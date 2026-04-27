@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wednesday 9–10 | Hall of Fame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #C9A84C;
+    --gold-dim: #7A6030;
+    --dark-bg: #0D0C0A;
+    --card-bg: #1A1810;
+    --card-border: #2A2618;
+    --text-primary: #F0E6C8;
+    --text-muted: #8A7D60;
+    --text-dim: #3E3A2A;
+    --silver: #A8A8A8;
+    --bronze: #CD7F32;
+  }
+
+  body {
+    background-color: var(--dark-bg);
+    color: var(--text-primary);
+    font-family: 'Raleway', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 48px, rgba(201,168,76,0.025) 48px, rgba(201,168,76,0.025) 49px),
+      repeating-linear-gradient(90deg, transparent, transparent 48px, rgba(201,168,76,0.015) 48px, rgba(201,168,76,0.015) 49px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 28px 100px;
+  }
+
+  header { text-align: center; padding: 70px 0 50px; }
+  .crest { width: 72px; height: 72px; margin: 0 auto 22px; }
+
+  .eyebrow {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.4em;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 900; color: var(--gold);
+    letter-spacing: 0.06em; text-transform: uppercase; line-height: 1;
+  }
+
+  .tagline {
+    font-family: 'Playfair Display', serif; font-style: italic;
+    font-size: clamp(13px, 2vw, 16px); color: var(--text-muted); margin-top: 14px;
+  }
+
+  .header-rule { display: flex; align-items: center; gap: 20px; margin: 28px auto 0; max-width: 280px; }
+  .header-rule span { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim)); }
+  .header-rule span:last-child { background: linear-gradient(90deg, var(--gold-dim), transparent); }
+  .diamond { width: 6px; height: 6px; background: var(--gold); transform: rotate(45deg); flex-shrink: 0; }
+
+  .stats-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--card-border); border-radius: 2px;
+    overflow: hidden; margin: 48px 0 56px;
+  }
+
+  .stat { padding: 22px 12px; text-align: center; border-right: 1px solid var(--card-border); }
+  .stat:last-child { border-right: none; }
+  .stat-n { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 900; color: var(--gold); display: block; line-height: 1; }
+  .stat-l { font-size: 9px; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-muted); display: block; margin-top: 6px; }
+
+  .sec-head { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+  .sec-head h2 { font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 700; letter-spacing: 0.35em; text-transform: uppercase; color: var(--gold); white-space: nowrap; }
+  .sec-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--gold-dim), transparent); }
+
+  #hof-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 16px; margin-bottom: 64px;
+  }
+
+  .hof-card {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: 2px; overflow: hidden;
+    transition: transform 0.18s ease, border-color 0.18s ease;
+  }
+  .hof-card:hover { transform: translateY(-3px); border-color: var(--gold-dim); }
+
+  .card-accent { height: 3px; background: var(--gold-dim); }
+  .hof-card.rank-1 .card-accent { background: var(--gold); }
+  .hof-card.rank-2 .card-accent { background: var(--silver); }
+  .hof-card.rank-3 .card-accent { background: var(--bronze); }
+
+  .card-body { padding: 20px 22px 22px; }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+
+  .rank-badge {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: var(--text-dim);
+    text-transform: uppercase; padding: 3px 7px; border: 1px solid var(--card-border); border-radius: 1px;
+  }
+  .hof-card.rank-1 .rank-badge { color: var(--gold); border-color: var(--gold-dim); }
+  .hof-card.rank-2 .rank-badge { color: var(--silver); border-color: #555; }
+  .hof-card.rank-3 .rank-badge { color: var(--bronze); border-color: #6B4000; }
+
+  .hof-bg-num { font-family: 'Playfair Display', serif; font-size: 64px; font-weight: 900; color: var(--text-dim); line-height: 1; opacity: 0.35; user-select: none; }
+  .hof-card.rank-1 .hof-bg-num { color: var(--gold-dim); opacity: 0.5; }
+
+  .hof-name { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: var(--text-primary); line-height: 1.15; margin-bottom: 10px; }
+
+  .hof-appearances { display: flex; align-items: baseline; gap: 7px; }
+  .hof-count { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 900; color: var(--gold); line-height: 1; }
+  .hof-count-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); }
+
+  .hof-badge {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 12px;
+    padding: 4px 9px; background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.18);
+    border-radius: 1px; font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--gold-dim);
+  }
+
+  .rising-section { margin-bottom: 72px; }
+
+  .rising-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 0; border-bottom: 1px solid rgba(42,38,24,0.8); transition: background 0.12s;
+  }
+  .rising-row:hover { background: rgba(201,168,76,0.02); }
+  .rising-row:first-child { border-top: 1px solid rgba(42,38,24,0.8); }
+
+  .r-pos { width: 26px; text-align: right; font-size: 11px; font-weight: 600; color: var(--text-dim); flex-shrink: 0; }
+  .r-name { flex: 1; font-size: 15px; font-weight: 500; color: var(--text-primary); min-width: 0; }
+  .r-bar-wrap { width: 120px; height: 3px; background: rgba(62,58,42,0.8); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+  .r-bar { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 2px; }
+  .r-count { width: 36px; text-align: right; font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
+  .r-gap { width: 42px; text-align: right; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--text-dim); flex-shrink: 0; }
+
+  .loading {
+    display: flex; gap: 6px; align-items: center; justify-content: center;
+    padding: 60px 0; color: var(--text-muted); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  .dot { width: 4px; height: 4px; background: var(--gold); border-radius: 50%; animation: blink 1.2s ease-in-out infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,100% { opacity: 0.15; } 50% { opacity: 1; } }
+
+  .error-box {
+    padding: 18px 22px; background: rgba(160,40,40,0.08); border: 1px solid rgba(160,40,40,0.2);
+    border-radius: 2px; font-size: 13px; color: #C07070; line-height: 1.7;
+  }
+
+  footer { border-top: 1px solid var(--card-border); padding-top: 36px; text-align: center; }
+  .footer-logo { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; letter-spacing: 0.15em; color: var(--gold-dim); text-transform: uppercase; }
+  .footer-sub { font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim); margin-top: 8px; text-transform: uppercase; }
+  #last-updated { font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 28px; }
+
+  @media (max-width: 560px) {
+    .stats-strip { grid-template-columns: repeat(2, 1fr); }
+    .stats-strip .stat:nth-child(2) { border-right: none; }
+    .stats-strip .stat:nth-child(3),
+    .stats-strip .stat:nth-child(4) { border-top: 1px solid var(--card-border); }
+    .r-bar-wrap { width: 70px; }
+    .r-gap { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="crest">
+      <svg viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M36 2 L68 14 L68 46 Q68 68 36 78 Q4 68 4 46 L4 14 Z" fill="#1A1810" stroke="#C9A84C" stroke-width="1.2"/>
+        <path d="M36 2 L68 14 L68 28 L4 28 L4 14 Z" fill="rgba(201,168,76,0.06)"/>
+        <circle cx="36" cy="50" r="15" stroke="#C9A84C" stroke-width="0.8" fill="none" opacity="0.35"/>
+        <path d="M21 50 Q28.5 42 36 50 Q43.5 58 51 50" stroke="#C9A84C" stroke-width="0.8" fill="none" opacity="0.3"/>
+        <path d="M36 20 L37.8 25.5 L43.5 25.5 L39 28.5 L40.8 34 L36 31 L31.2 34 L33 28.5 L28.5 25.5 L34.2 25.5 Z" fill="#C9A84C" opacity="0.85"/>
+        <text x="36" y="68" text-anchor="middle" font-family="serif" font-size="8" font-weight="bold" fill="#C9A84C" opacity="0.6" letter-spacing="1">W9-10</text>
+      </svg>
+    </div>
+    <p class="eyebrow">Wednesday 9–10 &nbsp;·&nbsp; Nairobi</p>
+    <h1>Hall of Fame</h1>
+    <p class="tagline">One hundred sessions. One jersey. One name on the back.</p>
+    <div class="header-rule">
+      <span></span><div class="diamond"></div><span></span>
+    </div>
+  </header>
+
+  <div class="stats-strip">
+    <div class="stat"><span class="stat-n" id="s-members">—</span><span class="stat-l">Century Members</span></div>
+    <div class="stat"><span class="stat-n" id="s-top">—</span><span class="stat-l">Top Appearances</span></div>
+    <div class="stat"><span class="stat-n" id="s-rising">—</span><span class="stat-l">Rising Stars</span></div>
+    <div class="stat"><span class="stat-n" id="s-players">—</span><span class="stat-l">Total Players</span></div>
+  </div>
+
+  <div class="sec-head"><h2>Century Club</h2><div class="sec-line"></div></div>
+  <div id="hof-grid">
+    <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  </div>
+
+  <div class="rising-section">
+    <div class="sec-head"><h2>Rising Stars</h2><div class="sec-line"></div></div>
+    <div id="rising-list">
+      <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">Wednesday 9–10</div>
+    <div class="footer-sub">The Century Club — 100 sessions, your name, your number</div>
+    <div id="last-updated"></div>
+  </footer>
+
+</div>
+<script>
+// CSV export URL — works from local files AND hosted pages (no CORS issues)
+const SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+
+const SKIP = new Set([
+  '', 'games played', 'amount paid', 'balance',
+  'owing from previous sessions', '+1s', 'krish p',
+]);
+
+function isPlayer(name) {
+  if (!name) return false;
+  const n = name.trim().toLowerCase();
+  if (n.length < 2) return false;
+  if (SKIP.has(n)) return false;
+  if (/^\d/.test(n)) return false;
+  // Skip rows where col B looks like a year or a label
+  if (/^20\d\d$/.test(n)) return false;
+  return true;
+}
+
+function parseCSV(text) {
+  // Simple CSV parser handling quoted fields
+  const rows = [];
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const cols = [];
+    let cur = '';
+    let inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQuote && line[i+1] === '"') { cur += '"'; i++; }
+        else { inQuote = !inQuote; }
+      } else if (c === ',' && !inQuote) {
+        cols.push(cur.trim());
+        cur = '';
+      } else {
+        cur += c;
+      }
+    }
+    cols.push(cur.trim());
+    rows.push(cols);
+  }
+  return rows;
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function load() {
+  try {
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const rows = parseCSV(text);
+
+    const players = [];
+
+    for (const row of rows) {
+      // Col 0 = Games Played, Col 1 = Name
+      const colA = row[0] ? row[0].replace(/,/g, '').trim() : '';
+      const colB = row[1] ? row[1].trim() : '';
+
+      if (!colA || !colB) continue;
+
+      const count = parseInt(colA, 10);
+      if (isNaN(count) || count <= 0) continue;
+
+      if (!isPlayer(colB)) continue;
+
+      players.push({ name: colB, count });
+    }
+
+    players.sort((a, b) => b.count - a.count);
+    render(players);
+
+  } catch (err) {
+    const msg = `
+      <div class="error-box" style="grid-column:1/-1">
+        Could not load data.<br><br>
+        <strong>Possible causes:</strong><br>
+        &bull; The Google Sheet is not set to "Anyone with the link — Viewer"<br>
+        &bull; You are offline<br><br>
+        <strong>Error:</strong> ${esc(err.message)}
+      </div>`;
+    document.getElementById('hof-grid').innerHTML = msg;
+    document.getElementById('rising-list').innerHTML = '';
+    console.error(err);
+  }
+}
+
+function render(players) {
+  const hof = players.filter(p => p.count >= 100);
+  const rising = players.filter(p => p.count >= 20 && p.count < 100);
+
+  document.getElementById('s-members').textContent = hof.length;
+  document.getElementById('s-top').textContent = players.length ? players[0].count : '—';
+  document.getElementById('s-rising').textContent = rising.length;
+  document.getElementById('s-players').textContent = players.length;
+
+  renderHOF(hof);
+  renderRising(rising);
+
+  document.getElementById('last-updated').textContent =
+    'Live data · refreshed ' +
+    new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function renderHOF(members) {
+  const grid = document.getElementById('hof-grid');
+  if (members.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 24px;
+      border:1px dashed var(--card-border);border-radius:2px;color:var(--text-muted);
+      font-size:13px;letter-spacing:0.05em;">
+      No century members yet — the first to reach 100 claims their jersey.
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = '';
+  members.forEach((p, i) => {
+    const rank = i + 1;
+    const rc = rank <= 3 ? `rank-${rank}` : '';
+    const rl = ['#1 Gold', '#2 Silver', '#3 Bronze'][i] || `#${rank}`;
+    const card = document.createElement('div');
+    card.className = `hof-card ${rc}`;
+    card.innerHTML = `
+      <div class="card-accent"></div>
+      <div class="card-body">
+        <div class="card-top">
+          <span class="rank-badge">${esc(rl)}</span>
+          <span class="hof-bg-num">100</span>
+        </div>
+        <div class="hof-name">${esc(p.name)}</div>
+        <div class="hof-appearances">
+          <span class="hof-count">${p.count}</span>
+          <span class="hof-count-label">Appearances</span>
+        </div>
+        <div class="hof-badge">&#9733;&nbsp; Century Member</div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function renderRising(players) {
+  const list = document.getElementById('rising-list');
+  if (players.length === 0) {
+    list.innerHTML = `<p style="color:var(--text-muted);font-size:13px;padding:24px 0;">No rising stars data available.</p>`;
+    return;
+  }
+  list.innerHTML = '';
+  players.forEach((p, i) => {
+    const pct = Math.round((p.count / 100) * 100);
+    const gap = 100 - p.count;
+    const row = document.createElement('div');
+    row.className = 'rising-row';
+    row.innerHTML = `
+      <span class="r-pos">${i + 1}</span>
+      <span class="r-name">${esc(p.name)}</span>
+      <div class="r-bar-wrap"><div class="r-bar" style="width:${pct}%"></div></div>
+      <span class="r-count">${p.count}</span>
+      <span class="r-gap">-${gap}</span>`;
+    list.appendChild(row);
+  });
+}
+
+load();
+</script>
+</body>
+</html>
