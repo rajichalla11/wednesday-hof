@@ -228,7 +228,7 @@
 */
 const SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
-const SESSION_START_COL = 7;
+const SESSION_START_COL = 8; // Col index 8 = "31st Oct 2024", the first actual session
 
 const SKIP = new Set(['','player','games played','amount paid','balance',
   'owing from previous sessions','+1s','krish p','images','postion','position','preferred foot']);
@@ -333,10 +333,10 @@ async function load() {
     if (!headerRow) throw new Error('Could not find header row');
 
     // Build session columns
-    // Year markers are in specific columns of the header row:
-    // Col O  (CSV index 14) = "2024" marker  → session offset 6
-    // Col CL (CSV index 89) = "2025" marker  → session offset 81
-    // Col FA (CSV index 156) = "2026" marker → session offset 148
+    // Year markers in the header row (spreadsheet column → year)
+    // Col O  = CSV index 14 = 2024
+    // Col CL = CSV index 89 = 2025
+    // Col FA = CSV index 156 = 2026
     const YEAR_MARKER_COLS = { 14: '2024', 89: '2025', 156: '2026' };
 
     const sessionCols = [];
