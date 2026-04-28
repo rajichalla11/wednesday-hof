@@ -18,6 +18,9 @@
     --text-primary: #F0E6C8;
     --text-muted: #8A7D60;
     --text-dim: #3E3A2A;
+    --pos-attack: #8B2020;
+    --pos-defense: #1A3A5C;
+    --pos-midfield: #2A4A2A;
   }
 
   body {
@@ -72,6 +75,7 @@
   .header-rule span:last-child { background: linear-gradient(90deg, var(--gold-dim), transparent); }
   .diamond { width: 6px; height: 6px; background: var(--gold); transform: rotate(45deg); flex-shrink: 0; }
 
+  /* ── STATS ── */
   .stats-strip {
     display: grid; grid-template-columns: repeat(4, 1fr);
     border: 1px solid var(--card-border); border-radius: 2px;
@@ -82,6 +86,7 @@
   .stat-n { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 900; color: var(--gold); display: block; line-height: 1; }
   .stat-l { font-size: 9px; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-muted); display: block; margin-top: 6px; }
 
+  /* ── SECTION HEADER ── */
   .sec-head { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
   .sec-head h2 { font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 700; letter-spacing: 0.35em; text-transform: uppercase; color: var(--gold); white-space: nowrap; }
   .sec-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--gold-dim), transparent); }
@@ -108,66 +113,55 @@
 
   /* Photo */
   .card-photo {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    position: relative;
-    background: #111008;
+    width: 100%; aspect-ratio: 1 / 1;
+    overflow: hidden; position: relative; background: #111008;
   }
-
   .card-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top center;
-    display: block;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: top center; display: block;
     filter: sepia(10%) contrast(1.05);
     transition: transform 0.4s ease;
   }
   .hof-card:hover .card-photo img { transform: scale(1.04); }
 
   .card-photo-fallback {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, #1E1C12, #0D0C0A);
   }
   .card-photo-fallback span {
     font-family: 'Playfair Display', serif;
-    font-size: 56px;
-    font-weight: 900;
-    color: var(--gold-dim);
-    opacity: 0.4;
-    letter-spacing: -2px;
+    font-size: 56px; font-weight: 900;
+    color: var(--gold-dim); opacity: 0.4; letter-spacing: -2px;
   }
 
-  /* Gradient overlay on photo bottom */
   .card-photo::after {
     content: '';
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     background: linear-gradient(to bottom, transparent 55%, rgba(13,12,10,0.75) 100%);
     pointer-events: none;
   }
 
-  /* Appearance count badge overlaid on photo */
+  /* Appearance count — top right of photo */
   .card-jersey {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(13,12,10,0.78);
-    border: 1px solid var(--gold-dim);
-    border-radius: 2px;
-    padding: 3px 8px;
-    font-family: 'Playfair Display', serif;
-    font-size: 14px;
-    font-weight: 900;
-    color: var(--gold);
-    letter-spacing: 0.05em;
-    z-index: 1;
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(13,12,10,0.78); border: 1px solid var(--gold-dim);
+    border-radius: 2px; padding: 3px 8px;
+    font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 900;
+    color: var(--gold); letter-spacing: 0.05em; z-index: 1;
   }
+
+  /* Position badge — bottom left of photo */
+  .card-pos-badge {
+    position: absolute; bottom: 10px; left: 10px;
+    border-radius: 2px; padding: 3px 8px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
+    text-transform: uppercase; z-index: 1; color: rgba(255,255,255,0.85);
+  }
+  .card-pos-badge.attack   { background: rgba(139,32,32,0.85); border: 1px solid rgba(200,60,60,0.4); }
+  .card-pos-badge.defense  { background: rgba(26,58,92,0.85);  border: 1px solid rgba(60,120,200,0.4); }
+  .card-pos-badge.midfield { background: rgba(42,74,42,0.85);  border: 1px solid rgba(80,160,80,0.4); }
+  .card-pos-badge.other    { background: rgba(50,45,30,0.85);  border: 1px solid rgba(130,120,80,0.3); }
 
   .card-body { padding: 16px 18px 18px; }
 
@@ -207,17 +201,28 @@
   .r-avatar-fallback {
     width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Playfair Display', serif;
-    font-size: 12px; font-weight: 700; color: var(--gold-dim);
+    font-family: 'Playfair Display', serif; font-size: 12px; font-weight: 700; color: var(--gold-dim);
   }
 
   .r-pos { width: 22px; text-align: right; font-size: 11px; font-weight: 600; color: var(--text-dim); flex-shrink: 0; }
   .r-name { flex: 1; font-size: 15px; font-weight: 500; color: var(--text-primary); min-width: 0; }
-  .r-bar-wrap { width: 120px; height: 3px; background: rgba(62,58,42,0.8); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+
+  /* Position pill in rising stars row */
+  .r-position-pill {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 2px; flex-shrink: 0; color: rgba(255,255,255,0.7);
+  }
+  .r-position-pill.attack   { background: rgba(139,32,32,0.7); }
+  .r-position-pill.defense  { background: rgba(26,58,92,0.7); }
+  .r-position-pill.midfield { background: rgba(42,74,42,0.7); }
+  .r-position-pill.other    { background: rgba(50,45,30,0.5); }
+
+  .r-bar-wrap { width: 100px; height: 3px; background: rgba(62,58,42,0.8); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
   .r-bar { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 2px; }
   .r-count { width: 36px; text-align: right; font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
-  .r-gap { width: 42px; text-align: right; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--text-dim); flex-shrink: 0; }
+  .r-gap { width: 38px; text-align: right; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--text-dim); flex-shrink: 0; }
 
+  /* ── LOADING / ERROR ── */
   .loading {
     display: flex; gap: 6px; align-items: center; justify-content: center;
     padding: 60px 0; color: var(--text-muted); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
@@ -232,6 +237,7 @@
     border-radius: 2px; font-size: 13px; color: #C07070; line-height: 1.7;
   }
 
+  /* ── FOOTER ── */
   footer { border-top: 1px solid var(--card-border); padding-top: 36px; text-align: center; }
   .footer-logo { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; letter-spacing: 0.15em; color: var(--gold-dim); text-transform: uppercase; }
   .footer-sub { font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim); margin-top: 8px; text-transform: uppercase; }
@@ -242,8 +248,9 @@
     .stats-strip .stat:nth-child(2) { border-right: none; }
     .stats-strip .stat:nth-child(3),
     .stats-strip .stat:nth-child(4) { border-top: 1px solid var(--card-border); }
-    .r-bar-wrap { width: 70px; }
+    .r-bar-wrap { width: 60px; }
     .r-gap { display: none; }
+    .r-position-pill { display: none; }
   }
 </style>
 </head>
@@ -296,12 +303,19 @@
 
 </div>
 <script>
+/*
+  SHEET STRUCTURE (as of latest update):
+  Col A (index 0): Games Played
+  Col B (index 1): Player name
+  Col C (index 2): Position
+  Col D (index 3): Images (Google Drive share link)
+*/
 const SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 
 const SKIP = new Set([
-  '', 'games played', 'amount paid', 'balance',
-  'owing from previous sessions', '+1s', 'krish p', 'images',
+  '', 'games played', 'player', 'amount paid', 'balance',
+  'owing from previous sessions', '+1s', 'krish p',
 ]);
 
 function isPlayer(name) {
@@ -314,32 +328,24 @@ function isPlayer(name) {
   return true;
 }
 
-/*
-  Convert any Google Drive share link to a direct-loadable image URL.
-  Input:  https://drive.google.com/file/d/FILE_ID/view?usp=...
-          https://drive.google.com/open?id=FILE_ID
-  Output: https://lh3.googleusercontent.com/d/FILE_ID  (works without login for public files)
-*/
+function posClass(pos) {
+  if (!pos) return 'other';
+  const p = pos.trim().toLowerCase();
+  if (p.includes('attack')) return 'attack';
+  if (p.includes('defense') || p.includes('defence')) return 'defense';
+  if (p.includes('mid')) return 'midfield';
+  return 'other';
+}
+
 function driveToImg(url) {
   if (!url) return '';
   url = url.trim();
-
-  // Already a direct URL — leave it alone
   if (!url.includes('drive.google.com') && url.startsWith('http')) return url;
-
-  // Extract file ID
-  let id = null;
-
   const matchPath = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (matchPath) { id = matchPath[1]; }
-
+  if (matchPath) return `https://lh3.googleusercontent.com/d/${matchPath[1]}`;
   const matchParam = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (!id && matchParam) { id = matchParam[1]; }
-
-  if (!id) return '';
-
-  // lh3.googleusercontent.com works for publicly shared Drive images
-  return `https://lh3.googleusercontent.com/d/${id}`;
+  if (matchParam) return `https://lh3.googleusercontent.com/d/${matchParam[1]}`;
+  return '';
 }
 
 function parseCSV(text) {
@@ -389,35 +395,20 @@ async function load() {
     const text = await res.text();
     const rows = parseCSV(text);
 
-    // Find the header row — the one where col A contains "Games Played"
-    // Col C (index 2) is "Images" based on the current sheet structure
-    // We'll detect it dynamically just in case
-    let imageColIndex = 2; // default: column C
-    for (let i = 0; i < rows.length; i++) {
-      if (rows[i][0] && rows[i][0].toLowerCase().includes('games played')) {
-        for (let j = 0; j < rows[i].length; j++) {
-          if (rows[i][j].toLowerCase().trim() === 'images') {
-            imageColIndex = j;
-            break;
-          }
-        }
-        break;
-      }
-    }
-
     const players = [];
 
     for (const row of rows) {
       const colA = row[0] ? row[0].replace(/,/g, '').trim() : '';
       const colB = row[1] ? row[1].trim() : '';
-      if (!colA || !colB) continue;
+      const colC = row[2] ? row[2].trim() : ''; // Position
+      const colD = row[3] ? row[3].trim() : ''; // Image
 
+      if (!colA || !colB) continue;
       const count = parseInt(colA, 10);
       if (isNaN(count) || count <= 0) continue;
       if (!isPlayer(colB)) continue;
 
-      const rawPhoto = (row[imageColIndex] || '').trim();
-      players.push({ name: colB, count, photo: rawPhoto });
+      players.push({ name: colB, count, position: colC, photo: colD });
     }
 
     players.sort((a, b) => b.count - a.count);
@@ -426,8 +417,7 @@ async function load() {
   } catch (err) {
     document.getElementById('hof-grid').innerHTML =
       `<div class="error-box" style="grid-column:1/-1">
-        Could not load data. Make sure the Google Sheet is shared as "Anyone with the link — Viewer".<br><br>
-        <strong>Error:</strong> ${esc(err.message)}
+        Could not load data.<br><br><strong>Error:</strong> ${esc(err.message)}
       </div>`;
     document.getElementById('rising-list').innerHTML = '';
     console.error(err);
@@ -463,6 +453,8 @@ function renderHOF(members) {
 
   grid.innerHTML = '';
   members.forEach((p, i) => {
+    const pc = posClass(p.position);
+    const posLabel = p.position || '';
     const card = document.createElement('div');
     card.className = `hof-card${i === 0 ? ' rank-1' : ''}`;
     card.innerHTML = `
@@ -470,6 +462,7 @@ function renderHOF(members) {
       <div class="card-photo">
         ${photoBlock(p.photo, p.name, 'card-photo')}
         <div class="card-jersey">${p.count}</div>
+        ${posLabel ? `<div class="card-pos-badge ${pc}">${esc(posLabel)}</div>` : ''}
       </div>
       <div class="card-body">
         <div class="hof-name">${esc(p.name)}</div>
@@ -493,12 +486,15 @@ function renderRising(players) {
   players.forEach((p, i) => {
     const pct = Math.round((p.count / 100) * 100);
     const gap = 100 - p.count;
+    const pc = posClass(p.position);
+    const posLabel = p.position || '';
     const row = document.createElement('div');
     row.className = 'rising-row';
     row.innerHTML = `
       <span class="r-pos">${i + 1}</span>
       <div class="r-avatar">${photoBlock(p.photo, p.name, 'r-avatar')}</div>
       <span class="r-name">${esc(p.name)}</span>
+      ${posLabel ? `<span class="r-position-pill ${pc}">${esc(posLabel)}</span>` : ''}
       <div class="r-bar-wrap"><div class="r-bar" style="width:${pct}%"></div></div>
       <span class="r-count">${p.count}</span>
       <span class="r-gap">-${gap}</span>`;
