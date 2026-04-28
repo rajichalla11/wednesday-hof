@@ -314,11 +314,7 @@ function fullDate(label) {
               .replace(/\(.*?\)/g,'').trim();
 }
 
-function yearFromLabel(label) {
-  // Session labels don't contain years — we derive year from position in sessionCols
-  // Instead we store the year separately. For display we just use the label as-is.
-  return label;
-}
+
 
 async function load() {
   try {
@@ -327,38 +323,42 @@ async function load() {
     const text = await res.text();
     const rows = parseCSV(text);
 
-    // Find header row and year row
-    let headerRow=null, headerIdx=-1, yearRow=null;
+    // Find header row
+    let headerRow=null, headerIdx=-1;
     for (let i=0;i<rows.length;i++) {
       if (rows[i][0] && rows[i][0].toLowerCase().includes('games played')) {
-        headerRow=rows[i]; headerIdx=i;
-        // Year row is immediately before header (row headerIdx-1)
-        if (headerIdx>0) yearRow=rows[headerIdx-1];
-        break;
+        headerRow=rows[i]; headerIdx=i; break;
       }
     }
     if (!headerRow) throw new Error('Could not find header row');
 
-    // Build session columns with year labels
+    // Build session columns
+    // Year markers are in specific columns of the header row:
+    // Col O  (CSV index 14) = "2024" marker  → session offset 6
+    // Col CL (CSV index 89) = "2025" marker  → session offset 81
+    // Col FA (CSV index 156) = "2026" marker → session offset 148
+    const YEAR_MARKER_COLS = { 14: '2024', 89: '2025', 156: '2026' };
+
     const sessionCols = [];
+    let lastYear = '2024';
+
     for (let i=SESSION_START_COL;i<headerRow.length;i++) {
+      // Check if this col is a year marker
+      if (YEAR_MARKER_COLS[i]) {
+        lastYear = YEAR_MARKER_COLS[i];
+        continue; // year marker col is not a session
+      }
       const h = headerRow[i].trim();
       if (!h || ['balance','owing from previous sessions','images','amount paid',
                  'preferred foot','position','postion'].includes(h.toLowerCase())) continue;
-      // Get year from year row
-      const yr = yearRow ? (yearRow[i]||'').trim() : '';
-      sessionCols.push({ idx:i, label:h, year:yr });
+      // Strip year from date label if present (e.g. "31st Oct 2024" → "31st Oct")
+      const cleanLabel = h.replace(/\s+20\d\d$/, '').trim();
+      sessionCols.push({ idx:i, label:cleanLabel, resolvedYear:lastYear });
     }
 
-    // Assign years: carry forward the last seen year
-    let lastYear = '2024';
-    for (const sc of sessionCols) {
-      if (sc.year && /^\d{4}$/.test(sc.year)) lastYear = sc.year;
-      sc.resolvedYear = lastYear;
-    }
-
-    // Current year sessions (2026)
-    const currentYear = '2026';
+    // Detect current year dynamically as the highest year seen
+    const years = [...new Set(sessionCols.map(s => s.resolvedYear))].sort();
+    const currentYear = years[years.length - 1];
 
     const players = [];
     for (const row of rows.slice(headerIdx+1)) {
