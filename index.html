@@ -18,8 +18,6 @@
     --text-primary: #F0E6C8;
     --text-muted: #8A7D60;
     --text-dim: #3E3A2A;
-    --silver: #A8A8A8;
-    --bronze: #CD7F32;
   }
 
   body {
@@ -79,7 +77,6 @@
     border: 1px solid var(--card-border); border-radius: 2px;
     overflow: hidden; margin: 48px 0 56px;
   }
-
   .stat { padding: 22px 12px; text-align: center; border-right: 1px solid var(--card-border); }
   .stat:last-child { border-right: none; }
   .stat-n { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 900; color: var(--gold); display: block; line-height: 1; }
@@ -89,50 +86,109 @@
   .sec-head h2 { font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 700; letter-spacing: 0.35em; text-transform: uppercase; color: var(--gold); white-space: nowrap; }
   .sec-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--gold-dim), transparent); }
 
+  /* ── HOF CARDS ── */
   #hof-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-    gap: 16px; margin-bottom: 64px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 64px;
   }
 
   .hof-card {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: 2px; overflow: hidden;
-    transition: transform 0.18s ease, border-color 0.18s ease;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 2px;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease;
   }
-  .hof-card:hover { transform: translateY(-3px); border-color: var(--gold-dim); }
+  .hof-card:hover { transform: translateY(-4px); border-color: var(--gold-dim); }
 
-  .card-accent { height: 3px; background: var(--gold-dim); }
+  .card-accent { height: 2px; background: var(--gold-dim); }
   .hof-card.rank-1 .card-accent { background: var(--gold); }
-  .hof-card.rank-2 .card-accent { background: var(--silver); }
-  .hof-card.rank-3 .card-accent { background: var(--bronze); }
 
-  .card-body { padding: 20px 22px 22px; }
-  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
-
-  .rank-badge {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: var(--text-dim);
-    text-transform: uppercase; padding: 3px 7px; border: 1px solid var(--card-border); border-radius: 1px;
+  /* Photo */
+  .card-photo {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    position: relative;
+    background: #111008;
   }
-  .hof-card.rank-1 .rank-badge { color: var(--gold); border-color: var(--gold-dim); }
-  .hof-card.rank-2 .rank-badge { color: var(--silver); border-color: #555; }
-  .hof-card.rank-3 .rank-badge { color: var(--bronze); border-color: #6B4000; }
 
-  .hof-bg-num { font-family: 'Playfair Display', serif; font-size: 64px; font-weight: 900; color: var(--text-dim); line-height: 1; opacity: 0.35; user-select: none; }
-  .hof-card.rank-1 .hof-bg-num { color: var(--gold-dim); opacity: 0.5; }
+  .card-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    filter: sepia(10%) contrast(1.05);
+    transition: transform 0.4s ease;
+  }
+  .hof-card:hover .card-photo img { transform: scale(1.04); }
 
-  .hof-name { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: var(--text-primary); line-height: 1.15; margin-bottom: 10px; }
+  .card-photo-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1E1C12, #0D0C0A);
+  }
+  .card-photo-fallback span {
+    font-family: 'Playfair Display', serif;
+    font-size: 56px;
+    font-weight: 900;
+    color: var(--gold-dim);
+    opacity: 0.4;
+    letter-spacing: -2px;
+  }
 
-  .hof-appearances { display: flex; align-items: baseline; gap: 7px; }
-  .hof-count { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 900; color: var(--gold); line-height: 1; }
-  .hof-count-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); }
+  /* Gradient overlay on photo bottom */
+  .card-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 55%, rgba(13,12,10,0.75) 100%);
+    pointer-events: none;
+  }
+
+  /* Appearance count badge overlaid on photo */
+  .card-jersey {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(13,12,10,0.78);
+    border: 1px solid var(--gold-dim);
+    border-radius: 2px;
+    padding: 3px 8px;
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    z-index: 1;
+  }
+
+  .card-body { padding: 16px 18px 18px; }
+
+  .hof-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--text-primary); line-height: 1.15; margin-bottom: 8px;
+  }
+
+  .hof-appearances { display: flex; align-items: baseline; gap: 6px; }
+  .hof-count { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 900; color: var(--gold); line-height: 1; }
+  .hof-count-label { font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); }
 
   .hof-badge {
-    display: inline-flex; align-items: center; gap: 5px; margin-top: 12px;
-    padding: 4px 9px; background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.18);
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 10px;
+    padding: 3px 8px; background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.18);
     border-radius: 1px; font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
     text-transform: uppercase; color: var(--gold-dim);
   }
 
+  /* ── RISING STARS ── */
   .rising-section { margin-bottom: 72px; }
 
   .rising-row {
@@ -142,7 +198,20 @@
   .rising-row:hover { background: rgba(201,168,76,0.02); }
   .rising-row:first-child { border-top: 1px solid rgba(42,38,24,0.8); }
 
-  .r-pos { width: 26px; text-align: right; font-size: 11px; font-weight: 600; color: var(--text-dim); flex-shrink: 0; }
+  .r-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    overflow: hidden; flex-shrink: 0;
+    background: #111008; border: 1px solid var(--card-border);
+  }
+  .r-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .r-avatar-fallback {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 12px; font-weight: 700; color: var(--gold-dim);
+  }
+
+  .r-pos { width: 22px; text-align: right; font-size: 11px; font-weight: 600; color: var(--text-dim); flex-shrink: 0; }
   .r-name { flex: 1; font-size: 15px; font-weight: 500; color: var(--text-primary); min-width: 0; }
   .r-bar-wrap { width: 120px; height: 3px; background: rgba(62,58,42,0.8); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
   .r-bar { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 2px; }
@@ -227,13 +296,12 @@
 
 </div>
 <script>
-// CSV export URL — works from local files AND hosted pages (no CORS issues)
 const SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 
 const SKIP = new Set([
   '', 'games played', 'amount paid', 'balance',
-  'owing from previous sessions', '+1s', 'krish p',
+  'owing from previous sessions', '+1s', 'krish p', 'images',
 ]);
 
 function isPlayer(name) {
@@ -242,31 +310,53 @@ function isPlayer(name) {
   if (n.length < 2) return false;
   if (SKIP.has(n)) return false;
   if (/^\d/.test(n)) return false;
-  // Skip rows where col B looks like a year or a label
   if (/^20\d\d$/.test(n)) return false;
   return true;
 }
 
+/*
+  Convert any Google Drive share link to a direct-loadable image URL.
+  Input:  https://drive.google.com/file/d/FILE_ID/view?usp=...
+          https://drive.google.com/open?id=FILE_ID
+  Output: https://lh3.googleusercontent.com/d/FILE_ID  (works without login for public files)
+*/
+function driveToImg(url) {
+  if (!url) return '';
+  url = url.trim();
+
+  // Already a direct URL — leave it alone
+  if (!url.includes('drive.google.com') && url.startsWith('http')) return url;
+
+  // Extract file ID
+  let id = null;
+
+  const matchPath = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (matchPath) { id = matchPath[1]; }
+
+  const matchParam = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (!id && matchParam) { id = matchParam[1]; }
+
+  if (!id) return '';
+
+  // lh3.googleusercontent.com works for publicly shared Drive images
+  return `https://lh3.googleusercontent.com/d/${id}`;
+}
+
 function parseCSV(text) {
-  // Simple CSV parser handling quoted fields
   const rows = [];
   const lines = text.split(/\r?\n/);
   for (const line of lines) {
     if (!line.trim()) continue;
     const cols = [];
-    let cur = '';
-    let inQuote = false;
+    let cur = '', inQ = false;
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
       if (c === '"') {
-        if (inQuote && line[i+1] === '"') { cur += '"'; i++; }
-        else { inQuote = !inQuote; }
-      } else if (c === ',' && !inQuote) {
-        cols.push(cur.trim());
-        cur = '';
-      } else {
-        cur += c;
-      }
+        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+        else { inQ = !inQ; }
+      } else if (c === ',' && !inQ) {
+        cols.push(cur.trim()); cur = '';
+      } else { cur += c; }
     }
     cols.push(cur.trim());
     rows.push(cols);
@@ -275,9 +365,21 @@ function parseCSV(text) {
 }
 
 function esc(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function initials(name) {
+  return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function photoBlock(rawUrl, name, cls) {
+  const imgUrl = driveToImg(rawUrl);
+  if (imgUrl) {
+    const fb = `this.style.display='none';this.nextElementSibling.style.display='flex'`;
+    return `<img src="${esc(imgUrl)}" alt="${esc(name)}" loading="lazy" onerror="${fb}">
+            <div class="${cls}-fallback" style="display:none"><span>${esc(initials(name))}</span></div>`;
+  }
+  return `<div class="${cls}-fallback"><span>${esc(initials(name))}</span></div>`;
 }
 
 async function load() {
@@ -287,36 +389,46 @@ async function load() {
     const text = await res.text();
     const rows = parseCSV(text);
 
+    // Find the header row — the one where col A contains "Games Played"
+    // Col C (index 2) is "Images" based on the current sheet structure
+    // We'll detect it dynamically just in case
+    let imageColIndex = 2; // default: column C
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i][0] && rows[i][0].toLowerCase().includes('games played')) {
+        for (let j = 0; j < rows[i].length; j++) {
+          if (rows[i][j].toLowerCase().trim() === 'images') {
+            imageColIndex = j;
+            break;
+          }
+        }
+        break;
+      }
+    }
+
     const players = [];
 
     for (const row of rows) {
-      // Col 0 = Games Played, Col 1 = Name
       const colA = row[0] ? row[0].replace(/,/g, '').trim() : '';
       const colB = row[1] ? row[1].trim() : '';
-
       if (!colA || !colB) continue;
 
       const count = parseInt(colA, 10);
       if (isNaN(count) || count <= 0) continue;
-
       if (!isPlayer(colB)) continue;
 
-      players.push({ name: colB, count });
+      const rawPhoto = (row[imageColIndex] || '').trim();
+      players.push({ name: colB, count, photo: rawPhoto });
     }
 
     players.sort((a, b) => b.count - a.count);
     render(players);
 
   } catch (err) {
-    const msg = `
-      <div class="error-box" style="grid-column:1/-1">
-        Could not load data.<br><br>
-        <strong>Possible causes:</strong><br>
-        &bull; The Google Sheet is not set to "Anyone with the link — Viewer"<br>
-        &bull; You are offline<br><br>
+    document.getElementById('hof-grid').innerHTML =
+      `<div class="error-box" style="grid-column:1/-1">
+        Could not load data. Make sure the Google Sheet is shared as "Anyone with the link — Viewer".<br><br>
         <strong>Error:</strong> ${esc(err.message)}
       </div>`;
-    document.getElementById('hof-grid').innerHTML = msg;
     document.getElementById('rising-list').innerHTML = '';
     console.error(err);
   }
@@ -343,8 +455,7 @@ function renderHOF(members) {
   const grid = document.getElementById('hof-grid');
   if (members.length === 0) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 24px;
-      border:1px dashed var(--card-border);border-radius:2px;color:var(--text-muted);
-      font-size:13px;letter-spacing:0.05em;">
+      border:1px dashed var(--card-border);border-radius:2px;color:var(--text-muted);font-size:13px;">
       No century members yet — the first to reach 100 claims their jersey.
     </div>`;
     return;
@@ -352,18 +463,15 @@ function renderHOF(members) {
 
   grid.innerHTML = '';
   members.forEach((p, i) => {
-    const rank = i + 1;
-    const rc = rank <= 3 ? `rank-${rank}` : '';
-    const rl = ['#1 Gold', '#2 Silver', '#3 Bronze'][i] || `#${rank}`;
     const card = document.createElement('div');
-    card.className = `hof-card ${rc}`;
+    card.className = `hof-card${i === 0 ? ' rank-1' : ''}`;
     card.innerHTML = `
       <div class="card-accent"></div>
+      <div class="card-photo">
+        ${photoBlock(p.photo, p.name, 'card-photo')}
+        <div class="card-jersey">${p.count}</div>
+      </div>
       <div class="card-body">
-        <div class="card-top">
-          <span class="rank-badge">${esc(rl)}</span>
-          <span class="hof-bg-num">100</span>
-        </div>
         <div class="hof-name">${esc(p.name)}</div>
         <div class="hof-appearances">
           <span class="hof-count">${p.count}</span>
@@ -389,6 +497,7 @@ function renderRising(players) {
     row.className = 'rising-row';
     row.innerHTML = `
       <span class="r-pos">${i + 1}</span>
+      <div class="r-avatar">${photoBlock(p.photo, p.name, 'r-avatar')}</div>
       <span class="r-name">${esc(p.name)}</span>
       <div class="r-bar-wrap"><div class="r-bar" style="width:${pct}%"></div></div>
       <span class="r-count">${p.count}</span>
