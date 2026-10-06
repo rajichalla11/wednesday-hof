@@ -131,6 +131,13 @@
   .r-count { width: 32px; text-align: right; font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
   .r-gap { width: 36px; text-align: right; font-size: 10px; font-weight: 600; letter-spacing: .1em; color: var(--text-dim); flex-shrink: 0; }
 
+  .squad-section { margin-bottom: 72px; }
+  .squad-sub { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--text-dim); margin: -16px 0 18px; }
+  .bal-reveal { display: inline-flex; align-items: center; gap: 7px; margin-top: 4px; padding: 6px 10px; background: transparent; border: 1px dashed rgba(201,168,76,.35); border-radius: 2px; color: var(--text-muted); font-family: 'Raleway', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; cursor: pointer; transition: all .2s; }
+  .bal-reveal:hover { color: var(--gold); border-color: var(--gold); background: rgba(201,168,76,.06); }
+  .bal-reveal i { font-style: normal; font-size: 12px; line-height: 1; }
+  .p-foot-v.revealed { animation: rise .4s var(--ease); }
+
   /* ───────────── PLAYER DOSSIER ───────────── */
   .profile-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px;
     background: rgba(6,5,3,.70); backdrop-filter: blur(18px) saturate(.7); -webkit-backdrop-filter: blur(18px) saturate(.7);
@@ -430,6 +437,12 @@
   <div class="rising-section">
     <div class="sec-head"><h2>Rising Stars</h2><div class="sec-line"></div></div>
     <div id="rising-list"><div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+  </div>
+
+  <div class="squad-section">
+    <div class="sec-head"><h2>The Squad</h2><div class="sec-line"></div></div>
+    <p class="squad-sub">Every other name in the book — under 20 appearances</p>
+    <div id="squad-list"></div>
   </div>
   </section>
 
@@ -808,6 +821,7 @@ function countUp(el, target, ms=1100) {
 function render(players, totalSessions) {
   const hof    = players.filter(p=>p.count>=100);
   const rising = players.filter(p=>p.count>=20&&p.count<100);
+  const squad  = players.filter(p=>p.count<20);
 
   countUp(document.getElementById('s-members'),  hof.length);
   countUp(document.getElementById('s-sessions'), totalSessions||0);
@@ -823,6 +837,7 @@ function render(players, totalSessions) {
 
   renderHOF(hof);
   renderRising(rising);
+  renderRising(squad, 'squad-list', 'squad');
   renderWall();
   renderRecords();
   renderTimeline();
@@ -871,6 +886,7 @@ function applyFilter() {
     : ALL_PLAYERS;
   renderHOF(filtered.filter(p=>p.count>=100));
   renderRising(filtered.filter(p=>p.count>=20&&p.count<100));
+  renderRising(filtered.filter(p=>p.count<20), 'squad-list', 'squad');
 }
 
 /* ── HOF CARDS ── */
@@ -926,10 +942,11 @@ function renderHOF(members) {
 }
 
 /* ── RISING STARS ── */
-function renderRising(players) {
-  const list = document.getElementById('rising-list');
+function renderRising(players, listId = 'rising-list', tier = 'rising') {
+  const list = document.getElementById(listId);
+  const what = tier === 'squad' ? 'squad players' : 'rising stars';
   if (players.length===0) {
-    list.innerHTML=`<p style="color:var(--text-muted);font-size:13px;padding:24px 0;">${ACTIVE_FILTER?'No rising stars in this position.':'No rising stars data available.'}</p>`;
+    list.innerHTML=`<p style="color:var(--text-muted);font-size:13px;padding:24px 0;">${ACTIVE_FILTER?`No ${what} in this position.`:`No ${what} yet.`}</p>`;
     return;
   }
   list.innerHTML='';
@@ -993,7 +1010,7 @@ function openProfile(p) {
     return `<div class="heat-row"><span class="heat-y">${y}</span><div class="heat-cells">${cells}</div></div>`;
   }).join('');
 
-  const balance = p.balance !== null && !isNaN(p.balance) ? `KES ${Math.round(p.balance).toLocaleString()}` : '—';
+  const balance = p.balance !== null && !isNaN(p.balance) ? `KES ${Math.abs(Math.round(p.balance)).toLocaleString()}` : '—';
   const neg = p.balance !== null && p.balance < 0;
   const first = SESSIONS[p.firstIdx], last = SESSIONS[p.lastIdx];
   const daysSince = last && last.date ? Math.round((Date.now() - last.date) / 86400000) : null;
@@ -1061,7 +1078,7 @@ function openProfile(p) {
     <div class="p-foot">
       <div><span class="p-foot-l">Debut</span><span class="p-foot-v">${esc(fmtSession(first,false))}<small>${first&&first.date?DAY_FULL[first.date.getDay()]:''}</small></span></div>
       <div><span class="p-foot-l">Most recent</span><span class="p-foot-v">${esc(fmtSession(last,false))}<small>${daysSince===null?'':daysSince===0?'today':daysSince===1?'yesterday':daysSince+' days ago'}</small></span></div>
-      <div><span class="p-foot-l">Balance</span><span class="p-foot-v ${neg?'neg':''}">${esc(balance)}<small>${neg?'owing':p.balance>0?'in credit':''}</small></span></div>
+      <div><span class="p-foot-l">Balance</span><button class="bal-reveal" onclick="revealBalance(this)" data-v="${esc(balance)}" data-neg="${neg?1:0}" data-note="${neg?'owing':p.balance>0?'in credit':''}" title="Balances stay hidden until you ask"><i>◉</i>Tap to reveal</button></div>
     </div>
     <div class="p-hint">← → to browse players · esc to close</div>`;
 
@@ -1076,6 +1093,13 @@ function openProfile(p) {
     const ring = document.querySelector('#p-body .ring .val');
     if (ring) ring.style.strokeDashoffset = (326.7 * (1 - parseFloat(ring.dataset.rate))).toFixed(1);
   }));
+}
+
+function revealBalance(btn) {
+  const v = document.createElement('span');
+  v.className = `p-foot-v revealed ${btn.dataset.neg==='1'?'neg':''}`;
+  v.innerHTML = `${esc(btn.dataset.v)}<small>${esc(btn.dataset.note)}</small>`;
+  btn.replaceWith(v);
 }
 
 function stepProfile(dir) {
