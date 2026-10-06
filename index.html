@@ -43,6 +43,20 @@
   .stat-n { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 900; color: var(--gold); display: block; line-height: 1; font-variant-numeric: tabular-nums; }
   .stat-l { font-size: 9px; font-weight: 700; letter-spacing: .25em; text-transform: uppercase; color: var(--text-muted); display: block; margin-top: 6px; }
 
+  /* TABS */
+  .tabs { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; margin: 0 0 40px; padding: 12px 0 14px; overflow-x: auto; scrollbar-width: none;
+    background: linear-gradient(180deg, var(--dark-bg) 0%, var(--dark-bg) 78%, transparent 100%); }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: 1; min-width: max-content; padding: 12px 18px 10px; background: rgba(26,24,16,.5); border: 1px solid var(--card-border); border-radius: 2px; color: var(--text-muted); cursor: pointer; text-align: center;
+    font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; transition: color .2s, border-color .2s, background .2s, box-shadow .3s; }
+  .tab:hover { color: var(--text-primary); border-color: var(--gold-dim); }
+  .tab.active { color: var(--gold); border-color: var(--gold); background: rgba(201,168,76,.08); box-shadow: 0 0 24px rgba(201,168,76,.12), inset 0 -2px 0 var(--gold); }
+  .tab small { display: block; font-family: 'Raleway', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: .2em; color: var(--text-dim); margin-top: 4px; }
+  .tab.active small { color: var(--gold-dim); }
+  .panel { display: none; }
+  .panel.active { display: block; animation: panelIn .5s var(--ease); }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
   /* POSITION BREAKDOWN — clickable */
   .pos-breakdown { display: flex; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
   .pos-block { flex: 1; min-width: 120px; padding: 16px 14px; border: 1px solid var(--card-border); border-radius: 2px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s, transform .2s; user-select: none; }
@@ -215,7 +229,7 @@
   .p-hint { margin-top: 18px; font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim); text-align: right; }
 
   /* CENTURY WALL */
-  .wall-section { margin: -24px 0 72px; }
+  .wall-section { margin: 0 0 72px; }
   .wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 16px; }
   .plaque { position: relative; padding: 20px 20px 18px 22px; border-radius: 3px; cursor: pointer; overflow: hidden;
     background: linear-gradient(135deg, #27220F 0%, #17140B 55%, #1F1B0E 100%); border: 1px solid rgba(201,168,76,.28);
@@ -361,6 +375,7 @@
     .stats-strip .stat:nth-child(3), .stats-strip .stat:nth-child(4) { border-top: 1px solid var(--card-border); }
     .r-gap, .r-position-pill { display: none; }
     .r-bar-wrap { width: 50px; }
+    .tab { padding: 10px 14px 8px; font-size: 10px; letter-spacing: .2em; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
@@ -394,6 +409,14 @@
     <div class="stat"><span class="stat-n" id="s-players">—</span><span class="stat-l">Total Players</span></div>
   </div>
 
+  <nav class="tabs" id="tabs" aria-label="Sections">
+    <button class="tab active" data-tab="hall">Hall of Fame<small id="tab-n-hall">&nbsp;</small></button>
+    <button class="tab" data-tab="wall">Century Wall<small id="tab-n-wall">&nbsp;</small></button>
+    <button class="tab" data-tab="records">Record Books<small id="tab-n-records">&nbsp;</small></button>
+    <button class="tab" data-tab="timeline">Season Timeline<small id="tab-n-timeline">&nbsp;</small></button>
+  </nav>
+
+  <section class="panel active" id="panel-hall">
   <div class="pos-breakdown">
     <div class="pos-block attack"   data-filter="attack"   onclick="toggleFilter(this)"><span class="pos-block-n" id="pb-attack">—</span><span class="pos-block-l">⚡ Attack</span></div>
     <div class="pos-block midfield" data-filter="midfield" onclick="toggleFilter(this)"><span class="pos-block-n" id="pb-mid">—</span><span class="pos-block-l">⚙ Midfield</span></div>
@@ -404,29 +427,36 @@
   <div class="sec-head"><h2>Century Club</h2><div class="sec-line"></div></div>
   <div id="hof-grid"><div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
 
+  <div class="rising-section">
+    <div class="sec-head"><h2>Rising Stars</h2><div class="sec-line"></div></div>
+    <div id="rising-list"><div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+  </div>
+  </section>
+
+  <section class="panel" id="panel-wall">
   <div class="wall-section" id="wall-section">
     <div class="sec-head"><h2>The Century Wall</h2><div class="sec-line"></div></div>
     <div class="wall" id="wall"></div>
     <div class="wall-next" id="wall-next"></div>
     <p class="wall-note" id="wall-note"></p>
   </div>
+  </section>
 
-  <div class="rising-section">
-    <div class="sec-head"><h2>Rising Stars</h2><div class="sec-line"></div></div>
-    <div id="rising-list"><div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
-  </div>
-
+  <section class="panel" id="panel-records">
   <div class="records-section">
     <div class="sec-head"><h2>Record Books</h2><div class="sec-line"></div></div>
     <div class="records" id="records"></div>
   </div>
+  </section>
 
+  <section class="panel" id="panel-timeline">
   <div class="timeline-section">
     <div class="sec-head"><h2>Season Timeline</h2><div class="sec-line"></div></div>
     <div class="tl-summary" id="tl-summary"></div>
     <div class="tl-wrap" id="tl-wrap"><div class="tl-track" id="tl-track"></div></div>
     <div class="tl-axis"><span id="tl-first"></span><span>tap a night to see who played · ★ a century was reached</span><span id="tl-last"></span></div>
   </div>
+  </section>
 
   <footer>
     <div class="footer-logo">Wednesday 9–10</div>
@@ -796,6 +826,10 @@ function render(players, totalSessions) {
   renderWall();
   renderRecords();
   renderTimeline();
+
+  document.getElementById('tab-n-hall').textContent     = `${players.length} players`;
+  document.getElementById('tab-n-records').textContent  = `${RECORDS.length} records`;
+  document.getElementById('tab-n-timeline').textContent = `${totalSessions} sessions`;
 
   document.getElementById('last-updated').textContent =
     'Live data · refreshed ' +
@@ -1195,7 +1229,8 @@ const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XI
 function renderWall() {
   const wall = document.getElementById('wall'), nextEl = document.getElementById('wall-next'), note = document.getElementById('wall-note');
   const inducted = ALL_PLAYERS.filter(p=>p.count>=100 && p.centuryIdx>=0).sort((a,b)=>a.centuryIdx-b.centuryIdx || b.count-a.count);
-  if (!inducted.length) { document.getElementById('wall-section').style.display='none'; return; }
+  document.getElementById('tab-n-wall').textContent = `${inducted.length} plaque${inducted.length===1?'':'s'}`;
+  if (!inducted.length) { wall.innerHTML = `<p class="s-empty">No one has reached 100 yet — the first to get there goes up here.</p>`; return; }
   wall.innerHTML = inducted.map((p,k) => {
     const s = SESSIONS[p.centuryIdx];
     const others = s.players.filter(x=>x!==p);
@@ -1322,6 +1357,24 @@ function closeSessionDirect() {
   document.body.style.overflow = '';
   CURRENT_SESSION = null;
 }
+
+/* ── TABS ── */
+const TABS = ['hall','wall','records','timeline'];
+function showTab(name, updateHash = true) {
+  if (!TABS.includes(name)) name = 'hall';
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+  if (name === 'timeline') { const w = document.getElementById('tl-wrap'); if (w) w.scrollLeft = w.scrollWidth; }
+  if (updateHash) history.replaceState(null, '', name === 'hall' ? location.pathname + location.search : '#' + name);
+  // Keep the active tab visible in the strip, and don't leave the reader stranded at the footer
+  const tabs = document.getElementById('tabs'), tab = tabs.querySelector('.tab.active');
+  if (tab) tabs.scrollTo({ left: tab.offsetLeft - (tabs.clientWidth - tab.offsetWidth) / 2, behavior: 'smooth' });
+  const anchor = document.querySelector('.stats-strip').getBoundingClientRect().bottom + window.scrollY;
+  if (updateHash && window.scrollY > anchor) window.scrollTo({ top: anchor, behavior: 'instant' });
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
+window.addEventListener('hashchange', () => showTab(location.hash.slice(1) || 'hall', false));
+showTab(location.hash.slice(1) || 'hall', false);
 
 load();
 </script>
