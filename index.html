@@ -223,8 +223,10 @@
   SHEET COLUMNS (header row):
   A(0): Games Played  B(1): Player  C(2): Position
   D(3): Preferred Foot  E(4): Images  F(5): blank  G(6): Balance
-  Sessions start at col 8 (index 7 in header but shifted by extra blank col)
-  We detect session cols dynamically from header.
+  Sessions start at CSV index 8 (col I). Each year's sessions are preceded by a
+  blank separator column whose cell in the row ABOVE the header holds the year
+  (e.g. "2024"). Sessions before the first marker belong to the year before it.
+  Year markers and session columns are both detected dynamically from the sheet.
 */
 const SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
@@ -309,9 +311,41 @@ function calcStreaks(att) {
 
 function fullDate(label) {
   if (!label) return '—';
-  // Keep full label including year context — strip day name prefix only
-  return label.replace(/^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+/i,'')
-              .replace(/\(.*?\)/g,'').trim();
+  // Strip day-name prefix (e.g. "Wednesday 6 Mar" → "6 Mar") and any parenthetical
+  const cleaned = label.replace(/^(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)[a-z]*\s+/i,'')
+                       .replace(/\(.*?\)/g,'').trim();
+  return cleaned || label;
+}
+
+const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+function monthOf(label) {
+  // 1–12, or null if the label has no recognisable month ("Friday", "TBC", …)
+  const m = label.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/i);
+  return m ? MONTHS.indexOf(m[1].toLowerCase()) + 1 : null;
+}
+
+// Assign a calendar year to every session column.
+// Sessions carry an `anchorYear` when a year marker precedes them in the sheet.
+// Between anchors, a big backwards jump in month (e.g. Dec → Jan) means a new year;
+// sessions before the first anchor are walked backwards the same way.
+function assignYears(sessions) {
+  const ROLLOVER = 6; // months of backwards jump that counts as a year boundary
+  let year = null, prevMonth = null;
+  for (const s of sessions) {
+    if (s.anchorYear != null) year = s.anchorYear;
+    else if (year != null && s.month && prevMonth && prevMonth - s.month >= ROLLOVER) year++;
+    s.year = year;
+    if (s.month) prevMonth = s.month;
+  }
+  year = null; prevMonth = null;
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    const s = sessions[i];
+    if (s.year != null) { year = s.year; if (s.month) prevMonth = s.month; continue; }
+    if (year != null && s.month && prevMonth && s.month - prevMonth >= ROLLOVER) year--;
+    s.year = year;
+    if (s.month) prevMonth = s.month;
+  }
+  return sessions;
 }
 
 
@@ -332,33 +366,46 @@ async function load() {
     }
     if (!headerRow) throw new Error('Could not find header row');
 
-    // Build session columns
-    // Year markers in the header row (spreadsheet column → year)
-    // Col O  = CSV index 14 = 2024
-    // Col CL = CSV index 89 = 2025
-    // Col FA = CSV index 156 = 2026
-    const YEAR_MARKER_COLS = { 14: '2024', 89: '2025', 156: '2026' };
-
-    const sessionCols = [];
-    let lastYear = '2024';
-
-    for (let i=SESSION_START_COL;i<headerRow.length;i++) {
-      // Check if this col is a year marker
-      if (YEAR_MARKER_COLS[i]) {
-        lastYear = YEAR_MARKER_COLS[i];
-        continue; // year marker col is not a session
-      }
-      const h = headerRow[i].trim();
-      if (!h || ['balance','owing from previous sessions','images','amount paid',
-                 'preferred foot','position','postion'].includes(h.toLowerCase())) continue;
-      // Strip year from date label if present (e.g. "31st Oct 2024" → "31st Oct")
-      const cleanLabel = h.replace(/\s+20\d\d$/, '').trim();
-      sessionCols.push({ idx:i, label:cleanLabel, resolvedYear:lastYear });
+    // Year markers: a bare "2024"/"2025"/… cell in any row above the header,
+    // sitting in the blank separator column before that year's first session.
+    const markerCols = {};
+    for (let r = 0; r < headerIdx; r++) {
+      rows[r].forEach((cell, i) => {
+        const m = (cell || '').trim().match(/^(20\d\d)$/);
+        if (m && i >= SESSION_START_COL) markerCols[i] = parseInt(m[1], 10);
+      });
     }
+    const hasMarkers = Object.keys(markerCols).length > 0;
 
-    // Detect current year dynamically as the highest year seen
-    const years = [...new Set(sessionCols.map(s => s.resolvedYear))].sort();
-    const currentYear = years[years.length - 1];
+    // Build session columns
+    const NON_SESSION = new Set(['balance','owing from previous sessions','images',
+                                 'amount paid','preferred foot','position','postion']);
+    const sessionCols = [];
+    let pendingYear = null;
+    for (let i=SESSION_START_COL;i<headerRow.length;i++) {
+      if (markerCols[i] != null) pendingYear = markerCols[i];
+      const h = (headerRow[i] || '').trim();
+      if (!h || NON_SESSION.has(h.toLowerCase())) continue;
+      const labelYear = h.match(/\b(20\d\d)\b/);
+      const cleanLabel = h.replace(/\s*\b20\d\d\b/, '').trim();
+      sessionCols.push({ idx:i, label:cleanLabel, month:monthOf(h),
+                         anchorYear: pendingYear,
+                         labelYear: labelYear ? parseInt(labelYear[1],10) : null });
+      pendingYear = null;
+    }
+    // Markers are authoritative. If the sheet has none, anchor on the most recent
+    // label that spells out a year ("21 Sep 2026") and walk backwards from there —
+    // recent labels are far more reliable than old ones. Failing that, assume the
+    // most recent session is in the current calendar year.
+    if (!hasMarkers && sessionCols.length) {
+      const withYear = sessionCols.filter(s => s.labelYear != null);
+      const anchor = withYear.length ? withYear[withYear.length-1] : sessionCols[sessionCols.length-1];
+      anchor.anchorYear = anchor.labelYear ?? new Date().getFullYear();
+    }
+    assignYears(sessionCols);
+
+    // "Games This Year" = the current calendar year
+    const currentYear = new Date().getFullYear();
 
     const players = [];
     for (const row of rows.slice(headerIdx+1)) {
@@ -389,7 +436,7 @@ async function load() {
 
       // Games this year
       const gamesThisYear = attendance.reduce((acc,v,i)=>{
-        return acc + (v===1 && sessionCols[i].resolvedYear===currentYear ? 1 : 0);
+        return acc + (v===1 && sessionCols[i].year===currentYear ? 1 : 0);
       },0);
 
       // Balance — parse as number
@@ -398,8 +445,8 @@ async function load() {
       players.push({
         name:colB, count, position:colC, foot:colD, photo:colE,
         balance:balanceRaw,
-        firstSession: firstIdx>=0 ? `${fullDate(sessionCols[firstIdx].label)} ${sessionCols[firstIdx].resolvedYear}` : '',
-        lastSession:  lastIdx>=0  ? `${fullDate(sessionCols[lastIdx].label)} ${sessionCols[lastIdx].resolvedYear}` : '',
+        firstSession: firstIdx>=0 ? `${fullDate(sessionCols[firstIdx].label)} ${sessionCols[firstIdx].year ?? ''}`.trim() : '',
+        lastSession:  lastIdx>=0  ? `${fullDate(sessionCols[lastIdx].label)} ${sessionCols[lastIdx].year ?? ''}`.trim() : '',
         maxStreak, currentStreak, gamesThisYear,
       });
     }
