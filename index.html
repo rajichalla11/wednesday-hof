@@ -133,10 +133,25 @@
 
   .squad-section { margin-bottom: 72px; }
   .squad-sub { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--text-dim); margin: -16px 0 18px; }
-  .bal-reveal { display: inline-flex; align-items: center; gap: 7px; margin-top: 4px; padding: 6px 10px; background: transparent; border: 1px dashed rgba(201,168,76,.35); border-radius: 2px; color: var(--text-muted); font-family: 'Raleway', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; cursor: pointer; transition: all .2s; }
-  .bal-reveal:hover { color: var(--gold); border-color: var(--gold); background: rgba(201,168,76,.06); }
-  .bal-reveal i { font-style: normal; font-size: 12px; line-height: 1; }
-  .p-foot-v.revealed { animation: rise .4s var(--ease); }
+  .list-divider { display: flex; align-items: center; gap: 14px; margin: 26px 0 10px; font-size: 8px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; }
+  .list-divider::before, .list-divider::after { content: ''; flex: 1; height: 1px; background: var(--card-border); }
+  #hof-grid .list-divider { grid-column: 1 / -1; margin: 10px 0 0; }
+  .rising-row.inactive, .hof-card.inactive.in { opacity: .55; }
+  .rising-row.inactive:hover, .hof-card.inactive.in:hover { opacity: 1; }
+
+  /* BALANCES */
+  .balances-section { margin-bottom: 72px; }
+  .bal-tiles { margin-bottom: 10px; }
+  .bal-tiles .p-tile-n.owe { color: #C07070; }
+  .bal-tiles .p-tile-n.credit { color: var(--gold); }
+  .bal-group { display: flex; align-items: center; gap: 14px; margin: 28px 0 8px; font-size: 9px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; color: var(--text-muted); }
+  .bal-group::after { content: ''; flex: 1; height: 1px; background: var(--card-border); }
+  .bal-group b { color: var(--text-primary); font-weight: 700; }
+  .bal-amt { width: 120px; text-align: right; font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .bal-amt.owe { color: #C07070; } .bal-amt.credit { color: var(--gold); } .bal-amt.zero { color: var(--text-dim); } .bal-amt.unknown { color: var(--text-dim); }
+  .bal-status { width: 70px; text-align: right; font-size: 8px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim); flex-shrink: 0; }
+  .bal-last { font-size: 9px; color: var(--text-dim); letter-spacing: .08em; flex-shrink: 0; }
+  @media (max-width: 560px) { .bal-status, .bal-last { display: none; } .bal-amt { width: 90px; font-size: 14px; } }
 
   /* ───────────── PLAYER DOSSIER ───────────── */
   .profile-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px;
@@ -368,6 +383,8 @@
     .p-body .p-name, .p-body .p-eyebrow { display: none; }
     .p-watermark { font-size: 150px; top: -20px; right: -6px; }
     .p-tiles { grid-template-columns: 1fr 1fr; }
+    .p-status { flex-direction: column; align-items: stretch; gap: 10px; }
+    .p-century { align-self: flex-start; }
     .p-att { grid-template-columns: 1fr; justify-items: center; }
     .ybars { width: 100%; }
     .p-foot { grid-template-columns: 1fr 1fr; }
@@ -421,6 +438,7 @@
     <button class="tab" data-tab="wall">Century Wall<small id="tab-n-wall">&nbsp;</small></button>
     <button class="tab" data-tab="records">Record Books<small id="tab-n-records">&nbsp;</small></button>
     <button class="tab" data-tab="timeline">Season Timeline<small id="tab-n-timeline">&nbsp;</small></button>
+    <button class="tab" data-tab="balances">Balances<small id="tab-n-balances">&nbsp;</small></button>
   </nav>
 
   <section class="panel active" id="panel-hall">
@@ -468,6 +486,15 @@
     <div class="tl-summary" id="tl-summary"></div>
     <div class="tl-wrap" id="tl-wrap"><div class="tl-track" id="tl-track"></div></div>
     <div class="tl-axis"><span id="tl-first"></span><span>tap a night to see who played · ★ a century was reached</span><span id="tl-last"></span></div>
+  </div>
+  </section>
+
+  <section class="panel" id="panel-balances">
+  <div class="balances-section">
+    <div class="sec-head"><h2>Balances</h2><div class="sec-line"></div></div>
+    <div class="p-tiles bal-tiles" id="bal-tiles"></div>
+    <div id="bal-list"></div>
+    <p class="wall-note">Straight from the sheet's Balance column. Negative means owing to the pot. Tap a name for their dossier.</p>
   </div>
   </section>
 
@@ -807,6 +834,18 @@ async function load() {
   }
 }
 
+/* Played-this-year first, then by appearances */
+const THIS_YEAR = new Date().getFullYear();
+const activeFirst = (a,b) => ((b.gamesThisYear>0) - (a.gamesThisYear>0)) || (b.count - a.count);
+const tiers = list => ({
+  hof:    list.filter(p=>p.count>=100).sort(activeFirst),
+  rising: list.filter(p=>p.count>=20&&p.count<100).sort(activeFirst),
+  squad:  list.filter(p=>p.count<20).sort(activeFirst),
+});
+function dividerEl(tag='div') {
+  const d = document.createElement(tag); d.className = 'list-divider'; d.textContent = `Not seen in ${THIS_YEAR}`; return d;
+}
+
 /* ── COUNT-UP ── */
 function countUp(el, target, ms=1100) {
   const start = performance.now();
@@ -819,9 +858,7 @@ function countUp(el, target, ms=1100) {
 }
 
 function render(players, totalSessions) {
-  const hof    = players.filter(p=>p.count>=100);
-  const rising = players.filter(p=>p.count>=20&&p.count<100);
-  const squad  = players.filter(p=>p.count<20);
+  const { hof, rising, squad } = tiers(players);
 
   countUp(document.getElementById('s-members'),  hof.length);
   countUp(document.getElementById('s-sessions'), totalSessions||0);
@@ -841,6 +878,7 @@ function render(players, totalSessions) {
   renderWall();
   renderRecords();
   renderTimeline();
+  renderBalances();
 
   document.getElementById('tab-n-hall').textContent     = `${players.length} players`;
   document.getElementById('tab-n-records').textContent  = `${RECORDS.length} records`;
@@ -876,7 +914,8 @@ function toggleFilter(el) {
 
 function visibleList() {
   const base = ACTIVE_FILTER ? ALL_PLAYERS.filter(p => posClass(p.position) === ACTIVE_FILTER) : ALL_PLAYERS;
-  return base.filter(p => p.count >= 20);
+  const t = tiers(base);
+  return [...t.hof, ...t.rising, ...t.squad];
 }
 
 function applyFilter() {
@@ -884,9 +923,10 @@ function applyFilter() {
   const filtered = ACTIVE_FILTER
     ? ALL_PLAYERS.filter(p => posClass(p.position) === ACTIVE_FILTER)
     : ALL_PLAYERS;
-  renderHOF(filtered.filter(p=>p.count>=100));
-  renderRising(filtered.filter(p=>p.count>=20&&p.count<100));
-  renderRising(filtered.filter(p=>p.count<20), 'squad-list', 'squad');
+  const t = tiers(filtered);
+  renderHOF(t.hof);
+  renderRising(t.rising);
+  renderRising(t.squad, 'squad-list', 'squad');
 }
 
 /* ── HOF CARDS ── */
@@ -899,11 +939,13 @@ function renderHOF(members) {
     return;
   }
   grid.innerHTML='';
+  let divided = false;
   members.forEach((p,i)=>{
     const pc = posClass(p.position);
     const ms = milestoneFor(p);
+    if (!divided && !p.gamesThisYear && i>0) { grid.appendChild(dividerEl()); divided = true; }
     const card = document.createElement('div');
-    card.className = `hof-card${p.rank===1?' rank-1':''}`;
+    card.className = `hof-card${p.rank===1?' rank-1':''}${p.gamesThisYear?'':' inactive'}`;
     card.onclick = () => openProfile(p);
     card.innerHTML = `
       <div class="card-accent"></div>
@@ -950,12 +992,14 @@ function renderRising(players, listId = 'rising-list', tier = 'rising') {
     return;
   }
   list.innerHTML='';
+  let divided = false;
   players.forEach((p,i)=>{
     const pct=Math.round((p.count/100)*100);
     const gap=100-p.count;
     const pc=posClass(p.position);
+    if (!divided && !p.gamesThisYear && i>0) { list.appendChild(dividerEl()); divided = true; }
     const row=document.createElement('div');
-    row.className='rising-row';
+    row.className=`rising-row${p.gamesThisYear?'':' inactive'}`;
     row.onclick=()=>openProfile(p);
     row.innerHTML=`
       <span class="r-pos-num">${i+1}</span>
@@ -1010,8 +1054,7 @@ function openProfile(p) {
     return `<div class="heat-row"><span class="heat-y">${y}</span><div class="heat-cells">${cells}</div></div>`;
   }).join('');
 
-  const balance = p.balance !== null && !isNaN(p.balance) ? `KES ${Math.abs(Math.round(p.balance)).toLocaleString()}` : '—';
-  const neg = p.balance !== null && p.balance < 0;
+  const seasons = p.years.filter(y=>y.got>0).length;
   const first = SESSIONS[p.firstIdx], last = SESSIONS[p.lastIdx];
   const daysSince = last && last.date ? Math.round((Date.now() - last.date) / 86400000) : null;
 
@@ -1078,7 +1121,7 @@ function openProfile(p) {
     <div class="p-foot">
       <div><span class="p-foot-l">Debut</span><span class="p-foot-v">${esc(fmtSession(first,false))}<small>${first&&first.date?DAY_FULL[first.date.getDay()]:''}</small></span></div>
       <div><span class="p-foot-l">Most recent</span><span class="p-foot-v">${esc(fmtSession(last,false))}<small>${daysSince===null?'':daysSince===0?'today':daysSince===1?'yesterday':daysSince+' days ago'}</small></span></div>
-      <div><span class="p-foot-l">Balance</span><button class="bal-reveal" onclick="revealBalance(this)" data-v="${esc(balance)}" data-neg="${neg?1:0}" data-note="${neg?'owing':p.balance>0?'in credit':''}" title="Balances stay hidden until you ask"><i>◉</i>Tap to reveal</button></div>
+      <div><span class="p-foot-l">Seasons</span><span class="p-foot-v">${seasons}<small>${first&&first.date?`since ${first.date.getFullYear()}`:''}</small></span></div>
     </div>
     <div class="p-hint">← → to browse players · esc to close</div>`;
 
@@ -1093,13 +1136,6 @@ function openProfile(p) {
     const ring = document.querySelector('#p-body .ring .val');
     if (ring) ring.style.strokeDashoffset = (326.7 * (1 - parseFloat(ring.dataset.rate))).toFixed(1);
   }));
-}
-
-function revealBalance(btn) {
-  const v = document.createElement('span');
-  v.className = `p-foot-v revealed ${btn.dataset.neg==='1'?'neg':''}`;
-  v.innerHTML = `${esc(btn.dataset.v)}<small>${esc(btn.dataset.note)}</small>`;
-  btn.replaceWith(v);
 }
 
 function stepProfile(dir) {
@@ -1382,8 +1418,39 @@ function closeSessionDirect() {
   CURRENT_SESSION = null;
 }
 
+/* ── BALANCES ── */
+const kes = n => `KES ${Math.abs(Math.round(n)).toLocaleString()}`;
+function renderBalances() {
+  const known = ALL_PLAYERS.filter(p => p.balance !== null && !isNaN(p.balance));
+  const owing   = known.filter(p=>p.balance<0).sort((a,b)=>a.balance-b.balance);
+  const credit  = known.filter(p=>p.balance>0).sort((a,b)=>b.balance-a.balance);
+  const settled = known.filter(p=>p.balance===0).sort(activeFirst);
+  const unknown = ALL_PLAYERS.filter(p=>!known.includes(p));
+  const owed = owing.reduce((a,p)=>a+p.balance,0), held = credit.reduce((a,p)=>a+p.balance,0);
+  document.getElementById('tab-n-balances').textContent = `${owing.length} owing`;
+  document.getElementById('bal-tiles').innerHTML = `
+    <div class="p-tile"><span class="p-tile-n owe">${kes(owed)}</span><span class="p-tile-l">Owed to the pot</span></div>
+    <div class="p-tile"><span class="p-tile-n credit">${kes(held)}</span><span class="p-tile-l">Held in credit</span></div>
+    <div class="p-tile"><span class="p-tile-n">${owing.length}</span><span class="p-tile-l">Players owing</span></div>
+    <div class="p-tile"><span class="p-tile-n">${credit.length}</span><span class="p-tile-l">In credit</span></div>`;
+  const row = (p, cls, status) => {
+    const last = p.lastIdx>=0 ? SESSIONS[p.lastIdx] : null;
+    return `<div class="rising-row" data-pi="${ALL_PLAYERS.indexOf(p)}">
+      <div class="r-avatar">${photoBlock(p.photo,p.name,'r-avatar')}</div>
+      <span class="r-name">${esc(p.name)}</span>
+      <span class="bal-last">${last ? 'last played ' + esc(fmtSession(last,false)) : ''}</span>
+      <span class="bal-status">${status}</span>
+      <span class="bal-amt ${cls}">${cls==='unknown' ? '—' : cls==='zero' ? '0' : (cls==='owe'?'−':'+') + kes(p.balance).replace('KES ','')}</span>
+    </div>`;
+  };
+  const group = (title, list, cls, status) => list.length ? `<div class="bal-group">${title} <b>${list.length}</b></div>${list.map(p=>row(p,cls,status)).join('')}` : '';
+  const el = document.getElementById('bal-list');
+  el.innerHTML = group('Owing', owing, 'owe', 'owing') + group('In credit', credit, 'credit', 'credit') + group('Settled', settled, 'zero', 'settled') + group('Not recorded', unknown, 'unknown', '');
+  el.onclick = e => { const r = e.target.closest('[data-pi]'); if (r) openProfile(ALL_PLAYERS[+r.dataset.pi]); };
+}
+
 /* ── TABS ── */
-const TABS = ['hall','wall','records','timeline'];
+const TABS = ['hall','wall','records','timeline','balances'];
 function showTab(name, updateHash = true) {
   if (!TABS.includes(name)) name = 'hall';
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
