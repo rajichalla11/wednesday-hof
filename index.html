@@ -5,25 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wednesday 9–10 | Hall of Fame</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --gold: #C9A84C; --gold-dim: #7A6030; --dark-bg: #0D0C0A;
+    --gold: #C9A84C; --gold-bright: #F2D27A; --gold-dim: #7A6030; --dark-bg: #0D0C0A;
     --card-bg: #1A1810; --card-border: #2A2618;
     --text-primary: #F0E6C8; --text-muted: #8A7D60; --text-dim: #3E3A2A;
+    --ease: cubic-bezier(.2,.8,.2,1);
   }
+  html { scroll-behavior: smooth; }
   body { background-color: var(--dark-bg); color: var(--text-primary); font-family: 'Raleway', sans-serif; min-height: 100vh; overflow-x: hidden; }
   body::before { content: ''; position: fixed; inset: 0;
     background-image: repeating-linear-gradient(0deg,transparent,transparent 48px,rgba(201,168,76,.025) 48px,rgba(201,168,76,.025) 49px), repeating-linear-gradient(90deg,transparent,transparent 48px,rgba(201,168,76,.015) 48px,rgba(201,168,76,.015) 49px);
     pointer-events: none; z-index: 0; }
+  body::after { content: ''; position: fixed; top: -30vh; left: 50%; width: 120vw; height: 90vh; transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(201,168,76,.10) 0%, rgba(201,168,76,.03) 35%, transparent 65%); pointer-events: none; z-index: 0; }
   .wrapper { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 0 28px 100px; }
 
   /* HEADER */
   header { text-align: center; padding: 70px 0 50px; }
-  .crest { width: 72px; height: 72px; margin: 0 auto 22px; }
+  .crest { width: 72px; height: 72px; margin: 0 auto 22px; filter: drop-shadow(0 0 18px rgba(201,168,76,.25)); animation: float 6s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
   .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .4em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
-  h1 { font-family: 'Playfair Display', serif; font-size: clamp(36px,6vw,64px); font-weight: 900; color: var(--gold); letter-spacing: .06em; text-transform: uppercase; line-height: 1; }
+  h1 { font-family: 'Playfair Display', serif; font-size: clamp(36px,6vw,64px); font-weight: 900; letter-spacing: .06em; text-transform: uppercase; line-height: 1;
+       background: linear-gradient(180deg, #F2D27A 0%, var(--gold) 45%, #9A7A30 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .tagline { font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(13px,2vw,16px); color: var(--text-muted); margin-top: 14px; }
   .header-rule { display: flex; align-items: center; gap: 20px; margin: 28px auto 0; max-width: 280px; }
   .header-rule span { flex: 1; height: 1px; background: linear-gradient(90deg,transparent,var(--gold-dim)); }
@@ -31,25 +37,23 @@
   .diamond { width: 6px; height: 6px; background: var(--gold); transform: rotate(45deg); flex-shrink: 0; }
 
   /* STATS STRIP */
-  .stats-strip { display: grid; grid-template-columns: repeat(4,1fr); border: 1px solid var(--card-border); border-radius: 2px; overflow: hidden; margin: 48px 0 40px; }
+  .stats-strip { display: grid; grid-template-columns: repeat(4,1fr); border: 1px solid var(--card-border); border-radius: 2px; overflow: hidden; margin: 48px 0 40px; background: rgba(26,24,16,.4); }
   .stat { padding: 22px 12px; text-align: center; border-right: 1px solid var(--card-border); }
   .stat:last-child { border-right: none; }
-  .stat-n { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 900; color: var(--gold); display: block; line-height: 1; }
+  .stat-n { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 900; color: var(--gold); display: block; line-height: 1; font-variant-numeric: tabular-nums; }
   .stat-l { font-size: 9px; font-weight: 700; letter-spacing: .25em; text-transform: uppercase; color: var(--text-muted); display: block; margin-top: 6px; }
 
   /* POSITION BREAKDOWN — clickable */
   .pos-breakdown { display: flex; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
-  .pos-block { flex: 1; min-width: 120px; padding: 16px 14px; border: 1px solid var(--card-border); border-radius: 2px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; user-select: none; }
-  .pos-block:hover { border-color: var(--gold-dim); background: rgba(201,168,76,.04); }
-  .pos-block.active { border-color: var(--gold); background: rgba(201,168,76,.08); }
+  .pos-block { flex: 1; min-width: 120px; padding: 16px 14px; border: 1px solid var(--card-border); border-radius: 2px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s, transform .2s; user-select: none; }
+  .pos-block:hover { border-color: var(--gold-dim); background: rgba(201,168,76,.04); transform: translateY(-2px); }
+  .pos-block.active { border-color: var(--gold); background: rgba(201,168,76,.08); box-shadow: 0 0 24px rgba(201,168,76,.12); }
   .pos-block-n { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; line-height: 1; display: block; }
   .pos-block-l { font-size: 9px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--text-muted); display: block; margin-top: 5px; }
   .pos-block.attack .pos-block-n   { color: #C05050; }
   .pos-block.defense .pos-block-n  { color: #5080C0; }
   .pos-block.midfield .pos-block-n { color: #50A050; }
   .pos-block.unknown .pos-block-n  { color: var(--text-muted); }
-  .pos-filter-label { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; display: none; }
-  .pos-filter-label.visible { display: block; }
 
   /* SECTION HEADER */
   .sec-head { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
@@ -58,17 +62,20 @@
 
   /* HOF CARDS */
   #hof-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 20px; margin-bottom: 64px; }
-  .hof-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 2px; overflow: hidden; transition: transform .2s ease, border-color .2s ease; cursor: pointer; }
-  .hof-card:hover { transform: translateY(-4px); border-color: var(--gold-dim); }
+  .hof-card { position: relative; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 3px; overflow: hidden; cursor: pointer;
+    opacity: 0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease), border-color .25s, box-shadow .35s; }
+  .hof-card.in { opacity: 1; transform: none; }
+  .hof-card.in:hover { transform: translateY(-5px); border-color: var(--gold-dim); box-shadow: 0 18px 40px rgba(0,0,0,.45), 0 0 30px rgba(201,168,76,.10); }
   .card-accent { height: 2px; background: var(--gold-dim); }
-  .hof-card.rank-1 .card-accent { background: var(--gold); }
+  .hof-card.rank-1 .card-accent { background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright), var(--gold-dim)); }
   .card-photo { width: 100%; aspect-ratio: 1/1; overflow: hidden; position: relative; background: #111008; }
-  .card-photo img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; filter: sepia(10%) contrast(1.05); transition: transform .4s ease; }
-  .hof-card:hover .card-photo img { transform: scale(1.04); }
+  .card-photo img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; filter: sepia(10%) contrast(1.05); transition: transform .6s var(--ease); }
+  .hof-card:hover .card-photo img { transform: scale(1.05); }
   .card-photo-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#1E1C12,#0D0C0A); }
   .card-photo-fallback span { font-family: 'Playfair Display', serif; font-size: 56px; font-weight: 900; color: var(--gold-dim); opacity: .4; }
-  .card-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom,transparent 55%,rgba(13,12,10,.8) 100%); pointer-events: none; }
+  .card-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom,transparent 55%,rgba(13,12,10,.85) 100%); pointer-events: none; }
   .card-jersey { position: absolute; top: 10px; right: 10px; background: rgba(13,12,10,.78); border: 1px solid var(--gold-dim); border-radius: 2px; padding: 3px 8px; font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 900; color: var(--gold); z-index: 1; }
+  .card-rank { position: absolute; top: 0; left: 14px; z-index: 1; background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #1A1407; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 11px; letter-spacing: .1em; padding: 8px 7px 10px; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); }
   .card-pos-badge { position: absolute; bottom: 10px; left: 10px; border-radius: 2px; padding: 3px 8px; font-size: 9px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; z-index: 1; color: rgba(255,255,255,.85); }
   .card-pos-badge.attack   { background: rgba(139,32,32,.85); border: 1px solid rgba(200,60,60,.4); }
   .card-pos-badge.defense  { background: rgba(26,58,92,.85);  border: 1px solid rgba(60,120,200,.4); }
@@ -84,12 +91,13 @@
   .streak-chip-n { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--text-primary); }
   .streak-chip-l { font-size: 8px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--text-dim); display: block; margin-top: 1px; }
   .hof-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; background: rgba(201,168,76,.07); border: 1px solid rgba(201,168,76,.18); border-radius: 1px; font-size: 9px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-dim); }
-  .view-profile-hint { font-size: 9px; color: var(--text-dim); letter-spacing: .1em; text-transform: uppercase; margin-top: 8px; }
+  .view-profile-hint { font-size: 9px; color: var(--text-dim); letter-spacing: .1em; text-transform: uppercase; margin-top: 8px; transition: color .2s; }
+  .hof-card:hover .view-profile-hint { color: var(--gold-dim); }
 
   /* RISING STARS */
   .rising-section { margin-bottom: 72px; }
-  .rising-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid rgba(42,38,24,.8); transition: background .12s; cursor: pointer; }
-  .rising-row:hover { background: rgba(201,168,76,.03); }
+  .rising-row { display: flex; align-items: center; gap: 12px; padding: 13px 8px; margin: 0 -8px; border-bottom: 1px solid rgba(42,38,24,.8); transition: background .15s, transform .2s; cursor: pointer; }
+  .rising-row:hover { background: rgba(201,168,76,.04); transform: translateX(3px); }
   .rising-row:first-child { border-top: 1px solid rgba(42,38,24,.8); }
   .r-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #111008; border: 1px solid var(--card-border); }
   .r-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
@@ -109,27 +117,101 @@
   .r-count { width: 32px; text-align: right; font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
   .r-gap { width: 36px; text-align: right; font-size: 10px; font-weight: 600; letter-spacing: .1em; color: var(--text-dim); flex-shrink: 0; }
 
-  /* MODAL */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 100; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
-  .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal { background: #1A1810; border: 1px solid var(--card-border); border-top: 2px solid var(--gold-dim); border-radius: 4px 4px 0 0; width: 100%; max-width: 520px; padding: 0; transform: translateY(40px); transition: transform .28s ease; max-height: 90vh; overflow-y: auto; }
-  .modal-overlay.open .modal { transform: translateY(0); }
-  .modal-header { display: flex; align-items: center; gap: 16px; padding: 20px 22px 16px; border-bottom: 1px solid var(--card-border); }
-  .modal-avatar { width: 52px; height: 52px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #111008; border: 1px solid var(--gold-dim); }
-  .modal-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
-  .modal-avatar-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 900; color: var(--gold-dim); }
-  .modal-title { flex: 1; }
-  .modal-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1.1; }
-  .modal-pos { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--text-muted); margin-top: 3px; }
-  .modal-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); font-size: 20px; flex-shrink: 0; border-radius: 2px; transition: color .15s; }
-  .modal-close:hover { color: var(--text-primary); }
-  .modal-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--card-border); margin: 0; }
-  .modal-stat { background: var(--card-bg); padding: 16px 18px; }
-  .modal-stat-n { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: var(--gold); display: block; line-height: 1; }
-  .modal-stat-n.neutral { color: var(--text-primary); font-size: 18px; }
-  .modal-stat-l { font-size: 9px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--text-muted); display: block; margin-top: 4px; }
-  .modal-footer { padding: 14px 22px; }
-  .modal-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; background: rgba(201,168,76,.07); border: 1px solid rgba(201,168,76,.18); border-radius: 1px; font-size: 9px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-dim); }
+  /* ───────────── PLAYER DOSSIER ───────────── */
+  .profile-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(6,5,3,.70); backdrop-filter: blur(18px) saturate(.7); -webkit-backdrop-filter: blur(18px) saturate(.7);
+    opacity: 0; pointer-events: none; transition: opacity .35s ease; }
+  .profile-overlay.open { opacity: 1; pointer-events: all; }
+  .profile { position: relative; width: 100%; max-width: 940px; height: min(680px, calc(100vh - 48px)); display: grid; grid-template-columns: 330px 1fr;
+    background: linear-gradient(160deg,#1D1A11 0%,#120F0A 100%); border: 1px solid rgba(201,168,76,.18); border-radius: 6px; overflow: hidden;
+    box-shadow: 0 50px 140px rgba(0,0,0,.75), 0 0 90px rgba(201,168,76,.10);
+    transform: translateY(28px) scale(.955); opacity: 0; transition: transform .5s var(--ease), opacity .35s ease; }
+  .profile-overlay.open .profile { transform: none; opacity: 1; }
+  .profile::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 6; background: linear-gradient(90deg,transparent,var(--gold-bright),transparent); }
+
+  .p-portrait { position: relative; background: #0B0A07; overflow: hidden; }
+  .p-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; filter: sepia(14%) contrast(1.06); transform: scale(1.06); transition: transform 1.6s var(--ease); }
+  .profile-overlay.open .p-portrait img { transform: scale(1); }
+  .p-portrait-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 110px; font-weight: 900; color: var(--gold-dim); opacity: .45; background: linear-gradient(135deg,#1E1C12,#0D0C0A); }
+  .p-portrait::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(to right, transparent 55%, #15120C 100%), linear-gradient(to top, #15120C 0%, rgba(21,18,12,.0) 45%); }
+  .p-rank { position: absolute; top: 18px; left: 18px; z-index: 2; background: rgba(13,12,10,.72); border: 1px solid rgba(201,168,76,.35); backdrop-filter: blur(6px); padding: 6px 10px; border-radius: 2px; }
+  .p-rank-l { display: block; font-size: 7px; letter-spacing: .3em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+  .p-rank-n { display: block; font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: var(--gold); line-height: 1; margin-top: 2px; }
+  .p-portrait-name { position: absolute; left: 20px; right: 20px; bottom: 22px; z-index: 2; display: none; }
+
+  .p-body { position: relative; padding: 34px 40px 30px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: var(--gold-dim) transparent; }
+  .p-watermark { position: absolute; top: -34px; right: 8px; font-family: 'Playfair Display', serif; font-size: 230px; font-weight: 900; line-height: 1; color: transparent; -webkit-text-stroke: 1px rgba(201,168,76,.13); pointer-events: none; user-select: none; }
+
+  .p-controls { position: absolute; top: 14px; right: 14px; z-index: 7; display: flex; gap: 6px; }
+  .p-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--card-border); background: rgba(13,12,10,.65); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; transition: all .2s; user-select: none; }
+  .p-btn:hover { color: var(--gold); border-color: var(--gold-dim); background: rgba(201,168,76,.08); }
+  .p-btn.close:hover { transform: rotate(90deg); }
+
+  .p-body > * { opacity: 0; transform: translateY(14px); animation: rise .6s var(--ease) forwards; }
+  .p-body > *:nth-child(1) { animation-delay: .08s } .p-body > *:nth-child(2) { animation-delay: .14s }
+  .p-body > *:nth-child(3) { animation-delay: .20s } .p-body > *:nth-child(4) { animation-delay: .26s }
+  .p-body > *:nth-child(5) { animation-delay: .32s } .p-body > *:nth-child(6) { animation-delay: .38s }
+  .p-body > *:nth-child(7) { animation-delay: .44s } .p-body > *:nth-child(8) { animation-delay: .50s }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+
+  .p-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .p-eyebrow .pill { padding: 2px 7px; border-radius: 2px; font-size: 8px; letter-spacing: .18em; color: rgba(255,255,255,.8); }
+  .pill.attack { background: rgba(139,32,32,.8); } .pill.defense { background: rgba(26,58,92,.8); } .pill.midfield { background: rgba(42,74,42,.8); } .pill.other { background: rgba(50,45,30,.7); }
+  .p-name { font-family: 'Playfair Display', serif; font-size: clamp(32px, 4.4vw, 46px); font-weight: 900; line-height: 1.02; margin: 8px 0 14px; letter-spacing: .01em;
+    background: linear-gradient(180deg, #FFF3CF 0%, var(--text-primary) 60%, #B8A77C 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .p-status { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+  .p-century { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; background: linear-gradient(180deg, rgba(201,168,76,.16), rgba(201,168,76,.06)); border: 1px solid rgba(201,168,76,.35); border-radius: 2px; font-size: 9px; font-weight: 700; letter-spacing: .25em; text-transform: uppercase; color: var(--gold); box-shadow: 0 0 20px rgba(201,168,76,.12); }
+  .p-progress { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .p-progress-l { display: flex; justify-content: space-between; font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+  .p-progress-bar { height: 4px; background: rgba(62,58,42,.8); border-radius: 2px; overflow: hidden; }
+  .p-progress-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg,var(--gold-dim),var(--gold-bright)); border-radius: 2px; transition: width 1.1s var(--ease) .4s; }
+
+  .p-tiles { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--card-border); border: 1px solid var(--card-border); border-radius: 3px; overflow: hidden; margin-bottom: 26px; }
+  .p-tile { background: rgba(13,12,10,.55); padding: 14px 14px 12px; }
+  .p-tile-n { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 900; color: var(--gold); line-height: 1; display: block; font-variant-numeric: tabular-nums; }
+  .p-tile-n.hot { color: var(--gold-bright); text-shadow: 0 0 18px rgba(242,210,122,.45); }
+  .p-tile-l { font-size: 8px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--text-muted); display: block; margin-top: 5px; }
+
+  .p-sec { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; }
+  .p-sec h3 { font-family: 'Playfair Display', serif; font-size: 10px; font-weight: 700; letter-spacing: .32em; text-transform: uppercase; color: var(--gold-dim); white-space: nowrap; }
+  .p-sec span { flex: 1; height: 1px; background: linear-gradient(90deg, var(--card-border), transparent); }
+
+  .p-att { display: grid; grid-template-columns: 118px 1fr; gap: 26px; align-items: center; margin-bottom: 26px; }
+  .ring { position: relative; width: 118px; height: 118px; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring .track { fill: none; stroke: rgba(62,58,42,.7); stroke-width: 6; }
+  .ring .val { fill: none; stroke: url(#ringGrad); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 326.7; stroke-dashoffset: 326.7; transition: stroke-dashoffset 1.3s var(--ease) .35s; filter: drop-shadow(0 0 6px rgba(201,168,76,.35)); }
+  .ring-c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring-n { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: var(--text-primary); line-height: 1; }
+  .ring-l { font-size: 7px; font-weight: 700; letter-spacing: .25em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; text-align: center; }
+  .ybars { display: flex; flex-direction: column; gap: 9px; }
+  .ybar { display: grid; grid-template-columns: 38px 1fr 64px; align-items: center; gap: 12px; }
+  .ybar-y { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 700; color: var(--text-muted); }
+  .ybar-y.now { color: var(--gold); }
+  .ybar-track { height: 6px; background: rgba(62,58,42,.6); border-radius: 3px; overflow: hidden; }
+  .ybar-fill { height: 100%; width: 0; border-radius: 3px; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); transition: width 1s var(--ease); }
+  .ybar-v { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; text-align: right; }
+  .ybar-v b { color: var(--text-primary); font-weight: 600; }
+
+  .heat { margin-bottom: 24px; }
+  .heat-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 7px; }
+  .heat-y { width: 34px; flex-shrink: 0; font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: .05em; padding-top: 1px; }
+  .heat-cells { display: flex; flex-wrap: wrap; gap: 3px; }
+  .cell { width: 9px; height: 9px; border-radius: 2px; background: rgba(201,168,76,.10); transition: transform .15s; }
+  .cell:hover { transform: scale(1.5); }
+  .cell.pre { background: rgba(255,255,255,.03); }
+  .cell.on { background: var(--gold); box-shadow: 0 0 5px rgba(201,168,76,.35); }
+  .cell.streak { background: var(--gold-bright); box-shadow: 0 0 8px rgba(242,210,122,.75); }
+  .heat-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 8px; letter-spacing: .18em; text-transform: uppercase; color: var(--text-dim); font-weight: 700; }
+  .heat-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+
+  .p-foot { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; border-top: 1px solid var(--card-border); padding-top: 18px; }
+  .p-foot-l { font-size: 8px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--text-muted); display: block; }
+  .p-foot-v { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--text-primary); display: block; margin-top: 4px; }
+  .p-foot-v small { display: block; font-family: 'Raleway', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: .15em; text-transform: uppercase; color: var(--text-dim); margin-top: 2px; }
+  .p-foot-v.neg { color: #C07070; }
+  .p-hint { margin-top: 18px; font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim); text-align: right; }
 
   /* LOADING / ERROR */
   .loading { display: flex; gap: 6px; align-items: center; justify-content: center; padding: 60px 0; color: var(--text-muted); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; }
@@ -144,13 +226,33 @@
   .footer-sub { font-size: 10px; letter-spacing: .15em; color: var(--text-dim); margin-top: 8px; text-transform: uppercase; }
   #last-updated { font-size: 10px; color: var(--text-dim); letter-spacing: .1em; text-transform: uppercase; margin-top: 28px; }
 
+  @media (max-width: 760px) {
+    .profile-overlay { padding: 0; align-items: stretch; }
+    .profile { max-width: none; height: 100vh; height: 100dvh; display: block; overflow-y: auto; border-radius: 0; border: none; }
+    .p-portrait { height: 300px; }
+    .p-portrait img { object-position: center 20%; }
+    .p-portrait::after { background: linear-gradient(to top, #15120C 0%, rgba(21,18,12,.2) 50%, transparent 100%); }
+    .p-portrait-name { display: block; }
+    .p-portrait-name .p-name { margin: 4px 0 0; font-size: 40px; }
+    .p-body { padding: 18px 20px 40px; overflow: visible; }
+    .p-body .p-name, .p-body .p-eyebrow { display: none; }
+    .p-watermark { font-size: 150px; top: -20px; right: -6px; }
+    .p-tiles { grid-template-columns: 1fr 1fr; }
+    .p-att { grid-template-columns: 1fr; justify-items: center; }
+    .ybars { width: 100%; }
+    .p-foot { grid-template-columns: 1fr 1fr; }
+    .p-hint { display: none; }
+  }
   @media (max-width: 560px) {
     .stats-strip { grid-template-columns: repeat(2,1fr); }
     .stats-strip .stat:nth-child(2) { border-right: none; }
     .stats-strip .stat:nth-child(3), .stats-strip .stat:nth-child(4) { border-top: 1px solid var(--card-border); }
     .r-gap, .r-position-pill { display: none; }
     .r-bar-wrap { width: 50px; }
-    .modal-stats { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    .hof-card { opacity: 1; transform: none; }
   }
 </style>
 </head>
@@ -202,19 +304,16 @@
   </footer>
 </div>
 
-<!-- PLAYER PROFILE MODAL -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
-  <div class="modal" id="modal">
-    <div class="modal-header">
-      <div class="modal-avatar" id="modal-avatar"></div>
-      <div class="modal-title">
-        <div class="modal-name" id="modal-name"></div>
-        <div class="modal-pos" id="modal-pos"></div>
-      </div>
-      <div class="modal-close" onclick="closeModalDirect()">✕</div>
+<!-- PLAYER DOSSIER -->
+<div class="profile-overlay" id="profile-overlay" onclick="closeProfile(event)">
+  <div class="profile" id="profile" role="dialog" aria-modal="true">
+    <div class="p-controls">
+      <div class="p-btn" onclick="stepProfile(-1)" title="Previous player (←)">‹</div>
+      <div class="p-btn" onclick="stepProfile(1)" title="Next player (→)">›</div>
+      <div class="p-btn close" onclick="closeProfileDirect()" title="Close (Esc)">✕</div>
     </div>
-    <div class="modal-stats" id="modal-stats"></div>
-    <div class="modal-footer" id="modal-footer"></div>
+    <div class="p-portrait" id="p-portrait"></div>
+    <div class="p-body" id="p-body"></div>
   </div>
 </div>
 
@@ -230,13 +329,15 @@
 */
 const SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
-const SESSION_START_COL = 8; // Col index 8 = "31st Oct 2024", the first actual session
+const SESSION_START_COL = 8; // Col index 8 = "31st Oct", the first actual session
 
 const SKIP = new Set(['','player','games played','amount paid','balance',
   'owing from previous sessions','+1s','krish p','images','postion','position','preferred foot']);
 
 let ALL_PLAYERS = [];
+let SESSIONS = [];
 let ACTIVE_FILTER = null;
+let CURRENT_PLAYER = null;
 
 function isPlayer(name) {
   const n = name.trim().toLowerCase();
@@ -309,19 +410,29 @@ function calcStreaks(att) {
   return { maxStreak:max, currentStreak:current };
 }
 
-function fullDate(label) {
-  if (!label) return '—';
-  // Strip day-name prefix (e.g. "Wednesday 6 Mar" → "6 Mar") and any parenthetical
-  const cleaned = label.replace(/^(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)[a-z]*\s+/i,'')
-                       .replace(/\(.*?\)/g,'').trim();
-  return cleaned || label;
-}
-
+/* ── SESSION DATES ──
+   Header labels are typed by hand and come in every shape: "31st Oct", "Feb 14th",
+   "Wednesday 6 Mar", "Mar 12 (8-9)", "Sept 2", "3rd August", "06 Oct 2026", or just
+   "Friday". We parse what we can, assign a year, then build a real Date so every
+   session renders the same way ("Thu 31 Oct 2023"). Typos in the day name are
+   ignored (the real weekday is derived from the date), and a label with only a
+   weekday is placed on that weekday between its neighbours. */
 const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-function monthOf(label) {
-  // 1–12, or null if the label has no recognisable month ("Friday", "TBC", …)
-  const m = label.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/i);
-  return m ? MONTHS.indexOf(m[1].toLowerCase()) + 1 : null;
+const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS = ['sun','mon','tue','wed','thu','fri','sat'];
+const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function parseLabel(raw) {
+  const s = raw.replace(/\(.*?\)/g,' ').replace(/\b20\d\d\b/g,' ');
+  const mm = s.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/i);
+  const dm = s.match(/\b(\d{1,2})(?:st|nd|rd|th)?\b/);
+  const wm = s.match(/\b(sun|mon|tue|wed|thu|fri|sat)[a-z]*\b/i);
+  return {
+    month:   mm ? MONTHS.indexOf(mm[1].toLowerCase()) + 1 : null,
+    day:     dm ? parseInt(dm[1],10) : null,
+    weekday: wm ? DAYS.indexOf(wm[1].toLowerCase()) : null,
+  };
 }
 
 // Assign a calendar year to every session column.
@@ -348,7 +459,31 @@ function assignYears(sessions) {
   return sessions;
 }
 
+function resolveDates(sessions) {
+  for (const s of sessions) {
+    s.date = (s.year && s.month && s.day) ? new Date(s.year, s.month-1, s.day) : null;
+  }
+  // Weekday-only labels ("Friday"): first matching weekday after the previous dated session
+  sessions.forEach((s, i) => {
+    if (s.date || s.weekday == null) return;
+    let prev = null, next = null;
+    for (let j=i-1; j>=0; j--) if (sessions[j].date) { prev = sessions[j]; break; }
+    for (let j=i+1; j<sessions.length; j++) if (sessions[j].date) { next = sessions[j]; break; }
+    if (!prev) return;
+    const d = new Date(prev.date); d.setDate(d.getDate()+1);
+    while (d.getDay() !== s.weekday) d.setDate(d.getDate()+1);
+    if (!next || d <= next.date) { s.date = d; s.inferred = true; }
+  });
+  return sessions;
+}
 
+function fmtSession(s, withDay = true) {
+  if (!s) return '—';
+  if (!s.date) return s.year ? `${s.label} ${s.year}` : s.label;
+  const d = s.date;
+  const core = `${d.getDate()} ${MONTH_LABELS[d.getMonth()]} ${d.getFullYear()}`;
+  return withDay ? `${DAY_LABELS[d.getDay()]} ${core}` : core;
+}
 
 async function load() {
   try {
@@ -387,8 +522,8 @@ async function load() {
       const h = (headerRow[i] || '').trim();
       if (!h || NON_SESSION.has(h.toLowerCase())) continue;
       const labelYear = h.match(/\b(20\d\d)\b/);
-      const cleanLabel = h.replace(/\s*\b20\d\d\b/, '').trim();
-      sessionCols.push({ idx:i, label:cleanLabel, month:monthOf(h),
+      const cleanLabel = h.replace(/\s*\b20\d\d\b/, '').replace(/\(.*?\)/g,'').trim();
+      sessionCols.push({ idx:i, raw:h, label:cleanLabel, ...parseLabel(h),
                          anchorYear: pendingYear,
                          labelYear: labelYear ? parseInt(labelYear[1],10) : null });
       pendingYear = null;
@@ -403,6 +538,7 @@ async function load() {
       anchor.anchorYear = anchor.labelYear ?? new Date().getFullYear();
     }
     assignYears(sessionCols);
+    resolveDates(sessionCols);
 
     // "Games This Year" = the current calendar year
     const currentYear = new Date().getFullYear();
@@ -444,15 +580,17 @@ async function load() {
 
       players.push({
         name:colB, count, position:colC, foot:colD, photo:colE,
-        balance:balanceRaw,
-        firstSession: firstIdx>=0 ? `${fullDate(sessionCols[firstIdx].label)} ${sessionCols[firstIdx].year ?? ''}`.trim() : '',
-        lastSession:  lastIdx>=0  ? `${fullDate(sessionCols[lastIdx].label)} ${sessionCols[lastIdx].year ?? ''}`.trim() : '',
+        balance:balanceRaw, attendance, firstIdx, lastIdx,
+        firstSession: firstIdx>=0 ? fmtSession(sessionCols[firstIdx]) : '',
+        lastSession:  lastIdx>=0  ? fmtSession(sessionCols[lastIdx])  : '',
         maxStreak, currentStreak, gamesThisYear,
       });
     }
 
     players.sort((a,b)=>b.count-a.count);
+    players.forEach((p,i)=>p.rank=i+1);
     ALL_PLAYERS = players;
+    SESSIONS = sessionCols;
     render(players, sessionCols.length);
 
   } catch(err) {
@@ -466,14 +604,25 @@ async function load() {
   }
 }
 
+/* ── COUNT-UP ── */
+function countUp(el, target, ms=1100) {
+  const start = performance.now();
+  const step = now => {
+    const t = Math.min(1, (now-start)/ms), e = 1 - Math.pow(1-t, 3);
+    el.textContent = Math.round(target*e);
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 function render(players, totalSessions) {
   const hof    = players.filter(p=>p.count>=100);
   const rising = players.filter(p=>p.count>=20&&p.count<100);
 
-  document.getElementById('s-members').textContent  = hof.length;
-  document.getElementById('s-sessions').textContent = totalSessions||'—';
-  document.getElementById('s-top').textContent      = players.length ? players[0].count : '—';
-  document.getElementById('s-players').textContent  = players.length;
+  countUp(document.getElementById('s-members'),  hof.length);
+  countUp(document.getElementById('s-sessions'), totalSessions||0);
+  countUp(document.getElementById('s-top'),      players.length ? players[0].count : 0);
+  countUp(document.getElementById('s-players'),  players.length);
 
   const pos={attack:0,midfield:0,defense:0,other:0};
   for (const p of players) pos[posClass(p.position)]++;
@@ -490,11 +639,19 @@ function render(players, totalSessions) {
     new Date().toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'});
 }
 
+/* ── SCROLL REVEAL ── */
+const revealer = ('IntersectionObserver' in window) ? new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); revealer.unobserve(e.target); } });
+}, { rootMargin: '0px 0px -8% 0px', threshold: .05 }) : null;
+function reveal(el, i) {
+  el.style.transitionDelay = `${Math.min(i, 8) * 60}ms`;
+  if (revealer) revealer.observe(el); else el.classList.add('in');
+}
+
 /* ── POSITION FILTER ── */
 function toggleFilter(el) {
   const filter = el.dataset.filter;
   if (ACTIVE_FILTER === filter) {
-    // Deactivate
     ACTIVE_FILTER = null;
     el.classList.remove('active');
   } else {
@@ -505,15 +662,18 @@ function toggleFilter(el) {
   applyFilter();
 }
 
+function visibleList() {
+  const base = ACTIVE_FILTER ? ALL_PLAYERS.filter(p => posClass(p.position) === ACTIVE_FILTER) : ALL_PLAYERS;
+  return base.filter(p => p.count >= 20);
+}
+
 function applyFilter() {
   if (!ALL_PLAYERS.length) return;
   const filtered = ACTIVE_FILTER
     ? ALL_PLAYERS.filter(p => posClass(p.position) === ACTIVE_FILTER)
     : ALL_PLAYERS;
-  const hof    = filtered.filter(p=>p.count>=100);
-  const rising = filtered.filter(p=>p.count>=20&&p.count<100);
-  renderHOF(hof);
-  renderRising(rising);
+  renderHOF(filtered.filter(p=>p.count>=100));
+  renderRising(filtered.filter(p=>p.count>=20&&p.count<100));
 }
 
 /* ── HOF CARDS ── */
@@ -529,12 +689,13 @@ function renderHOF(members) {
   members.forEach((p,i)=>{
     const pc = posClass(p.position);
     const card = document.createElement('div');
-    card.className = `hof-card${i===0?' rank-1':''}`;
-    card.onclick = () => openModal(p);
+    card.className = `hof-card${p.rank===1?' rank-1':''}`;
+    card.onclick = () => openProfile(p);
     card.innerHTML = `
       <div class="card-accent"></div>
       <div class="card-photo">
         ${photoBlock(p.photo,p.name,'card-photo')}
+        ${p.rank<=3 ? `<div class="card-rank">No.${p.rank}</div>` : ''}
         <div class="card-jersey">${p.count}</div>
         ${p.position?`<div class="card-pos-badge ${pc}">${esc(p.position)}</div>`:''}
       </div>
@@ -555,9 +716,10 @@ function renderHOF(members) {
           </div>
         </div>
         <div class="hof-badge">&#9733;&nbsp; Century Member</div>
-        <div class="view-profile-hint">tap to view profile →</div>
+        <div class="view-profile-hint">open dossier →</div>
       </div>`;
     grid.appendChild(card);
+    reveal(card, i);
   });
 }
 
@@ -575,7 +737,7 @@ function renderRising(players) {
     const pc=posClass(p.position);
     const row=document.createElement('div');
     row.className='rising-row';
-    row.onclick=()=>openModal(p);
+    row.onclick=()=>openProfile(p);
     row.innerHTML=`
       <span class="r-pos-num">${i+1}</span>
       <div class="r-avatar">${photoBlock(p.photo,p.name,'r-avatar')}</div>
@@ -596,73 +758,148 @@ function renderRising(players) {
   });
 }
 
-/* ── MODAL ── */
-function openModal(p) {
-  const overlay = document.getElementById('modal-overlay');
+/* ── PLAYER DOSSIER ── */
+function openProfile(p) {
+  CURRENT_PLAYER = p;
+  const overlay = document.getElementById('profile-overlay');
   const pc = posClass(p.position);
+  const n = SESSIONS.length;
 
-  // Avatar
-  document.getElementById('modal-avatar').innerHTML = photoBlock(p.photo,p.name,'modal-avatar');
+  // Attendance since debut
+  const played = p.attendance.reduce((a,v)=>a+v,0);
+  const sinceDebut = p.firstIdx >= 0 ? n - p.firstIdx : 0;
+  const rate = sinceDebut ? played / sinceDebut : 0;
 
-  // Header
-  document.getElementById('modal-name').textContent = p.name;
-  document.getElementById('modal-pos').textContent  = [p.position, p.foot ? `${p.foot} foot` : ''].filter(Boolean).join(' · ');
+  // Per-year breakdown (eligible = sessions in that year from debut onwards)
+  const years = [...new Set(SESSIONS.map(s=>s.year).filter(Boolean))].sort();
+  const thisYear = new Date().getFullYear();
+  const perYear = years.map(y => {
+    let eligible=0, got=0, total=0;
+    SESSIONS.forEach((s,i)=>{ if (s.year!==y) return; total++; if (i>=p.firstIdx) { eligible++; if (p.attendance[i]) got++; } });
+    return { y, eligible, got, total };
+  });
+  const maxEligible = Math.max(1, ...perYear.map(r=>r.eligible));
 
-  // Stats grid
-  const balance = p.balance !== null && !isNaN(p.balance)
-    ? `KES ${Math.round(p.balance).toLocaleString()}`
-    : '—';
-  const balanceColor = p.balance !== null && p.balance < 0 ? 'color:#C07070' : '';
+  // Heatmap rows
+  const streakStart = n - p.currentStreak;
+  const heatRows = years.map(y => {
+    const cells = SESSIONS.map((s,i)=>{
+      if (s.year!==y) return '';
+      const on = p.attendance[i]===1;
+      const cls = i < p.firstIdx ? 'pre' : on ? (i >= streakStart ? 'on streak' : 'on') : '';
+      const tip = `${fmtSession(s)} · ${i < p.firstIdx ? 'before debut' : on ? 'Played' : 'Missed'}`;
+      return `<i class="cell ${cls}" title="${esc(tip)}"></i>`;
+    }).join('');
+    return `<div class="heat-row"><span class="heat-y">${y}</span><div class="heat-cells">${cells}</div></div>`;
+  }).join('');
 
-  document.getElementById('modal-stats').innerHTML = `
-    <div class="modal-stat">
-      <span class="modal-stat-n">${p.count}</span>
-      <span class="modal-stat-l">Total Appearances</span>
-    </div>
-    <div class="modal-stat">
-      <span class="modal-stat-n">${p.gamesThisYear}</span>
-      <span class="modal-stat-l">Games This Year</span>
-    </div>
-    <div class="modal-stat">
-      <span class="modal-stat-n">${p.maxStreak}</span>
-      <span class="modal-stat-l">Best Streak</span>
-    </div>
-    <div class="modal-stat">
-      <span class="modal-stat-n">${p.currentStreak||'—'}</span>
-      <span class="modal-stat-l">Current Streak</span>
-    </div>
-    <div class="modal-stat">
-      <span class="modal-stat-n neutral">${esc(p.firstSession||'—')}</span>
-      <span class="modal-stat-l">First Game</span>
-    </div>
-    <div class="modal-stat">
-      <span class="modal-stat-n neutral">${esc(p.lastSession||'—')}</span>
-      <span class="modal-stat-l">Last Game</span>
-    </div>
-    <div class="modal-stat" style="grid-column:1/-1">
-      <span class="modal-stat-n neutral" style="${balanceColor}">${esc(balance)}</span>
-      <span class="modal-stat-l">Current Balance</span>
+  const balance = p.balance !== null && !isNaN(p.balance) ? `KES ${Math.round(p.balance).toLocaleString()}` : '—';
+  const neg = p.balance !== null && p.balance < 0;
+  const first = SESSIONS[p.firstIdx], last = SESSIONS[p.lastIdx];
+  const daysSince = last && last.date ? Math.round((Date.now() - last.date) / 86400000) : null;
+
+  const eyebrow = `
+    <div class="p-eyebrow">
+      <span>Player No. ${p.rank} of ${ALL_PLAYERS.length}</span>
+      ${p.position ? `<span class="pill ${pc}">${esc(p.position)}</span>` : ''}
+      ${p.foot ? `<span>${esc(p.foot)} foot</span>` : ''}
     </div>`;
 
-  // Footer badge
-  document.getElementById('modal-footer').innerHTML = p.count>=100
-    ? `<div class="modal-badge">&#9733;&nbsp; Century Member</div>`
-    : `<div style="font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;">${100-p.count} games to century</div>`;
+  document.getElementById('p-portrait').innerHTML = `
+    ${photoBlock(p.photo, p.name, 'p-portrait')}
+    <div class="p-rank"><span class="p-rank-l">All-time</span><span class="p-rank-n">#${p.rank}</span></div>
+    <div class="p-portrait-name">${eyebrow}<div class="p-name">${esc(p.name)}</div></div>`;
+
+  document.getElementById('p-body').innerHTML = `
+    <div class="p-watermark">${p.count}</div>
+    ${eyebrow}
+    <div class="p-name">${esc(p.name)}</div>
+    <div class="p-status">
+      ${p.count>=100
+        ? `<span class="p-century">&#9733; Century Member</span>
+           <div class="p-progress"><div class="p-progress-l"><span>${p.count>=200?'Double century':'Beyond the hundred'}</span><span>+${p.count-100}</span></div></div>`
+        : `<div class="p-progress"><div class="p-progress-l"><span>Road to the century</span><span>${100-p.count} to go</span></div>
+           <div class="p-progress-bar"><i data-w="${p.count}"></i></div></div>`}
+    </div>
+    <div class="p-tiles">
+      <div class="p-tile"><span class="p-tile-n">${p.count}</span><span class="p-tile-l">Appearances</span></div>
+      <div class="p-tile"><span class="p-tile-n">${p.gamesThisYear}</span><span class="p-tile-l">In ${thisYear}</span></div>
+      <div class="p-tile"><span class="p-tile-n">${p.maxStreak}</span><span class="p-tile-l">Best Streak</span></div>
+      <div class="p-tile"><span class="p-tile-n ${p.currentStreak>=5?'hot':''}">${p.currentStreak||'—'}</span><span class="p-tile-l">Current Streak</span></div>
+    </div>
+    <div>
+      <div class="p-sec"><h3>Attendance</h3><span></span></div>
+      <div class="p-att">
+        <div class="ring">
+          <svg viewBox="0 0 120 120">
+            <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7A6030"/><stop offset="1" stop-color="#F2D27A"/></linearGradient></defs>
+            <circle class="track" cx="60" cy="60" r="52"/>
+            <circle class="val" cx="60" cy="60" r="52" data-rate="${rate}"/>
+          </svg>
+          <div class="ring-c"><span class="ring-n">${Math.round(rate*100)}%</span><span class="ring-l">of ${sinceDebut}<br>since debut</span></div>
+        </div>
+        <div class="ybars">
+          ${perYear.map(r => `
+            <div class="ybar">
+              <span class="ybar-y ${r.y===thisYear?'now':''}">${r.y}</span>
+              <div class="ybar-track"><div class="ybar-fill" data-w="${r.eligible ? (r.got/maxEligible)*100 : 0}"></div></div>
+              <span class="ybar-v"><b>${r.got}</b> / ${r.eligible}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="heat">
+      <div class="p-sec"><h3>Every session</h3><span></span></div>
+      ${heatRows}
+      <div class="heat-legend">
+        <span><i style="background:var(--gold)"></i>Played</span>
+        <span><i style="background:rgba(201,168,76,.10)"></i>Missed</span>
+        <span><i style="background:var(--gold-bright);box-shadow:0 0 6px rgba(242,210,122,.7)"></i>Current streak</span>
+      </div>
+    </div>
+    <div class="p-foot">
+      <div><span class="p-foot-l">Debut</span><span class="p-foot-v">${esc(fmtSession(first,false))}<small>${first&&first.date?DAY_FULL[first.date.getDay()]:''}</small></span></div>
+      <div><span class="p-foot-l">Most recent</span><span class="p-foot-v">${esc(fmtSession(last,false))}<small>${daysSince===null?'':daysSince===0?'today':daysSince===1?'yesterday':daysSince+' days ago'}</small></span></div>
+      <div><span class="p-foot-l">Balance</span><span class="p-foot-v ${neg?'neg':''}">${esc(balance)}<small>${neg?'owing':p.balance>0?'in credit':''}</small></span></div>
+    </div>
+    <div class="p-hint">← → to browse players · esc to close</div>`;
 
   overlay.classList.add('open');
   document.body.style.overflow='hidden';
+  document.getElementById('p-body').scrollTop = 0;
+  document.getElementById('profile').scrollTop = 0;
+
+  // Kick off the bar / ring animations after layout
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll('#p-body [data-w]').forEach(el => el.style.width = el.dataset.w + '%');
+    const ring = document.querySelector('#p-body .ring .val');
+    if (ring) ring.style.strokeDashoffset = (326.7 * (1 - parseFloat(ring.dataset.rate))).toFixed(1);
+  }));
 }
 
-function closeModal(e) {
-  if (e.target === document.getElementById('modal-overlay')) closeModalDirect();
+function stepProfile(dir) {
+  const list = visibleList();
+  const i = list.indexOf(CURRENT_PLAYER);
+  if (i < 0 || !list.length) return;
+  openProfile(list[(i + dir + list.length) % list.length]);
 }
 
-function closeModalDirect() {
-  document.getElementById('modal-overlay').classList.remove('open');
+function closeProfile(e) {
+  if (e.target === document.getElementById('profile-overlay')) closeProfileDirect();
+}
+
+function closeProfileDirect() {
+  document.getElementById('profile-overlay').classList.remove('open');
   document.body.style.overflow='';
+  CURRENT_PLAYER = null;
 }
 
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeModalDirect(); });
+document.addEventListener('keydown', e => {
+  if (!CURRENT_PLAYER) return;
+  if (e.key==='Escape') closeProfileDirect();
+  else if (e.key==='ArrowLeft') stepProfile(-1);
+  else if (e.key==='ArrowRight') stepProfile(1);
+});
 
 load();
 </script>
