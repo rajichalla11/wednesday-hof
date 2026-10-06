@@ -153,6 +153,7 @@
   .p-body > *:nth-child(3) { animation-delay: .20s } .p-body > *:nth-child(4) { animation-delay: .26s }
   .p-body > *:nth-child(5) { animation-delay: .32s } .p-body > *:nth-child(6) { animation-delay: .38s }
   .p-body > *:nth-child(7) { animation-delay: .44s } .p-body > *:nth-child(8) { animation-delay: .50s }
+  .p-body > *:nth-child(9) { animation-delay: .56s } .p-body > *:nth-child(10) { animation-delay: .62s }
   @keyframes rise { to { opacity: 1; transform: none; } }
 
   .p-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -213,6 +214,114 @@
   .p-foot-v.neg { color: #C07070; }
   .p-hint { margin-top: 18px; font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim); text-align: right; }
 
+  /* CENTURY WALL */
+  .wall-section { margin: -24px 0 72px; }
+  .wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 16px; }
+  .plaque { position: relative; padding: 20px 20px 18px 22px; border-radius: 3px; cursor: pointer; overflow: hidden;
+    background: linear-gradient(135deg, #27220F 0%, #17140B 55%, #1F1B0E 100%); border: 1px solid rgba(201,168,76,.28);
+    box-shadow: inset 0 1px 0 rgba(242,210,122,.18), inset 0 -1px 0 rgba(0,0,0,.6), 0 10px 30px rgba(0,0,0,.35);
+    opacity: 0; transform: translateY(18px); transition: opacity .7s var(--ease), transform .7s var(--ease), border-color .25s, box-shadow .3s; }
+  .plaque.in { opacity: 1; transform: none; }
+  .plaque.in:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: inset 0 1px 0 rgba(242,210,122,.25), 0 16px 40px rgba(0,0,0,.5), 0 0 30px rgba(201,168,76,.12); }
+  .plaque::before { content: ''; position: absolute; inset: 6px; border: 1px solid rgba(201,168,76,.14); border-radius: 2px; pointer-events: none; }
+  .plaque-num { position: absolute; top: 12px; right: 16px; font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 900; color: rgba(201,168,76,.16); line-height: 1; }
+  .plaque-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .plaque-avatar { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; border: 1px solid var(--gold-dim); background: #111008; flex-shrink: 0; }
+  .plaque-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .plaque-avatar-fallback { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:15px; font-weight:900; color:var(--gold-dim); }
+  .plaque-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--text-primary); line-height: 1.1; }
+  .plaque-sub { font-size: 8px; font-weight: 700; letter-spacing: .25em; text-transform: uppercase; color: var(--gold); margin-top: 3px; }
+  .plaque-date { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--gold-bright); margin-bottom: 8px; }
+  .plaque-date small { font-family: 'Raleway', sans-serif; font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: var(--text-muted); margin-left: 8px; }
+  .plaque-with { font-size: 11px; line-height: 1.6; color: var(--text-muted); }
+  .plaque-with b { color: var(--text-primary); font-weight: 600; }
+  .wall-next { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .wall-next-l { font-size: 9px; font-weight: 700; letter-spacing: .25em; text-transform: uppercase; color: var(--text-muted); margin-right: 6px; }
+  .next-chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border: 1px solid var(--card-border); border-radius: 30px; cursor: pointer; transition: border-color .2s, background .2s; font-size: 11px; color: var(--text-primary); }
+  .next-chip:hover { border-color: var(--gold-dim); background: rgba(201,168,76,.05); }
+  .next-chip .r-avatar { width: 24px; height: 24px; }
+  .next-chip em { font-style: normal; color: var(--gold); font-weight: 700; }
+  .next-chip small { color: var(--text-dim); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+  .wall-note { margin-top: 14px; font-size: 9px; letter-spacing: .08em; color: var(--text-dim); }
+
+  /* RECORD BOOKS */
+  .records-section { margin-bottom: 72px; }
+  .records { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 14px; }
+  .rec { position: relative; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 3px; padding: 18px 18px 16px; cursor: pointer; overflow: hidden;
+    opacity: 0; transform: translateY(18px); transition: opacity .7s var(--ease), transform .7s var(--ease), border-color .25s, box-shadow .3s; }
+  .rec.in { opacity: 1; transform: none; }
+  .rec.in:hover { border-color: var(--gold-dim); transform: translateY(-3px); box-shadow: 0 14px 34px rgba(0,0,0,.4); }
+  .rec::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--gold-dim), var(--gold), transparent); }
+  .rec-glyph { position: absolute; top: 10px; right: 14px; font-size: 22px; color: rgba(201,168,76,.25); font-family: 'Playfair Display', serif; }
+  .rec-l { font-size: 8px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; color: var(--text-muted); padding-right: 30px; }
+  .rec-v { font-family: 'Playfair Display', serif; font-size: 40px; font-weight: 900; color: var(--gold); line-height: 1; margin: 10px 0 12px; white-space: nowrap; }
+  .rec-v small { font-size: 10px; font-family: 'Raleway', sans-serif; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--text-muted); margin-left: 6px; }
+  .rec-holder { display: flex; align-items: center; gap: 10px; }
+  .rec-holder .r-avatar { width: 28px; height: 28px; }
+  .rec-name { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.15; }
+  .rec-detail { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+
+  /* SEASON TIMELINE */
+  .timeline-section { margin-bottom: 72px; }
+  .tl-summary { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 18px; }
+  .tl-sum { display: flex; flex-direction: column; }
+  .tl-sum-n { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: var(--gold); line-height: 1; }
+  .tl-sum-l { font-size: 8px; font-weight: 700; letter-spacing: .25em; text-transform: uppercase; color: var(--text-muted); margin-top: 5px; }
+  .tl-wrap { position: relative; overflow-x: auto; overflow-y: hidden; padding: 30px 0 8px; border: 1px solid var(--card-border); border-radius: 3px; background: rgba(26,24,16,.35); scrollbar-width: thin; scrollbar-color: var(--gold-dim) transparent; cursor: grab; }
+  .tl-wrap.dragging { cursor: grabbing; user-select: none; }
+  .tl-track { display: flex; align-items: flex-end; height: 150px; padding: 0 16px; width: max-content; }
+  .tl-year { display: flex; align-items: flex-end; gap: 3px; padding-right: 12px; margin-right: 12px; border-right: 1px dashed rgba(201,168,76,.18); position: relative; height: 100%; }
+  .tl-year:last-child { border-right: none; margin-right: 0; }
+  .tl-year-l { position: absolute; top: -24px; left: 0; font-family: 'Playfair Display', serif; font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: .1em; }
+  .tl-bar { width: 8px; height: 100%; display: flex; align-items: flex-end; position: relative; cursor: pointer; }
+  .tl-bar i { display: block; width: 100%; border-radius: 2px 2px 0 0; background: var(--gold-dim); min-height: 2px; transition: background .15s, transform .15s; transform-origin: bottom; }
+  .tl-bar.now i { background: var(--gold); }
+  .tl-bar.peak i { background: var(--gold-bright); box-shadow: 0 0 10px rgba(242,210,122,.5); }
+  .tl-bar:hover i, .tl-bar.active i { background: var(--gold-bright); transform: scaleX(1.6); }
+  .tl-bar.star::before { content: '★'; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--gold); }
+  .tl-tip { position: fixed; z-index: 90; pointer-events: none; background: rgba(13,12,10,.96); border: 1px solid var(--gold-dim); border-radius: 2px; padding: 8px 11px; font-size: 10px; color: var(--text-primary); white-space: nowrap; opacity: 0; transition: opacity .15s; transform: translate(-50%, calc(-100% - 10px)); box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+  .tl-tip.show { opacity: 1; }
+  .tl-tip b { font-family: 'Playfair Display', serif; font-size: 14px; color: var(--gold); display: block; margin-bottom: 1px; }
+  .tl-tip span { display: block; color: var(--text-muted); font-size: 9px; letter-spacing: .08em; margin-top: 3px; }
+  .tl-axis { display: flex; justify-content: space-between; padding: 8px 2px 0; font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim); }
+
+  /* SESSION SHEET */
+  .session { position: relative; width: 100%; max-width: 660px; max-height: calc(100vh - 48px); overflow-y: auto; background: linear-gradient(160deg,#1D1A11 0%,#120F0A 100%); border: 1px solid rgba(201,168,76,.18); border-radius: 6px; padding: 34px 36px 30px; box-shadow: 0 50px 140px rgba(0,0,0,.75), 0 0 90px rgba(201,168,76,.08); transform: translateY(28px) scale(.96); opacity: 0; transition: transform .5s var(--ease), opacity .35s ease; scrollbar-width: thin; scrollbar-color: var(--gold-dim) transparent; }
+  .profile-overlay.open .session { transform: none; opacity: 1; }
+  .session::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg,transparent,var(--gold-bright),transparent); }
+  .s-body > * { opacity: 0; transform: translateY(14px); animation: rise .6s var(--ease) forwards; }
+  .s-body > *:nth-child(1) { animation-delay: .06s } .s-body > *:nth-child(2) { animation-delay: .12s } .s-body > *:nth-child(3) { animation-delay: .18s } .s-body > *:nth-child(4) { animation-delay: .24s } .s-body > *:nth-child(5) { animation-delay: .30s }
+  .s-date { font-family: 'Playfair Display', serif; font-size: clamp(26px, 4vw, 38px); font-weight: 900; color: var(--text-primary); line-height: 1.05; margin: 0 0 18px; padding-right: 124px; }
+  .s-date small { display: block; font-family: 'Raleway', sans-serif; font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 8px; }
+  .s-moments { display: flex; flex-direction: column; gap: 6px; margin-bottom: 22px; }
+  .moment { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(201,168,76,.05); border: 1px solid rgba(201,168,76,.14); border-radius: 2px; font-size: 12px; color: var(--text-primary); cursor: pointer; transition: border-color .2s; }
+  .moment:hover { border-color: var(--gold-dim); }
+  .moment i { font-style: normal; color: var(--gold); width: 14px; text-align: center; }
+  .moment b { font-weight: 600; }
+  .moment span { color: var(--text-muted); font-size: 9px; letter-spacing: .15em; text-transform: uppercase; margin-left: auto; }
+  .s-players { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 6px; }
+  .s-player { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--card-border); border-radius: 2px; cursor: pointer; transition: border-color .2s, background .2s; font-size: 12px; min-width: 0; }
+  .s-player:hover { border-color: var(--gold-dim); background: rgba(201,168,76,.04); }
+  .s-player .r-avatar { width: 26px; height: 26px; }
+  .s-player span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); }
+  .s-player small { font-size: 9px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .s-player.century small { color: var(--gold); }
+  .s-empty { font-size: 12px; color: var(--text-muted); padding: 14px 0; }
+
+  /* BADGES */
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin: -8px 0 24px; }
+  .badge { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; border-radius: 2px; border: 1px solid rgba(201,168,76,.18); background: rgba(201,168,76,.05); font-size: 9px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--text-primary); cursor: default; }
+  .badge i { font-style: normal; color: var(--gold); }
+  .badge.rare { border-color: rgba(242,210,122,.5); background: linear-gradient(180deg, rgba(201,168,76,.18), rgba(201,168,76,.06)); color: var(--gold-bright); box-shadow: 0 0 14px rgba(201,168,76,.12); }
+  .cell.century { outline: 1.5px solid var(--gold-bright); outline-offset: 1px; }
+
+  /* MILESTONE ON CARDS */
+  .card-next { margin-top: 12px; }
+  .card-next-l { display: flex; justify-content: space-between; font-size: 8px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; }
+  .card-next-l em { font-style: normal; color: var(--text-muted); }
+  .card-next-bar { height: 3px; background: rgba(62,58,42,.8); border-radius: 2px; overflow: hidden; }
+  .card-next-bar i { display: block; height: 100%; background: linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius: 2px; }
+
   /* LOADING / ERROR */
   .loading { display: flex; gap: 6px; align-items: center; justify-content: center; padding: 60px 0; color: var(--text-muted); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; }
   .dot { width: 4px; height: 4px; background: var(--gold); border-radius: 50%; animation: blink 1.2s ease-in-out infinite; }
@@ -242,6 +351,9 @@
     .ybars { width: 100%; }
     .p-foot { grid-template-columns: 1fr 1fr; }
     .p-hint { display: none; }
+    .session { max-width: none; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 22px 18px 40px; }
+    .s-players { grid-template-columns: 1fr 1fr; }
+    .tl-summary { gap: 20px; }
   }
   @media (max-width: 560px) {
     .stats-strip { grid-template-columns: repeat(2,1fr); }
@@ -292,9 +404,28 @@
   <div class="sec-head"><h2>Century Club</h2><div class="sec-line"></div></div>
   <div id="hof-grid"><div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
 
+  <div class="wall-section" id="wall-section">
+    <div class="sec-head"><h2>The Century Wall</h2><div class="sec-line"></div></div>
+    <div class="wall" id="wall"></div>
+    <div class="wall-next" id="wall-next"></div>
+    <p class="wall-note" id="wall-note"></p>
+  </div>
+
   <div class="rising-section">
     <div class="sec-head"><h2>Rising Stars</h2><div class="sec-line"></div></div>
     <div id="rising-list"><div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+  </div>
+
+  <div class="records-section">
+    <div class="sec-head"><h2>Record Books</h2><div class="sec-line"></div></div>
+    <div class="records" id="records"></div>
+  </div>
+
+  <div class="timeline-section">
+    <div class="sec-head"><h2>Season Timeline</h2><div class="sec-line"></div></div>
+    <div class="tl-summary" id="tl-summary"></div>
+    <div class="tl-wrap" id="tl-wrap"><div class="tl-track" id="tl-track"></div></div>
+    <div class="tl-axis"><span id="tl-first"></span><span>tap a night to see who played · ★ a century was reached</span><span id="tl-last"></span></div>
   </div>
 
   <footer>
@@ -317,6 +448,19 @@
   </div>
 </div>
 
+<!-- SESSION SHEET -->
+<div class="profile-overlay" id="session-overlay" onclick="closeSession(event)">
+  <div class="session" id="session" role="dialog" aria-modal="true">
+    <div class="p-controls">
+      <div class="p-btn" onclick="stepSession(-1)" title="Previous session (←)">‹</div>
+      <div class="p-btn" onclick="stepSession(1)" title="Next session (→)">›</div>
+      <div class="p-btn close" onclick="closeSessionDirect()" title="Close (Esc)">✕</div>
+    </div>
+    <div class="s-body" id="s-body"></div>
+  </div>
+</div>
+<div class="tl-tip" id="tl-tip"></div>
+
 <script>
 /*
   SHEET COLUMNS (header row):
@@ -338,6 +482,10 @@ let ALL_PLAYERS = [];
 let SESSIONS = [];
 let ACTIVE_FILTER = null;
 let CURRENT_PLAYER = null;
+let CURRENT_SESSION = null;
+let YEARS = [];
+let RECORDS = [];
+let RECORD_HOLDERS = {};
 
 function isPlayer(name) {
   const n = name.trim().toLowerCase();
@@ -403,11 +551,11 @@ function photoBlock(rawUrl, name, cls) {
 }
 
 function calcStreaks(att) {
-  let max=0, cur=0;
-  for (const v of att) { if (v){cur++;max=Math.max(max,cur);}else{cur=0;} }
+  let max=0, cur=0, maxEnd=-1;
+  for (let i=0;i<att.length;i++) { if (att[i]) { cur++; if (cur>max) { max=cur; maxEnd=i; } } else cur=0; }
   let current=0;
   for (let i=att.length-1;i>=0;i--) { if(att[i])current++; else break; }
-  return { maxStreak:max, currentStreak:current };
+  return { maxStreak:max, currentStreak:current, maxStreakStart:maxEnd-max+1, maxStreakEnd:maxEnd };
 }
 
 /* ── SESSION DATES ──
@@ -568,7 +716,7 @@ async function load() {
       let lastIdx=-1;
       for (let i=attendance.length-1;i>=0;i--) { if(attendance[i]){lastIdx=i;break;} }
 
-      const {maxStreak,currentStreak} = calcStreaks(attendance);
+      const {maxStreak,currentStreak,maxStreakStart,maxStreakEnd} = calcStreaks(attendance);
 
       // Games this year
       const gamesThisYear = attendance.reduce((acc,v,i)=>{
@@ -583,14 +731,26 @@ async function load() {
         balance:balanceRaw, attendance, firstIdx, lastIdx,
         firstSession: firstIdx>=0 ? fmtSession(sessionCols[firstIdx]) : '',
         lastSession:  lastIdx>=0  ? fmtSession(sessionCols[lastIdx])  : '',
-        maxStreak, currentStreak, gamesThisYear,
+        maxStreak, currentStreak, maxStreakStart, maxStreakEnd, gamesThisYear,
       });
     }
+
+    // Collapse rows that are exact duplicates (same name, count and attendance) —
+    // the sheet occasionally gets the same person added twice at the bottom.
+    const seen = new Set();
+    const unique = players.filter(p => {
+      const key = `${p.name.toLowerCase()}|${p.count}|${p.attendance.join('')}`;
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
+    players.length = 0; players.push(...unique);
 
     players.sort((a,b)=>b.count-a.count);
     players.forEach((p,i)=>p.rank=i+1);
     ALL_PLAYERS = players;
     SESSIONS = sessionCols;
+    derive(players, sessionCols);
+    RECORDS = computeRecords(players, sessionCols);
     render(players, sessionCols.length);
 
   } catch(err) {
@@ -633,6 +793,9 @@ function render(players, totalSessions) {
 
   renderHOF(hof);
   renderRising(rising);
+  renderWall();
+  renderRecords();
+  renderTimeline();
 
   document.getElementById('last-updated').textContent =
     'Live data · refreshed ' +
@@ -688,6 +851,7 @@ function renderHOF(members) {
   grid.innerHTML='';
   members.forEach((p,i)=>{
     const pc = posClass(p.position);
+    const ms = milestoneFor(p);
     const card = document.createElement('div');
     card.className = `hof-card${p.rank===1?' rank-1':''}`;
     card.onclick = () => openProfile(p);
@@ -716,6 +880,10 @@ function renderHOF(members) {
           </div>
         </div>
         <div class="hof-badge">&#9733;&nbsp; Century Member</div>
+        <div class="card-next">
+          <div class="card-next-l"><span>Next · ${ms.next}</span><em>${ms.toGo} to go</em></div>
+          <div class="card-next-bar"><i style="width:${ms.pct}%"></i></div>
+        </div>
         <div class="view-profile-hint">open dossier →</div>
       </div>`;
     grid.appendChild(card);
@@ -761,7 +929,9 @@ function renderRising(players) {
 /* ── PLAYER DOSSIER ── */
 function openProfile(p) {
   CURRENT_PLAYER = p;
+  if (CURRENT_SESSION !== null) { document.getElementById('session-overlay').classList.remove('open'); CURRENT_SESSION = null; }
   const overlay = document.getElementById('profile-overlay');
+  const ms = milestoneFor(p);
   const pc = posClass(p.position);
   const n = SESSIONS.length;
 
@@ -773,11 +943,7 @@ function openProfile(p) {
   // Per-year breakdown (eligible = sessions in that year from debut onwards)
   const years = [...new Set(SESSIONS.map(s=>s.year).filter(Boolean))].sort();
   const thisYear = new Date().getFullYear();
-  const perYear = years.map(y => {
-    let eligible=0, got=0, total=0;
-    SESSIONS.forEach((s,i)=>{ if (s.year!==y) return; total++; if (i>=p.firstIdx) { eligible++; if (p.attendance[i]) got++; } });
-    return { y, eligible, got, total };
-  });
+  const perYear = p.years;
   const maxEligible = Math.max(1, ...perYear.map(r=>r.eligible));
 
   // Heatmap rows
@@ -786,8 +952,8 @@ function openProfile(p) {
     const cells = SESSIONS.map((s,i)=>{
       if (s.year!==y) return '';
       const on = p.attendance[i]===1;
-      const cls = i < p.firstIdx ? 'pre' : on ? (i >= streakStart ? 'on streak' : 'on') : '';
-      const tip = `${fmtSession(s)} · ${i < p.firstIdx ? 'before debut' : on ? 'Played' : 'Missed'}`;
+      const cls = (i < p.firstIdx ? 'pre' : on ? (i >= streakStart ? 'on streak' : 'on') : '') + (i === p.centuryIdx ? ' century' : '');
+      const tip = `${fmtSession(s)} · ${i < p.firstIdx ? 'before debut' : on ? 'Played' : 'Missed'}${i === p.centuryIdx ? ' · 100th appearance' : ''}`;
       return `<i class="cell ${cls}" title="${esc(tip)}"></i>`;
     }).join('');
     return `<div class="heat-row"><span class="heat-y">${y}</span><div class="heat-cells">${cells}</div></div>`;
@@ -815,12 +981,13 @@ function openProfile(p) {
     ${eyebrow}
     <div class="p-name">${esc(p.name)}</div>
     <div class="p-status">
-      ${p.count>=100
-        ? `<span class="p-century">&#9733; Century Member</span>
-           <div class="p-progress"><div class="p-progress-l"><span>${p.count>=200?'Double century':'Beyond the hundred'}</span><span>+${p.count-100}</span></div></div>`
-        : `<div class="p-progress"><div class="p-progress-l"><span>Road to the century</span><span>${100-p.count} to go</span></div>
-           <div class="p-progress-bar"><i data-w="${p.count}"></i></div></div>`}
+      ${p.count>=100 ? `<span class="p-century">&#9733; Century Member</span>` : ''}
+      <div class="p-progress">
+        <div class="p-progress-l"><span>${p.count<100 ? 'Road to the century' : `Next milestone · ${ms.next}`}</span><span>${ms.toGo} to go · ${fmtEta(ms.eta)}</span></div>
+        <div class="p-progress-bar"><i data-w="${ms.pct}"></i></div>
+      </div>
     </div>
+    <div class="badges">${badgesFor(p).map(b=>`<span class="badge ${b.rare?'rare':''}" title="${esc(b.d||b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>
     <div class="p-tiles">
       <div class="p-tile"><span class="p-tile-n">${p.count}</span><span class="p-tile-l">Appearances</span></div>
       <div class="p-tile"><span class="p-tile-n">${p.gamesThisYear}</span><span class="p-tile-l">In ${thisYear}</span></div>
@@ -895,11 +1062,266 @@ function closeProfileDirect() {
 }
 
 document.addEventListener('keydown', e => {
+  if (CURRENT_SESSION !== null) {
+    if (e.key==='Escape') closeSessionDirect();
+    else if (e.key==='ArrowLeft') stepSession(-1);
+    else if (e.key==='ArrowRight') stepSession(1);
+    return;
+  }
   if (!CURRENT_PLAYER) return;
   if (e.key==='Escape') closeProfileDirect();
   else if (e.key==='ArrowLeft') stepProfile(-1);
   else if (e.key==='ArrowRight') stepProfile(1);
 });
+
+/* ── DERIVED DATA ──
+   Column A is the group's hand-kept appearance count and is the source of truth.
+   The payment cells track sessions since the sheet began; a few players carry
+   appearances from before that (or paid in one cell). We treat those untracked
+   appearances as the player's earliest games when working out milestones. */
+const maxBy = (arr, f) => arr.reduce((b,x) => (b===null || f(x) > f(b)) ? x : b, null);
+const ordinal = n => n + (n%100>=11&&n%100<=13 ? 'th' : ['th','st','nd','rd'][n%10] || 'th');
+
+function yearStats(p, sessions) {
+  return YEARS.map(y => {
+    let eligible=0, got=0, total=0;
+    sessions.forEach((s,i)=>{ if (s.year!==y) return; total++; if (p.firstIdx>=0 && i>=p.firstIdx) { eligible++; if (p.attendance[i]) got++; } });
+    return { y, eligible, got, total };
+  });
+}
+
+function derive(players, sessions) {
+  YEARS = [...new Set(sessions.map(s=>s.year).filter(Boolean))].sort();
+  sessions.forEach(s => { s.turnout = 0; s.players = []; s.moments = []; });
+  for (const p of players) {
+    p.played = p.attendance.reduce((a,v)=>a+v,0);
+    p.offset = Math.max(0, p.count - p.played);
+    let c = p.offset; p.cum = p.attendance.map(v => (c += v));
+    p.milestoneIdx = {};
+    for (let m = 50; m <= p.count; m += 50) p.milestoneIdx[m] = p.attendance.findIndex((v,i) => v && p.cum[i] >= m);
+    p.centuryIdx = p.milestoneIdx[100] ?? -1;
+    let gap=0, best=0, bestEnd=-1;
+    for (let i=Math.max(0,p.firstIdx); i<=p.lastIdx; i++) { if (p.attendance[i]) { if (gap>best) { best=gap; bestEnd=i; } gap=0; } else gap++; }
+    p.longestGap = best; p.comebackIdx = bestEnd;
+    p.years = yearStats(p, sessions);
+    p.attendance.forEach((v,i) => { if (v) { sessions[i].turnout++; sessions[i].players.push(p); } });
+  }
+  for (const p of players) {
+    if (p.firstIdx >= 0) sessions[p.firstIdx].moments.push({ p, kind:'debut', label:'Debut' });
+    for (const [m, i] of Object.entries(p.milestoneIdx)) if (i >= 0) sessions[i].moments.push({ p, kind: m==='100' ? 'century' : 'milestone', label: `${ordinal(+m)} appearance`, m:+m });
+  }
+  for (const s of sessions) { s.players.sort((a,b)=>b.count-a.count); s.moments.sort((a,b)=>(b.m||0)-(a.m||0)); }
+  const ranked = [...sessions].sort((a,b)=>b.turnout-a.turnout);
+  sessions.forEach(s => s.busyRank = ranked.indexOf(s)+1);
+}
+
+/* ── MILESTONES ── */
+function cadenceDays() {
+  const dated = SESSIONS.filter(s=>s.date).slice(-30);
+  if (dated.length < 2) return 7;
+  return (dated[dated.length-1].date - dated[0].date) / 86400000 / (dated.length-1);
+}
+function milestoneFor(p) {
+  const next = p.count < 100 ? 100 : Math.floor(p.count/50)*50 + 50;
+  const prev = p.count < 100 ? 0 : next - 50;
+  const toGo = next - p.count;
+  const win = Math.min(20, p.firstIdx >= 0 ? SESSIONS.length - p.firstIdx : 0);
+  const recent = win > 0 ? p.attendance.slice(-win).reduce((a,v)=>a+v,0) / win : 0;
+  const eta = recent > 0 ? new Date(Date.now() + (toGo/recent) * cadenceDays() * 86400000) : null;
+  return { next, prev, toGo, pct: Math.min(100, (p.count-prev)/(next-prev)*100), recent, eta };
+}
+function fmtEta(d) {
+  if (!d) return 'no recent games';
+  const days = (d - Date.now()) / 86400000;
+  if (days < 10) return 'any day now';
+  if (days < 50) return `≈ ${Math.round(days/7)} weeks`;
+  return `on pace for ${MONTH_LABELS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/* ── RECORDS ── */
+function computeRecords(players, sessions) {
+  const thisYear = new Date().getFullYear();
+  const R = [];
+  const ls = maxBy(players, p=>p.maxStreak);
+  if (ls && ls.maxStreak) R.push({ key:'streak', glyph:'⚡', label:'Longest streak', value: ls.maxStreak, unit:'in a row', p: ls,
+    detail: `${fmtSession(sessions[ls.maxStreakStart],false)} → ${fmtSession(sessions[ls.maxStreakEnd],false)}` });
+  let best = null;
+  for (const p of players) for (const r of p.years) if (!best || r.got > best.got) best = { p, ...r };
+  if (best) R.push({ key:'year', glyph:'◆', label:'Most games in a year', value: best.got, unit:`in ${best.y}`, p: best.p, detail:`of ${best.total} sessions that year` });
+  const ty = sessions.filter(s=>s.year===thisYear).length;
+  const im = maxBy(players, p=>p.gamesThisYear);
+  if (im && im.gamesThisYear) R.push({ key:'iron', glyph:'♜', label:`Iron man ${thisYear}`, value: im.gamesThisYear, unit:`of ${ty}`, p: im, detail:`${Math.round(100*im.gamesThisYear/Math.max(1,ty))}% of nights this year` });
+  const eligible = players.filter(p=>p.firstIdx>=0 && sessions.length-p.firstIdx>=30);
+  const br = maxBy(eligible, p=>p.played/(sessions.length-p.firstIdx));
+  if (br) R.push({ key:'rate', glyph:'◎', label:'Best attendance', value: Math.round(100*br.played/(sessions.length-br.firstIdx))+'%', unit:'since debut', p: br, detail:`${br.played} of ${sessions.length-br.firstIdx} possible` });
+  const cb = maxBy(players.filter(p=>p.longestGap>=5), p=>p.longestGap);
+  if (cb) R.push({ key:'comeback', glyph:'↻', label:'Greatest comeback', value: cb.longestGap, unit:'missed', p: cb, detail:`then back on ${fmtSession(sessions[cb.comebackIdx],false)}` });
+  const bn = maxBy(sessions, s=>s.turnout);
+  if (bn) R.push({ key:'night', glyph:'✦', label:'Biggest night', value: bn.turnout, unit:'players', session: bn, detail:`${DAY_FULL[bn.date?bn.date.getDay():0]||''}` });
+  const founders = players.filter(p=>p.attendance[0]===1).sort((a,b)=>b.count-a.count);
+  if (founders.length) R.push({ key:'founders', glyph:'⚑', label:'Founding members', value: founders.length, unit:'at session one', names: founders.map(f=>f.name), people: founders,
+    detail:`${founders.reduce((a,f)=>a+f.count,0).toLocaleString()} appearances between them` });
+  let duo = null;
+  for (let a=0;a<players.length;a++) for (let b=a+1;b<players.length;b++) {
+    let t=0; const A=players[a].attendance, B=players[b].attendance;
+    for (let i=0;i<A.length;i++) t += A[i] & B[i];
+    if (!duo || t>duo.t) duo = { a:players[a], b:players[b], t };
+  }
+  if (duo && duo.t) R.push({ key:'duo', glyph:'∞', label:'Most nights together', value: duo.t, unit:'shared', p: duo.a, p2: duo.b, detail:'on the pitch at the same time' });
+  RECORD_HOLDERS = {};
+  for (const r of R) for (const p of [r.p, r.p2].filter(Boolean)) (RECORD_HOLDERS[p.name] ||= []).push(r.label);
+  return R;
+}
+
+/* ── BADGES ── */
+function badgesFor(p) {
+  const thisYear = new Date().getFullYear(); const B = [];
+  if (p.attendance[0]===1) B.push({ i:'⚑', t:'Founding member', d:'Played the very first session', rare:true });
+  if (p.count>=200) B.push({ i:'★★', t:'Double century', rare:true }); else if (p.count>=100) B.push({ i:'★', t:'Century member', rare:true });
+  for (const y of p.years) {
+    if (y.y!==thisYear && y.total>=20 && y.got===y.total) B.push({ i:'♜', t:`Iron man ${y.y}`, d:`Played every one of the ${y.total} sessions in ${y.y}`, rare:true });
+    if (y.y===thisYear && y.total>=5 && y.got===y.total) B.push({ i:'◆', t:`Ever-present ${y.y}`, d:`Every session so far this year` });
+  }
+  if (p.currentStreak>=10) B.push({ i:'▲', t:`On fire · ${p.currentStreak} straight` });
+  if (p.maxStreak>=20) B.push({ i:'⚡', t:'Streak master', d:`Best run of ${p.maxStreak}` });
+  if (p.longestGap>=20) B.push({ i:'↻', t:'The comeback', d:`Came back after missing ${p.longestGap} in a row` });
+  if (p.firstIdx>=0 && SESSIONS[p.firstIdx].year===thisYear) B.push({ i:'✧', t:`Class of ${thisYear}` });
+  for (const r of (RECORD_HOLDERS[p.name]||[])) B.push({ i:'♛', t:`Record · ${r}`, rare:true });
+  return B;
+}
+
+/* ── CENTURY WALL ── */
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV'];
+function renderWall() {
+  const wall = document.getElementById('wall'), nextEl = document.getElementById('wall-next'), note = document.getElementById('wall-note');
+  const inducted = ALL_PLAYERS.filter(p=>p.count>=100 && p.centuryIdx>=0).sort((a,b)=>a.centuryIdx-b.centuryIdx || b.count-a.count);
+  if (!inducted.length) { document.getElementById('wall-section').style.display='none'; return; }
+  wall.innerHTML = inducted.map((p,k) => {
+    const s = SESSIONS[p.centuryIdx];
+    const others = s.players.filter(x=>x!==p);
+    const shown = others.slice(0,5).map(x=>x.name.split(' ')[0]);
+    const more = others.length - shown.length;
+    return `<div class="plaque" data-i="${p.centuryIdx}">
+      <span class="plaque-num">${ROMAN[k]||k+1}</span>
+      <div class="plaque-top"><div class="plaque-avatar">${photoBlock(p.photo,p.name,'plaque-avatar')}</div>
+        <div><div class="plaque-name">${esc(p.name)}</div><div class="plaque-sub">100th appearance</div></div></div>
+      <div class="plaque-date">${esc(fmtSession(s,false))}${s.date?`<small>${DAY_FULL[s.date.getDay()]}</small>`:''}</div>
+      <div class="plaque-with">On the pitch with <b>${others.length}</b> others — ${shown.map(esc).join(', ')}${more>0?` <b>+${more}</b>`:''}</div>
+    </div>`;
+  }).join('');
+  wall.querySelectorAll('.plaque').forEach((el,i)=>{ el.onclick=()=>openSession(+el.dataset.i); reveal(el,i); });
+
+  const next = ALL_PLAYERS.filter(p=>p.count<100 && p.count>=40).sort((a,b)=>b.count-a.count).slice(0,4);
+  nextEl.innerHTML = next.length ? `<span class="wall-next-l">Next on the wall</span>` + next.map(p => {
+    const ms = milestoneFor(p);
+    return `<span class="next-chip" data-pi="${ALL_PLAYERS.indexOf(p)}"><div class="r-avatar">${photoBlock(p.photo,p.name,'r-avatar')}</div>${esc(p.name)} <em>${ms.toGo} to go</em> <small>${esc(fmtEta(ms.eta))}</small></span>`;
+  }).join('') : '';
+  nextEl.querySelectorAll('.next-chip').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
+  note.textContent = inducted.some(p=>p.offset>0)
+    ? `Appearances logged before this sheet began (${fmtSession(SESSIONS[0],false)}) are counted as a player's earliest games.` : '';
+}
+
+/* ── RECORD BOOKS ── */
+function renderRecords() {
+  const el = document.getElementById('records');
+  el.innerHTML = RECORDS.map(r => {
+    const who = r.names ? r.names.slice(0,4).join(', ') + (r.names.length>4 ? ` +${r.names.length-4}` : '')
+              : r.p2 ? `${r.p.name} & ${r.p2.name}` : r.p ? r.p.name : fmtSession(r.session,false);
+    return `<div class="rec">
+      <span class="rec-glyph">${r.glyph}</span>
+      <div class="rec-l">${esc(r.label)}</div>
+      <div class="rec-v">${r.value}${r.unit?`<small>${esc(r.unit)}</small>`:''}</div>
+      <div class="rec-holder">${r.p && !r.names ? `<div class="r-avatar">${photoBlock(r.p.photo,r.p.name,'r-avatar')}</div>` : ''}
+        <div><div class="rec-name">${esc(who)}</div><div class="rec-detail">${esc(r.detail)}</div></div></div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.rec').forEach((d,i)=>{
+    const r = RECORDS[i];
+    d.onclick = () => r.session ? openSession(SESSIONS.indexOf(r.session)) : r.p ? openProfile(r.p) : r.people ? openSession(0) : null;
+    reveal(d,i);
+  });
+}
+
+/* ── SEASON TIMELINE ── */
+function renderTimeline() {
+  const wrap = document.getElementById('tl-wrap'), track = document.getElementById('tl-track'), tip = document.getElementById('tl-tip');
+  const n = SESSIONS.length; if (!n) return;
+  const thisYear = new Date().getFullYear();
+  const max = Math.max(1, ...SESSIONS.map(s=>s.turnout));
+  const peak = SESSIONS.indexOf(maxBy(SESSIONS, s=>s.turnout));
+  const avg = SESSIONS.reduce((a,s)=>a+s.turnout,0)/n;
+  const ty = SESSIONS.filter(s=>s.year===thisYear);
+  const avgTy = ty.length ? ty.reduce((a,s)=>a+s.turnout,0)/ty.length : 0;
+  document.getElementById('tl-summary').innerHTML = `
+    <div class="tl-sum"><span class="tl-sum-n">${ty.length}</span><span class="tl-sum-l">Sessions in ${thisYear}</span></div>
+    <div class="tl-sum"><span class="tl-sum-n">${avgTy.toFixed(1)}</span><span class="tl-sum-l">Avg turnout ${thisYear}</span></div>
+    <div class="tl-sum"><span class="tl-sum-n">${avg.toFixed(1)}</span><span class="tl-sum-l">Avg turnout all-time</span></div>
+    <div class="tl-sum"><span class="tl-sum-n">${SESSIONS[peak].turnout}</span><span class="tl-sum-l">Biggest night</span></div>`;
+  document.getElementById('tl-first').textContent = fmtSession(SESSIONS[0], false);
+  document.getElementById('tl-last').textContent = fmtSession(SESSIONS[n-1], false);
+
+  track.innerHTML = YEARS.map(y => `<div class="tl-year"><span class="tl-year-l">${y}</span>${
+    SESSIONS.map((s,i) => s.year!==y ? '' :
+      `<div class="tl-bar${s.year===thisYear?' now':''}${i===peak?' peak':''}${s.moments.some(m=>m.kind==='century')?' star':''}" data-i="${i}"><i style="height:${Math.max(3, s.turnout/max*100)}%"></i></div>`
+    ).join('')}</div>`).join('');
+
+  const showTip = bar => {
+    const s = SESSIONS[+bar.dataset.i];
+    tip.innerHTML = `<b>${s.turnout} players</b>${esc(fmtSession(s))}${s.moments.slice(0,4).map(m=>`<span>${m.kind==='debut'?'●':m.kind==='century'?'★':'◆'} ${esc(m.p.name)} · ${esc(m.label)}</span>`).join('')}`;
+    const r = bar.firstElementChild.getBoundingClientRect();
+    tip.style.left = (r.left + r.width/2) + 'px';
+    tip.style.top = r.top + 'px';
+    tip.classList.add('show');
+  };
+  track.onmouseover = e => { const b = e.target.closest('.tl-bar'); if (b) showTip(b); };
+  track.onmouseleave = () => tip.classList.remove('show');
+  wrap.onscroll = () => tip.classList.remove('show');
+  track.onclick = e => { const b = e.target.closest('.tl-bar'); if (b && !wrap.dataset.dragged) openSession(+b.dataset.i); };
+
+  // drag to scroll
+  let down = null;
+  wrap.onpointerdown = e => { down = { x: e.clientX, sl: wrap.scrollLeft }; delete wrap.dataset.dragged; };
+  wrap.onpointermove = e => { if (!down) return; const dx = e.clientX - down.x; if (Math.abs(dx) > 4) { wrap.classList.add('dragging'); wrap.dataset.dragged = '1'; wrap.scrollLeft = down.sl - dx; } };
+  wrap.onpointerup = wrap.onpointercancel = wrap.onpointerleave = () => { down = null; wrap.classList.remove('dragging'); setTimeout(()=>delete wrap.dataset.dragged, 0); };
+
+  wrap.scrollLeft = wrap.scrollWidth;
+}
+
+/* ── SESSION SHEET ── */
+function openSession(i) {
+  const s = SESSIONS[i]; if (!s) return;
+  if (CURRENT_PLAYER) { document.getElementById('profile-overlay').classList.remove('open'); CURRENT_PLAYER = null; }
+  CURRENT_SESSION = i;
+  const avg = SESSIONS.reduce((a,x)=>a+x.turnout,0)/SESSIONS.length;
+  const body = document.getElementById('s-body');
+  body.innerHTML = `
+    <div class="s-date"><small>Session ${i+1} of ${SESSIONS.length}${s.date?` · ${DAY_FULL[s.date.getDay()]}`:''}</small>${esc(fmtSession(s,false))}</div>
+    <div class="p-tiles">
+      <div class="p-tile"><span class="p-tile-n">${s.turnout}</span><span class="p-tile-l">Players</span></div>
+      <div class="p-tile"><span class="p-tile-n">#${s.busyRank}</span><span class="p-tile-l">Busiest night</span></div>
+      <div class="p-tile"><span class="p-tile-n">${s.turnout-avg>=0?'+':''}${(s.turnout-avg).toFixed(1)}</span><span class="p-tile-l">vs average</span></div>
+      <div class="p-tile"><span class="p-tile-n">${s.moments.length}</span><span class="p-tile-l">Moments</span></div>
+    </div>
+    ${s.moments.length ? `<div class="s-moments">${s.moments.map(m=>`<div class="moment" data-pi="${ALL_PLAYERS.indexOf(m.p)}"><i>${m.kind==='debut'?'●':m.kind==='century'?'★':'◆'}</i><b>${esc(m.p.name)}</b><span>${esc(m.label)}</span></div>`).join('')}</div>` : ''}
+    <div class="p-sec"><h3>On the pitch</h3><span></span></div>
+    ${s.players.length ? `<div class="s-players">${s.players.map(p=>`<div class="s-player ${p.count>=100?'century':''}" data-pi="${ALL_PLAYERS.indexOf(p)}"><div class="r-avatar">${photoBlock(p.photo,p.name,'r-avatar')}</div><span>${esc(p.name)}</span><small>${ordinal(p.cum[i])}</small></div>`).join('')}</div>` : `<div class="s-empty">No attendance recorded for this night.</div>`}`;
+  body.onclick = e => { const el = e.target.closest('[data-pi]'); if (el) openProfile(ALL_PLAYERS[+el.dataset.pi]); };
+  document.getElementById('session').scrollTop = 0;
+  document.getElementById('session-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.querySelectorAll('.tl-bar.active').forEach(b=>b.classList.remove('active'));
+  const bar = document.querySelector(`.tl-bar[data-i="${i}"]`); if (bar) bar.classList.add('active');
+}
+function stepSession(dir) {
+  if (CURRENT_SESSION === null) return;
+  openSession((CURRENT_SESSION + dir + SESSIONS.length) % SESSIONS.length);
+}
+function closeSession(e) { if (e.target === document.getElementById('session-overlay')) closeSessionDirect(); }
+function closeSessionDirect() {
+  document.getElementById('session-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  CURRENT_SESSION = null;
+}
 
 load();
 </script>
