@@ -298,13 +298,11 @@
   .saved.show { opacity: 1; }
 
   /* BALANCES */
-  .tr.bal { grid-template-columns: 1fr 150px 70px 110px; }
-  .amt { font-size: 16px; text-align: right; }
-  .amt.owe { color: var(--neg); } .amt.credit { color: var(--fg); } .amt.zero, .amt.unknown { color: var(--fg-3); }
-  .status { font-size: 11px; color: var(--fg-3); text-transform: uppercase; letter-spacing: .08em; text-align: right; }
+  .tr.bal { grid-template-columns: 1fr 170px 110px; }
+  .amt { font-size: 15px; text-align: right; color: var(--fg-2); }
+  .amt.unknown { color: var(--fg-3); }
   .lastp { font-size: 12px; color: var(--fg-3); text-align: right; }
   .stats.four { grid-template-columns: repeat(4, 1fr); }
-  .stat b.owe { color: var(--neg); }
 
   footer { border-top: 1px solid var(--line); margin-top: 72px; padding-top: 18px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--fg-3); }
 
@@ -317,7 +315,7 @@
     .stats { grid-template-columns: repeat(3, 1fr); } .stats.four { grid-template-columns: 1fr 1fr; }
     .stat { padding: 14px 12px 12px; } .stat b { font-size: 26px; } .stat .label { font-size: 10px; }
     .tr { grid-template-columns: 24px 1fr 56px 56px; gap: 10px; padding: 10px 12px; } .tr .form { display: none; }
-    .tr.bal { grid-template-columns: 1fr 90px; } .tr.bal .status, .tr.bal .lastp { display: none; }
+    .tr.bal { grid-template-columns: 1fr 90px; } .tr.bal .lastp { display: none; }
     .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
     .c-num { font-size: 36px; } .c-head, .c-name { padding-inline: 12px; } .c-photo, .c-stats { margin-inline: 12px; } .c-stat b { font-size: 14px; } .c-foot { padding-inline: 12px; }
     .c-stat { padding-right: 6px; } .c-stat:nth-child(3n+2), .c-stat:nth-child(3n+3) { padding-left: 6px; }
@@ -405,9 +403,8 @@
   </section>
 
   <section class="panel" id="panel-balances">
-    <div class="sh"><h2>Balances</h2><span>From the sheet's Balance column · negative means owing</span></div>
-    <div class="stats four" id="bal-tiles"></div>
-    <div id="bal-list" style="margin-top:14px"></div>
+    <div class="sh"><h2>Balances</h2><span>From the sheet · negative means owing to the pot</span></div>
+    <div id="bal-list"></div>
   </section>
 
   <footer><span>Wednesday 9–10 · Nairobi</span><span id="last-updated"></span></footer>
@@ -812,21 +809,13 @@ function renderTimeline() {
 /* ── balances ── */
 const kes = n => `KES ${Math.abs(Math.round(n)).toLocaleString()}`;
 function renderBalances() {
-  const known = ALL_PLAYERS.filter(p => p.balance !== null && !isNaN(p.balance));
-  const owing = known.filter(p=>p.balance<0).sort((a,b)=>a.balance-b.balance), credit = known.filter(p=>p.balance>0).sort((a,b)=>b.balance-a.balance);
-  const settled = known.filter(p=>p.balance===0).sort(activeFirst), unknown = ALL_PLAYERS.filter(p=>!known.includes(p));
-  const owed = owing.reduce((a,p)=>a+p.balance,0), held = credit.reduce((a,p)=>a+p.balance,0);
-  document.getElementById('tab-n-balances').textContent = `${owing.length} owing`;
-  document.getElementById('bal-tiles').innerHTML = `
-    <div class="stat"><b class="num owe">${kes(owed)}</b><div class="label">Owed to the pot</div></div>
-    <div class="stat"><b class="num">${kes(held)}</b><div class="label">Held in credit</div></div>
-    <div class="stat"><b class="num">${owing.length}</b><div class="label">Players owing</div></div>
-    <div class="stat"><b class="num">${credit.length}</b><div class="label">In credit</div></div>`;
-  const row = (p, cls, status) => { const last = p.lastIdx>=0 ? SESSIONS[p.lastIdx] : null;
-    return `<div class="tr bal" data-pi="${ALL_PLAYERS.indexOf(p)}"><span class="who">${photo(p,'avatar')}<span class="name">${esc(p.name)}</span></span><span class="lastp">${last ? 'last played ' + esc(fmtSession(last,false)) : ''}</span><span class="status">${status}</span><span class="amt num ${cls}">${cls==='unknown' ? '—' : cls==='zero' ? '0' : (cls==='owe'?'−':'+') + kes(p.balance).replace('KES ','')}</span></div>`; };
-  const group = (title, list, cls, status) => list.length ? `<div class="tr sub"><span class="label">${title} · ${list.length}</span></div>` + list.map(p=>row(p,cls,status)).join('') : '';
+  document.getElementById('tab-n-balances').textContent = '';
+  const list = [...ALL_PLAYERS].sort((a,b) => a.name.localeCompare(b.name));
+  const row = p => { const last = p.lastIdx>=0 ? SESSIONS[p.lastIdx] : null, known = p.balance !== null && !isNaN(p.balance);
+    const amt = !known ? '—' : p.balance === 0 ? '0' : (p.balance < 0 ? '−' : '+') + kes(p.balance).replace('KES ','');
+    return `<div class="tr bal" data-pi="${ALL_PLAYERS.indexOf(p)}"><span class="who">${photo(p,'avatar')}<span class="name">${esc(p.name)}</span></span><span class="lastp">${last ? 'last played ' + esc(fmtSession(last,false)) : ''}</span><span class="amt num ${known ? '' : 'unknown'}">${amt}</span></div>`; };
   const el = document.getElementById('bal-list');
-  el.innerHTML = `<div class="table">${group('Owing', owing, 'owe', 'owing')}${group('In credit', credit, 'credit', 'credit')}${group('Settled', settled, 'zero', 'settled')}${group('Not recorded', unknown, 'unknown', '')}</div>`;
+  el.innerHTML = `<div class="table"><div class="tr hd bal"><span class="label">Player</span><span class="label" style="text-align:right">Last played</span><span class="label" style="text-align:right">KES</span></div>${list.map(row).join('')}</div>`;
   el.onclick = e => { const r = e.target.closest('[data-pi]'); if (r) openProfile(ALL_PLAYERS[+r.dataset.pi]); };
 }
 
