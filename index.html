@@ -267,6 +267,19 @@
   .you-grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
   .you-grid .card { cursor: default; }
   .you-grid .card:hover { transform: none; }
+  .seed-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .seed-tools input { padding: 8px 10px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; font-size: 13px; width: 200px; }
+  .seed-head, .seed-row { display: grid; grid-template-columns: 150px repeat(6, 1fr) 70px; gap: 8px; align-items: center; }
+  .seed-head { padding: 0 10px 6px; }
+  .seed-head .label { text-align: center; } .seed-head .label:first-child { text-align: left; }
+  .seed-row { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); margin-top: 6px; }
+  .seed-row .n { font-weight: 600; font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .seed-row .n span { display: block; font-weight: 400; font-size: 11px; color: var(--fg-3); }
+  .seed-seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+  .seed-seg button { height: 26px; border: 1px solid var(--line-2); border-radius: 4px; font-size: 11px; color: var(--fg-2); background: transparent; }
+  .seed-seg button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .seed-row .st { font-size: 11px; color: var(--fg-3); text-align: right; }
+  @media (max-width: 900px) { .seed-head { display: none; } .seed-row { grid-template-columns: 1fr 1fr 1fr; } .seed-row .n { grid-column: 1 / -1; } .seed-seg { position: relative; } .seed-seg::before { content: attr(data-k); position: absolute; top: -14px; left: 0; font-size: 9px; color: var(--fg-3); letter-spacing: .08em; } .seed-row { row-gap: 20px; padding-top: 10px; } .seed-row .st { grid-column: 1 / -1; text-align: left; } }
   .admin-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); margin-top: 6px; }
   .admin-row .n { font-weight: 600; }
   .admin-row .st { font-size: 12px; color: var(--fg-2); margin-top: 2px; }
@@ -1141,7 +1154,8 @@ async function renderYou() {
         </div>
       </div>
     </section>
-    ${v.isAdmin ? `<section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
+    ${v.isAdmin ? `<section><div class="sh"><h2>Starting points</h2><span>Only you can see this · what voters see as the suggested level · saves as you tap</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   paintSelfPreview();
   if (v.isAdmin) renderAdmin(me);
 }
@@ -1160,10 +1174,35 @@ async function submitSelf() {
   btn.textContent = 'Update'; msg.textContent = 'Submitted'; msg.classList.add('show');
   VOTER.self = { stats: Object.assign({}, SELF.values), traits: SELF.traits.slice(), note, updated: new Date().toISOString() };
 }
+let SEED_FILTER = '';
+function renderSeedEditor(a) {
+  const el = document.getElementById('seed-body'); if (!el) return;
+  const q = SEED_FILTER.toLowerCase();
+  const list = [...ALL_PLAYERS].sort((x,y)=>y.count-x.count).filter(p => !q || p.name.toLowerCase().includes(q) || posClass(p.position).includes(q));
+  el.innerHTML = `
+    <div class="seed-tools"><input id="seed-q" placeholder="Filter by name or position" value="${esc(SEED_FILTER)}" oninput="SEED_FILTER=this.value; renderSeedEditor(window.__ADMIN); document.getElementById('seed-q').focus(); document.getElementById('seed-q').setSelectionRange(99,99)"><span class="muted" style="font-size:12px">${list.length} players · 1 = Needs work, 5 = Elite · dot in the ballot shows voters this level</span></div>
+    <div class="seed-head"><span class="label">Player</span>${STAT_KEYS.map(k=>`<span class="label">${k}</span>`).join('')}<span></span></div>
+    ${list.map(p => { const seed = a.seeds[p.name] || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{}); const pi = ALL_PLAYERS.indexOf(p);
+      return `<div class="seed-row" id="seed-${pi}"><div class="n">${esc(p.name)}<span>${esc(posName(p) || 'Unassigned')} · ${p.count} apps</span></div>${STAT_KEYS.map(k => `<div class="seed-seg" data-k="${k}">${LEVELS.map((L,i)=>`<button type="button" class="${levelIdx(seed[k])===i?'on':''}" title="${L.l}" onclick="setSeedLevel(${pi},'${k}',${i},this)">${i+1}</button>`).join('')}</div>`).join('')}<span class="st" id="seed-st-${pi}"></span></div>`; }).join('')}`;
+}
+const SEED_TIMERS = {};
+function setSeedLevel(pi, k, i, btn) {
+  const p = ALL_PLAYERS[pi], a = window.__ADMIN;
+  a.seeds[p.name] = Object.assign(STAT_KEYS.reduce((o,kk)=>(o[kk]=72,o),{}), a.seeds[p.name] || {}); a.seeds[p.name][k] = LEVELS[i].v;
+  btn.parentElement.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('on', j===i));
+  const st = document.getElementById('seed-st-'+pi); st.textContent = 'Saving…';
+  clearTimeout(SEED_TIMERS[pi]);
+  SEED_TIMERS[pi] = setTimeout(async () => {
+    let res; try { res = await api(null, { action:'setSeed', t: TOKEN, name: p.name, stats: a.seeds[p.name] }); } catch (e) { res = { ok:false, error: e.message }; }
+    st.textContent = res.ok ? 'Saved' : (res.error || 'Failed'); if (VOTER && VOTER.seeds) VOTER.seeds[p.name] = Object.assign({}, a.seeds[p.name]);
+  }, 600);
+}
 async function renderAdmin(me) {
   const el = document.getElementById('admin-body'); if (!el) return;
   let a; try { a = await api({ action:'admin', t: TOKEN }); } catch (e) { a = { ok:false, error: e.message }; }
-  if (!a.ok) { el.innerHTML = `<div class="error">${esc(a.error || 'Could not load')}</div>`; return; }
+  if (!a.ok) { el.innerHTML = `<div class="error">${esc(a.error || 'Could not load')}</div>`; const se = document.getElementById('seed-body'); if (se) se.innerHTML = ''; return; }
+  window.__ADMIN = a;
+  renderSeedEditor(a);
   if (!a.selfRatings.length) { el.innerHTML = `<div class="empty">Nobody has rated themselves yet.</div>`; return; }
   el.innerHTML = a.selfRatings.sort((x,y)=>x.name.localeCompare(y.name)).map((sr, i) => {
     const seed = a.seeds[sr.name] || {};
@@ -1176,7 +1215,13 @@ async function renderAdmin(me) {
 async function useAsSeed(i) {
   const sr = window.__ADMIN.selfRatings.sort((x,y)=>x.name.localeCompare(y.name))[i];
   let res; try { res = await api(null, { action:'setSeed', t: TOKEN, name: sr.name, stats: sr.stats }); } catch (e) { res = { ok:false, error: e.message }; }
-  if (res.ok) { VOTER = null; renderYou(); }
+  if (res.ok) { window.__ADMIN.seeds[sr.name] = Object.assign({}, sr.stats); if (VOTER && VOTER.seeds) VOTER.seeds[sr.name] = Object.assign({}, sr.stats); renderSeedEditor(window.__ADMIN); renderAdminList(); }
+}
+function renderAdminList() { const a = window.__ADMIN, el = document.getElementById('admin-body'); if (!a || !el) return;
+  el.innerHTML = a.selfRatings.sort((x,y)=>x.name.localeCompare(y.name)).map((sr, i) => { const seed = a.seeds[sr.name] || {}; const same = STAT_KEYS.every(k => levelIdx(seed[k] ?? 72) === levelIdx(sr.stats[k]));
+    return `<div class="admin-row"><div><div class="n">${esc(sr.name)} <span class="dim" style="font-weight:400">· ${sr.traits.join(', ') || 'no traits'}</span></div>
+      <div class="st">${STAT_KEYS.map(k => `${k} <b>${LEVELS[levelIdx(sr.stats[k])].l}</b>${seed[k] != null && levelIdx(seed[k]) !== levelIdx(sr.stats[k]) ? ` <span class="dim">(seed ${LEVELS[levelIdx(seed[k])].l})</span>` : ''}`).join(' · ')}${sr.note ? `<br>“${esc(sr.note)}”` : ''}</div></div>
+      <button class="btn ghost" ${same ? 'disabled' : ''} onclick="useAsSeed(${i})">${same ? 'Matches seed' : 'Use as seed'}</button></div>`; }).join('');
 }
 
 /* ── keyboard ── */
