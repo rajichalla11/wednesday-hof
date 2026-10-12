@@ -9,8 +9,9 @@ sheet). Setup takes about ten minutes, once.
 1. Create a new Google Sheet called something like `W9-10 Ratings` (private, just you).
 2. **Extensions → Apps Script**. Delete the default code, paste in `Code.gs`, save.
 3. In the editor, pick the `setup` function and press **Run**. Approve the permissions.
-   This creates the tabs `Voters`, `Votes`, `Windows` and `Seeds`, and opens the first
-   quarterly window (e.g. `2026-Q4`).
+   This creates the tabs `Voters`, `Votes`, `Windows` and `Seeds`, opens the first
+   quarterly window (e.g. `2026-Q4`), and on a first run also creates everyone's links
+   (the `Links` tab — see below).
 4. **Deploy → New deployment → Web app**. Execute as **Me**, who has access **Anyone**.
    Copy the web-app URL (ends in `/exec`).
 5. Put that URL into `index.html` as `VOTE_API` and push. The **Player Cards** tab goes live.
@@ -46,3 +47,8 @@ starting point voters see; they never show on the public cards.
   the top and bottom 20% of votes are trimmed once there are 5+, and votes are weighted
   by how well the voter knows the player (stored only as a low/medium/high bucket).
 - Comments are private: only the player they are about can read them, via their own link.
+
+## Current deployment (2026-10-12)
+
+- Sheet: `W9-10 Ratings` in Raji's Drive. Script project of the same name.
+- Web app URL is set as `VOTE_API` in `index.html`. Redeploying a new version keeps the same URL only if you **Manage deployments → edit → new version**; a brand-new deployment gets a new URL.

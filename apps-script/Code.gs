@@ -40,6 +40,7 @@ function setup() {
     players_().forEach(function (p) { s.appendRow([p.name].concat(SEED_BY_POS[posClass_(p.position)])); });
   }
   if (!props_().getProperty('window')) openWindow();
+  if (rows_(sheet_('Voters')).length === 0) generateLinks();   // first run: create everyone's links too
 }
 
 /** Creates a personal link for every player who doesn't have one yet. Writes them to a "Links" tab — send them, then run burnLinks(). */
