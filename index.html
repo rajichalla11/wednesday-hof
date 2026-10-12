@@ -81,42 +81,6 @@
   .ph img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
   .ph .fb { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700; color: var(--fg-3); }
 
-  /* CENTURY TILES */
-  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
-  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; cursor: pointer; transition: border-color .15s, transform .2s var(--ease); }
-  .tile:hover { border-color: var(--line-2); transform: translateY(-2px); }
-  .tile.inactive { opacity: .6; }
-  .tile .ph { aspect-ratio: 4 / 3.4; }
-  .tile .ph .fb { font-size: 40px; }
-  .tile .rank { position: absolute; top: 10px; left: 10px; background: rgba(14,14,15,.75); border: 1px solid var(--line-2); border-radius: 4px; font-size: 11px; font-weight: 700; padding: 3px 7px; }
-  .tile .body { padding: 12px 14px 14px; }
-  .tile .name { font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
-  .tile .sub { font-size: 12px; color: var(--fg-2); margin-top: 2px; }
-  .tile .row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; }
-  .tile .row b { font-size: 28px; line-height: 1; }
-  .tile .row span { font-size: 12px; color: var(--fg-2); }
-  .tile .meter { margin-top: 10px; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
-  .tile .meter i { display: block; height: 100%; background: var(--fg-2); }
-  .tile .next { display: flex; justify-content: space-between; font-size: 11px; color: var(--fg-3); margin-top: 6px; }
-
-  /* TABLE */
-  .table { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-  .tr { display: grid; grid-template-columns: 32px 1fr 120px 64px 80px; gap: 16px; align-items: center; padding: 11px 16px; border-top: 1px solid var(--line); cursor: pointer; transition: background .12s; }
-  .tr:hover { background: var(--surface); }
-  .tr.hd { padding: 8px 16px; cursor: default; border-top: none; background: var(--surface); }
-  .tr.hd:hover { background: var(--surface); }
-  .tr.hd .label { text-align: right; } .tr.hd .label:nth-child(-n+2) { text-align: left; }
-  .tr .n { color: var(--fg-3); font-size: 12px; }
-  .tr .name { font-weight: 600; min-width: 0; }
-  .tr .name span { display: block; font-weight: 400; font-size: 12px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tr .form { display: flex; gap: 3px; }
-  .tr .form i { width: 9px; height: 9px; border-radius: 2px; background: var(--line-2); }
-  .tr .form i.on { background: var(--fg); }
-  .tr .apps { font-size: 18px; text-align: right; }
-  .tr .to { font-size: 12px; color: var(--fg-2); text-align: right; }
-  .tr.inactive .name, .tr.inactive .apps { color: var(--fg-2); }
-  .tr.sub { grid-template-columns: 1fr; padding: 8px 16px; background: var(--surface); cursor: default; }
-  .tr.sub:hover { background: var(--surface); }
   .avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; }
   .avatar .fb { font-size: 11px; }
   .who { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -135,7 +99,9 @@
   .pill { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--tier); border: 1px solid color-mix(in srgb, var(--tier) 35%, transparent); border-radius: 4px; padding: 3px 6px; }
   .marks { display: flex; gap: 4px; }
   .marks i { font-style: normal; font-size: 10px; color: var(--fg-3); width: 18px; height: 18px; border: 1px solid var(--line-2); border-radius: 4px; display: grid; place-items: center; cursor: help; }
-  .c-photo { margin: 14px 16px 0; aspect-ratio: 4 / 3; border-radius: 6px; }
+  .c-photo-wrap { position: relative; margin: 14px 16px 0; }
+  .c-photo { aspect-ratio: 4 / 3; border-radius: 6px; }
+  .founder { position: absolute; left: 8px; bottom: 8px; z-index: 2; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--bg); background: var(--fg); border-radius: 4px; padding: 3px 7px; }
   .c-photo .fb { font-size: 34px; }
   .c-name { padding: 12px 16px 0; }
   .c-name b { font-size: 18px; font-weight: 700; letter-spacing: -.01em; display: block; line-height: 1.15; }
@@ -310,9 +276,8 @@
     .last { text-align: left; }
     .stats { grid-template-columns: repeat(3, 1fr); } .stats.four { grid-template-columns: 1fr 1fr; }
     .stat { padding: 14px 12px 12px; } .stat b { font-size: 26px; } .stat .label { font-size: 10px; }
-    .tr { grid-template-columns: 24px 1fr 56px 56px; gap: 10px; padding: 10px 12px; } .tr .form { display: none; }
     .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
-    .c-num { font-size: 36px; } .c-head, .c-name { padding-inline: 12px; } .c-photo, .c-stats { margin-inline: 12px; } .c-stat b { font-size: 14px; } .c-foot { padding-inline: 12px; }
+    .c-num { font-size: 36px; } .c-head, .c-name { padding-inline: 12px; } .c-photo-wrap, .c-stats { margin-inline: 12px; } .c-stat b { font-size: 14px; } .c-foot { padding-inline: 12px; }
     .c-stat { padding-right: 6px; } .c-stat:nth-child(3n+2), .c-stat:nth-child(3n+3) { padding-left: 6px; }
     .overlay { padding: 0; align-items: stretch; }
     .sheet { max-width: none !important; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 20px 16px 40px; }
@@ -325,7 +290,7 @@
   }
   @media (max-width: 480px) {
     .cards { grid-template-columns: 1fr; gap: 12px; }
-    .c-num { font-size: 44px; } .c-head, .c-name { padding-inline: 16px; } .c-photo, .c-stats { margin-inline: 16px; } .c-stat b { font-size: 16px; } .c-foot { padding-inline: 16px; }
+    .c-num { font-size: 44px; } .c-head, .c-name { padding-inline: 16px; } .c-photo-wrap, .c-stats { margin-inline: 16px; } .c-stat b { font-size: 16px; } .c-foot { padding-inline: 16px; }
     .c-stat { padding-right: 10px; } .c-stat:nth-child(3n+2), .c-stat:nth-child(3n+3) { padding-left: 10px; }
     .c-photo { aspect-ratio: 16 / 10; }
   }
@@ -338,7 +303,6 @@
     <div class="wordmark">Wednesday 9–10<span>Hall of Fame</span></div>
     <div class="tabs" id="tabs">
       <button class="tab active" data-tab="hall">Players<small id="tab-n-hall"></small></button>
-      <button class="tab" data-tab="cards">Cards<small id="tab-n-cards"></small></button>
       <button class="tab" data-tab="wall">Century Wall<small id="tab-n-wall"></small></button>
       <button class="tab" data-tab="records">Records<small id="tab-n-records"></small></button>
       <button class="tab" data-tab="timeline">Season<small id="tab-n-timeline"></small></button>
@@ -357,24 +321,11 @@
   </div>
 
   <section class="panel active" id="panel-hall">
-    <div class="sh"><h2>Century Club</h2><div class="seg" id="posfilter">
+    <div class="sh"><h2>Players</h2><div class="seg" id="posfilter">
       <button class="on" data-filter="">All</button><button data-filter="attack">Attack</button><button data-filter="midfield">Midfield</button><button data-filter="defense">Defense</button><button data-filter="other">Unassigned</button>
     </div></div>
-    <div class="tiles" id="hof-grid"><div class="loading">Loading…</div></div>
-    <section>
-      <div class="sh"><h2>Rising Stars</h2><span>20 to 99 appearances · active this year first</span></div>
-      <div id="rising-list"></div>
-    </section>
-    <section>
-      <div class="sh"><h2>Squad</h2><span>Under 20 appearances</span></div>
-      <div id="squad-list"></div>
-    </section>
-  </section>
-
-  <section class="panel" id="panel-cards">
-    <div class="sh"><h2>Cards</h2><span id="cards-status"></span></div>
     <div id="cards-intro"></div>
-    <div class="cards" id="cards-grid"></div>
+    <div class="cards" id="cards-grid"><div class="loading">Loading…</div></div>
     <div class="legend" id="cards-legend"></div>
   </section>
 
@@ -451,7 +402,7 @@ function captureToken() {
   if (!m) return false;
   TOKEN = m[1]; PENDING_VOTE = true;
   try { localStorage.setItem('w910_token', TOKEN); } catch (_) {}
-  history.replaceState(null, '', location.pathname + location.search + '#cards');
+  history.replaceState(null, '', location.pathname + location.search);
   return true;
 }
 captureToken();
@@ -582,7 +533,7 @@ async function load() {
     derive(ALL_PLAYERS, SESSIONS); RECORDS = computeRecords(ALL_PLAYERS, SESSIONS);
     render();
   } catch (err) {
-    document.getElementById('hof-grid').innerHTML = `<div class="error">Could not load the sheet. Make sure it is shared as "Anyone with the link". ${esc(err.message)}</div>`;
+    document.getElementById('cards-grid').innerHTML = `<div class="error" style="grid-column:1/-1">Could not load the sheet. Make sure it is shared as "Anyone with the link". ${esc(err.message)}</div>`;
     console.error(err);
   }
 }
@@ -707,36 +658,31 @@ function render() {
   document.getElementById('tab-n-hall').textContent = ALL_PLAYERS.length;
   document.getElementById('tab-n-records').textContent = RECORDS.length;
   document.getElementById('tab-n-timeline').textContent = n;
-  renderLists(); renderWall(); renderRecords(); renderTimeline(); renderBalances();
-  renderCards().then(() => { if (PENDING_VOTE && TOKEN) { PENDING_VOTE = false; showTab('cards', false); openBallot(); } });
+  renderPlayers(); renderWall(); renderRecords(); renderTimeline(); renderBalances();
+  renderCards().then(() => { if (PENDING_VOTE && TOKEN) { PENDING_VOTE = false; showTab('hall', false); openBallot(); } });
   document.getElementById('last-updated').textContent = 'Live from the sheet · ' + new Date().toLocaleString('en-GB', { dateStyle:'medium', timeStyle:'short' });
 }
-document.querySelectorAll('#posfilter button').forEach(b => b.onclick = () => { ACTIVE_FILTER = b.dataset.filter; document.querySelectorAll('#posfilter button').forEach(x=>x.classList.toggle('on', x===b)); renderLists(); });
+document.querySelectorAll('#posfilter button').forEach(b => b.onclick = () => { ACTIVE_FILTER = b.dataset.filter; document.querySelectorAll('#posfilter button').forEach(x=>x.classList.toggle('on', x===b)); renderPlayers(); });
 
-function renderLists() {
+function renderPlayers() {
+  const grid = document.getElementById('cards-grid');
   const base = ACTIVE_FILTER ? ALL_PLAYERS.filter(p=>posClass(p.position)===ACTIVE_FILTER) : ALL_PLAYERS;
-  const t = tiers(base);
-  const grid = document.getElementById('hof-grid');
-  if (!t.hof.length) grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${ACTIVE_FILTER ? 'No century members in this position.' : 'No one has reached 100 yet.'}</div>`;
-  else { let divided = false; grid.innerHTML = t.hof.map((p,i) => { const ms = milestoneFor(p); const div = (!divided && !p.gamesThisYear && i>0) ? (divided = true, `<div class="divider" style="grid-column:1/-1">Not seen in ${THIS_YEAR}</div>`) : '';
-    return `${div}<div class="tile${p.gamesThisYear?'':' inactive'}" data-pi="${ALL_PLAYERS.indexOf(p)}">${photo(p,'')}<span class="rank" style="position:absolute"></span>
-      <div class="body"><div class="name">${esc(p.name)}</div><div class="sub">${esc([posName(p), `#${p.rank} all-time`].filter(Boolean).join(' · '))}</div>
-      <div class="row"><b class="num">${p.count}</b><span>best ${p.maxStreak} · now ${p.currentStreak||'—'}</span></div>
-      <div class="meter"><i style="width:${ms.pct}%"></i></div><div class="next"><span>Next ${ms.next}</span><span>${ms.toGo} to go</span></div></div></div>`; }).join('');
-    grid.querySelectorAll('.tile').forEach(el => { el.querySelector('.rank').remove(); el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]); }); }
-  renderTable('rising-list', t.rising, 'rising');
-  renderTable('squad-list', t.squad, 'squad');
-}
-function formStrip(p) { return `<span class="form">${p.attendance.slice(-10).map(v=>`<i class="${v?'on':''}"></i>`).join('')}</span>`; }
-function renderTable(id, list, tier) {
-  const el = document.getElementById(id);
-  if (!list.length) { el.innerHTML = `<div class="empty">${ACTIVE_FILTER ? 'Nobody in this position.' : 'Nobody here yet.'}</div>`; return; }
-  let divided = false;
-  el.innerHTML = `<div class="table"><div class="tr hd"><span class="label">#</span><span class="label">Player</span><span class="label">Last 10</span><span class="label">Apps</span><span class="label">To 100</span></div>` +
-    list.map((p,i) => { const div = (!divided && !p.gamesThisYear && i>0) ? (divided = true, `<div class="tr sub"><span class="label">Not seen in ${THIS_YEAR}</span></div>`) : '';
-      const sub = [posName(p), p.gamesThisYear ? `Debut ${fmtSession(SESSIONS[p.firstIdx], false)}` : `Last played ${fmtSession(SESSIONS[p.lastIdx], false)}`].filter(Boolean).join(' · ');
-      return `${div}<div class="tr${p.gamesThisYear?'':' inactive'}" data-pi="${ALL_PLAYERS.indexOf(p)}"><span class="n">${i+1}</span><span class="who">${photo(p,'avatar')}<span class="name">${esc(p.name)}<span>${esc(sub)}</span></span></span>${formStrip(p)}<span class="apps num">${p.count}</span><span class="to">${100-p.count}</span></div>`; }).join('') + '</div>';
-  el.querySelectorAll('.tr[data-pi]').forEach(r => r.onclick = () => openProfile(ALL_PLAYERS[+r.dataset.pi]));
+  const groups = [['icon','Icon · 100+'],['gold','Gold · 50+'],['silver','Silver · 20+'],['bronze','Bronze']];
+  let html = '';
+  for (const [tier, title] of groups) {
+    const list = base.filter(p => tierOf(p) === tier).sort(activeFirst);
+    if (!list.length) continue;
+    html += `<div class="group">${title} · ${list.length}</div>`;
+    let divided = false;
+    for (let i = 0; i < list.length; i++) { const p = list[i];
+      if (!divided && !p.gamesThisYear && i > 0) { divided = true; html += `<div class="divider" style="grid-column:1/-1;margin:4px 0 0">Not seen in ${THIS_YEAR}</div>`; }
+      const r = RATINGS && RATINGS.ok ? (RATINGS.players[p.name] || { n:0 }) : { n:0 };
+      const prev = RATINGS && RATINGS.prev && RATINGS.prev[p.name] && RATINGS.prev[p.name].stats;
+      html += cardHtml(p, r.stats || null, { n: RATINGS && RATINGS.ok ? r.n : null, prev });
+    }
+  }
+  grid.innerHTML = html || `<div class="empty" style="grid-column:1/-1">Nobody in this position.</div>`;
+  grid.querySelectorAll('.card').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
 }
 
 /* ── wall ── */
@@ -910,23 +856,20 @@ function cardHtml(p, stats, opts = {}) {
     else foot = `<span>${opts.n != null ? `${opts.n} of ${RATINGS ? RATINGS.minVotes : 3} votes` : 'preview'}</span><span>${esc((RECORD_HOLDERS[p.name]||[])[0] || '')}</span>`; }
   return `<div class="card ${tier}${foil?' foil':''}${rated?'':' unrated'}" data-pi="${ALL_PLAYERS.indexOf(p)}">
     <div class="c-head"><div><div class="c-num num">${p.count}</div><div class="label">Appearances</div></div><div class="c-tier"><span class="pill">${TIER_NAME[tier]}</span><div class="marks">${badges.map(b=>`<i title="${esc(b.d||b.t)}">${b.i}</i>`).join('')}</div></div></div>
-    ${photo(p,'c-photo')}
+    <div class="c-photo-wrap">${photo(p,'c-photo')}${p.attendance[0]===1 ? `<span class="founder" title="Played the very first session, ${esc(fmtSession(SESSIONS[0],false))}">⚑ Founder</span>` : ''}</div>
     <div class="c-name"><b>${esc(p.name)}</b><span>${esc([posName(p), p.foot ? p.foot+' foot' : ''].filter(Boolean).join(' · ') || ' ')}</span></div>
     <div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>
     <div class="c-foot">${foot}</div></div>`;
 }
 async function renderCards() {
-  const intro = document.getElementById('cards-intro'), grid = document.getElementById('cards-grid'), status = document.getElementById('cards-status'), tabN = document.getElementById('tab-n-cards');
-  if (!VOTE_API) { grid.innerHTML = `<div class="empty" style="grid-column:1/-1">Ratings are switched off.</div>`; return; }
+  const intro = document.getElementById('cards-intro'), legend = document.getElementById('cards-legend');
+  if (!VOTE_API) { renderPlayers(); return; }
   try { RATINGS = await api({ action:'results' }); } catch (e) { RATINGS = null; }
-  if (!RATINGS || !RATINGS.ok) { tabN.textContent = ''; grid.innerHTML = `<div class="empty" style="grid-column:1/-1">Could not reach the ratings backend.</div>`; return; }
-  const rated = ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats);
-  tabN.textContent = rated.length;
-  status.textContent = `Window ${RATINGS.window} · ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated.length} of ${ALL_PLAYERS.length} rated`;
-  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:62ch;margin-bottom:16px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats are rated anonymously by teammates who have played with you, and show once three have.${TOKEN ? '' : ' Got a personal link? Open it to rate.'}</p>${TOKEN ? `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>` : ''}`;
-  grid.innerHTML = [...ALL_PLAYERS].sort((a,b)=>b.count-a.count).map(p => { const r = RATINGS.players[p.name] || { n:0 }; const prev = RATINGS.prev && RATINGS.prev[p.name] && RATINGS.prev[p.name].stats; return cardHtml(p, r.stats || null, { n:r.n, prev }); }).join('');
-  grid.querySelectorAll('.card').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
-  document.getElementById('cards-legend').innerHTML = `<span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Marks under the tier · badges, hover for details</span>`;
+  const ok = RATINGS && RATINGS.ok;
+  const rated = ok ? ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats).length : 0;
+  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats are rated anonymously by teammates who have played with you, and show once three have.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${TOKEN && ok ? `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>` : ''}`;
+  legend.innerHTML = `<span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Marks under the tier · badges, hover for details</span>`;
+  renderPlayers();
 }
 
 /* ── ballot ── */
@@ -1023,8 +966,9 @@ document.addEventListener('keydown', e => {
 });
 
 /* ── tabs ── */
-const TABS = ['hall','cards','wall','records','timeline','balances'];
+const TABS = ['hall','wall','records','timeline','balances'];
 function showTab(name, updateHash = true) {
+  if (name === 'cards') name = 'hall';
   if (!TABS.includes(name)) name = 'hall';
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-'+name));
@@ -1036,7 +980,7 @@ function showTab(name, updateHash = true) {
   if (updateHash && window.scrollY > anchor) window.scrollTo({ top: anchor - 70, behavior:'instant' });
 }
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
-window.addEventListener('hashchange', () => { if (captureToken()) { showTab('cards', false); if (ALL_PLAYERS.length) { PENDING_VOTE = false; VOTER = null; renderBalances(); openBallot(); } return; } showTab(location.hash.slice(1) || 'hall', false); });
+window.addEventListener('hashchange', () => { if (captureToken()) { showTab('hall', false); if (ALL_PLAYERS.length) { PENDING_VOTE = false; VOTER = null; renderBalances(); openBallot(); } return; } showTab(location.hash.slice(1) || 'hall', false); });
 showTab(location.hash.slice(1) || 'hall', false);
 load();
 </script>
