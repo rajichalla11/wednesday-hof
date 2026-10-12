@@ -275,9 +275,10 @@
   .seed-row { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); margin-top: 6px; }
   .seed-row .n { font-weight: 600; font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .seed-row .n span { display: block; font-weight: 400; font-size: 11px; color: var(--fg-3); }
-  .seed-seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
-  .seed-seg button { height: 26px; border: 1px solid var(--line-2); border-radius: 4px; font-size: 11px; color: var(--fg-2); background: transparent; }
-  .seed-seg button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .seed-seg { display: grid; gap: 2px; justify-items: stretch; }
+  .seed-seg input { width: 100%; height: 30px; padding: 0 6px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 4px; color: var(--fg); font: inherit; font-size: 14px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+  .seed-seg input:focus { outline: none; border-color: var(--fg-3); }
+  .seed-seg small { font-size: 10px; color: var(--fg-3); text-align: center; }
   .seed-row .st { font-size: 11px; color: var(--fg-3); text-align: right; }
   @media (max-width: 900px) { .seed-head { display: none; } .seed-row { grid-template-columns: 1fr 1fr 1fr; } .seed-row .n { grid-column: 1 / -1; } .seed-seg { position: relative; } .seed-seg::before { content: attr(data-k); position: absolute; top: -14px; left: 0; font-size: 9px; color: var(--fg-3); letter-spacing: .08em; } .seed-row { row-gap: 20px; padding-top: 10px; } .seed-row .st { grid-column: 1 / -1; text-align: left; } }
   .admin-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); margin-top: 6px; }
@@ -458,7 +459,7 @@ const STAT_NAMES = { PAC:'Pace', SHO:'Shooting', PAS:'Passing', DRI:'Dribbling',
 const STAT_GUIDE = { PAC:'First to loose balls, recovery runs', SHO:'Finishing and shot quality', PAS:'Picks a pass, keeps the ball', DRI:'Close control, beats a man', DEF:'Tackles, blocks, positioning', PHY:'Strength, stamina, wins duels' };
 const LEVELS = [{ v:52, l:'Needs work' }, { v:62, l:'Decent' }, { v:72, l:'Good' }, { v:82, l:'Very good' }, { v:92, l:'Elite' }];
 const levelIdx = v => LEVELS.reduce((b, L, i) => Math.abs(L.v - v) < Math.abs(LEVELS[b].v - v) ? i : b, 0);
-const TRAITS = { ENGINE:'Never stops running', FINISHER:'Puts chances away', PLAYMAKER:'Makes the team tick', WALL:'Nothing gets past', MAGICIAN:'Does things with the ball', ROCKET:'Pure pace', CAPTAIN:'Organises, talks, leads', CLUTCH:'Shows up when it matters', SWEEPER:'Reads danger early', GLOVES:'Goes in goal and means it', WILDCARD:'Anything can happen', ENFORCER:'Wins the physical battles' };
+const TRAITS = { ENGINE:'Never stops running', FINISHER:'Puts chances away', PLAYMAKER:'Makes the team tick', WALL:'Nothing gets past', MAGICIAN:'Does things with the ball', ROCKET:'Pure pace', CAPTAIN:'Organises, talks, leads', CLUTCH:'Shows up when it matters', SWEEPER:'Reads danger early', GLOVES:'Goes in goal and means it', WILDCARD:'Anything can happen', ENFORCER:'Wins the physical battles', HEART:'Never hides, never gives up', BRAIN:'Always a step ahead', HUSTLER:'First to press, last to stop', SNIPER:'Dangerous from distance', JOKER:'Keeps everyone laughing', ROCK:'Same standard every week' };
 const MAX_TRAITS = 3;
 let SELF = null;
 
@@ -877,7 +878,7 @@ function openProfile(p) {
         ${heat}
         <div class="heat-legend"><span><i style="background:var(--fg-2)"></i>Played</span><span><i style="background:var(--surface-2)"></i>Missed</span><span><i style="background:var(--fg)"></i>Current streak</span><span><i style="outline:1px solid var(--gold);outline-offset:1px"></i>100th</span></div>
         <div class="yrs">${p.years.map(y=>`<div class="yr"><span class="y">${y.y}</span><i style="--w:${y.eligible ? y.got/maxEligible*100 : 0}%"></i><span class="v">${y.got} / ${y.eligible}</span></div>`).join('')}</div>
-        ${r && r.stats ? `<div class="label" style="margin-top:22px">Teammate ratings · ${r.n} votes</div><div class="c-stats" style="margin:8px 0 0">${STAT_KEYS.map(k=>`<div class="c-stat"><span class="label">${k}</span><b class="num">${r.stats[k]}</b></div>`).join('')}</div>` : ''}
+        ${r && r.stats ? `<div class="label" style="margin-top:22px">Ratings · ${r.n ? r.n + ' vote' + (r.n===1?'':'s') : 'starting point, no votes yet'}</div><div class="c-stats" style="margin:8px 0 0">${STAT_KEYS.map(k=>`<div class="c-stat"><span class="label">${k}</span><b class="num">${r.stats[k]}</b></div>`).join('')}</div>` : ''}
         ${r && r.traits && Object.keys(r.traits).length ? `<div class="c-traits" style="padding:10px 0 0">${Object.keys(r.traits).sort((a,b)=>r.traits[b]-r.traits[a]).slice(0,5).map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)} · ${r.traits[t]}</span>`).join('')}</div>` : ''}
         <div class="d-foot">
           <div><span>Seasons</span><b>${seasons}${first&&first.date ? ` <span class="dim" style="font-weight:400">since ${first.date.getFullYear()}</span>` : ''}</b></div>
@@ -929,7 +930,7 @@ function cardHtml(p, stats, opts = {}) {
   const badges = badgesFor(p).sort((a,b)=>(b.rare?1:0)-(a.rare?1:0)).slice(0,3);
   const top = rated ? STAT_KEYS.reduce((b,k)=>stats[k]>stats[b]?k:b, STAT_KEYS[0]) : null;
   let foot = opts.meta || '';
-  if (!foot) { if (rated) { let trend = ''; if (opts.prev) { const d = avgOf(stats)-avgOf(opts.prev); if (d) trend = `<span class="${d>0?'up':'down'}">${d>0?'▲':'▼'} ${Math.abs(d)}</span>`; } foot = `<span>${opts.n} vote${opts.n===1?'':'s'}</span>${trend || `<span>${esc((RECORD_HOLDERS[p.name]||[])[0] || TIER_NAME[tier])}</span>`}`; }
+  if (!foot) { if (rated) { let trend = ''; if (opts.prev) { const d = avgOf(stats)-avgOf(opts.prev); if (d) trend = `<span class="${d>0?'up':'down'}">${d>0?'▲':'▼'} ${Math.abs(d)}</span>`; } foot = `<span>${opts.n ? `${opts.n} vote${opts.n===1?'':'s'}` : 'Starting point'}</span>${trend || `<span>${esc((RECORD_HOLDERS[p.name]||[])[0] || TIER_NAME[tier])}</span>`}`; }
     else foot = `<span>${opts.n != null ? `${opts.n} of ${RATINGS ? RATINGS.minVotes : 3} votes` : 'preview'}</span><span>${esc((RECORD_HOLDERS[p.name]||[])[0] || '')}</span>`; }
   let traits = opts.traits || [];
   if (!opts.traits && RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].traits) {
@@ -949,7 +950,7 @@ async function renderCards() {
   try { RATINGS = await api({ action:'results' }); } catch (e) { RATINGS = null; }
   const ok = RATINGS && RATINGS.ok;
   const rated = ok ? ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats).length : 0;
-  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats are rated anonymously by teammates who have played with you, and show once three have.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>` : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Get your personal link</button>`) : ''}`;
+  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from Raji's call and move with anonymous votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>` : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Get your personal link</button>`) : ''}`;
   legend.innerHTML = `<span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Marks under the tier · badges, hover for details</span>`;
   renderPlayers();
 }
@@ -1123,7 +1124,7 @@ async function renderYou() {
   body.innerHTML = `
     <div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
     <div class="you-grid">
-      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${r.stats ? `Rated by ${r.n} teammates.` : `${r.n} of ${RATINGS ? RATINGS.minVotes : 3} votes so far. Stats show at three.`}</p></div>
+      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${r.stats ? (r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
       <div>
         <div class="stats four">
           <div class="stat"><b class="num">${me.count}</b><div class="label">Appearances</div></div>
@@ -1180,22 +1181,24 @@ function renderSeedEditor(a) {
   const q = SEED_FILTER.toLowerCase();
   const list = [...ALL_PLAYERS].sort((x,y)=>y.count-x.count).filter(p => !q || p.name.toLowerCase().includes(q) || posClass(p.position).includes(q));
   el.innerHTML = `
-    <div class="seed-tools"><input id="seed-q" placeholder="Filter by name or position" value="${esc(SEED_FILTER)}" oninput="SEED_FILTER=this.value; renderSeedEditor(window.__ADMIN); document.getElementById('seed-q').focus(); document.getElementById('seed-q').setSelectionRange(99,99)"><span class="muted" style="font-size:12px">${list.length} players · 1 = Needs work, 5 = Elite · dot in the ballot shows voters this level</span></div>
+    <div class="seed-tools"><input id="seed-q" placeholder="Filter by name or position" value="${esc(SEED_FILTER)}" oninput="SEED_FILTER=this.value; renderSeedEditor(window.__ADMIN); document.getElementById('seed-q').focus(); document.getElementById('seed-q').setSelectionRange(99,99)"><span class="muted" style="font-size:12px">${list.length} players · exact numbers 40–99 · these show on the cards now; votes trim them (your number counts like ${RATINGS && RATINGS.priorWeight || 3} votes)</span></div>
     <div class="seed-head"><span class="label">Player</span>${STAT_KEYS.map(k=>`<span class="label">${k}</span>`).join('')}<span></span></div>
     ${list.map(p => { const seed = a.seeds[p.name] || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{}); const pi = ALL_PLAYERS.indexOf(p);
-      return `<div class="seed-row" id="seed-${pi}"><div class="n">${esc(p.name)}<span>${esc(posName(p) || 'Unassigned')} · ${p.count} apps</span></div>${STAT_KEYS.map(k => `<div class="seed-seg" data-k="${k}">${LEVELS.map((L,i)=>`<button type="button" class="${levelIdx(seed[k])===i?'on':''}" title="${L.l}" onclick="setSeedLevel(${pi},'${k}',${i},this)">${i+1}</button>`).join('')}</div>`).join('')}<span class="st" id="seed-st-${pi}"></span></div>`; }).join('')}`;
+      return `<div class="seed-row" id="seed-${pi}"><div class="n">${esc(p.name)}<span>${esc(posName(p) || 'Unassigned')} · ${p.count} apps</span></div>${STAT_KEYS.map(k => `<div class="seed-seg" data-k="${k}"><input type="number" min="40" max="99" step="1" inputmode="numeric" value="${seed[k]}" id="seed-${pi}-${k}" oninput="setSeedValue(${pi},'${k}',this.value)"><small id="seed-${pi}-${k}-l">${LEVELS[levelIdx(seed[k])].l}</small></div>`).join('')}<span class="st" id="seed-st-${pi}"></span></div>`; }).join('')}`;
 }
 const SEED_TIMERS = {};
-function setSeedLevel(pi, k, i, btn) {
+function setSeedValue(pi, k, raw) {
+  const v = Math.round(Number(raw)); if (isNaN(v) || v < 40 || v > 99) return;
   const p = ALL_PLAYERS[pi], a = window.__ADMIN;
-  a.seeds[p.name] = Object.assign(STAT_KEYS.reduce((o,kk)=>(o[kk]=72,o),{}), a.seeds[p.name] || {}); a.seeds[p.name][k] = LEVELS[i].v;
-  btn.parentElement.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('on', j===i));
+  a.seeds[p.name] = Object.assign(STAT_KEYS.reduce((o,kk)=>(o[kk]=72,o),{}), a.seeds[p.name] || {}); a.seeds[p.name][k] = v;
+  const lab = document.getElementById(`seed-${pi}-${k}-l`); if (lab) lab.textContent = LEVELS[levelIdx(v)].l;
   const st = document.getElementById('seed-st-'+pi); st.textContent = 'Saving…';
   clearTimeout(SEED_TIMERS[pi]);
   SEED_TIMERS[pi] = setTimeout(async () => {
     let res; try { res = await api(null, { action:'setSeed', t: TOKEN, name: p.name, stats: a.seeds[p.name] }); } catch (e) { res = { ok:false, error: e.message }; }
     st.textContent = res.ok ? 'Saved' : (res.error || 'Failed'); if (VOTER && VOTER.seeds) VOTER.seeds[p.name] = Object.assign({}, a.seeds[p.name]);
-  }, 600);
+    if (res.ok && RATINGS && RATINGS.ok) { RATINGS = null; renderCards(); }
+  }, 900);
 }
 async function renderAdmin(me) {
   const el = document.getElementById('admin-body'); if (!el) return;

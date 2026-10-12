@@ -19,10 +19,11 @@ const MAIN_SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/' + MAIN_SHEET_ID + '/export?format=csv&gid=0';
 const SITE_URL = 'https://wednesday910.vercel.app/';
 const STATS = ['PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY'];
-const TRAITS = ['ENGINE', 'FINISHER', 'PLAYMAKER', 'WALL', 'MAGICIAN', 'ROCKET', 'CAPTAIN', 'CLUTCH', 'SWEEPER', 'GLOVES', 'WILDCARD', 'ENFORCER'];
+const TRAITS = ['ENGINE', 'FINISHER', 'PLAYMAKER', 'WALL', 'MAGICIAN', 'ROCKET', 'CAPTAIN', 'CLUTCH', 'SWEEPER', 'GLOVES', 'WILDCARD', 'ENFORCER', 'HEART', 'BRAIN', 'HUSTLER', 'SNIPER', 'JOKER', 'ROCK'];
 const MAX_TRAITS = 3;
 const MIN_SHARED = 3;      // sessions you must have shared to rate someone
-const MIN_VOTES = 3;       // ballots before a rating is shown
+const MIN_VOTES = 3;       // ballots before a rating is shown for a player with no baseline
+const PRIOR_WEIGHT = 3;    // the admin's exact baseline counts like this many votes
 const RMIN = 40, RMAX = 99;
 const SESSION_START_COL = 8;
 // Starting points by position (PAC SHO PAS DRI DEF PHY) — overwrite in the Seeds tab
@@ -212,13 +213,15 @@ function results_() {
   const windows = rows_(sheet_('Windows')).map(function (r) { return r[0]; });
   const prevWin = windows[windows.indexOf(win) - 1] || null;
   const all = rows_(sheet_('Votes'));
-  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, players: aggregate_(all.filter(function (r) { return r[0] === win; })), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; })) : {}, prevWindow: prevWin };
+  const seeds = seeds_();
+  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, players: aggregate_(all.filter(function (r) { return r[0] === win; }), seeds), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds) : {}, prevWindow: prevWin };
   out.ballots = Object.keys(all.filter(function (r) { return r[0] === win; }).reduce(function (m, r) { m[r[1]] = 1; return m; }, {})).length;
   cache_().put('results', JSON.stringify(out), 120);
   return out;
 }
 
-function aggregate_(rows) {
+function aggregate_(rows, seeds) {
+  seeds = seeds || {};
   // voter calibration: how generous is each ballot compared with everyone?
   const perBallot = {}; let gSum = 0, gN = 0;
   rows.forEach(function (r) { const b = r[1]; perBallot[b] = perBallot[b] || { s: 0, n: 0 }; STATS.forEach(function (_, i) { const v = Number(r[4 + i]); perBallot[b].s += v; perBallot[b].n++; gSum += v; gN++; }); });
@@ -228,17 +231,20 @@ function aggregate_(rows) {
   const byTarget = {};
   rows.forEach(function (r) { (byTarget[r[2]] = byTarget[r[2]] || []).push(r); });
   const res = {};
-  Object.keys(byTarget).forEach(function (t) {
-    const vs = byTarget[t], n = vs.length;
+  const names = {}; Object.keys(byTarget).forEach(function (t) { names[t] = 1; }); Object.keys(seeds).forEach(function (t) { names[t] = 1; });
+  Object.keys(names).forEach(function (t) {
+    const vs = byTarget[t] || [], n = vs.length, base = seeds[t] || null;
     const entry = { n: n, traits: {} };
     vs.forEach(function (r) { String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean).forEach(function (t) { entry.traits[t] = (entry.traits[t] || 0) + 1; }); });
-    if (n >= MIN_VOTES) {
+    if (base) entry.base = base;
+    if (base || n >= MIN_VOTES) {
       entry.stats = {};
       STATS.forEach(function (k, i) {
         let items = vs.map(function (r) { return { v: Number(r[4 + i]) - 0.5 * offset[r[1]], w: Number(r[3]) || 1 }; }).sort(function (a, b) { return a.v - b.v; });
         if (n >= 5) { const cut = Math.floor(n * 0.2); items = items.slice(cut, items.length - cut); }
-        const ws = items.reduce(function (a, x) { return a + x.w; }, 0);
-        entry.stats[k] = Math.max(RMIN, Math.min(RMAX, Math.round(items.reduce(function (a, x) { return a + x.v * x.w; }, 0) / ws)));
+        let sum = items.reduce(function (a, x) { return a + x.v * x.w; }, 0), ws = items.reduce(function (a, x) { return a + x.w; }, 0);
+        if (base) { sum += PRIOR_WEIGHT * base[k]; ws += PRIOR_WEIGHT; }   // the baseline is a strong prior; votes trim it
+        entry.stats[k] = Math.max(RMIN, Math.min(RMAX, Math.round(sum / ws)));
       });
     }
     res[t] = entry;

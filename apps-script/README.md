@@ -51,10 +51,14 @@ they can claim again.
 - One ballot per link; re-rating someone replaces the earlier rating.
 - You can only rate teammates you've shared at least **3** sessions with, never yourself.
 - Values are clamped to 40–99; comments to 280 characters.
-- A player's card only shows a rating once **3** ballots have rated them.
-- Aggregation: each voter's generosity is half-corrected toward the group average,
-  the top and bottom 20% of votes are trimmed once there are 5+, and votes are weighted
-  by how well the voter knows the player (stored only as a low/medium/high bucket).
+- The admin sets an exact baseline per player (Seeds tab, or the Starting points editor on
+  the admin's You tab). Cards show the baseline from day one. Each vote is a level (Needs
+  work … Elite → 52/62/72/82/92) and the shown figure is a weighted mean in which the
+  baseline counts like 3 votes, so votes trim the baseline rather than replace it. A player
+  with no baseline needs 3 votes before anything shows.
+- Each voter's generosity is half-corrected toward the group average, the top and bottom
+  20% of votes are trimmed once there are 5+, and votes are weighted by how well the voter
+  knows the player (stored only as a low/medium/high bucket).
 - Comments are private: only the player they are about can read them, via their own link.
 
 ## Current deployment (2026-10-12)
