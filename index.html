@@ -298,10 +298,6 @@
   .saved.show { opacity: 1; }
 
   /* BALANCES */
-  .tr.bal { grid-template-columns: 1fr 170px 110px; }
-  .amt { font-size: 15px; text-align: right; color: var(--fg-2); }
-  .amt.unknown { color: var(--fg-3); }
-  .lastp { font-size: 12px; color: var(--fg-3); text-align: right; }
   .stats.four { grid-template-columns: repeat(4, 1fr); }
 
   footer { border-top: 1px solid var(--line); margin-top: 72px; padding-top: 18px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--fg-3); }
@@ -315,7 +311,6 @@
     .stats { grid-template-columns: repeat(3, 1fr); } .stats.four { grid-template-columns: 1fr 1fr; }
     .stat { padding: 14px 12px 12px; } .stat b { font-size: 26px; } .stat .label { font-size: 10px; }
     .tr { grid-template-columns: 24px 1fr 56px 56px; gap: 10px; padding: 10px 12px; } .tr .form { display: none; }
-    .tr.bal { grid-template-columns: 1fr 90px; } .tr.bal .lastp { display: none; }
     .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
     .c-num { font-size: 36px; } .c-head, .c-name { padding-inline: 12px; } .c-photo, .c-stats { margin-inline: 12px; } .c-stat b { font-size: 14px; } .c-foot { padding-inline: 12px; }
     .c-stat { padding-right: 6px; } .c-stat:nth-child(3n+2), .c-stat:nth-child(3n+3) { padding-left: 6px; }
@@ -347,7 +342,7 @@
       <button class="tab" data-tab="wall">Century Wall<small id="tab-n-wall"></small></button>
       <button class="tab" data-tab="records">Records<small id="tab-n-records"></small></button>
       <button class="tab" data-tab="timeline">Season<small id="tab-n-timeline"></small></button>
-      <button class="tab" data-tab="balances">Balances<small id="tab-n-balances"></small></button>
+      <button class="tab" data-tab="balances">Balance<small id="tab-n-balances"></small></button>
     </div>
   </nav>
 
@@ -403,7 +398,7 @@
   </section>
 
   <section class="panel" id="panel-balances">
-    <div class="sh"><h2>Balances</h2><span>From the sheet · negative means owing to the pot</span></div>
+    <div class="sh"><h2>Balance</h2><span>Personal · shown only to you</span></div>
     <div id="bal-list"></div>
   </section>
 
@@ -808,15 +803,22 @@ function renderTimeline() {
 
 /* ── balances ── */
 const kes = n => `KES ${Math.abs(Math.round(n)).toLocaleString()}`;
-function renderBalances() {
-  document.getElementById('tab-n-balances').textContent = '';
-  const list = [...ALL_PLAYERS].sort((a,b) => a.name.localeCompare(b.name));
-  const row = p => { const last = p.lastIdx>=0 ? SESSIONS[p.lastIdx] : null, known = p.balance !== null && !isNaN(p.balance);
-    const amt = !known ? '—' : p.balance === 0 ? '0' : (p.balance < 0 ? '−' : '+') + kes(p.balance).replace('KES ','');
-    return `<div class="tr bal" data-pi="${ALL_PLAYERS.indexOf(p)}"><span class="who">${photo(p,'avatar')}<span class="name">${esc(p.name)}</span></span><span class="lastp">${last ? 'last played ' + esc(fmtSession(last,false)) : ''}</span><span class="amt num ${known ? '' : 'unknown'}">${amt}</span></div>`; };
+async function renderBalances() {
   const el = document.getElementById('bal-list');
-  el.innerHTML = `<div class="table"><div class="tr hd bal"><span class="label">Player</span><span class="label" style="text-align:right">Last played</span><span class="label" style="text-align:right">KES</span></div>${list.map(row).join('')}</div>`;
-  el.onclick = e => { const r = e.target.closest('[data-pi]'); if (r) openProfile(ALL_PLAYERS[+r.dataset.pi]); };
+  document.getElementById('tab-n-balances').textContent = '';
+  if (!TOKEN) { el.innerHTML = `<div class="empty">Balances are personal. Open the site from your personal link to see yours.</div>`; return; }
+  if (!VOTER) { el.innerHTML = `<div class="loading">Checking your link…</div>`; try { VOTER = await api({ action:'me', t: TOKEN }); } catch (e) { VOTER = { ok:false, error: e.message }; } }
+  if (!VOTER.ok) { el.innerHTML = `<div class="error">${esc(VOTER.error || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
+  const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
+  if (!me) { el.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; return; }
+  const known = me.balance !== null && !isNaN(me.balance), last = me.lastIdx>=0 ? SESSIONS[me.lastIdx] : null;
+  const status = !known ? 'Not recorded on the sheet' : me.balance < 0 ? 'Owing to the pot' : me.balance > 0 ? 'In credit' : 'Settled';
+  el.innerHTML = `<div class="box" style="cursor:default;max-width:420px">
+      <div class="label">${esc(me.name)} · only you can see this</div>
+      <div class="big num">${known ? kes(me.balance) : '—'}<small>${esc(status)}</small></div>
+      <div class="muted" style="font-size:12px">${last ? 'Last played ' + esc(fmtSession(last,false)) + ' · ' : ''}Ask Raji if something looks wrong.</div>
+    </div>
+    <p class="foot-note">Anyone who has your link can open this, so keep it to yourself.</p>`;
 }
 
 /* ── dossier ── */
@@ -941,7 +943,7 @@ async function openBallot() {
   BALLOT = { me, queue, idx: 0 };
   renderBallotIntro();
 }
-function forgetToken() { try { localStorage.removeItem('w910_token'); } catch (_) {} TOKEN = ''; VOTER = null; closeBallotDirect(); renderCards(); }
+function forgetToken() { try { localStorage.removeItem('w910_token'); } catch (_) {} TOKEN = ''; VOTER = null; closeBallotDirect(); renderCards(); renderBalances(); }
 const doneCount = () => BALLOT.queue.filter(p => VOTER.mine[p.name]).length;
 function renderBallotIntro() {
   const { me, queue } = BALLOT, done = doneCount(), next = queue.findIndex(p => !VOTER.mine[p.name]);
@@ -1034,7 +1036,7 @@ function showTab(name, updateHash = true) {
   if (updateHash && window.scrollY > anchor) window.scrollTo({ top: anchor - 70, behavior:'instant' });
 }
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
-window.addEventListener('hashchange', () => { if (captureToken()) { showTab('cards', false); if (ALL_PLAYERS.length) { PENDING_VOTE = false; openBallot(); } return; } showTab(location.hash.slice(1) || 'hall', false); });
+window.addEventListener('hashchange', () => { if (captureToken()) { showTab('cards', false); if (ALL_PLAYERS.length) { PENDING_VOTE = false; VOTER = null; renderBalances(); openBallot(); } return; } showTab(location.hash.slice(1) || 'hall', false); });
 showTab(location.hash.slice(1) || 'hall', false);
 load();
 </script>
