@@ -283,6 +283,9 @@
   /* RECORD BOOKS */
   .records-section { margin-bottom: 72px; }
   .records { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 14px; }
+  .rec-group { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; margin: 18px 0 -2px; font-size: 9px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; color: var(--text-muted); }
+  .rec-group:first-child { margin-top: 0; }
+  .rec-group::after { content: ''; flex: 1; height: 1px; background: var(--card-border); }
   .rec { position: relative; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 3px; padding: 18px 18px 16px; cursor: pointer; overflow: hidden;
     opacity: 0; transform: translateY(18px); transition: opacity .7s var(--ease), transform .7s var(--ease), border-color .25s, box-shadow .3s; }
   .rec.in { opacity: 1; transform: none; }
@@ -295,6 +298,8 @@
   .rec-holder { display: flex; align-items: center; gap: 10px; }
   .rec-holder .r-avatar { width: 28px; height: 28px; }
   .rec-name { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.15; }
+  .rec-name em { font-style: normal; font-family: 'Raleway', sans-serif; font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-dim); margin-left: 6px; }
+  .rec-v small { white-space: normal; display: inline-block; max-width: 110px; vertical-align: middle; line-height: 1.3; }
   .rec-detail { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
 
   /* SEASON TIMELINE */
@@ -1232,38 +1237,97 @@ function fmtEta(d) {
   return `on pace for ${MONTH_LABELS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-/* ── RECORDS ── */
-function computeRecords(players, sessions) {
-  const thisYear = new Date().getFullYear();
-  const R = [];
-  const ls = maxBy(players, p=>p.maxStreak);
-  if (ls && ls.maxStreak) R.push({ key:'streak', glyph:'⚡', label:'Longest streak', value: ls.maxStreak, unit:'in a row', p: ls,
-    detail: `${fmtSession(sessions[ls.maxStreakStart],false)} → ${fmtSession(sessions[ls.maxStreakEnd],false)}` });
-  let best = null;
-  for (const p of players) for (const r of p.years) if (!best || r.got > best.got) best = { p, ...r };
-  if (best) R.push({ key:'year', glyph:'◆', label:'Most games in a year', value: best.got, unit:`in ${best.y}`, p: best.p, detail:`of ${best.total} sessions that year` });
-  const ty = sessions.filter(s=>s.year===thisYear).length;
-  const im = maxBy(players, p=>p.gamesThisYear);
-  if (im && im.gamesThisYear) R.push({ key:'iron', glyph:'♜', label:`Iron man ${thisYear}`, value: im.gamesThisYear, unit:`of ${ty}`, p: im, detail:`${Math.round(100*im.gamesThisYear/Math.max(1,ty))}% of nights this year` });
-  const eligible = players.filter(p=>p.firstIdx>=0 && sessions.length-p.firstIdx>=30);
-  const br = maxBy(eligible, p=>p.played/(sessions.length-p.firstIdx));
-  if (br) R.push({ key:'rate', glyph:'◎', label:'Best attendance', value: Math.round(100*br.played/(sessions.length-br.firstIdx))+'%', unit:'since debut', p: br, detail:`${br.played} of ${sessions.length-br.firstIdx} possible` });
-  const cb = maxBy(players.filter(p=>p.longestGap>=5), p=>p.longestGap);
-  if (cb) R.push({ key:'comeback', glyph:'↻', label:'Greatest comeback', value: cb.longestGap, unit:'missed', p: cb, detail:`then back on ${fmtSession(sessions[cb.comebackIdx],false)}` });
-  const bn = maxBy(sessions, s=>s.turnout);
-  if (bn) R.push({ key:'night', glyph:'✦', label:'Biggest night', value: bn.turnout, unit:'players', session: bn, detail:`${DAY_FULL[bn.date?bn.date.getDay():0]||''}` });
-  const founders = players.filter(p=>p.attendance[0]===1).sort((a,b)=>b.count-a.count);
-  if (founders.length) R.push({ key:'founders', glyph:'⚑', label:'Founding members', value: founders.length, unit:'at session one', names: founders.map(f=>f.name), people: founders,
-    detail:`${founders.reduce((a,f)=>a+f.count,0).toLocaleString()} appearances between them` });
-  let duo = null;
-  for (let a=0;a<players.length;a++) for (let b=a+1;b<players.length;b++) {
-    let t=0; const A=players[a].attendance, B=players[b].attendance;
-    for (let i=0;i<A.length;i++) t += A[i] & B[i];
-    if (!duo || t>duo.t) duo = { a:players[a], b:players[b], t };
+/* ── RECORDS ──
+   Deliberately a mix: volume records (streaks, games in a year) reward the
+   regulars, so the rest measure pace, loyalty, timing and share of games to
+   spread the board across the group. Ties are shown as ties. */
+function topAll(arr, f, { min = null, lowest = false } = {}) {
+  let best = null, holders = [];
+  for (const p of arr) {
+    const v = f(p); if (v == null || isNaN(v)) continue;
+    const r = Math.round(v * 1000) / 1000;
+    if (best === null || (lowest ? r < best : r > best)) { best = r; holders = [p]; }
+    else if (r === best) holders.push(p);
   }
-  if (duo && duo.t) R.push({ key:'duo', glyph:'∞', label:'Most nights together', value: duo.t, unit:'shared', p: duo.a, p2: duo.b, detail:'on the pitch at the same time' });
+  if (best === null || (min !== null && best < min)) return null;
+  return { value: best, holders, p: holders[0] };
+}
+
+function computeRecords(players, sessions) {
+  const thisYear = new Date().getFullYear(), n = sessions.length;
+  const R = [];
+  const push = (t, key) => { if (t) R.push({ ...key, value: key.value ?? t.value, holders: t.holders, p: t.p }); };
+  const gy = (p, y) => { const r = p.years.find(r => r.y === y); return r ? r.got : 0; };
+  const dow = (p, days) => sessions.reduce((a, s, i) => a + (p.attendance[i] && s.date && days.includes(s.date.getDay()) ? 1 : 0), 0);
+  const avgTurnout = p => { const t = sessions.filter((s, i) => p.attendance[i]).map(s => s.turnout); return t.length >= 15 ? t.reduce((a, b) => a + b, 0) / t.length : null; };
+
+  // Volume
+  let t = topAll(players, p => p.maxStreak, { min: 2 });
+  push(t, { key:'streak', glyph:'⚡', label:'Longest streak', unit:'in a row',
+    detail: t ? `${fmtSession(sessions[t.p.maxStreakStart], false)} → ${fmtSession(sessions[t.p.maxStreakEnd], false)}` : '' });
+
+  let bestYear = null;
+  for (const p of players) for (const r of p.years) if (!bestYear || r.got > bestYear.got) bestYear = { p, ...r };
+  if (bestYear) { const ties = players.filter(p => p.years.some(r => r.got === bestYear.got));
+    R.push({ key:'year', glyph:'◆', label:'Most games in a year', value: bestYear.got, unit:`in ${bestYear.y}`, holders: ties, p: ties[0], detail:`of ${bestYear.total} sessions that year` }); }
+
+  const ty = sessions.filter(s => s.year === thisYear).length;
+  t = topAll(players, p => p.gamesThisYear, { min: 1 });
+  push(t, { key:'iron', glyph:'♜', label:`Iron man ${thisYear}`, unit:`of ${ty}`, detail: t ? `${Math.round(100 * t.value / Math.max(1, ty))}% of nights this year` : '' });
+
+  const yearStreak = p => { let m = 0, c = 0; sessions.forEach((s, i) => { if (s.year !== thisYear) return; if (p.attendance[i]) { c++; m = Math.max(m, c); } else c = 0; }); return m; };
+  t = topAll(players, yearStreak, { min: 3 });
+  push(t, { key:'ystreak', glyph:'⚡', label:`Streak of ${thisYear}`, unit:'in a row this year', detail:'longest unbroken run this season' });
+
+  // Pace & change
+  t = topAll(players.filter(p => p.gamesThisYear >= 10), p => gy(p, thisYear) - gy(p, thisYear - 1), { min: 5 });
+  push(t, { key:'breakout', glyph:'↗', label:'Breakout season', value: t ? '+' + t.value : '', unit:'on last year', detail: t ? `${gy(t.p, thisYear - 1)} in ${thisYear - 1} → ${gy(t.p, thisYear)} in ${thisYear}` : '' });
+
+  t = topAll(players.filter(p => p.longestGap >= 5), p => p.longestGap);
+  push(t, { key:'comeback', glyph:'↻', label:'Greatest comeback', unit:'missed', detail: t ? `then back on ${fmtSession(sessions[t.p.comebackIdx], false)}` : '' });
+
+  const monthKey = s => s.date ? `${s.date.getFullYear()}-${s.date.getMonth()}` : null;
+  const bestMonth = p => { const m = {}; sessions.forEach((s, i) => { const k = monthKey(s); if (p.attendance[i] && k) m[k] = (m[k] || 0) + 1; }); let b = null; for (const k in m) if (!b || m[k] > b.n) b = { k, n: m[k] }; return b; };
+  t = topAll(players, p => (bestMonth(p) || {}).n, { min: 4 });
+  push(t, { key:'month', glyph:'▦', label:'Busiest month', unit:'in one month',
+    detail: t ? t.holders.map(p => { const b = bestMonth(p); const [y, m] = b.k.split('-'); return `${p.name.split(' ')[0]} · ${MONTH_LABELS[+m]} ${y}`; }).join(' · ') : '' });
+
+  // Loyalty & timing
+  let insep = null;
+  for (const a of players) { if (a.played < 20) continue;
+    for (const b of players) { if (b === a || b.played < 20) continue;
+      let sh = 0; for (let i = 0; i < n; i++) sh += a.attendance[i] & b.attendance[i];
+      const share = sh / a.played; if (!insep || share > insep.share) insep = { a, b, sh, share }; } }
+  if (insep) R.push({ key:'insep', glyph:'∞', label:'Inseparable', value: Math.round(insep.share * 100) + '%', unit:`of nights with ${insep.b.name.split(' ')[0]}`, holders:[insep.a], p: insep.a, detail:`${insep.sh} of ${insep.a.played} games alongside ${insep.b.name}` });
+
+  t = topAll(players, avgTurnout, { lowest: true });
+  push(t, { key:'quiet', glyph:'☾', label:'Shows up regardless', value: t ? t.value.toFixed(1) : '', unit:'avg turnout on their nights', detail:'turns up when the numbers are thin' });
+
+  t = topAll(players, avgTurnout);
+  push(t, { key:'party', glyph:'✶', label:'Big-night player', value: t ? t.value.toFixed(1) : '', unit:'avg turnout on their nights', detail:'when they play, everyone plays' });
+
+  t = topAll(players.filter(p => p.played >= 20), p => dow(p, [3]) / p.played);
+  push(t, { key:'wed', glyph:'W', label:'True Wednesday', value: t ? Math.round(t.value * 100) + '%' : '', unit:'of games on a Wednesday', detail: t ? `${dow(t.p, [3])} of ${t.p.played} games on the namesake night` : '' });
+
+  // Position leaders
+  for (const [pos, label, glyph] of [['attack','Top attacker','▲'], ['midfield','Top midfielder','●'], ['defense','Top defender','■']]) {
+    t = topAll(players.filter(p => posClass(p.position) === pos), p => p.count, { min: 1 });
+    push(t, { key:'pos-' + pos, glyph, label, unit:'appearances', detail:`most games of any ${pos === 'defense' ? 'defender' : pos === 'attack' ? 'attacker' : 'midfielder'}` });
+  }
+
+  // Group
+  const bn = maxBy(sessions, s => s.turnout);
+  if (bn) R.push({ key:'night', glyph:'✦', label:'Biggest night', value: bn.turnout, unit:'players', session: bn, holders: [], detail: bn.date ? DAY_FULL[bn.date.getDay()] : '' });
+  const founders = players.filter(p => p.attendance[0] === 1).sort((a, b) => b.count - a.count);
+  if (founders.length) R.push({ key:'founders', glyph:'⚑', label:'Founding members', value: founders.length, unit:'at session one', holders: founders, noBadge: true,
+    detail:`${founders.reduce((a, f) => a + f.count, 0).toLocaleString()} appearances between them` });
+
+  const SECTION = { iron:'season', ystreak:'season', breakout:'season', comeback:'character', month:'character', insep:'character', quiet:'character', party:'character', wed:'character' };
+  for (const r of R) r.section = SECTION[r.key] || 'alltime';
+  const order = { season: 0, character: 1, alltime: 2 };
+  R.sort((a, b) => order[a.section] - order[b.section]);
   RECORD_HOLDERS = {};
-  for (const r of R) for (const p of [r.p, r.p2].filter(Boolean)) (RECORD_HOLDERS[p.name] ||= []).push(r.label);
+  for (const r of R) if (!r.noBadge) for (const p of r.holders) (RECORD_HOLDERS[p.name] ||= []).push(r.label);
   return R;
 }
 
@@ -1319,21 +1383,28 @@ function renderWall() {
 /* ── RECORD BOOKS ── */
 function renderRecords() {
   const el = document.getElementById('records');
+  const TITLES = { season: `This season · ${new Date().getFullYear()}`, character: 'Character', alltime: 'All-time' };
+  let lastSection = null;
   el.innerHTML = RECORDS.map(r => {
-    const who = r.names ? r.names.slice(0,4).join(', ') + (r.names.length>4 ? ` +${r.names.length-4}` : '')
-              : r.p2 ? `${r.p.name} & ${r.p2.name}` : r.p ? r.p.name : fmtSession(r.session,false);
-    return `<div class="rec">
+    const header = r.section !== lastSection ? `<div class="rec-group">${TITLES[r.section]}</div>` : '';
+    lastSection = r.section;
+    const names = r.holders.map(p => p.name);
+    const who = r.session ? fmtSession(r.session, false)
+              : names.length === 1 ? names[0]
+              : names.slice(0, 3).join(', ') + (names.length > 3 ? ` +${names.length - 3}` : '');
+    const single = r.holders.length === 1;
+    return `${header}<div class="rec${single ? '' : ' rec-multi'}">
       <span class="rec-glyph">${r.glyph}</span>
       <div class="rec-l">${esc(r.label)}</div>
-      <div class="rec-v">${r.value}${r.unit?`<small>${esc(r.unit)}</small>`:''}</div>
-      <div class="rec-holder">${r.p && !r.names ? `<div class="r-avatar">${photoBlock(r.p.photo,r.p.name,'r-avatar')}</div>` : ''}
-        <div><div class="rec-name">${esc(who)}</div><div class="rec-detail">${esc(r.detail)}</div></div></div>
+      <div class="rec-v">${r.value}${r.unit ? `<small>${esc(r.unit)}</small>` : ''}</div>
+      <div class="rec-holder">${single ? `<div class="r-avatar">${photoBlock(r.p.photo, r.p.name, 'r-avatar')}</div>` : ''}
+        <div><div class="rec-name">${esc(who)}${!single && !r.session && names.length > 1 && names.length <= 3 ? ' <em>tied</em>' : ''}</div><div class="rec-detail">${esc(r.detail)}</div></div></div>
     </div>`;
   }).join('');
-  el.querySelectorAll('.rec').forEach((d,i)=>{
+  el.querySelectorAll('.rec').forEach((d, i) => {
     const r = RECORDS[i];
-    d.onclick = () => r.session ? openSession(SESSIONS.indexOf(r.session)) : r.p ? openProfile(r.p) : r.people ? openSession(0) : null;
-    reveal(d,i);
+    d.onclick = () => r.session ? openSession(SESSIONS.indexOf(r.session)) : r.key === 'founders' ? openSession(0) : r.p ? openProfile(r.p) : null;
+    reveal(d, i);
   });
 }
 
