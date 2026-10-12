@@ -697,7 +697,7 @@ let SESSIONS = [];
 let ACTIVE_FILTER = null;
 let CURRENT_PLAYER = null;
 /* Ratings backend (Google Apps Script web app — see apps-script/README.md). Empty = feature off. */
-const VOTE_API = new URLSearchParams(location.search).get('api') || '';
+const VOTE_API = new URLSearchParams(location.search).get('api') || 'https://script.google.com/macros/s/AKfycby3NDACkLNP9_MKwWQYqPTFPROcDiAoXbpOnbtMxYGOvSAVvfeAHIeKLb4krs-mcHGf/exec';
 const STAT_KEYS = ['PAC','SHO','PAS','DRI','DEF','PHY'];
 const STAT_NAMES = { PAC:'Pace', SHO:'Shooting', PAS:'Passing', DRI:'Dribbling', DEF:'Defending', PHY:'Physical' };
 let RATINGS = null, VOTER = null, PENDING_VOTE = false;
