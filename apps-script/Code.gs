@@ -1,0 +1,256 @@
+/**
+ * Wednesday 9–10 · Player Ratings backend
+ * ------------------------------------------------------------
+ * Lives in a PRIVATE Google Sheet (not the attendance sheet).
+ * Deploy: Extensions → Apps Script → Deploy → New deployment →
+ *   Web app · Execute as: Me · Who has access: Anyone
+ * Then paste the web-app URL into index.html as VOTE_API.
+ *
+ * Privacy model
+ *   Each player gets a secret link (token). We store TWO different hashes
+ *   of it: id1 identifies the voter (so we can check they exist and whom
+ *   they're allowed to rate) and id2 keys their ballot. Neither can be
+ *   turned back into the other without the raw token, which only exists
+ *   in the player's own chat once the Links tab is burned. Votes are
+ *   therefore anonymous to everyone, including the sheet owner.
+ */
+
+const MAIN_SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
+const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/' + MAIN_SHEET_ID + '/export?format=csv&gid=0';
+const SITE_URL = 'https://rajichalla11.github.io/wednesday-hof/';
+const STATS = ['PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY'];
+const MIN_SHARED = 3;      // sessions you must have shared to rate someone
+const MIN_VOTES = 3;       // ballots before a rating is shown
+const RMIN = 40, RMAX = 99;
+const SESSION_START_COL = 8;
+const SKIP = ['', 'player', 'games played', 'amount paid', 'balance', 'owing from previous sessions', '+1s', 'krish p', 'images', 'postion', 'position', 'preferred foot'];
+
+/* ───────── admin: run these from the editor ───────── */
+
+function setup() {
+  const v = sheet_('Voters');  if (v.getLastRow() === 0) v.appendRow(['voter_id', 'name', 'created']);
+  const b = sheet_('Votes');   if (b.getLastRow() === 0) b.appendRow(['window', 'ballot_id', 'target', 'w'].concat(STATS, ['comment', 'updated']));
+  const w = sheet_('Windows'); if (w.getLastRow() === 0) w.appendRow(['window', 'opened', 'closed']);
+  const s = sheet_('Seeds');
+  if (s.getLastRow() === 0) {
+    s.appendRow(['name'].concat(STATS));
+    players_().forEach(function (p) { s.appendRow([p.name, 65, 65, 65, 65, 65, 65]); });
+  }
+  if (!props_().getProperty('window')) openWindow();
+}
+
+/** Creates a personal link for every player who doesn't have one yet. Writes them to a "Links" tab — send them, then run burnLinks(). */
+function generateLinks() {
+  const voters = sheet_('Voters');
+  const have = {};
+  rows_(voters).forEach(function (r) { have[String(r[1]).toLowerCase()] = true; });
+  const links = sheet_('Links');
+  if (links.getLastRow() === 0) links.appendRow(['name', 'link']);
+  let made = 0;
+  players_().forEach(function (p) {
+    if (have[p.name.toLowerCase()]) return;
+    const token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8);
+    voters.appendRow([id1_(token), p.name, new Date()]);
+    links.appendRow([p.name, SITE_URL + '#vote/' + token]);
+    made++;
+  });
+  Logger.log(made + ' links created. Send them from the Links tab, then run burnLinks().');
+}
+
+/** Deletes the Links tab so raw tokens no longer exist in the sheet. */
+function burnLinks() {
+  const s = ss_().getSheetByName('Links');
+  if (s) ss_().deleteSheet(s);
+  cache_().remove('results');
+}
+
+/** Re-issues one player's link (old link stops working; their old ballot stays but is orphaned). */
+function rotateLink(name) {
+  const voters = sheet_('Voters');
+  const data = voters.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) if (String(data[i][1]).toLowerCase() === String(name).toLowerCase()) voters.deleteRow(i + 1);
+  generateLinks();
+}
+
+function openWindow(id) {
+  id = id || defaultWindow_();
+  props_().setProperties({ window: id, open: '1' });
+  sheet_('Windows').appendRow([id, new Date(), '']);
+  cache_().remove('results');
+}
+function closeWindow() {
+  props_().setProperty('open', '0');
+  const w = sheet_('Windows'), data = w.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === props_().getProperty('window')) { w.getRange(i + 1, 3).setValue(new Date()); break; }
+  cache_().remove('results');
+}
+
+/* ───────── web app ───────── */
+
+function doGet(e) {
+  const a = (e.parameter.action || 'results');
+  try {
+    if (a === 'me') return json_(me_(e.parameter.t));
+    if (a === 'results') return json_(results_());
+    return json_({ ok: false, error: 'unknown action' });
+  } catch (err) { return json_({ ok: false, error: String(err) }); }
+}
+
+function doPost(e) {
+  let body = {};
+  try { body = JSON.parse(e.postData.contents || '{}'); } catch (_) {}
+  try {
+    if (body.action === 'rate') return json_(rate_(body));
+    if (body.action === 'unrate') return json_(unrate_(body));
+    return json_({ ok: false, error: 'unknown action' });
+  } catch (err) { return json_({ ok: false, error: String(err) }); }
+}
+
+function me_(token) {
+  const name = voterName_(token);
+  if (!name) return { ok: false, error: 'This link isn’t recognised.' };
+  const win = props_().getProperty('window'), open = props_().getProperty('open') === '1';
+  const mine = {}, feedback = [];
+  const b = id2_(token);
+  rows_(sheet_('Votes')).forEach(function (r) {
+    if (r[0] !== win) return;
+    if (r[1] === b) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[4 + i]); }); mine[r[2]] = { stats: st, comment: r[4 + STATS.length] || '' }; }
+    if (r[2] === name && r[4 + STATS.length]) feedback.push(String(r[4 + STATS.length]));
+  });
+  return { ok: true, name: name, window: win, open: open, seeds: seeds_(), mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED };
+}
+
+function rate_(body) {
+  const name = voterName_(body.t);
+  if (!name) return { ok: false, error: 'This link isn’t recognised.' };
+  if (props_().getProperty('open') !== '1') return { ok: false, error: 'The ratings window is closed.' };
+  const target = String(body.target || '').trim();
+  const ps = players_(), byName = {};
+  ps.forEach(function (p) { byName[p.name.toLowerCase()] = p; });
+  const me = byName[name.toLowerCase()], tp = byName[target.toLowerCase()];
+  if (!tp) return { ok: false, error: 'Unknown player.' };
+  if (tp === me) return { ok: false, error: 'You can’t rate yourself.' };
+  const shared = shared_(me, tp);
+  if (shared < MIN_SHARED) return { ok: false, error: 'You haven’t played enough sessions with ' + tp.name + '.' };
+  const stats = STATS.map(function (k) { const v = Math.round(Number((body.stats || {})[k])); if (isNaN(v)) throw new Error('Missing ' + k); return Math.max(RMIN, Math.min(RMAX, v)); });
+  const comment = String(body.comment || '').replace(/\s+/g, ' ').trim().slice(0, 280);
+  const w = shared >= 20 ? 1 : shared >= 8 ? 0.8 : 0.6;   // familiarity, bucketed so it can't identify the voter
+  const win = props_().getProperty('window'), b = id2_(body.t);
+
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
+    let rowIdx = -1;
+    for (let i = 1; i < data.length; i++) if (data[i][0] === win && data[i][1] === b && data[i][2] === tp.name) { rowIdx = i + 1; break; }
+    const row = [win, b, tp.name, w].concat(stats, [comment, new Date()]);
+    if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+  } finally { lock.releaseLock(); }
+  cache_().remove('results');
+  return { ok: true };
+}
+
+function unrate_(body) {
+  const name = voterName_(body.t);
+  if (!name) return { ok: false, error: 'This link isn’t recognised.' };
+  const win = props_().getProperty('window'), b = id2_(body.t), target = String(body.target || '');
+  const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === win && data[i][1] === b && data[i][2] === target) sh.deleteRow(i + 1);
+  cache_().remove('results');
+  return { ok: true };
+}
+
+/** Aggregated ratings: calibrated, trimmed, familiarity-weighted means. Cached 2 min. */
+function results_() {
+  const cached = cache_().get('results');
+  if (cached) return JSON.parse(cached);
+  const win = props_().getProperty('window'), open = props_().getProperty('open') === '1';
+  const windows = rows_(sheet_('Windows')).map(function (r) { return r[0]; });
+  const prevWin = windows[windows.indexOf(win) - 1] || null;
+  const all = rows_(sheet_('Votes'));
+  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, players: aggregate_(all.filter(function (r) { return r[0] === win; })), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; })) : {}, prevWindow: prevWin };
+  out.ballots = Object.keys(all.filter(function (r) { return r[0] === win; }).reduce(function (m, r) { m[r[1]] = 1; return m; }, {})).length;
+  cache_().put('results', JSON.stringify(out), 120);
+  return out;
+}
+
+function aggregate_(rows) {
+  // voter calibration: how generous is each ballot compared with everyone?
+  const perBallot = {}; let gSum = 0, gN = 0;
+  rows.forEach(function (r) { const b = r[1]; perBallot[b] = perBallot[b] || { s: 0, n: 0 }; STATS.forEach(function (_, i) { const v = Number(r[4 + i]); perBallot[b].s += v; perBallot[b].n++; gSum += v; gN++; }); });
+  const gMean = gN ? gSum / gN : 0;
+  const offset = {}; Object.keys(perBallot).forEach(function (b) { offset[b] = perBallot[b].s / perBallot[b].n - gMean; });
+
+  const byTarget = {};
+  rows.forEach(function (r) { (byTarget[r[2]] = byTarget[r[2]] || []).push(r); });
+  const res = {};
+  Object.keys(byTarget).forEach(function (t) {
+    const vs = byTarget[t], n = vs.length;
+    const entry = { n: n };
+    if (n >= MIN_VOTES) {
+      entry.stats = {};
+      STATS.forEach(function (k, i) {
+        let items = vs.map(function (r) { return { v: Number(r[4 + i]) - 0.5 * offset[r[1]], w: Number(r[3]) || 1 }; }).sort(function (a, b) { return a.v - b.v; });
+        if (n >= 5) { const cut = Math.floor(n * 0.2); items = items.slice(cut, items.length - cut); }
+        const ws = items.reduce(function (a, x) { return a + x.w; }, 0);
+        entry.stats[k] = Math.max(RMIN, Math.min(RMAX, Math.round(items.reduce(function (a, x) { return a + x.v * x.w; }, 0) / ws)));
+      });
+    }
+    res[t] = entry;
+  });
+  return res;
+}
+
+/* ───────── helpers ───────── */
+
+function ss_() { return SpreadsheetApp.getActive(); }
+function sheet_(n) { return ss_().getSheetByName(n) || ss_().insertSheet(n); }
+function rows_(sh) { const d = sh.getDataRange().getValues(); return d.slice(1).filter(function (r) { return String(r[0]) !== ''; }); }
+function props_() { return PropertiesService.getScriptProperties(); }
+function cache_() { return CacheService.getScriptCache(); }
+function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function sha_(s) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8).map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join(''); }
+function id1_(t) { return sha_('voter|' + t); }
+function id2_(t) { return sha_('ballot|' + t); }
+function defaultWindow_() { const d = new Date(); return d.getFullYear() + '-Q' + (Math.floor(d.getMonth() / 3) + 1); }
+function shuffle_(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+function voterName_(token) {
+  if (!token || String(token).length < 16) return null;
+  const id = id1_(String(token));
+  const hit = rows_(sheet_('Voters')).filter(function (r) { return r[0] === id; })[0];
+  return hit ? String(hit[1]) : null;
+}
+
+function seeds_() {
+  const out = {};
+  rows_(sheet_('Seeds')).forEach(function (r) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[1 + i]) || 65; }); out[String(r[0])] = st; });
+  return out;
+}
+
+function shared_(a, b) { let s = 0; for (let i = 0; i < a.att.length; i++) s += a.att[i] & (b.att[i] || 0); return s; }
+
+/** Players + attendance from the public attendance sheet (cached 10 min). */
+function players_() {
+  const c = cache_().get('players');
+  if (c) return JSON.parse(c);
+  const rows = Utilities.parseCsv(UrlFetchApp.fetch(MAIN_CSV).getContentText());
+  let hdr = -1;
+  for (let i = 0; i < rows.length; i++) if (rows[i][0] && rows[i][0].toLowerCase().indexOf('games played') >= 0) { hdr = i; break; }
+  if (hdr < 0) throw new Error('header not found');
+  const NON = ['balance', 'owing from previous sessions', 'images', 'amount paid', 'preferred foot', 'position', 'postion'];
+  const cols = [];
+  for (let i = SESSION_START_COL; i < rows[hdr].length; i++) { const h = (rows[hdr][i] || '').trim(); if (h && NON.indexOf(h.toLowerCase()) < 0) cols.push(i); }
+  const seen = {}, out = [];
+  rows.slice(hdr + 1).forEach(function (r) {
+    const name = (r[1] || '').trim(), count = parseInt((r[0] || '').replace(/,/g, ''), 10);
+    if (!name || isNaN(count) || count <= 0) return;
+    const n = name.toLowerCase();
+    if (SKIP.indexOf(n) >= 0 || /^\d/.test(n) || n.length < 2) return;
+    const att = cols.map(function (i) { const v = parseFloat((r[i] || '').replace(/,/g, '')); return (!isNaN(v) && v > 0) ? 1 : 0; });
+    const key = n + '|' + count + '|' + att.join('');
+    if (seen[key]) return; seen[key] = 1;
+    out.push({ name: name, count: count, position: (r[2] || '').trim(), att: att });
+  });
+  cache_().put('players', JSON.stringify(out), 600);
+  return out;
+}

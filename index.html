@@ -363,6 +363,108 @@
   .card-next-bar { height: 3px; background: rgba(62,58,42,.8); border-radius: 2px; overflow: hidden; }
   .card-next-bar i { display: block; height: 100%; background: linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius: 2px; }
 
+  /* PLAYER CARDS */
+  .cards-section { margin-bottom: 72px; }
+  .cards-intro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; margin-bottom: 26px; }
+  .cards-status { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-muted); line-height: 1.8; }
+  .cards-status b { color: var(--gold); font-weight: 700; }
+  .btn-gold, .btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 2px; font-family: 'Raleway', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .25em; text-transform: uppercase; cursor: pointer; transition: all .2s; }
+  .btn-gold { border: 1px solid var(--gold); background: linear-gradient(180deg, rgba(201,168,76,.24), rgba(201,168,76,.08)); color: var(--gold-bright); }
+  .btn-gold:hover { background: rgba(201,168,76,.32); box-shadow: 0 0 22px rgba(201,168,76,.22); }
+  .btn-gold:disabled { opacity: .5; cursor: default; box-shadow: none; }
+  .btn-ghost { border: 1px solid var(--card-border); background: transparent; color: var(--text-muted); }
+  .btn-ghost:hover { border-color: var(--gold-dim); color: var(--text-primary); }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 24px 20px; perspective: 1400px; }
+  .cards-empty { padding: 40px 24px; border: 1px dashed var(--card-border); border-radius: 3px; text-align: center; color: var(--text-muted); font-size: 13px; line-height: 1.8; }
+  .cards-empty code { font-family: ui-monospace, monospace; font-size: 11px; color: var(--gold); }
+
+  .fut-wrap { container-type: inline-size; perspective: 1400px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .fut-wrap.in-grid { opacity: 0; translate: 0 18px; transition: opacity .7s var(--ease), translate .7s var(--ease); }
+  .fut-wrap.in-grid.in { opacity: 1; translate: 0 0; }
+  .fut { position: relative; aspect-ratio: 5 / 7.6; transform-style: preserve-3d; transition: transform .75s var(--ease); }
+  .fut.flipped { transform: rotateY(180deg); }
+  .fut-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; clip-path: polygon(0 0, 100% 0, 100% 86%, 50% 100%, 0 86%); display: flex; flex-direction: column; padding: 7cqw 8cqw 12cqw; color: var(--ink); }
+  .fut-face::before { content: ''; position: absolute; inset: 3.5cqw; clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%); border: 1px solid rgba(255,255,255,.22); pointer-events: none; mix-blend-mode: overlay; }
+  .fut-back { transform: rotateY(180deg); }
+  .tier-gold   { --ink: #2A1F08; background: radial-gradient(120% 70% at 50% 0%, #F6E3A0 0%, #D9B860 38%, #A8853A 72%, #6E5420 100%); }
+  .tier-silver { --ink: #1C2026; background: radial-gradient(120% 70% at 50% 0%, #F4F5F7 0%, #CDD1D8 38%, #9097A3 72%, #5C636E 100%); }
+  .tier-bronze { --ink: #2B1A0C; background: radial-gradient(120% 70% at 50% 0%, #E6BE93 0%, #C58A55 38%, #935E30 72%, #5E3B1D 100%); }
+  .tier-icon   { --ink: #3A2A08; background: radial-gradient(120% 70% at 50% 0%, #FFFBEF 0%, #F6E8BD 40%, #DDC27A 75%, #B59240 100%); }
+  .fut-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .fut-ovr { font-family: 'Playfair Display', serif; font-size: 22cqw; font-weight: 900; line-height: .9; letter-spacing: -.02em; }
+  .fut-pos { font-size: 7.5cqw; font-weight: 700; letter-spacing: .25em; margin-top: 2cqw; }
+  .fut-crest { width: 14cqw; height: 15cqw; opacity: .9; }
+  .fut-photo { position: absolute; top: 6cqw; right: 6cqw; width: 58cqw; height: 58cqw; border-radius: 50%; overflow: hidden; }
+  .fut-photo img { width: 100%; height: 100%; object-fit: cover; object-position: top; filter: contrast(1.05) saturate(.9); }
+  .fut-photo .fut-fb { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 22cqw; font-weight: 900; opacity: .45; }
+  .fut-photo::after { content: ''; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18), inset 0 -18cqw 20cqw -12cqw rgba(0,0,0,.45); }
+  .fut-name { margin-top: auto; text-align: center; font-family: 'Playfair Display', serif; font-size: 11.5cqw; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; line-height: 1; padding-bottom: 3cqw; border-bottom: 1px solid rgba(0,0,0,.18); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fut-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6cqw 6cqw; margin-top: 3.5cqw; position: relative; }
+  .fut-stats::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: rgba(0,0,0,.18); }
+  .fut-stat { display: flex; align-items: baseline; gap: 2.5cqw; font-size: 7.2cqw; letter-spacing: .08em; }
+  .fut-stat b { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 9cqw; min-width: 12cqw; }
+  .fut-meta { text-align: center; font-size: 6cqw; letter-spacing: .2em; text-transform: uppercase; opacity: .75; margin-top: 3cqw; font-weight: 700; }
+  .fut-meta .up { color: #1F6A2E; } .fut-meta .down { color: #8B1E1E; }
+  .fut-face.unrated .fut-stat b { opacity: .3; }
+  .fut-back .fut-name { margin-top: 0; }
+  .radar { width: 70cqw; height: 70cqw; margin: 3cqw auto 0; }
+  .radar polygon.grid { fill: none; stroke: rgba(0,0,0,.18); stroke-width: .5; }
+  .radar line { stroke: rgba(0,0,0,.15); stroke-width: .5; }
+  .radar polygon.val { fill: rgba(0,0,0,.18); stroke: rgba(0,0,0,.6); stroke-width: 1.2; stroke-linejoin: round; }
+  .radar text { font-family: 'Raleway', sans-serif; font-size: 7px; font-weight: 700; letter-spacing: .08em; fill: var(--ink); }
+  .fut-back .fut-meta { margin-top: auto; }
+  .fut-feedback { margin-top: 3cqw; font-size: 6.5cqw; line-height: 1.5; max-height: 42cqw; overflow: auto; }
+  .fut-feedback p { padding: 2cqw 0; border-top: 1px solid rgba(0,0,0,.12); font-style: italic; }
+  .fut-feedback h4 { font-size: 6cqw; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 1cqw; }
+
+  /* BALLOT */
+  .ballot { position: relative; width: 100%; max-width: 900px; max-height: calc(100vh - 48px); overflow-y: auto; background: linear-gradient(160deg,#1D1A11 0%,#120F0A 100%); border: 1px solid rgba(201,168,76,.18); border-radius: 6px; padding: 30px 36px 30px; box-shadow: 0 50px 140px rgba(0,0,0,.75), 0 0 90px rgba(201,168,76,.08); transform: translateY(28px) scale(.96); opacity: 0; transition: transform .5s var(--ease), opacity .35s ease; scrollbar-width: thin; scrollbar-color: var(--gold-dim) transparent; }
+  .profile-overlay.open .ballot { transform: none; opacity: 1; }
+  .ballot::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg,transparent,var(--gold-bright),transparent); }
+  .b-progress { height: 3px; background: rgba(62,58,42,.8); border-radius: 2px; overflow: hidden; margin: 0 0 22px; }
+  .b-progress i { display: block; height: 100%; background: linear-gradient(90deg,var(--gold-dim),var(--gold-bright)); transition: width .5s var(--ease); }
+  .b-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .b-title { font-family: 'Playfair Display', serif; font-size: clamp(26px, 3.6vw, 36px); font-weight: 900; color: var(--text-primary); line-height: 1.05; margin-bottom: 14px; }
+  .b-copy { font-size: 13px; line-height: 1.75; color: var(--text-muted); max-width: 560px; }
+  .b-copy b { color: var(--text-primary); font-weight: 600; }
+  .b-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; align-items: center; }
+  .b-grid { display: grid; grid-template-columns: 230px 1fr; gap: 34px; align-items: start; }
+  .b-card { position: sticky; top: 0; }
+  .b-card .fut-wrap { animation: cardIn .5s var(--ease); }
+  @keyframes cardIn { from { opacity: 0; transform: translateX(-16px) rotateY(-12deg); } to { opacity: 1; transform: none; } }
+  .b-who { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .b-who .b-title { margin: 0; }
+  .b-shared { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; }
+  .st-rows { display: flex; flex-direction: column; gap: 6px; }
+  .st-row { display: grid; grid-template-columns: 92px 40px 54px 40px 1fr; align-items: center; gap: 8px; padding: 6px 10px; background: rgba(13,12,10,.5); border: 1px solid var(--card-border); border-radius: 2px; }
+  .st-k { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--text-muted); }
+  .st-k small { display: block; font-size: 8px; letter-spacing: .1em; color: var(--text-dim); text-transform: none; font-weight: 600; }
+  .st-btn { width: 40px; height: 34px; border-radius: 2px; border: 1px solid var(--card-border); background: transparent; color: var(--text-primary); font-size: 18px; cursor: pointer; transition: all .15s; font-family: 'Raleway', sans-serif; }
+  .st-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,.08); }
+  .st-btn:active { transform: scale(.94); }
+  .st-v { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: var(--gold); text-align: center; font-variant-numeric: tabular-nums; }
+  .st-bar { height: 4px; background: rgba(62,58,42,.8); border-radius: 2px; overflow: hidden; position: relative; }
+  .st-bar i { display: block; height: 100%; background: linear-gradient(90deg,var(--gold-dim),var(--gold)); transition: width .25s var(--ease); }
+  .st-bar s { position: absolute; top: -3px; width: 1px; height: 10px; background: var(--text-muted); text-decoration: none; }
+  .st-delta { position: absolute; right: 0; top: -16px; font-size: 9px; font-weight: 700; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .st-delta.up { color: #7FBF7F; } .st-delta.down { color: #C07070; }
+  .b-comment { width: 100%; margin-top: 14px; padding: 10px 12px; background: rgba(13,12,10,.5); border: 1px solid var(--card-border); border-radius: 2px; color: var(--text-primary); font-family: 'Raleway', sans-serif; font-size: 13px; resize: vertical; min-height: 58px; }
+  .b-comment:focus { outline: none; border-color: var(--gold-dim); }
+  .b-hint { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); margin-top: 6px; }
+  .b-nav { display: flex; align-items: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  .b-nav .spacer { flex: 1; }
+  .b-saved { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: #7FBF7F; opacity: 0; transition: opacity .3s; }
+  .b-saved.show { opacity: 1; }
+  .b-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .b-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border: 1px solid var(--card-border); border-radius: 30px; font-size: 11px; color: var(--text-primary); cursor: pointer; transition: border-color .2s; }
+  .b-chip:hover { border-color: var(--gold-dim); }
+  .b-chip .r-avatar { width: 22px; height: 22px; }
+  .b-chip em { font-style: normal; font-family: 'Playfair Display', serif; font-weight: 700; color: var(--gold); }
+  .b-chip.todo { opacity: .6; }
+  .b-error { padding: 14px 16px; background: rgba(160,40,40,.08); border: 1px solid rgba(160,40,40,.25); border-radius: 2px; color: #C07070; font-size: 13px; line-height: 1.6; }
+  .b-link { background: none; border: none; color: var(--text-dim); font-size: 9px; letter-spacing: .15em; text-transform: uppercase; cursor: pointer; font-family: 'Raleway', sans-serif; text-decoration: underline; text-underline-offset: 3px; }
+  .b-link:hover { color: var(--text-muted); }
+
   /* LOADING / ERROR */
   .loading { display: flex; gap: 6px; align-items: center; justify-content: center; padding: 60px 0; color: var(--text-muted); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; }
   .dot { width: 4px; height: 4px; background: var(--gold); border-radius: 50%; animation: blink 1.2s ease-in-out infinite; }
@@ -395,6 +497,12 @@
     .p-foot { grid-template-columns: 1fr 1fr; }
     .p-hint { display: none; }
     .session { max-width: none; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 22px 18px 40px; }
+    .ballot { max-width: none; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 20px 18px 40px; }
+    .b-grid { grid-template-columns: 1fr; gap: 20px; }
+    .b-card { position: static; width: 170px; margin: 0 auto; }
+    .st-row { grid-template-columns: 70px 38px 46px 38px 1fr; gap: 6px; padding: 5px 8px; }
+    .st-k small { display: none; }
+    .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 16px 12px; }
     .s-players { grid-template-columns: 1fr 1fr; }
     .tl-summary { gap: 20px; }
   }
@@ -440,6 +548,7 @@
 
   <nav class="tabs" id="tabs" aria-label="Sections">
     <button class="tab active" data-tab="hall">Hall of Fame<small id="tab-n-hall">&nbsp;</small></button>
+    <button class="tab" data-tab="cards">Player Cards<small id="tab-n-cards">&nbsp;</small></button>
     <button class="tab" data-tab="wall">Century Wall<small id="tab-n-wall">&nbsp;</small></button>
     <button class="tab" data-tab="records">Record Books<small id="tab-n-records">&nbsp;</small></button>
     <button class="tab" data-tab="timeline">Season Timeline<small id="tab-n-timeline">&nbsp;</small></button>
@@ -466,6 +575,14 @@
     <div class="sec-head"><h2>The Squad</h2><div class="sec-line"></div></div>
     <p class="squad-sub">Every other name in the book — under 20 appearances</p>
     <div id="squad-list"></div>
+  </div>
+  </section>
+
+  <section class="panel" id="panel-cards">
+  <div class="cards-section">
+    <div class="sec-head"><h2>Player Cards</h2><div class="sec-line"></div></div>
+    <div class="cards-intro" id="cards-intro"></div>
+    <div class="cards-grid" id="cards-grid"></div>
   </div>
   </section>
 
@@ -534,6 +651,13 @@
     <div class="s-body" id="s-body"></div>
   </div>
 </div>
+<!-- BALLOT -->
+<div class="profile-overlay" id="ballot-overlay" onclick="closeBallot(event)">
+  <div class="ballot" id="ballot" role="dialog" aria-modal="true">
+    <div class="p-controls"><div class="p-btn close" onclick="closeBallotDirect()" title="Close (Esc)">✕</div></div>
+    <div id="b-body"></div>
+  </div>
+</div>
 <div class="tl-tip" id="tl-tip"></div>
 
 <script>
@@ -557,6 +681,22 @@ let ALL_PLAYERS = [];
 let SESSIONS = [];
 let ACTIVE_FILTER = null;
 let CURRENT_PLAYER = null;
+/* Ratings backend (Google Apps Script web app — see apps-script/README.md). Empty = feature off. */
+const VOTE_API = new URLSearchParams(location.search).get('api') || '';
+const STAT_KEYS = ['PAC','SHO','PAS','DRI','DEF','PHY'];
+const STAT_NAMES = { PAC:'Pace', SHO:'Shooting', PAS:'Passing', DRI:'Dribbling', DEF:'Defending', PHY:'Physical' };
+let RATINGS = null, VOTER = null, PENDING_VOTE = false;
+let TOKEN = '';
+try { TOKEN = localStorage.getItem('w910_token') || ''; } catch (_) {}
+function captureToken() {
+  const m = location.hash.match(/^#vote\/([A-Za-z0-9_-]{16,})/);
+  if (!m) return false;
+  TOKEN = m[1]; PENDING_VOTE = true;
+  try { localStorage.setItem('w910_token', TOKEN); } catch (_) {}
+  history.replaceState(null, '', location.pathname + location.search + '#cards');
+  return true;
+}
+captureToken();
 let CURRENT_SESSION = null;
 let YEARS = [];
 let RECORDS = [];
@@ -884,6 +1024,7 @@ function render(players, totalSessions) {
   renderRecords();
   renderTimeline();
   renderBalances();
+  renderCards().then(() => { if (PENDING_VOTE && TOKEN) { PENDING_VOTE = false; showTab('cards', false); openBallot(); } });
 
   document.getElementById('tab-n-hall').textContent     = `${players.length} players`;
   document.getElementById('tab-n-records').textContent  = `${RECORDS.length} records`;
@@ -1161,6 +1302,7 @@ function closeProfileDirect() {
 }
 
 document.addEventListener('keydown', e => {
+  if (BALLOT) return;
   if (CURRENT_SESSION !== null) {
     if (e.key==='Escape') closeSessionDirect();
     else if (e.key==='ArrowLeft') stepSession(-1);
@@ -1513,8 +1655,229 @@ function renderBalances() {
   el.onclick = e => { const r = e.target.closest('[data-pi]'); if (r) openProfile(ALL_PLAYERS[+r.dataset.pi]); };
 }
 
+/* ── PLAYER CARDS ── */
+async function api(params, body) {
+  if (!VOTE_API) throw new Error('Ratings backend not configured');
+  const res = body
+    ? await fetch(VOTE_API, { method:'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect:'follow' })
+    : await fetch(VOTE_API + (VOTE_API.includes('?') ? '&' : '?') + new URLSearchParams(params), { redirect:'follow' });
+  return res.json();
+}
+const sharedCount = (a, b) => { let s = 0; for (let i = 0; i < a.attendance.length; i++) s += a.attendance[i] & b.attendance[i]; return s; };
+const avgOf = stats => Math.round(STAT_KEYS.reduce((a, k) => a + stats[k], 0) / STAT_KEYS.length);
+// Cards are earned by turning up: the tier climbs with appearances, the big number IS appearances.
+const tierOf = p => p.count >= 100 ? 'icon' : p.count >= 50 ? 'gold' : p.count >= 20 ? 'silver' : 'bronze';
+const TIER_NAME = { icon:'Icon · 100+', gold:'Gold · 50+', silver:'Silver · 20+', bronze:'Bronze' };
+const posAbbr = p => ({ attack:'ATT', midfield:'MID', defense:'DEF', other:'—' })[posClass(p.position)];
+const CREST = `<svg viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M36 2 L68 14 L68 46 Q68 68 36 78 Q4 68 4 46 L4 14 Z" fill="rgba(0,0,0,.12)" stroke="currentColor" stroke-width="2"/><path d="M36 20 L37.8 25.5 L43.5 25.5 L39 28.5 L40.8 34 L36 31 L31.2 34 L33 28.5 L28.5 25.5 L34.2 25.5 Z" fill="currentColor"/><text x="36" y="66" text-anchor="middle" font-family="serif" font-size="12" font-weight="bold" fill="currentColor" letter-spacing="1">9-10</text></svg>`;
+
+function radarSvg(stats) {
+  const cx = 60, cy = 60, R = 44, n = 6;
+  const pt = (i, r) => { const a = -Math.PI/2 + i * 2*Math.PI/n; return [cx + r*Math.cos(a), cy + r*Math.sin(a)]; };
+  const ring = f => Array.from({length:n}, (_, i) => pt(i, R*f).join(',')).join(' ');
+  const val = STAT_KEYS.map((k, i) => pt(i, R * Math.max(0, (stats[k]-40)/59)).join(',')).join(' ');
+  const labels = STAT_KEYS.map((k, i) => { const [x, y] = pt(i, R + 11); return `<text x="${x}" y="${y+2.5}" text-anchor="middle">${k}</text>`; }).join('');
+  const axes = STAT_KEYS.map((_, i) => { const [x, y] = pt(i, R); return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}"/>`; }).join('');
+  return `<svg class="radar" viewBox="0 0 120 120">${[1,.66,.33].map(f=>`<polygon class="grid" points="${ring(f)}"/>`).join('')}${axes}<polygon class="val" points="${val}"/>${labels}</svg>`;
+}
+
+function futCard(p, stats, opts = {}) {
+  const rated = !!stats;
+  const tier = tierOf(p);
+  const photo = driveToImg(p.photo);
+  const img = photo ? `<img src="${esc(photo)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="fut-fb" style="display:none">${esc(initials(p.name))}</div>` : `<div class="fut-fb">${esc(initials(p.name))}</div>`;
+  const statCells = STAT_KEYS.map(k => `<div class="fut-stat"><b>${rated ? stats[k] : '–'}</b>${k}</div>`).join('');
+  let meta = opts.meta || '';
+  if (!meta && rated && opts.n != null) {
+    let trend = '';
+    if (opts.prev) { const d = avgOf(stats) - avgOf(opts.prev); if (d) trend = ` · <span class="${d>0?'up':'down'}">${d>0?'▲':'▼'}${Math.abs(d)}</span>`; }
+    meta = `${opts.n} vote${opts.n===1?'':'s'}${trend}`;
+  }
+  if (!meta && !rated) meta = opts.n != null ? `${opts.n} of ${RATINGS ? RATINGS.minVotes : 3} votes` : 'preview';
+  const front = `<div class="fut-face fut-front tier-${tier}${rated ? '' : ' unrated'}">
+      <div class="fut-top"><div><div class="fut-ovr" title="appearances">${p.count}</div><div class="fut-pos">${posAbbr(p)}</div></div><div class="fut-crest">${CREST}</div></div>
+      <div class="fut-photo">${img}</div>
+      <div class="fut-name">${esc(p.name)}</div>
+      <div class="fut-stats">${statCells}</div>
+      <div class="fut-meta">${meta}</div>
+    </div>`;
+  if (!opts.back) return `<div class="fut-wrap"><div class="fut">${front}</div></div>`;
+  const diffs = rated && opts.prev ? STAT_KEYS.map(k => { const d = stats[k]-opts.prev[k]; return d ? `<div class="fut-stat"><b>${d>0?'+':''}${d}</b>${k}</div>` : `<div class="fut-stat"><b>=</b>${k}</div>`; }).join('') : '';
+  const fb = opts.feedback && opts.feedback.length ? `<div class="fut-feedback"><h4>What teammates said</h4>${opts.feedback.map(c=>`<p>“${esc(c)}”</p>`).join('')}</div>` : '';
+  const back = `<div class="fut-face fut-back tier-${tier}">
+      <div class="fut-name">${esc(p.name)}</div>
+      ${rated ? radarSvg(stats) : `<div class="fut-feedback"><p>${esc(TIER_NAME[tier])} card · ${p.count} appearances.</p><p>Stats appear once ${RATINGS ? RATINGS.minVotes : 3} teammates have rated them.</p></div>`}
+      ${diffs ? `<div class="fut-stats" style="margin-top:2cqw">${diffs}</div>` : ''}
+      ${fb}
+      <div class="fut-meta">${rated && opts.prev ? `vs ${esc(RATINGS.prevWindow||'last window')}` : rated ? 'first window' : ''}</div>
+    </div>`;
+  return `<div class="fut-wrap"><div class="fut">${front}${back}</div></div>`;
+}
+
+async function renderCards() {
+  const intro = document.getElementById('cards-intro'), grid = document.getElementById('cards-grid');
+  const tabN = document.getElementById('tab-n-cards');
+  if (!VOTE_API) {
+    tabN.textContent = 'coming soon';
+    intro.innerHTML = '';
+    grid.innerHTML = `<div class="cards-empty" style="grid-column:1/-1">FIFA-style cards, rated anonymously by the group, are on the way.<br>Admin: deploy <code>apps-script/Code.gs</code> and set <code>VOTE_API</code> in index.html to switch this on.</div>`;
+    return;
+  }
+  try { RATINGS = await api({ action:'results' }); } catch (e) { RATINGS = null; }
+  if (!RATINGS || !RATINGS.ok) {
+    tabN.textContent = 'offline';
+    grid.innerHTML = `<div class="cards-empty" style="grid-column:1/-1">Couldn’t reach the ratings backend. ${esc((RATINGS && RATINGS.error) || '')}</div>`;
+    return;
+  }
+  const rated = ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats);
+  tabN.textContent = `${rated.length} rated`;
+  intro.innerHTML = `
+    <div class="cards-status">Window <b>${esc(RATINGS.window)}</b> · ${RATINGS.open ? '<b>open</b> for voting' : 'closed'} · <b>${RATINGS.ballots}</b> ballot${RATINGS.ballots===1?'':'s'} in · <b>${rated.length}</b> of ${ALL_PLAYERS.length} rated<br>
+      The number is appearances and the card is earned by turning up — silver at 20, gold at 50, Icon at 100. The six stats are rated anonymously by teammates. Tap a card to flip it.</div>
+    ${TOKEN ? `<button class="btn-gold" onclick="openBallot()">Rate your teammates →</button>` : `<span class="cards-status">Got a personal link? Open it to start rating.</span>`}`;
+  const order = [...ALL_PLAYERS].sort((a, b) => b.count - a.count);
+  grid.innerHTML = order.map(p => {
+    const r = RATINGS.players[p.name] || { n: 0 };
+    const prev = RATINGS.prev && RATINGS.prev[p.name] && RATINGS.prev[p.name].stats;
+    const feedback = VOTER && VOTER.name === p.name ? VOTER.feedback : null;
+    return futCard(p, r.stats || null, { n: r.n, prev, back: true, feedback });
+  }).join('');
+  grid.querySelectorAll('.fut-wrap').forEach((el, i) => { el.classList.add('in-grid'); el.onclick = () => el.firstElementChild.classList.toggle('flipped'); reveal(el, i % 12); });
+}
+
+/* ── BALLOT (swipe-through rating flow) ── */
+let BALLOT = null;   // { me, queue, idx, values, dirty }
+async function openBallot() {
+  if (!TOKEN) return;
+  const overlay = document.getElementById('ballot-overlay'), body = document.getElementById('b-body');
+  overlay.classList.add('open'); document.body.style.overflow = 'hidden';
+  body.innerHTML = `<div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  try { VOTER = await api({ action:'me', t: TOKEN }); } catch (e) { VOTER = { ok:false, error: e.message }; }
+  if (!VOTER.ok) {
+    body.innerHTML = `<div class="b-eyebrow">Ratings</div><div class="b-title">That link didn’t work</div><div class="b-error">${esc(VOTER.error || 'Unknown error')}</div>
+      <div class="b-actions"><button class="btn-ghost" onclick="forgetToken()">Forget this link on this device</button></div>`;
+    return;
+  }
+  const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
+  if (!me) { body.innerHTML = `<div class="b-error">You’re not on the attendance sheet yet.</div>`; return; }
+  const queue = ALL_PLAYERS.filter(p => p !== me && sharedCount(me, p) >= (VOTER.minShared || 3)).sort((a, b) => sharedCount(me, b) - sharedCount(me, a) || b.count - a.count);
+  BALLOT = { me, queue, idx: 0 };
+  renderBallotIntro();
+}
+function forgetToken() { try { localStorage.removeItem('w910_token'); } catch (_) {} TOKEN = ''; VOTER = null; closeBallotDirect(); renderCards(); }
+const doneCount = () => BALLOT.queue.filter(p => VOTER.mine[p.name]).length;
+
+function renderBallotIntro() {
+  const { me, queue } = BALLOT, done = doneCount();
+  const body = document.getElementById('b-body');
+  const next = queue.findIndex(p => !VOTER.mine[p.name]);
+  body.innerHTML = `
+    <div class="b-eyebrow">Ratings · ${esc(VOTER.window)} · ${VOTER.open ? 'open' : 'closed'}</div>
+    <div class="b-title">Hi ${esc(me.name.split(' ')[0])}.</div>
+    <div class="b-copy">You’ve shared the pitch with <b>${queue.length} teammates</b> at least ${VOTER.minShared || 3} times, so those are the ones you can rate.
+      Each one comes up with suggested numbers — nudge them up or down, or confirm if they look right. Add a word if you like; only they will ever read it.
+      <br><br><b>Your ratings are anonymous.</b> Nobody, including the admin, can see who gave what. You can come back and change anything while the window is open.</div>
+    <div class="b-actions">
+      ${VOTER.open ? `<button class="btn-gold" onclick="gotoBallot(${next < 0 ? 0 : next})">${done ? `Continue · ${done} of ${queue.length} done →` : 'Start rating →'}</button>` : `<span class="b-error">The window is closed — ratings are frozen until the next one opens.</span>`}
+      ${done ? `<button class="btn-ghost" onclick="renderBallotDone()">Review my ratings</button>` : ''}
+      <button class="b-link" onclick="forgetToken()">not ${esc(me.name.split(' ')[0])}? forget this link</button>
+    </div>
+    ${VOTER.feedback && VOTER.feedback.length ? `<div class="b-copy" style="margin-top:26px"><b>What teammates said about you</b> (${VOTER.feedback.length}):${VOTER.feedback.map(c=>`<br>“${esc(c)}”`).join('')}</div>` : ''}`;
+}
+
+function gotoBallot(i) {
+  const { queue } = BALLOT;
+  if (i >= queue.length) return renderBallotDone();
+  BALLOT.idx = i;
+  const p = queue[i], existing = VOTER.mine[p.name];
+  const seed = (VOTER.seeds && VOTER.seeds[p.name]) || STAT_KEYS.reduce((o, k) => (o[k] = 65, o), {});
+  BALLOT.seed = seed;
+  BALLOT.values = Object.assign({}, existing ? existing.stats : seed);
+  BALLOT.comment = existing ? existing.comment : '';
+  renderBallotCard();
+}
+
+function renderBallotCard() {
+  const { me, queue, idx, values, seed } = BALLOT, p = queue[idx];
+  const body = document.getElementById('b-body');
+  const done = doneCount();
+  body.innerHTML = `
+    <div class="b-progress"><i style="width:${(done / queue.length) * 100}%"></i></div>
+    <div class="b-eyebrow">${idx + 1} of ${queue.length} · ${done} rated</div>
+    <div class="b-grid">
+      <div class="b-card" id="b-card"></div>
+      <div>
+        <div class="b-who"><div class="b-title">${esc(p.name)}</div><span class="b-shared">${sharedCount(me, p)} nights together</span></div>
+        <div class="st-rows">${STAT_KEYS.map(k => `
+          <div class="st-row" data-k="${k}">
+            <span class="st-k">${k}<small>${STAT_NAMES[k]}</small></span>
+            <button class="st-btn" onclick="nudge('${k}',-2)" aria-label="lower">−</button>
+            <span class="st-v" id="v-${k}">${values[k]}</span>
+            <button class="st-btn" onclick="nudge('${k}',2)" aria-label="higher">+</button>
+            <div class="st-bar"><i id="bar-${k}" style="width:${(values[k]-40)/59*100}%"></i><s style="left:${(seed[k]-40)/59*100}%" title="suggested ${seed[k]}"></s><span class="st-delta" id="d-${k}"></span></div>
+          </div>`).join('')}</div>
+        <textarea class="b-comment" id="b-comment" maxlength="280" placeholder="A word for ${esc(p.name.split(' ')[0])}? Optional, private to them.">${esc(BALLOT.comment || '')}</textarea>
+        <div class="b-hint">tick on the bar = suggested number · ← → to move between players</div>
+        <div class="b-nav">
+          ${idx > 0 ? `<button class="btn-ghost" onclick="gotoBallot(${idx-1})">‹ Back</button>` : ''}
+          <button class="btn-ghost" onclick="gotoBallot(${idx+1})">Skip</button>
+          <span class="spacer"></span>
+          <span class="b-saved" id="b-saved">Saved ✓</span>
+          <button class="btn-gold" id="b-confirm" onclick="confirmRating()">${VOTER.mine[p.name] ? 'Update →' : 'Looks right · Confirm →'}</button>
+        </div>
+      </div>
+    </div>`;
+  paintCardPreview();
+  document.getElementById('ballot').scrollTop = 0;
+}
+function paintCardPreview() {
+  const { queue, idx, values, seed } = BALLOT, p = queue[idx];
+  document.getElementById('b-card').innerHTML = futCard(p, values, { meta: 'your rating' });
+  STAT_KEYS.forEach(k => { const d = values[k] - seed[k], el = document.getElementById('d-' + k); el.textContent = d ? (d > 0 ? '+' : '') + d : ''; el.className = 'st-delta ' + (d > 0 ? 'up' : d < 0 ? 'down' : ''); });
+}
+function nudge(k, d) {
+  BALLOT.values[k] = Math.max(40, Math.min(99, BALLOT.values[k] + d));
+  document.getElementById('v-' + k).textContent = BALLOT.values[k];
+  document.getElementById('bar-' + k).style.width = (BALLOT.values[k]-40)/59*100 + '%';
+  paintCardPreview();
+}
+async function confirmRating() {
+  const { queue, idx, values } = BALLOT, p = queue[idx];
+  const btn = document.getElementById('b-confirm'); btn.disabled = true; btn.textContent = 'Saving…';
+  const comment = document.getElementById('b-comment').value.trim();
+  let res; try { res = await api(null, { action:'rate', t: TOKEN, target: p.name, stats: values, comment }); } catch (e) { res = { ok:false, error: e.message }; }
+  if (!res.ok) { btn.disabled = false; btn.textContent = 'Retry'; alert(res.error || 'Could not save'); return; }
+  VOTER.mine[p.name] = { stats: Object.assign({}, values), comment };
+  document.getElementById('b-saved').classList.add('show');
+  setTimeout(() => { const next = queue.findIndex((q, j) => j > idx && !VOTER.mine[q.name]); gotoBallot(next < 0 ? queue.length : next); }, 350);
+}
+function renderBallotDone() {
+  const { queue } = BALLOT, done = doneCount();
+  document.getElementById('b-body').innerHTML = `
+    <div class="b-progress"><i style="width:${(done / queue.length) * 100}%"></i></div>
+    <div class="b-eyebrow">Ratings · ${esc(VOTER.window)}</div>
+    <div class="b-title">${done === queue.length ? 'All done. Thank you.' : `${done} of ${queue.length} rated`}</div>
+    <div class="b-copy">Tap any name to change a rating. Cards update as ballots come in; a player needs ${RATINGS ? RATINGS.minVotes : 3} before their rating shows.</div>
+    <div class="b-chips">${queue.map((p, i) => { const m = VOTER.mine[p.name]; return `<span class="b-chip ${m ? '' : 'todo'}" onclick="gotoBallot(${i})"><div class="r-avatar">${photoBlock(p.photo, p.name, 'r-avatar')}</div>${esc(p.name)} ${m ? `<em>${avgOf(m.stats)}</em>` : '<em>·</em>'}</span>`; }).join('')}</div>
+    <div class="b-actions"><button class="btn-gold" onclick="closeBallotDirect()">Back to the cards</button></div>`;
+}
+function closeBallot(e) { if (e.target === document.getElementById('ballot-overlay')) closeBallotDirect(); }
+function closeBallotDirect() {
+  document.getElementById('ballot-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  if (BALLOT) { BALLOT = null; renderCards(); }
+}
+document.addEventListener('keydown', e => {
+  if (!BALLOT || !document.getElementById('ballot-overlay').classList.contains('open')) return;
+  if (e.target && e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'Escape') closeBallotDirect();
+  else if (e.key === 'ArrowRight' && BALLOT.values) gotoBallot(BALLOT.idx + 1);
+  else if (e.key === 'ArrowLeft' && BALLOT.values && BALLOT.idx > 0) gotoBallot(BALLOT.idx - 1);
+  else if (e.key === 'Enter' && BALLOT.values) confirmRating();
+});
+
 /* ── TABS ── */
-const TABS = ['hall','wall','records','timeline','balances'];
+const TABS = ['hall','cards','wall','records','timeline','balances'];
 function showTab(name, updateHash = true) {
   if (!TABS.includes(name)) name = 'hall';
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
@@ -1528,7 +1891,10 @@ function showTab(name, updateHash = true) {
   if (updateHash && window.scrollY > anchor) window.scrollTo({ top: anchor, behavior: 'instant' });
 }
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
-window.addEventListener('hashchange', () => showTab(location.hash.slice(1) || 'hall', false));
+window.addEventListener('hashchange', () => {
+  if (captureToken()) { showTab('cards', false); if (ALL_PLAYERS.length) { PENDING_VOTE = false; openBallot(); } return; }
+  showTab(location.hash.slice(1) || 'hall', false);
+});
 showTab(location.hash.slice(1) || 'hall', false);
 
 load();
