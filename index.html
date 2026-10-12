@@ -241,6 +241,37 @@
   .linkbox { margin-top: 16px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; color: var(--fg-2); word-break: break-all; }
   .linkbox code { display: block; color: var(--fg); font-size: 12px; margin-top: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
+  /* LEVELS & TRAITS */
+  .lv-row { padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+  .lv-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .lv-head b { font-size: 13px; }
+  .lv-head span { font-size: 12px; color: var(--fg-2); flex: 1; min-width: 0; }
+  .lv-head em { font-style: normal; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .lv-seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .lv-seg button { padding: 8px 4px; border: 1px solid var(--line-2); border-radius: 5px; font-size: 11px; color: var(--fg-2); background: transparent; position: relative; }
+  .lv-seg button .short { display: none; }
+  .lv-seg button.seed::after { content: ''; position: absolute; left: 50%; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--fg-3); transform: translateX(-50%); }
+  .lv-seg button:hover { border-color: var(--fg-3); color: var(--fg); }
+  .lv-seg button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .lv-seg button.on.seed::after { background: var(--bg); }
+  .trait-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-top: 8px; }
+  .trait { text-align: left; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--surface); }
+  .trait b { display: block; font-size: 11px; letter-spacing: .08em; }
+  .trait span { display: block; font-size: 11px; color: var(--fg-2); margin-top: 2px; }
+  .trait:hover { border-color: var(--fg-3); }
+  .trait.on { border-color: var(--fg); background: var(--surface-3); }
+  .trait.on b { color: var(--fg); }
+  .trait:disabled { opacity: .4; cursor: default; }
+  .c-traits { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 16px 0; }
+  .c-traits span { font-size: 10px; font-weight: 700; letter-spacing: .08em; padding: 2px 6px; border: 1px solid var(--line-2); border-radius: 4px; color: var(--fg-2); }
+  .you-grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
+  .you-grid .card { cursor: default; }
+  .you-grid .card:hover { transform: none; }
+  .admin-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); margin-top: 6px; }
+  .admin-row .n { font-weight: 600; }
+  .admin-row .st { font-size: 12px; color: var(--fg-2); margin-top: 2px; }
+  .admin-row .st b { color: var(--fg); font-weight: 600; }
+
   /* BALLOT */
   .b-progress { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; margin-bottom: 20px; }
   .b-progress i { display: block; height: 100%; background: var(--fg); transition: width .4s var(--ease); }
@@ -294,6 +325,8 @@
     .b-card { position: static; width: 180px; margin: 0 auto; }
     .d-foot, .s-kv { grid-template-columns: 1fr 1fr; }
     .st-row { grid-template-columns: 64px 34px 42px 34px 1fr; gap: 6px; padding: 5px 8px; } .st-k small { display: none; }
+    .lv-seg button .full { display: none; } .lv-seg button .short { display: inline; }
+    .you-grid { grid-template-columns: 1fr; } .you-grid .card { max-width: 260px; margin: 0 auto; }
     .hint { display: none; }
     .controls { top: 10px; right: 10px; }
   }
@@ -311,6 +344,7 @@
   <nav class="top">
     <div class="wordmark">Wednesday 9–10<span>Hall of Fame</span></div>
     <div class="tabs" id="tabs">
+      <button class="tab" data-tab="you" id="tab-you" hidden>You</button>
       <button class="tab active" data-tab="hall">Players<small id="tab-n-hall"></small></button>
       <button class="tab" data-tab="wall">Century Wall<small id="tab-n-wall"></small></button>
       <button class="tab" data-tab="records">Records<small id="tab-n-records"></small></button>
@@ -328,6 +362,8 @@
     <div class="stat"><b class="num" id="s-members">—</b><div class="label">Century members</div></div>
     <div class="stat"><b class="num" id="s-players">—</b><div class="label">Players</div></div>
   </div>
+
+  <section class="panel" id="panel-you"><div id="you-body"></div></section>
 
   <section class="panel active" id="panel-hall">
     <div class="sh"><h2>Players</h2><div class="seg" id="posfilter">
@@ -406,6 +442,12 @@ const SKIP = new Set(['','player','games played','amount paid','balance','owing 
 const VOTE_API = new URLSearchParams(location.search).get('api') || 'https://script.google.com/macros/s/AKfycby3NDACkLNP9_MKwWQYqPTFPROcDiAoXbpOnbtMxYGOvSAVvfeAHIeKLb4krs-mcHGf/exec';
 const STAT_KEYS = ['PAC','SHO','PAS','DRI','DEF','PHY'];
 const STAT_NAMES = { PAC:'Pace', SHO:'Shooting', PAS:'Passing', DRI:'Dribbling', DEF:'Defending', PHY:'Physical' };
+const STAT_GUIDE = { PAC:'First to loose balls, recovery runs', SHO:'Finishing and shot quality', PAS:'Picks a pass, keeps the ball', DRI:'Close control, beats a man', DEF:'Tackles, blocks, positioning', PHY:'Strength, stamina, wins duels' };
+const LEVELS = [{ v:52, l:'Needs work' }, { v:62, l:'Decent' }, { v:72, l:'Good' }, { v:82, l:'Very good' }, { v:92, l:'Elite' }];
+const levelIdx = v => LEVELS.reduce((b, L, i) => Math.abs(L.v - v) < Math.abs(LEVELS[b].v - v) ? i : b, 0);
+const TRAITS = { ENGINE:'Never stops running', FINISHER:'Puts chances away', PLAYMAKER:'Makes the team tick', WALL:'Nothing gets past', MAGICIAN:'Does things with the ball', ROCKET:'Pure pace', CAPTAIN:'Organises, talks, leads', CLUTCH:'Shows up when it matters', SWEEPER:'Reads danger early', GLOVES:'Goes in goal and means it', WILDCARD:'Anything can happen', ENFORCER:'Wins the physical battles' };
+const MAX_TRAITS = 3;
+let SELF = null;
 
 let ALL_PLAYERS = [], SESSIONS = [], YEARS = [], RECORDS = [], RECORD_HOLDERS = {};
 let ACTIVE_FILTER = '', CURRENT_PLAYER = null, CURRENT_SESSION = null;
@@ -674,7 +716,13 @@ function render() {
   document.getElementById('tab-n-records').textContent = RECORDS.length;
   document.getElementById('tab-n-timeline').textContent = n;
   renderPlayers(); renderWall(); renderRecords(); renderTimeline(); renderBalances();
-  renderCards().then(() => { if (PENDING_VOTE && TOKEN) { PENDING_VOTE = false; showTab('hall', false); openBallot(); } });
+  renderCards().then(() => {
+    renderYou();
+    if (PENDING_VOTE && TOKEN) { PENDING_VOTE = false; showTab('you', false); return; }
+    if (TOKEN && !location.hash) showTab('you', false);
+    let later = false; try { later = !!sessionStorage.getItem('w910_claim_later'); } catch (_) {}
+    if (!TOKEN && !later && RATINGS && RATINGS.ok) setTimeout(openClaim, 600);
+  });
   document.getElementById('last-updated').textContent = 'Live from the sheet · ' + new Date().toLocaleString('en-GB', { dateStyle:'medium', timeStyle:'short' });
 }
 document.querySelectorAll('#posfilter button').forEach(b => b.onclick = () => { ACTIVE_FILTER = b.dataset.filter; document.querySelectorAll('#posfilter button').forEach(x=>x.classList.toggle('on', x===b)); renderPlayers(); });
@@ -817,6 +865,7 @@ function openProfile(p) {
         <div class="heat-legend"><span><i style="background:var(--fg-2)"></i>Played</span><span><i style="background:var(--surface-2)"></i>Missed</span><span><i style="background:var(--fg)"></i>Current streak</span><span><i style="outline:1px solid var(--gold);outline-offset:1px"></i>100th</span></div>
         <div class="yrs">${p.years.map(y=>`<div class="yr"><span class="y">${y.y}</span><i style="--w:${y.eligible ? y.got/maxEligible*100 : 0}%"></i><span class="v">${y.got} / ${y.eligible}</span></div>`).join('')}</div>
         ${r && r.stats ? `<div class="label" style="margin-top:22px">Teammate ratings · ${r.n} votes</div><div class="c-stats" style="margin:8px 0 0">${STAT_KEYS.map(k=>`<div class="c-stat"><span class="label">${k}</span><b class="num">${r.stats[k]}</b></div>`).join('')}</div>` : ''}
+        ${r && r.traits && Object.keys(r.traits).length ? `<div class="c-traits" style="padding:10px 0 0">${Object.keys(r.traits).sort((a,b)=>r.traits[b]-r.traits[a]).slice(0,5).map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)} · ${r.traits[t]}</span>`).join('')}</div>` : ''}
         <div class="d-foot">
           <div><span>Seasons</span><b>${seasons}${first&&first.date ? ` <span class="dim" style="font-weight:400">since ${first.date.getFullYear()}</span>` : ''}</b></div>
           <div><span>Longest absence</span><b>${p.longestGap ? p.longestGap+' sessions' : '—'}</b></div>
@@ -869,10 +918,15 @@ function cardHtml(p, stats, opts = {}) {
   let foot = opts.meta || '';
   if (!foot) { if (rated) { let trend = ''; if (opts.prev) { const d = avgOf(stats)-avgOf(opts.prev); if (d) trend = `<span class="${d>0?'up':'down'}">${d>0?'▲':'▼'} ${Math.abs(d)}</span>`; } foot = `<span>${opts.n} vote${opts.n===1?'':'s'}</span>${trend || `<span>${esc((RECORD_HOLDERS[p.name]||[])[0] || TIER_NAME[tier])}</span>`}`; }
     else foot = `<span>${opts.n != null ? `${opts.n} of ${RATINGS ? RATINGS.minVotes : 3} votes` : 'preview'}</span><span>${esc((RECORD_HOLDERS[p.name]||[])[0] || '')}</span>`; }
+  let traits = opts.traits || [];
+  if (!opts.traits && RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].traits) {
+    const t = RATINGS.players[p.name].traits; traits = Object.keys(t).filter(k => t[k] >= 2).sort((a,b) => t[b]-t[a]).slice(0, 2);
+  }
   return `<div class="card ${tier}${foil?' foil':''}${rated?'':' unrated'}" data-pi="${ALL_PLAYERS.indexOf(p)}">
     <div class="c-head"><div><div class="c-num num">${p.count}</div><div class="label">Appearances</div></div><div class="c-tier"><span class="pill">${TIER_NAME[tier]}</span><div class="marks">${badges.map(b=>`<i title="${esc(b.d||b.t)}">${b.i}</i>`).join('')}</div></div></div>
     <div class="c-photo-wrap">${photo(p,'c-photo')}${p.attendance[0]===1 ? `<span class="founder" title="Played the very first session, ${esc(fmtSession(SESSIONS[0],false))}">⚑ Founder</span>` : ''}</div>
     <div class="c-name"><b>${esc(p.name)}</b><span>${esc([posName(p), p.foot ? p.foot+' foot' : ''].filter(Boolean).join(' · ') || ' ')}</span></div>
+    ${traits.length ? `<div class="c-traits">${traits.map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>
     <div class="c-foot">${foot}</div></div>`;
 }
@@ -898,7 +952,7 @@ function openClaim() {
     <form id="claim-form" onsubmit="return submitClaim(event)">
       <div class="field"><label for="claim-name">Your name</label><select id="claim-name" required><option value="">Choose…</option>${names.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}</select></div>
       <div class="field"><label for="claim-code">Group code</label><input id="claim-code" autocomplete="one-time-code" inputmode="text" placeholder="e.g. W1234" required></div>
-      <div class="b-actions"><button class="btn" id="claim-btn" type="submit">Get my link</button><span class="saved" id="claim-msg"></span></div>
+      <div class="b-actions"><button class="btn" id="claim-btn" type="submit">Get my link</button><button class="btn ghost" type="button" onclick="closeClaimDirect(); try { sessionStorage.setItem('w910_claim_later','1'); } catch(_) {}">Not now</button><span class="saved" id="claim-msg"></span></div>
     </form>`;
   document.getElementById('claim-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
   setTimeout(() => document.getElementById('claim-name').focus(), 50);
@@ -917,8 +971,8 @@ async function submitClaim(e) {
     <div class="b-title" style="margin-top:8px">You're set, ${esc(res.name.split(' ')[0])}.</div>
     <div class="b-copy">This device now remembers you. To use another phone or laptop, open this link there. Keep it to yourself: whoever has it can vote as you and see your balance.</div>
     <div class="linkbox">Your link<code id="mylink">${esc(myLink())}</code></div>
-    <div class="b-actions"><button class="btn" onclick="copyLink(this)">Copy link</button><button class="btn ghost" onclick="closeClaimDirect(); openBallot()">Rate teammates</button><button class="btn ghost" onclick="closeClaimDirect(); showTab('balances')">See my balance</button></div>`;
-  renderCards(); renderBalances();
+    <div class="b-actions"><button class="btn" onclick="closeClaimDirect(); showTab('you')">Go to my page</button><button class="btn ghost" onclick="copyLink(this)">Copy link</button></div>`;
+  renderCards(); renderBalances(); renderYou();
   return false;
 }
 function copyLink(btn) { const t = myLink(); const done = () => { btn.textContent = 'Copied'; setTimeout(()=>btn.textContent='Copy link', 1500); };
@@ -940,29 +994,50 @@ async function openBallot() {
   BALLOT = { me, queue, idx: 0 };
   renderBallotIntro();
 }
-function forgetToken() { try { localStorage.removeItem('w910_token'); } catch (_) {} TOKEN = ''; VOTER = null; closeBallotDirect(); renderCards(); renderBalances(); }
+function forgetToken() { try { localStorage.removeItem('w910_token'); } catch (_) {} TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); renderCards(); renderBalances(); renderYou(); showTab('hall'); }
 const doneCount = () => BALLOT.queue.filter(p => VOTER.mine[p.name]).length;
 function renderBallotIntro() {
   const { me, queue } = BALLOT, done = doneCount(), next = queue.findIndex(p => !VOTER.mine[p.name]);
   document.getElementById('b-body').innerHTML = `
     <div class="label">Ratings · ${esc(VOTER.window)} · ${VOTER.open ? 'open' : 'closed'}</div>
     <div class="b-title" style="margin-top:8px">${esc(me.name)}</div>
-    <div class="b-copy">You have shared the pitch with <b>${queue.length} teammates</b> at least ${VOTER.minShared || 3} times, so those are the ones you can rate. Each comes up with suggested numbers. Nudge them up or down, or confirm if they look right. Add a word if you like; only they will read it.<br><br><b>Ratings are anonymous.</b> Nobody, including the admin, can see who gave what. You can come back and change anything while the window is open.</div>
+    <div class="b-copy">You have shared the pitch with <b>${queue.length} teammates</b> at least ${VOTER.minShared || 3} times, so those are the ones you can rate. Each comes up with a suggested level for six things. Tap a level, pick up to three traits, add a word if you like. Only they will read the word.<br><br><b>Ratings are anonymous.</b> Nobody, including the admin, can see who gave what. You can come back and change anything while the window is open.</div>
     <div class="b-actions">
       ${VOTER.open ? `<button class="btn" onclick="gotoBallot(${next<0?0:next})">${done ? `Continue · ${done} of ${queue.length} done` : 'Start'}</button>` : `<span class="error">The window is closed. Ratings are frozen until the next one opens.</span>`}
       ${done ? `<button class="btn ghost" onclick="renderBallotDone()">Review my ratings</button>` : ''}
       <button class="btn link" onclick="forgetToken()">Not ${esc(me.name.split(' ')[0])}? Forget this link</button>
     </div>
-    <div class="linkbox">Your link, for another device<code id="mylink">${esc(myLink())}</code></div>
-    <div class="b-actions" style="margin-top:10px"><button class="btn ghost" onclick="copyLink(this)">Copy link</button></div>
+
     ${VOTER.feedback && VOTER.feedback.length ? `<div class="b-copy" style="margin-top:26px"><b>What teammates said about you</b> · ${VOTER.feedback.length}${VOTER.feedback.map(c=>`<br>“${esc(c)}”`).join('')}</div>` : ''}`;
 }
 function gotoBallot(i) {
   const { queue } = BALLOT; if (i >= queue.length) return renderBallotDone();
   BALLOT.idx = i; const p = queue[i], existing = VOTER.mine[p.name];
-  const seed = (VOTER.seeds && VOTER.seeds[p.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=65,o),{});
-  BALLOT.seed = seed; BALLOT.values = Object.assign({}, existing ? existing.stats : seed); BALLOT.comment = existing ? existing.comment : '';
+  const seed = (VOTER.seeds && VOTER.seeds[p.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{});
+  BALLOT.seed = seed; BALLOT.values = Object.assign({}, existing ? existing.stats : seed);
+  BALLOT.traits = existing && existing.traits ? existing.traits.slice() : []; BALLOT.comment = existing ? existing.comment : '';
   renderBallotCard();
+}
+function levelRowsHtml(ns, values, seed) {
+  return `<div class="st-rows">${STAT_KEYS.map(k => { const cur = levelIdx(values[k]), sd = seed ? levelIdx(seed[k]) : -1; return `
+    <div class="lv-row"><div class="lv-head"><b>${k}</b><span>${STAT_NAMES[k]} · ${STAT_GUIDE[k]}</span><em id="${ns}-lv-${k}">${LEVELS[cur].l}</em></div>
+      <div class="lv-seg" id="${ns}-seg-${k}">${LEVELS.map((L,i)=>`<button type="button" class="${i===cur?'on':''}${i===sd?' seed':''}" onclick="setLevel('${ns}','${k}',${i})" title="${L.l}"><span class="full">${L.l}</span><span class="short">${i+1}</span></button>`).join('')}</div></div>`; }).join('')}</div>`;
+}
+function traitGridHtml(ns, chosen) {
+  return `<div class="trait-grid">${Object.entries(TRAITS).map(([t,d]) => `<button type="button" class="trait ${chosen.includes(t)?'on':''}" onclick="toggleTrait('${ns}','${t}')" ${!chosen.includes(t) && chosen.length>=MAX_TRAITS ? 'disabled' : ''}><b>${t}</b><span>${d}</span></button>`).join('')}</div>`;
+}
+function stateFor(ns) { return ns === 'b' ? BALLOT : SELF; }
+function setLevel(ns, k, i) {
+  const st = stateFor(ns); st.values[k] = LEVELS[i].v;
+  document.getElementById(`${ns}-lv-${k}`).textContent = LEVELS[i].l;
+  document.querySelectorAll(`#${ns}-seg-${k} button`).forEach((b,j)=>b.classList.toggle('on', j===i));
+  if (ns === 'b') paintCardPreview(); else paintSelfPreview();
+}
+function toggleTrait(ns, t) {
+  const st = stateFor(ns); const i = st.traits.indexOf(t);
+  if (i >= 0) st.traits.splice(i,1); else if (st.traits.length < MAX_TRAITS) st.traits.push(t);
+  document.getElementById(`${ns}-traits`).innerHTML = traitGridHtml(ns, st.traits);
+  if (ns === 'b') paintCardPreview(); else paintSelfPreview();
 }
 function renderBallotCard() {
   const { me, queue, idx, values, seed } = BALLOT, p = queue[idx], done = doneCount();
@@ -973,7 +1048,10 @@ function renderBallotCard() {
       <div class="b-card" id="b-card"></div>
       <div>
         <div class="b-who"><div class="b-title">${esc(p.name)}</div><span>${sharedCount(me,p)} nights together</span></div>
-        <div class="st-rows">${STAT_KEYS.map(k=>`<div class="st-row"><span class="st-k">${k}<small>${STAT_NAMES[k]}</small></span><button class="st-btn" onclick="nudge('${k}',-2)">−</button><span class="st-v num" id="v-${k}">${values[k]}</span><button class="st-btn" onclick="nudge('${k}',2)">+</button><div class="st-bar"><i id="bar-${k}" style="width:${(values[k]-40)/59*100}%"></i><s style="left:${(seed[k]-40)/59*100}%" title="suggested ${seed[k]}"></s><em id="d-${k}"></em></div></div>`).join('')}</div>
+        <p class="muted" style="font-size:12px;margin-bottom:10px">Tap a level for each. The dot marks the suggested level. Five is the best in the group, one needs work.</p>
+        ${levelRowsHtml('b', values, seed)}
+        <div class="label" style="margin-top:16px">Traits · pick up to ${MAX_TRAITS}</div>
+        <div id="b-traits">${traitGridHtml('b', BALLOT.traits)}</div>
         <textarea class="b-comment" id="b-comment" maxlength="280" placeholder="A word for ${esc(p.name.split(' ')[0])}? Optional, private to them.">${esc(BALLOT.comment || '')}</textarea>
         <div class="b-nav">${idx>0 ? `<button class="btn ghost" onclick="gotoBallot(${idx-1})">Back</button>` : ''}<button class="btn ghost" onclick="gotoBallot(${idx+1})">Skip</button><span class="sp"></span><span class="saved" id="b-saved">Saved</span><button class="btn" id="b-confirm" onclick="confirmRating()">${VOTER.mine[p.name] ? 'Update' : 'Looks right'}</button></div>
       </div>
@@ -982,17 +1060,15 @@ function renderBallotCard() {
 }
 function paintCardPreview() {
   const { queue, idx, values, seed } = BALLOT, p = queue[idx];
-  document.getElementById('b-card').innerHTML = cardHtml(p, values, { meta:`<span>Your rating</span><span>${avgOf(values)} avg</span>` });
-  STAT_KEYS.forEach(k => { const d = values[k]-seed[k], el = document.getElementById('d-'+k); el.textContent = d ? (d>0?'+':'')+d : ''; el.className = d>0 ? 'up' : d<0 ? 'down' : ''; });
+  document.getElementById('b-card').innerHTML = cardHtml(p, values, { meta:`<span>Your rating</span><span>${avgOf(values)} avg</span>`, traits: BALLOT.traits });
 }
-function nudge(k, d) { BALLOT.values[k] = Math.max(40, Math.min(99, BALLOT.values[k]+d)); document.getElementById('v-'+k).textContent = BALLOT.values[k]; document.getElementById('bar-'+k).style.width = (BALLOT.values[k]-40)/59*100+'%'; paintCardPreview(); }
 async function confirmRating() {
   const { queue, idx, values } = BALLOT, p = queue[idx], btn = document.getElementById('b-confirm');
   btn.disabled = true; btn.textContent = 'Saving…';
   const comment = document.getElementById('b-comment').value.trim();
-  let res; try { res = await api(null, { action:'rate', t: TOKEN, target: p.name, stats: values, comment }); } catch (e) { res = { ok:false, error: e.message }; }
+  let res; try { res = await api(null, { action:'rate', t: TOKEN, target: p.name, stats: values, comment, traits: BALLOT.traits }); } catch (e) { res = { ok:false, error: e.message }; }
   if (!res.ok) { btn.disabled = false; btn.textContent = 'Retry'; document.getElementById('b-saved').textContent = res.error || 'Could not save'; document.getElementById('b-saved').classList.add('show'); return; }
-  VOTER.mine[p.name] = { stats: Object.assign({}, values), comment };
+  VOTER.mine[p.name] = { stats: Object.assign({}, values), comment, traits: BALLOT.traits.slice() };
   document.getElementById('b-saved').classList.add('show');
   setTimeout(() => { const next = queue.findIndex((q,j) => j>idx && !VOTER.mine[q.name]); gotoBallot(next<0 ? queue.length : next); }, 300);
 }
@@ -1007,7 +1083,101 @@ function renderBallotDone() {
     <div class="b-actions"><button class="btn" onclick="closeBallotDirect()">Back to the cards</button></div>`;
 }
 function closeBallot(e) { if (e.target === document.getElementById('ballot-overlay')) closeBallotDirect(); }
-function closeBallotDirect() { document.getElementById('ballot-overlay').classList.remove('open'); document.body.style.overflow = ''; if (BALLOT) { BALLOT = null; renderCards(); } }
+function closeBallotDirect() { document.getElementById('ballot-overlay').classList.remove('open'); document.body.style.overflow = ''; if (BALLOT) { BALLOT = null; renderCards().then(renderYou); } }
+
+/* ── You ── */
+async function ensureVoter() {
+  if (!TOKEN) return null;
+  if (!VOTER) { try { VOTER = await api({ action:'me', t: TOKEN }); } catch (e) { VOTER = { ok:false, error: e.message }; } }
+  return VOTER;
+}
+async function renderYou() {
+  const tab = document.getElementById('tab-you'), body = document.getElementById('you-body');
+  tab.hidden = !TOKEN;
+  if (!TOKEN) { body.innerHTML = ''; return; }
+  body.innerHTML = `<div class="loading">Loading your page…</div>`;
+  const v = await ensureVoter();
+  if (!v || !v.ok) { body.innerHTML = `<div class="error">${esc((v && v.error) || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
+  const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === v.name.toLowerCase());
+  if (!me) { body.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; return; }
+  const r = RATINGS && RATINGS.ok ? (RATINGS.players[me.name] || { n:0 }) : { n:0 };
+  const queue = ALL_PLAYERS.filter(p => p !== me && sharedCount(me,p) >= (v.minShared || 3));
+  const done = queue.filter(p => v.mine[p.name]).length;
+  const known = me.balance !== null && !isNaN(me.balance);
+  const balStatus = !known ? 'Not recorded' : me.balance < 0 ? 'Owing to the pot' : me.balance > 0 ? 'In credit' : 'Settled';
+  const ms = milestoneFor(me);
+  SELF = { values: Object.assign({}, v.self ? v.self.stats : (v.seeds && v.seeds[me.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{})), traits: v.self ? v.self.traits.slice() : [], note: v.self ? v.self.note : '' };
+  body.innerHTML = `
+    <div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
+    <div class="you-grid">
+      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${r.stats ? `Rated by ${r.n} teammates.` : `${r.n} of ${RATINGS ? RATINGS.minVotes : 3} votes so far. Stats show at three.`}</p></div>
+      <div>
+        <div class="stats four">
+          <div class="stat"><b class="num">${me.count}</b><div class="label">Appearances</div></div>
+          <div class="stat"><b class="num">${me.gamesThisYear}</b><div class="label">In ${THIS_YEAR}</div></div>
+          <div class="stat"><b class="num">${me.currentStreak || '—'}</b><div class="label">Current streak</div></div>
+          <div class="stat"><b class="num">${known ? kes(me.balance) : '—'}</b><div class="label">${esc(balStatus)}</div></div>
+        </div>
+        <div class="mile" style="margin-top:18px"><div class="l"><span>${me.count<100 ? 'To the century' : `Next milestone ${ms.next}`}</span><span>${ms.toGo} to go · ${esc(fmtEta(ms.eta))}</span></div><i style="--w:${ms.pct}%"></i></div>
+        <div class="b-actions" style="margin-top:18px">
+          ${v.open ? `<button class="btn" onclick="openBallot()">${done ? `Rate teammates · ${done} of ${queue.length} done` : 'Rate your teammates'}</button>` : `<span class="muted" style="font-size:12px">Rating window ${esc(v.window)} is closed.</span>`}
+          <button class="btn ghost" onclick="openProfile(ALL_PLAYERS[${ALL_PLAYERS.indexOf(me)}])">Full record</button>
+          <button class="btn ghost" onclick="copyLink(this)">Copy my link</button>
+        </div>
+        <div class="linkbox">Your link, for another device · keep it to yourself<code id="mylink">${esc(myLink())}</code></div>
+        ${v.feedback && v.feedback.length ? `<div class="label" style="margin-top:22px">What teammates said · ${v.feedback.length}</div><div class="b-copy" style="margin-top:6px">${v.feedback.map(c=>`“${esc(c)}”`).join('<br>')}</div>` : ''}
+      </div>
+    </div>
+    <section>
+      <div class="sh"><h2>Rate yourself</h2><span>Only Raji sees this. It helps set a fair starting point.</span></div>
+      <div class="you-grid">
+        <div id="self-card"></div>
+        <div>
+          ${levelRowsHtml('s', SELF.values, v.seeds && v.seeds[me.name])}
+          <div class="label" style="margin-top:16px">Your traits · pick up to ${MAX_TRAITS}</div>
+          <div id="s-traits">${traitGridHtml('s', SELF.traits)}</div>
+          <textarea class="b-comment" id="s-note" maxlength="280" placeholder="Anything Raji should know? Optional.">${esc(SELF.note)}</textarea>
+          <div class="b-nav"><span class="sp"></span><span class="saved" id="s-saved">${v.self && v.self.updated ? 'Submitted' : ''}</span><button class="btn" id="s-submit" onclick="submitSelf()">${v.self ? 'Update' : 'Submit'}</button></div>
+        </div>
+      </div>
+    </section>
+    ${v.isAdmin ? `<section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
+  paintSelfPreview();
+  if (v.isAdmin) renderAdmin(me);
+}
+function paintSelfPreview() {
+  const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
+  const el = document.getElementById('self-card'); if (!el || !me) return;
+  el.innerHTML = cardHtml(me, SELF.values, { meta:`<span>How you see yourself</span><span>${avgOf(SELF.values)} avg</span>`, traits: SELF.traits });
+}
+async function submitSelf() {
+  const btn = document.getElementById('s-submit'), msg = document.getElementById('s-saved');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const note = document.getElementById('s-note').value.trim();
+  let res; try { res = await api(null, { action:'self', t: TOKEN, stats: SELF.values, traits: SELF.traits, note }); } catch (e) { res = { ok:false, error: e.message }; }
+  btn.disabled = false;
+  if (!res.ok) { btn.textContent = 'Retry'; msg.textContent = res.error || 'Could not save'; msg.classList.add('show'); return; }
+  btn.textContent = 'Update'; msg.textContent = 'Submitted'; msg.classList.add('show');
+  VOTER.self = { stats: Object.assign({}, SELF.values), traits: SELF.traits.slice(), note, updated: new Date().toISOString() };
+}
+async function renderAdmin(me) {
+  const el = document.getElementById('admin-body'); if (!el) return;
+  let a; try { a = await api({ action:'admin', t: TOKEN }); } catch (e) { a = { ok:false, error: e.message }; }
+  if (!a.ok) { el.innerHTML = `<div class="error">${esc(a.error || 'Could not load')}</div>`; return; }
+  if (!a.selfRatings.length) { el.innerHTML = `<div class="empty">Nobody has rated themselves yet.</div>`; return; }
+  el.innerHTML = a.selfRatings.sort((x,y)=>x.name.localeCompare(y.name)).map((sr, i) => {
+    const seed = a.seeds[sr.name] || {};
+    const same = STAT_KEYS.every(k => levelIdx(seed[k] ?? 72) === levelIdx(sr.stats[k]));
+    return `<div class="admin-row"><div><div class="n">${esc(sr.name)} <span class="dim" style="font-weight:400">· ${sr.traits.join(', ') || 'no traits'}</span></div>
+      <div class="st">${STAT_KEYS.map(k => `${k} <b>${LEVELS[levelIdx(sr.stats[k])].l}</b>${seed[k] != null && levelIdx(seed[k]) !== levelIdx(sr.stats[k]) ? ` <span class="dim">(seed ${LEVELS[levelIdx(seed[k])].l})</span>` : ''}`).join(' · ')}${sr.note ? `<br>“${esc(sr.note)}”` : ''}</div></div>
+      <button class="btn ghost" ${same ? 'disabled' : ''} onclick="useAsSeed(${i})">${same ? 'Matches seed' : 'Use as seed'}</button></div>`; }).join('');
+  window.__ADMIN = a;
+}
+async function useAsSeed(i) {
+  const sr = window.__ADMIN.selfRatings.sort((x,y)=>x.name.localeCompare(y.name))[i];
+  let res; try { res = await api(null, { action:'setSeed', t: TOKEN, name: sr.name, stats: sr.stats }); } catch (e) { res = { ok:false, error: e.message }; }
+  if (res.ok) { VOTER = null; renderYou(); }
+}
 
 /* ── keyboard ── */
 document.addEventListener('keydown', e => {
@@ -1023,21 +1193,22 @@ document.addEventListener('keydown', e => {
 });
 
 /* ── tabs ── */
-const TABS = ['hall','wall','records','timeline','balances'];
+const TABS = ['you','hall','wall','records','timeline','balances'];
 function showTab(name, updateHash = true) {
   if (name === 'cards') name = 'hall';
+  if (name === 'you' && !TOKEN) name = 'hall';
   if (!TABS.includes(name)) name = 'hall';
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-'+name));
   if (name === 'timeline') { const w = document.getElementById('tl-wrap'); if (w) w.scrollLeft = w.scrollWidth; }
-  if (updateHash) history.replaceState(null, '', name === 'hall' ? location.pathname + location.search : '#'+name);
+  if (updateHash) history.replaceState(null, '', name === 'hall' || name === 'you' ? location.pathname + location.search : '#'+name);
   const tabs = document.getElementById('tabs'), tab = tabs.querySelector('.tab.active');
   if (tab) tabs.scrollTo({ left: tab.offsetLeft - (tabs.clientWidth - tab.offsetWidth)/2, behavior:'smooth' });
   const anchor = document.getElementById('stats').getBoundingClientRect().bottom + window.scrollY;
   if (updateHash && window.scrollY > anchor) window.scrollTo({ top: anchor - 70, behavior:'instant' });
 }
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
-window.addEventListener('hashchange', () => { if (captureToken()) { showTab('hall', false); if (ALL_PLAYERS.length) { PENDING_VOTE = false; VOTER = null; renderBalances(); openBallot(); } return; } showTab(location.hash.slice(1) || 'hall', false); });
+window.addEventListener('hashchange', () => { if (captureToken()) { if (ALL_PLAYERS.length) { PENDING_VOTE = false; VOTER = null; renderBalances(); renderYou().then(() => showTab('you', false)); } return; } showTab(location.hash.slice(1) || (TOKEN ? 'you' : 'hall'), false); });
 showTab(location.hash.slice(1) || 'hall', false);
 load();
 </script>

@@ -19,6 +19,8 @@ const MAIN_SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/' + MAIN_SHEET_ID + '/export?format=csv&gid=0';
 const SITE_URL = 'https://wednesday910.vercel.app/';
 const STATS = ['PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY'];
+const TRAITS = ['ENGINE', 'FINISHER', 'PLAYMAKER', 'WALL', 'MAGICIAN', 'ROCKET', 'CAPTAIN', 'CLUTCH', 'SWEEPER', 'GLOVES', 'WILDCARD', 'ENFORCER'];
+const MAX_TRAITS = 3;
 const MIN_SHARED = 3;      // sessions you must have shared to rate someone
 const MIN_VOTES = 3;       // ballots before a rating is shown
 const RMIN = 40, RMAX = 99;
@@ -34,7 +36,9 @@ function setup() {
   const v = sheet_('Voters');  if (v.getLastRow() === 0) v.appendRow(['voter_id', 'name', 'created', 'claimed']);
   if (v.getLastColumn() < 4) v.getRange(1, 4).setValue('claimed');
   settings_();   // creates the Settings tab with a group code if missing
-  const b = sheet_('Votes');   if (b.getLastRow() === 0) b.appendRow(['window', 'ballot_id', 'target', 'w'].concat(STATS, ['comment', 'updated']));
+  const b = sheet_('Votes');   if (b.getLastRow() === 0) b.appendRow(['window', 'ballot_id', 'target', 'w'].concat(STATS, ['comment', 'updated', 'traits']));
+  if (b.getLastColumn() < 4 + STATS.length + 3) b.getRange(1, 4 + STATS.length + 3).setValue('traits');
+  const sr = sheet_('SelfRatings'); if (sr.getLastRow() === 0) sr.appendRow(['window', 'name'].concat(STATS, ['traits', 'note', 'updated']));
   const w = sheet_('Windows'); if (w.getLastRow() === 0) w.appendRow(['window', 'opened', 'closed']);
   const s = sheet_('Seeds');
   if (s.getLastRow() === 0) {
@@ -97,6 +101,7 @@ function doGet(e) {
   const a = (e.parameter.action || 'results');
   try {
     if (a === 'me') return json_(me_(e.parameter.t));
+    if (a === 'admin') return json_(admin_(e.parameter.t));
     if (a === 'results') return json_(results_());
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) { return json_({ ok: false, error: String(err) }); }
@@ -108,6 +113,8 @@ function doPost(e) {
   try {
     if (body.action === 'rate') return json_(rate_(body));
     if (body.action === 'claim') return json_(claim_(body));
+    if (body.action === 'self') return json_(self_(body));
+    if (body.action === 'setSeed') return json_(setSeed_(body));
     if (body.action === 'unrate') return json_(unrate_(body));
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) { return json_({ ok: false, error: String(err) }); }
@@ -121,10 +128,13 @@ function me_(token) {
   const b = id2_(token);
   rows_(sheet_('Votes')).forEach(function (r) {
     if (r[0] !== win) return;
-    if (r[1] === b) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[4 + i]); }); mine[r[2]] = { stats: st, comment: r[4 + STATS.length] || '' }; }
+    if (r[1] === b) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[4 + i]); }); mine[r[2]] = { stats: st, comment: r[4 + STATS.length] || '', traits: String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean) }; }
     if (r[2] === name && r[4 + STATS.length]) feedback.push(String(r[4 + STATS.length]));
   });
-  return { ok: true, name: name, window: win, open: open, seeds: seeds_(), mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED };
+  const selfRow = rows_(sheet_('SelfRatings')).filter(function (r) { return r[0] === win && String(r[1]).toLowerCase() === name.toLowerCase(); }).pop();
+  const self = selfRow ? rowToRating_(selfRow, 2) : null;
+  return { ok: true, name: name, window: win, open: open, seeds: seeds_(), mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED,
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name) };
 }
 
 function rate_(body) {
@@ -141,6 +151,7 @@ function rate_(body) {
   if (shared < MIN_SHARED) return { ok: false, error: 'You haven’t played enough sessions with ' + tp.name + '.' };
   const stats = STATS.map(function (k) { const v = Math.round(Number((body.stats || {})[k])); if (isNaN(v)) throw new Error('Missing ' + k); return Math.max(RMIN, Math.min(RMAX, v)); });
   const comment = String(body.comment || '').replace(/\s+/g, ' ').trim().slice(0, 280);
+  const traits = cleanTraits_(body.traits);
   const w = shared >= 20 ? 1 : shared >= 8 ? 0.8 : 0.6;   // familiarity, bucketed so it can't identify the voter
   const win = props_().getProperty('window'), b = id2_(body.t);
 
@@ -149,7 +160,7 @@ function rate_(body) {
     const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
     let rowIdx = -1;
     for (let i = 1; i < data.length; i++) if (data[i][0] === win && data[i][1] === b && data[i][2] === tp.name) { rowIdx = i + 1; break; }
-    const row = [win, b, tp.name, w].concat(stats, [comment, new Date()]);
+    const row = [win, b, tp.name, w].concat(stats, [comment, new Date(), traits.join(',')]);
     if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
   } finally { lock.releaseLock(); }
   cache_().remove('results');
@@ -219,7 +230,8 @@ function aggregate_(rows) {
   const res = {};
   Object.keys(byTarget).forEach(function (t) {
     const vs = byTarget[t], n = vs.length;
-    const entry = { n: n };
+    const entry = { n: n, traits: {} };
+    vs.forEach(function (r) { String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean).forEach(function (t) { entry.traits[t] = (entry.traits[t] || 0) + 1; }); });
     if (n >= MIN_VOTES) {
       entry.stats = {};
       STATS.forEach(function (k, i) {
@@ -233,6 +245,48 @@ function aggregate_(rows) {
   });
   return res;
 }
+
+/** A player's own view of themselves. Visible only to the admin (Settings → admin_name), as a starting point to adjust seeds. */
+function self_(body) {
+  const name = voterName_(body.t);
+  if (!name) return { ok: false, error: 'This link isn’t recognised.' };
+  const stats = STATS.map(function (k) { const v = Math.round(Number((body.stats || {})[k])); if (isNaN(v)) throw new Error('Missing ' + k); return Math.max(RMIN, Math.min(RMAX, v)); });
+  const traits = cleanTraits_(body.traits), note = String(body.note || '').replace(/\s+/g, ' ').trim().slice(0, 280);
+  const win = props_().getProperty('window');
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const sh = sheet_('SelfRatings'), data = sh.getDataRange().getValues();
+    let rowIdx = -1;
+    for (let i = 1; i < data.length; i++) if (data[i][0] === win && String(data[i][1]).toLowerCase() === name.toLowerCase()) { rowIdx = i + 1; break; }
+    const row = [win, name].concat(stats, [traits.join(','), note, new Date()]);
+    if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+  } finally { lock.releaseLock(); }
+  return { ok: true };
+}
+
+function admin_(token) {
+  const name = voterName_(token);
+  if (!name || !isAdmin_(name)) return { ok: false, error: 'Admin only.' };
+  const win = props_().getProperty('window');
+  const selfRatings = rows_(sheet_('SelfRatings')).filter(function (r) { return r[0] === win; }).map(function (r) { const o = rowToRating_(r, 2); o.name = String(r[1]); return o; });
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS };
+}
+
+function setSeed_(body) {
+  const name = voterName_(body.t);
+  if (!name || !isAdmin_(name)) return { ok: false, error: 'Admin only.' };
+  const target = String(body.name || '').trim();
+  const stats = STATS.map(function (k) { const v = Math.round(Number((body.stats || {})[k])); if (isNaN(v)) throw new Error('Missing ' + k); return Math.max(RMIN, Math.min(RMAX, v)); });
+  const sh = sheet_('Seeds'), data = sh.getDataRange().getValues();
+  let rowIdx = -1;
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]).toLowerCase() === target.toLowerCase()) { rowIdx = i + 1; break; }
+  if (rowIdx > 0) sh.getRange(rowIdx, 2, 1, STATS.length).setValues([stats]); else sh.appendRow([target].concat(stats));
+  return { ok: true };
+}
+
+function isAdmin_(name) { return String(name || '').toLowerCase() === String(settings_().admin_name || 'Raji').toLowerCase(); }
+function cleanTraits_(arr) { const seen = {}; return (Array.isArray(arr) ? arr : []).map(function (t) { return String(t).toUpperCase(); }).filter(function (t) { if (TRAITS.indexOf(t) < 0 || seen[t]) return false; seen[t] = 1; return true; }).slice(0, MAX_TRAITS); }
+function rowToRating_(r, off) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[off + i]); }); return { stats: st, traits: String(r[off + STATS.length] || '').split(',').filter(Boolean), note: String(r[off + STATS.length + 1] || ''), updated: r[off + STATS.length + 2] ? String(r[off + STATS.length + 2]) : '' }; }
 
 /* ───────── helpers ───────── */
 
@@ -249,7 +303,9 @@ function newToken_() { return Utilities.getUuid().replace(/-/g, '') + Utilities.
 function settings_() {
   const sh = sheet_('Settings');
   if (sh.getLastRow() === 0) { sh.appendRow(['key', 'value']); sh.appendRow(['claim_code', 'W' + Math.floor(1000 + Math.random() * 9000)]); }
-  const o = {}; rows_(sh).forEach(function (r) { o[String(r[0])] = String(r[1]); }); return o;
+  const o = {}; rows_(sh).forEach(function (r) { o[String(r[0])] = String(r[1]); });
+  if (!o.admin_name) { sh.appendRow(['admin_name', 'Raji']); o.admin_name = 'Raji'; }
+  return o;
 }
 function defaultWindow_() { const d = new Date(); return d.getFullYear() + '-Q' + (Math.floor(d.getMonth() / 3) + 1); }
 function shuffle_(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
