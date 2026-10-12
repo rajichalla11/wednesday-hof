@@ -262,8 +262,16 @@
   .trait.on { border-color: var(--fg); background: var(--surface-3); }
   .trait.on b { color: var(--fg); }
   .trait:disabled { opacity: .4; cursor: default; }
-  .c-traits { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 16px 0; }
-  .c-traits span { font-size: 10px; font-weight: 700; letter-spacing: .08em; padding: 2px 6px; border: 1px solid var(--line-2); border-radius: 4px; color: var(--fg-2); }
+  .c-badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px 0; }
+  .medal { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 3px; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--line-2); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--fg); cursor: help; }
+  .medal i { width: 18px; height: 18px; border-radius: 50%; background: var(--fg); color: var(--bg); display: grid; place-items: center; font-style: normal; font-size: 10px; font-weight: 700; }
+  .medal.tier i { background: var(--tier); }
+  .c-traits { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 16px 0; }
+  .c-traits span { font-size: 10px; font-weight: 600; letter-spacing: .06em; padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); }
+  .lock-overlay { position: fixed; inset: 0; z-index: 200; background: var(--bg); display: none; align-items: center; justify-content: center; padding: 24px; }
+  .lock-overlay.on { display: flex; }
+  .lock-box { max-width: 420px; width: 100%; }
+  .lock-box p { color: var(--fg-2); font-size: 14px; line-height: 1.7; margin-top: 10px; }
   .you-grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
   .you-grid .card { cursor: default; }
   .you-grid .card:hover { transform: none; }
@@ -331,7 +339,7 @@
     .stats { grid-template-columns: repeat(3, 1fr); } .stats.four { grid-template-columns: 1fr 1fr; }
     .stat { padding: 14px 12px 12px; } .stat b { font-size: 26px; } .stat .label { font-size: 10px; }
     .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
-    .c-num { font-size: 36px; } .c-head, .c-name { padding-inline: 12px; } .c-photo-wrap, .c-stats { margin-inline: 12px; } .c-stat b { font-size: 14px; } .c-foot { padding-inline: 12px; }
+    .c-num { font-size: 36px; } .c-head, .c-name, .c-badges, .c-traits { padding-inline: 12px; } .c-photo-wrap, .c-stats { margin-inline: 12px; } .c-stat b { font-size: 14px; } .c-foot { padding-inline: 12px; }
     .c-stat { padding-right: 6px; } .c-stat:nth-child(3n+2), .c-stat:nth-child(3n+3) { padding-left: 6px; }
     .overlay { padding: 0; align-items: stretch; }
     .sheet { max-width: none !important; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 20px 16px 40px; }
@@ -439,6 +447,17 @@
     <div id="c-body"></div>
   </div>
 </div>
+<div class="lock-overlay" id="lock">
+  <div class="lock-box">
+    <div class="label">Wednesday 9–10</div>
+    <div class="b-title" style="margin-top:8px">Not open yet</div>
+    <p>The Hall of Fame is being set up. It will open to the group once the ratings are ready.</p>
+    <form onsubmit="return tryUnlock(event)" style="margin-top:18px">
+      <div class="field"><label for="lock-code">Admin passcode</label><input id="lock-code" type="password" autocomplete="off"></div>
+      <div class="b-actions"><button class="btn" type="submit">Open</button><span class="saved" id="lock-msg"></span></div>
+    </form>
+  </div>
+</div>
 <div class="tl-tip" id="tl-tip"></div>
 
 <script>
@@ -468,6 +487,13 @@ let ACTIVE_FILTER = '', CURRENT_PLAYER = null, CURRENT_SESSION = null;
 let RATINGS = null, VOTER = null, PENDING_VOTE = false, BALLOT = null, TOKEN = '';
 const THIS_YEAR = new Date().getFullYear();
 try { TOKEN = localStorage.getItem('w910_token') || ''; } catch (_) {}
+/* Site lock while the ratings are being set up. Set LOCKED to false to open the site to everyone. */
+const LOCKED = true, LOCK_CODE = 'nineten';
+let UNLOCKED = !LOCKED; try { if (localStorage.getItem('w910_unlock') === LOCK_CODE) UNLOCKED = true; } catch (_) {}
+function tryUnlock(e) { e.preventDefault(); const v = document.getElementById('lock-code').value.trim().toLowerCase();
+  if (v === LOCK_CODE) { UNLOCKED = true; try { localStorage.setItem('w910_unlock', LOCK_CODE); } catch (_) {} document.getElementById('lock').classList.remove('on'); document.body.style.overflow = ''; }
+  else { const m = document.getElementById('lock-msg'); m.textContent = 'Not it.'; m.classList.add('show'); } return false; }
+document.addEventListener('DOMContentLoaded', () => { if (!UNLOCKED) { document.getElementById('lock').classList.add('on'); document.body.style.overflow = 'hidden'; } });
 function captureToken() {
   const m = location.hash.match(/^#vote\/([A-Za-z0-9_-]{16,})/);
   if (!m) return false;
@@ -697,14 +723,14 @@ function computeRecords(players, sessions) {
 }
 function badgesFor(p) {
   const B = [];
-  if (p.attendance[0]===1) B.push({ i:'⚑', t:'Founding member', d:'Played the very first session', rare:true });
+  if (p.attendance[0]===1) B.push({ i:'⚑', t:'Founder', d:`Played the very first session, ${fmtSession(SESSIONS[0],false)}`, rare:true });
   if (p.count>=200) B.push({ i:'★★', t:'Double century', rare:true }); else if (p.count>=100) B.push({ i:'★', t:'Century member', rare:true });
   for (const y of p.years) { if (y.y!==THIS_YEAR && y.total>=20 && y.got===y.total) B.push({ i:'♜', t:`Iron man ${y.y}`, d:`Every one of the ${y.total} sessions in ${y.y}`, rare:true }); if (y.y===THIS_YEAR && y.total>=5 && y.got===y.total) B.push({ i:'◆', t:`Ever-present ${y.y}` }); }
   if (p.currentStreak>=10) B.push({ i:'▲', t:`${p.currentStreak} straight` });
   if (p.maxStreak>=20) B.push({ i:'⚡', t:'Streak master', d:`Best run of ${p.maxStreak}` });
   if (p.longestGap>=20) B.push({ i:'↻', t:'The comeback', d:`Back after missing ${p.longestGap} in a row` });
   if (p.firstIdx>=0 && SESSIONS[p.firstIdx].year===THIS_YEAR) B.push({ i:'✧', t:`Debut ${THIS_YEAR}` });
-  for (const r of (RECORD_HOLDERS[p.name]||[])) B.push({ i:'♛', t:r, rare:true });
+  for (const r of (RECORD_HOLDERS[p.name]||[])) B.push({ i:'♛', t:r, d:`Holds the record: ${r}`, rare:true });
   return B;
 }
 
@@ -735,7 +761,7 @@ function render() {
     if (PENDING_VOTE && TOKEN) { PENDING_VOTE = false; showTab('you', false); return; }
     if (TOKEN && !location.hash) showTab('you', false);
     let later = false; try { later = !!sessionStorage.getItem('w910_claim_later'); } catch (_) {}
-    if (!TOKEN && !later && RATINGS && RATINGS.ok) setTimeout(openClaim, 600);
+    if (!TOKEN && !later && UNLOCKED && RATINGS && RATINGS.ok) setTimeout(openClaim, 600);
   });
   document.getElementById('last-updated').textContent = 'Live from the sheet · ' + new Date().toLocaleString('en-GB', { dateStyle:'medium', timeStyle:'short' });
 }
@@ -927,19 +953,20 @@ const sharedCount = (a,b) => { let s=0; for (let i=0;i<a.attendance.length;i++) 
 const avgOf = stats => Math.round(STAT_KEYS.reduce((a,k)=>a+stats[k],0)/STAT_KEYS.length);
 function cardHtml(p, stats, opts = {}) {
   const rated = !!stats, tier = tierOf(p), foil = isRecordHolder(p);
-  const badges = badgesFor(p).sort((a,b)=>(b.rare?1:0)-(a.rare?1:0)).slice(0,3);
+  const badges = badgesFor(p).sort((a,b)=>(b.rare?1:0)-(a.rare?1:0)).filter(b => !/^Century member$|^Double century$/.test(b.t)).slice(0,3);
   const top = rated ? STAT_KEYS.reduce((b,k)=>stats[k]>stats[b]?k:b, STAT_KEYS[0]) : null;
   let foot = opts.meta || '';
-  if (!foot) { if (rated) { let trend = ''; if (opts.prev) { const d = avgOf(stats)-avgOf(opts.prev); if (d) trend = `<span class="${d>0?'up':'down'}">${d>0?'▲':'▼'} ${Math.abs(d)}</span>`; } foot = `<span>${opts.n ? `${opts.n} vote${opts.n===1?'':'s'}` : 'Starting point'}</span>${trend || `<span>${esc((RECORD_HOLDERS[p.name]||[])[0] || TIER_NAME[tier])}</span>`}`; }
-    else foot = `<span>${opts.n != null ? `${opts.n} of ${RATINGS ? RATINGS.minVotes : 3} votes` : 'preview'}</span><span>${esc((RECORD_HOLDERS[p.name]||[])[0] || '')}</span>`; }
+  if (!foot) { if (rated) { let trend = ''; if (opts.prev) { const d = avgOf(stats)-avgOf(opts.prev); if (d) trend = `<span class="${d>0?'up':'down'}">${d>0?'▲':'▼'} ${Math.abs(d)}</span>`; } foot = `<span>${opts.n ? `${opts.n} vote${opts.n===1?'':'s'}` : 'Starting point'}</span>${trend || `<span>${TIER_NAME[tier]}</span>`}`; }
+    else foot = `<span>${opts.n != null ? `${opts.n} of ${RATINGS ? RATINGS.minVotes : 3} votes` : 'preview'}</span><span>${TIER_NAME[tier]}</span>`; }
   let traits = opts.traits || [];
   if (!opts.traits && RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].traits) {
     const t = RATINGS.players[p.name].traits; traits = Object.keys(t).filter(k => t[k] >= 2).sort((a,b) => t[b]-t[a]).slice(0, 2);
   }
   return `<div class="card ${tier}${foil?' foil':''}${rated?'':' unrated'}" data-pi="${ALL_PLAYERS.indexOf(p)}">
-    <div class="c-head"><div><div class="c-num num">${p.count}</div><div class="label">Appearances</div></div><div class="c-tier"><span class="pill">${TIER_NAME[tier]}</span><div class="marks">${badges.map(b=>`<i title="${esc(b.d||b.t)}">${b.i}</i>`).join('')}</div></div></div>
-    <div class="c-photo-wrap">${photo(p,'c-photo')}${p.attendance[0]===1 ? `<span class="founder" title="Played the very first session, ${esc(fmtSession(SESSIONS[0],false))}">⚑ Founder</span>` : ''}</div>
+    <div class="c-head"><div><div class="c-num num">${p.count}</div><div class="label">Appearances</div></div><div class="c-tier"><span class="pill">${TIER_NAME[tier]}</span></div></div>
+    <div class="c-photo-wrap">${photo(p,'c-photo')}</div>
     <div class="c-name"><b>${esc(p.name)}</b><span>${esc([posName(p), p.foot ? p.foot+' foot' : ''].filter(Boolean).join(' · ') || ' ')}</span></div>
+    ${badges.length ? `<div class="c-badges">${badges.map(b=>`<span class="medal${b.rare?' tier':''}" title="${esc(b.d||b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>` : ''}
     ${traits.length ? `<div class="c-traits">${traits.map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>
     <div class="c-foot">${foot}</div></div>`;
@@ -951,7 +978,7 @@ async function renderCards() {
   const ok = RATINGS && RATINGS.ok;
   const rated = ok ? ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats).length : 0;
   intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from Raji's call and move with anonymous votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>` : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Get your personal link</button>`) : ''}`;
-  legend.innerHTML = `<span style="flex-basis:100%">${STAT_KEYS.map(k=>`<b style="color:var(--fg-2)">${k}</b> ${STAT_GUIDE[k].toLowerCase().replace(/ · /g, ', ')}`).join(' &nbsp;·&nbsp; ')}</span><span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Marks under the tier · badges, hover for details</span>`;
+  legend.innerHTML = `<span style="flex-basis:100%">${STAT_KEYS.map(k=>`<b style="color:var(--fg-2)">${k}</b> ${STAT_GUIDE[k].toLowerCase().replace(/ · /g, ', ')}`).join(' &nbsp;·&nbsp; ')}</span><span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Medals under the name · hover for details</span>`;
   renderPlayers();
 }
 
