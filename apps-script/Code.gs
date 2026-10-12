@@ -183,11 +183,11 @@ function unrate_(body) {
  *  their row in the Voters tab. The code lives in the Settings tab (key claim_code). */
 function claim_(body) {
   const name = String(body.name || '').trim(), code = String(body.code || '').trim();
-  if (!name || !code) return { ok: false, error: 'Pick your name and enter the group code.' };
+  if (!name) return { ok: false, error: 'Pick your name.' };
   const key = 'claim|' + name.toLowerCase(), tries = Number(cache_().get(key) || 0);
   if (tries >= 5) return { ok: false, error: 'Too many attempts for this name. Try again in 15 minutes.' };
-  const want = String(settings_().claim_code || '').trim().toLowerCase();
-  if (!want || code.toLowerCase() !== want) { cache_().put(key, String(tries + 1), 900); return { ok: false, error: 'That code is not right.' }; }
+  const want = String(settings_().claim_code || '').trim().toLowerCase();   // blank in Settings = no code needed
+  if (want && code.toLowerCase() !== want) { cache_().put(key, String(tries + 1), 900); return { ok: false, error: 'That code is not right.' }; }
   const p = players_().filter(function (x) { return x.name.toLowerCase() === name.toLowerCase(); })[0];
   if (!p) return { ok: false, error: 'That name is not on the attendance sheet.' };
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
@@ -214,7 +214,7 @@ function results_() {
   const prevWin = windows[windows.indexOf(win) - 1] || null;
   const all = rows_(sheet_('Votes'));
   const seeds = seeds_();
-  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, players: aggregate_(all.filter(function (r) { return r[0] === win; }), seeds), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds) : {}, prevWindow: prevWin };
+  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), players: aggregate_(all.filter(function (r) { return r[0] === win; }), seeds), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds) : {}, prevWindow: prevWin };
   out.ballots = Object.keys(all.filter(function (r) { return r[0] === win; }).reduce(function (m, r) { m[r[1]] = 1; return m; }, {})).length;
   cache_().put('results', JSON.stringify(out), 120);
   return out;
@@ -308,7 +308,7 @@ function id2_(t) { return sha_('ballot|' + t); }
 function newToken_() { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); }
 function settings_() {
   const sh = sheet_('Settings');
-  if (sh.getLastRow() === 0) { sh.appendRow(['key', 'value']); sh.appendRow(['claim_code', 'W' + Math.floor(1000 + Math.random() * 9000)]); }
+  if (sh.getLastRow() === 0) { sh.appendRow(['key', 'value']); sh.appendRow(['claim_code', '']); }   // leave blank for no code
   const o = {}; rows_(sh).forEach(function (r) { o[String(r[0])] = String(r[1]); });
   if (!o.admin_name) { sh.appendRow(['admin_name', 'Raji']); o.admin_name = 'Raji'; }
   return o;
