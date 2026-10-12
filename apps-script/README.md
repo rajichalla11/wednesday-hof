@@ -22,7 +22,16 @@ Open the `Seeds` tab. Every player is listed with 65 across the board. Put in yo
 indicative numbers (40–99) for PAC / SHO / PAS / DRI / DEF / PHY. These are only the
 starting point voters see; they never show on the public cards.
 
-## Sending the links
+## Letting people claim their own link (recommended)
+
+Post one message to the group with the **group code** from the `Settings` tab of the ratings
+sheet (key `claim_code`; change it any time). Each player opens the site, taps **Get your
+personal link**, picks their name, enters the code, and the site stores their link on that
+device and shows it so they can save it. One claim per name; five wrong codes locks a name
+for 15 minutes. If someone claims the wrong name, delete that row in the `Voters` tab and
+they can claim again.
+
+## Sending the links by hand (alternative)
 
 1. Run `generateLinks`. A `Links` tab appears with one personal link per player.
 2. Send each person their own link (WhatsApp). Tell them not to forward it — whoever

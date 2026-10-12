@@ -31,7 +31,9 @@ const SKIP = ['', 'player', 'games played', 'amount paid', 'balance', 'owing fro
 /* ───────── admin: run these from the editor ───────── */
 
 function setup() {
-  const v = sheet_('Voters');  if (v.getLastRow() === 0) v.appendRow(['voter_id', 'name', 'created']);
+  const v = sheet_('Voters');  if (v.getLastRow() === 0) v.appendRow(['voter_id', 'name', 'created', 'claimed']);
+  if (v.getLastColumn() < 4) v.getRange(1, 4).setValue('claimed');
+  settings_();   // creates the Settings tab with a group code if missing
   const b = sheet_('Votes');   if (b.getLastRow() === 0) b.appendRow(['window', 'ballot_id', 'target', 'w'].concat(STATS, ['comment', 'updated']));
   const w = sheet_('Windows'); if (w.getLastRow() === 0) w.appendRow(['window', 'opened', 'closed']);
   const s = sheet_('Seeds');
@@ -53,8 +55,8 @@ function generateLinks() {
   let made = 0;
   players_().forEach(function (p) {
     if (have[p.name.toLowerCase()]) return;
-    const token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8);
-    voters.appendRow([id1_(token), p.name, new Date()]);
+    const token = newToken_();
+    voters.appendRow([id1_(token), p.name, new Date(), '']);
     links.appendRow([p.name, SITE_URL + '#vote/' + token]);
     made++;
   });
@@ -105,6 +107,7 @@ function doPost(e) {
   try { body = JSON.parse(e.postData.contents || '{}'); } catch (_) {}
   try {
     if (body.action === 'rate') return json_(rate_(body));
+    if (body.action === 'claim') return json_(claim_(body));
     if (body.action === 'unrate') return json_(unrate_(body));
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) { return json_({ ok: false, error: String(err) }); }
@@ -163,6 +166,33 @@ function unrate_(body) {
   return { ok: true };
 }
 
+/** Self-service: a player picks their name on the site and enters the group code to get their personal link.
+ *  One claim per name. An unclaimed pre-generated link is replaced. To let someone claim again, delete
+ *  their row in the Voters tab. The code lives in the Settings tab (key claim_code). */
+function claim_(body) {
+  const name = String(body.name || '').trim(), code = String(body.code || '').trim();
+  if (!name || !code) return { ok: false, error: 'Pick your name and enter the group code.' };
+  const key = 'claim|' + name.toLowerCase(), tries = Number(cache_().get(key) || 0);
+  if (tries >= 5) return { ok: false, error: 'Too many attempts for this name. Try again in 15 minutes.' };
+  const want = String(settings_().claim_code || '').trim().toLowerCase();
+  if (!want || code.toLowerCase() !== want) { cache_().put(key, String(tries + 1), 900); return { ok: false, error: 'That code is not right.' }; }
+  const p = players_().filter(function (x) { return x.name.toLowerCase() === name.toLowerCase(); })[0];
+  if (!p) return { ok: false, error: 'That name is not on the attendance sheet.' };
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const voters = sheet_('Voters'), data = voters.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][1]).toLowerCase() !== p.name.toLowerCase()) continue;
+      if (data[i][3]) return { ok: false, error: 'This name has already been claimed. If that was not you, ask Raji to reset it.' };
+      voters.deleteRow(i + 1);
+    }
+    const token = newToken_();
+    voters.appendRow([id1_(token), p.name, new Date(), new Date()]);
+    cache_().remove(key);
+    return { ok: true, token: token, name: p.name };
+  } finally { lock.releaseLock(); }
+}
+
 /** Aggregated ratings: calibrated, trimmed, familiarity-weighted means. Cached 2 min. */
 function results_() {
   const cached = cache_().get('results');
@@ -215,6 +245,12 @@ function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).se
 function sha_(s) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8).map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join(''); }
 function id1_(t) { return sha_('voter|' + t); }
 function id2_(t) { return sha_('ballot|' + t); }
+function newToken_() { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); }
+function settings_() {
+  const sh = sheet_('Settings');
+  if (sh.getLastRow() === 0) { sh.appendRow(['key', 'value']); sh.appendRow(['claim_code', 'W' + Math.floor(1000 + Math.random() * 9000)]); }
+  const o = {}; rows_(sh).forEach(function (r) { o[String(r[0])] = String(r[1]); }); return o;
+}
 function defaultWindow_() { const d = new Date(); return d.getFullYear() + '-Q' + (Math.floor(d.getMonth() / 3) + 1); }
 function shuffle_(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 

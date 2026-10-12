@@ -232,6 +232,15 @@
   .s-player small { font-size: 11px; color: var(--fg-3); }
   .s-player.century small { color: var(--gold); }
 
+  /* CLAIM */
+  .sheet.claim { max-width: 520px; }
+  .field { display: grid; gap: 6px; margin-top: 16px; }
+  .field label { font-size: 12px; color: var(--fg-2); }
+  .field select, .field input { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; font-size: 14px; }
+  .field select:focus, .field input:focus { outline: none; border-color: var(--fg-3); }
+  .linkbox { margin-top: 16px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; color: var(--fg-2); word-break: break-all; }
+  .linkbox code { display: block; color: var(--fg); font-size: 12px; margin-top: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
   /* BALLOT */
   .b-progress { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; margin-bottom: 20px; }
   .b-progress i { display: block; height: 100%; background: var(--fg); transition: width .4s var(--ease); }
@@ -372,6 +381,12 @@
   <div class="sheet ballot" id="ballot">
     <div class="controls"><button class="ctl" onclick="closeBallotDirect()" title="Close (Esc)">✕</button></div>
     <div id="b-body"></div>
+  </div>
+</div>
+<div class="overlay" id="claim-overlay" onclick="closeClaim(event)">
+  <div class="sheet claim" id="claim">
+    <div class="controls"><button class="ctl" onclick="closeClaimDirect()" title="Close (Esc)">✕</button></div>
+    <div id="c-body"></div>
   </div>
 </div>
 <div class="tl-tip" id="tl-tip"></div>
@@ -752,7 +767,7 @@ const kes = n => `KES ${Math.abs(Math.round(n)).toLocaleString()}`;
 async function renderBalances() {
   const el = document.getElementById('bal-list');
   document.getElementById('tab-n-balances').textContent = '';
-  if (!TOKEN) { el.innerHTML = `<div class="empty">Balances are personal. Open the site from your personal link to see yours.</div>`; return; }
+  if (!TOKEN) { el.innerHTML = `<div class="empty">Balances are personal. Get your personal link to see yours.<div style="margin-top:12px"><button class="btn" onclick="openClaim()">Get your personal link</button></div></div>`; return; }
   if (!VOTER) { el.innerHTML = `<div class="loading">Checking your link…</div>`; try { VOTER = await api({ action:'me', t: TOKEN }); } catch (e) { VOTER = { ok:false, error: e.message }; } }
   if (!VOTER.ok) { el.innerHTML = `<div class="error">${esc(VOTER.error || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
@@ -867,10 +882,49 @@ async function renderCards() {
   try { RATINGS = await api({ action:'results' }); } catch (e) { RATINGS = null; }
   const ok = RATINGS && RATINGS.ok;
   const rated = ok ? ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats).length : 0;
-  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats are rated anonymously by teammates who have played with you, and show once three have.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${TOKEN && ok ? `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>` : ''}`;
+  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats are rated anonymously by teammates who have played with you, and show once three have.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>` : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Get your personal link</button>`) : ''}`;
   legend.innerHTML = `<span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Marks under the tier · badges, hover for details</span>`;
   renderPlayers();
 }
+
+/* ── claim your link ── */
+const myLink = () => `${location.origin}${location.pathname}#vote/${TOKEN}`;
+function openClaim() {
+  const names = [...ALL_PLAYERS].sort((a,b)=>a.name.localeCompare(b.name));
+  document.getElementById('c-body').innerHTML = `
+    <div class="label">Personal link</div>
+    <div class="b-title" style="margin-top:8px">Get your personal link</div>
+    <div class="b-copy">Pick your name and enter the group code from the WhatsApp group. Your link is saved on this device and shown once so you can keep it. One claim per name: if yours is already taken, ask Raji to reset it.</div>
+    <form id="claim-form" onsubmit="return submitClaim(event)">
+      <div class="field"><label for="claim-name">Your name</label><select id="claim-name" required><option value="">Choose…</option>${names.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}</select></div>
+      <div class="field"><label for="claim-code">Group code</label><input id="claim-code" autocomplete="one-time-code" inputmode="text" placeholder="e.g. W1234" required></div>
+      <div class="b-actions"><button class="btn" id="claim-btn" type="submit">Get my link</button><span class="saved" id="claim-msg"></span></div>
+    </form>`;
+  document.getElementById('claim-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('claim-name').focus(), 50);
+}
+async function submitClaim(e) {
+  e.preventDefault();
+  const name = document.getElementById('claim-name').value, code = document.getElementById('claim-code').value.trim();
+  const btn = document.getElementById('claim-btn'), msg = document.getElementById('claim-msg');
+  btn.disabled = true; btn.textContent = 'Checking…'; msg.textContent = ''; msg.classList.remove('show');
+  let res; try { res = await api(null, { action:'claim', name, code }); } catch (err) { res = { ok:false, error: err.message }; }
+  if (!res.ok) { btn.disabled = false; btn.textContent = 'Get my link'; msg.textContent = res.error || 'Could not claim.'; msg.style.color = 'var(--neg)'; msg.classList.add('show'); return false; }
+  TOKEN = res.token; try { localStorage.setItem('w910_token', TOKEN); } catch (_) {}
+  VOTER = null;
+  document.getElementById('c-body').innerHTML = `
+    <div class="label">Personal link</div>
+    <div class="b-title" style="margin-top:8px">You're set, ${esc(res.name.split(' ')[0])}.</div>
+    <div class="b-copy">This device now remembers you. To use another phone or laptop, open this link there. Keep it to yourself: whoever has it can vote as you and see your balance.</div>
+    <div class="linkbox">Your link<code id="mylink">${esc(myLink())}</code></div>
+    <div class="b-actions"><button class="btn" onclick="copyLink(this)">Copy link</button><button class="btn ghost" onclick="closeClaimDirect(); openBallot()">Rate teammates</button><button class="btn ghost" onclick="closeClaimDirect(); showTab('balances')">See my balance</button></div>`;
+  renderCards(); renderBalances();
+  return false;
+}
+function copyLink(btn) { const t = myLink(); const done = () => { btn.textContent = 'Copied'; setTimeout(()=>btn.textContent='Copy link', 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(() => { window.getSelection().selectAllChildren(document.getElementById('mylink')); }); else window.getSelection().selectAllChildren(document.getElementById('mylink')); }
+function closeClaim(e) { if (e.target === document.getElementById('claim-overlay')) closeClaimDirect(); }
+function closeClaimDirect() { document.getElementById('claim-overlay').classList.remove('open'); document.body.style.overflow = ''; }
 
 /* ── ballot ── */
 async function openBallot() {
@@ -899,6 +953,8 @@ function renderBallotIntro() {
       ${done ? `<button class="btn ghost" onclick="renderBallotDone()">Review my ratings</button>` : ''}
       <button class="btn link" onclick="forgetToken()">Not ${esc(me.name.split(' ')[0])}? Forget this link</button>
     </div>
+    <div class="linkbox">Your link, for another device<code id="mylink">${esc(myLink())}</code></div>
+    <div class="b-actions" style="margin-top:10px"><button class="btn ghost" onclick="copyLink(this)">Copy link</button></div>
     ${VOTER.feedback && VOTER.feedback.length ? `<div class="b-copy" style="margin-top:26px"><b>What teammates said about you</b> · ${VOTER.feedback.length}${VOTER.feedback.map(c=>`<br>“${esc(c)}”`).join('')}</div>` : ''}`;
 }
 function gotoBallot(i) {
@@ -955,6 +1011,7 @@ function closeBallotDirect() { document.getElementById('ballot-overlay').classLi
 
 /* ── keyboard ── */
 document.addEventListener('keydown', e => {
+  if (document.getElementById('claim-overlay').classList.contains('open')) { if (e.key==='Escape') closeClaimDirect(); return; }
   if (BALLOT && document.getElementById('ballot-overlay').classList.contains('open')) {
     if (e.target && e.target.tagName === 'TEXTAREA') return;
     if (e.key==='Escape') closeBallotDirect(); else if (e.key==='ArrowRight' && BALLOT.values) gotoBallot(BALLOT.idx+1); else if (e.key==='ArrowLeft' && BALLOT.values && BALLOT.idx>0) gotoBallot(BALLOT.idx-1); else if (e.key==='Enter' && BALLOT.values) confirmRating();
