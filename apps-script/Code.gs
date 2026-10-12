@@ -17,7 +17,7 @@
 
 const MAIN_SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/' + MAIN_SHEET_ID + '/export?format=csv&gid=0';
-const SITE_URL = 'https://rajichalla11.github.io/wednesday-hof/';
+const SITE_URL = 'https://wednesday910.vercel.app/';
 const STATS = ['PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY'];
 const MIN_SHARED = 3;      // sessions you must have shared to rate someone
 const MIN_VOTES = 3;       // ballots before a rating is shown

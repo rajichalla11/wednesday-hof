@@ -61,3 +61,11 @@ they can claim again.
 
 - Sheet: `W9-10 Ratings` in Raji's Drive. Script project of the same name.
 - Web app URL is set as `VOTE_API` in `index.html`. Redeploying a new version keeps the same URL only if you **Manage deployments → edit → new version**; a brand-new deployment gets a new URL.
+
+## Hosting (2026-10-12)
+
+The public address is **https://wednesday910.vercel.app** (Vercel project `wednesday910`). It is a
+Vercel rewrite that proxies https://rajichalla11.github.io/wednesday-hof/, so deploys still happen
+by pushing to `main` on GitHub; nothing on Vercel needs touching. Do not add a redirect on the
+GitHub Pages side, or the proxy would loop. Personal links use whichever address the player opened,
+so links claimed on the Vercel address work there.
