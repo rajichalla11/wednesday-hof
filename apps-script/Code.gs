@@ -23,6 +23,9 @@ const MIN_SHARED = 3;      // sessions you must have shared to rate someone
 const MIN_VOTES = 3;       // ballots before a rating is shown
 const RMIN = 40, RMAX = 99;
 const SESSION_START_COL = 8;
+// Starting points by position (PAC SHO PAS DRI DEF PHY) — overwrite in the Seeds tab
+const SEED_BY_POS = { attack:[72,74,64,70,52,64], midfield:[68,64,74,70,64,66], defense:[66,54,64,58,74,72], other:[65,65,65,65,65,65] };
+function posClass_(pos) { const p = String(pos || '').toLowerCase(); return p.indexOf('attack') >= 0 ? 'attack' : (p.indexOf('defen') >= 0) ? 'defense' : p.indexOf('mid') >= 0 ? 'midfield' : 'other'; }
 const SKIP = ['', 'player', 'games played', 'amount paid', 'balance', 'owing from previous sessions', '+1s', 'krish p', 'images', 'postion', 'position', 'preferred foot'];
 
 /* ───────── admin: run these from the editor ───────── */
@@ -34,7 +37,7 @@ function setup() {
   const s = sheet_('Seeds');
   if (s.getLastRow() === 0) {
     s.appendRow(['name'].concat(STATS));
-    players_().forEach(function (p) { s.appendRow([p.name, 65, 65, 65, 65, 65, 65]); });
+    players_().forEach(function (p) { s.appendRow([p.name].concat(SEED_BY_POS[posClass_(p.position)])); });
   }
   if (!props_().getProperty('window')) openWindow();
 }

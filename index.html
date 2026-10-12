@@ -390,6 +390,21 @@
   .tier-silver { --ink: #1C2026; background: radial-gradient(120% 70% at 50% 0%, #F4F5F7 0%, #CDD1D8 38%, #9097A3 72%, #5C636E 100%); }
   .tier-bronze { --ink: #2B1A0C; background: radial-gradient(120% 70% at 50% 0%, #E6BE93 0%, #C58A55 38%, #935E30 72%, #5E3B1D 100%); }
   .tier-icon   { --ink: #3A2A08; background: radial-gradient(120% 70% at 50% 0%, #FFFBEF 0%, #F6E8BD 40%, #DDC27A 75%, #B59240 100%); }
+  /* Record holders get the black-foil variant of their tier */
+  .foil.tier-gold   { --ink: #EBD38A; --line: rgba(235,211,138,.38); background: radial-gradient(120% 70% at 50% 0%, #4A3B14 0%, #241C08 45%, #0D0A04 100%); }
+  .foil.tier-silver { --ink: #E3E6EB; --line: rgba(227,230,235,.32); background: radial-gradient(120% 70% at 50% 0%, #3C4148 0%, #1F2226 45%, #0B0C0E 100%); }
+  .foil.tier-bronze { --ink: #E6B986; --line: rgba(230,185,134,.38); background: radial-gradient(120% 70% at 50% 0%, #4A2F18 0%, #261708 45%, #0E0803 100%); }
+  .foil.tier-icon   { --ink: #2E2106; --line: rgba(120,90,20,.45); background: radial-gradient(120% 70% at 50% 0%, #FFFDF4 0%, #F7E7B6 35%, #E2C168 65%, #A8842E 100%); }
+  .fut-face.foil::before { border: 1px solid var(--line); mix-blend-mode: normal; }
+  .fut-face.foil.tier-icon::before { border: 2px solid rgba(160,120,30,.75); }
+  .fut-face.foil .fut-name { border-color: var(--line); }
+  .fut-face.foil .fut-stats::before { background: var(--line); }
+  .fut-face.foil .fut-photo::after { box-shadow: inset 0 0 0 1px var(--line), inset 0 -18cqw 20cqw -12cqw rgba(0,0,0,.45); }
+  .fut-left { display: flex; flex-direction: column; align-items: flex-start; }
+  .fut-badges { display: flex; flex-direction: column; gap: .5cqw; margin-top: 2.5cqw; font-size: 7cqw; line-height: 1.2; opacity: .85; }
+  .fut-badges span { cursor: help; }
+  .cards-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: -8px 0 22px; font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim); font-weight: 700; }
+  .cards-legend i { display: inline-block; width: 10px; height: 13px; clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%); vertical-align: -2px; margin-right: 6px; }
   .fut-top { display: flex; justify-content: space-between; align-items: flex-start; }
   .fut-ovr { font-family: 'Playfair Display', serif; font-size: 22cqw; font-weight: 900; line-height: .9; letter-spacing: -.02em; }
   .fut-pos { font-size: 7.5cqw; font-weight: 700; letter-spacing: .25em; margin-top: 2cqw; }
@@ -1668,6 +1683,7 @@ const avgOf = stats => Math.round(STAT_KEYS.reduce((a, k) => a + stats[k], 0) / 
 // Cards are earned by turning up: the tier climbs with appearances, the big number IS appearances.
 const tierOf = p => p.count >= 100 ? 'icon' : p.count >= 50 ? 'gold' : p.count >= 20 ? 'silver' : 'bronze';
 const TIER_NAME = { icon:'Icon · 100+', gold:'Gold · 50+', silver:'Silver · 20+', bronze:'Bronze' };
+const isRecordHolder = p => !!(RECORD_HOLDERS[p.name] && RECORD_HOLDERS[p.name].length);
 const posAbbr = p => ({ attack:'ATT', midfield:'MID', defense:'DEF', other:'—' })[posClass(p.position)];
 const CREST = `<svg viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M36 2 L68 14 L68 46 Q68 68 36 78 Q4 68 4 46 L4 14 Z" fill="rgba(0,0,0,.12)" stroke="currentColor" stroke-width="2"/><path d="M36 20 L37.8 25.5 L43.5 25.5 L39 28.5 L40.8 34 L36 31 L31.2 34 L33 28.5 L28.5 25.5 L34.2 25.5 Z" fill="currentColor"/><text x="36" y="66" text-anchor="middle" font-family="serif" font-size="12" font-weight="bold" fill="currentColor" letter-spacing="1">9-10</text></svg>`;
 
@@ -1683,7 +1699,10 @@ function radarSvg(stats) {
 
 function futCard(p, stats, opts = {}) {
   const rated = !!stats;
-  const tier = tierOf(p);
+  const tier = tierOf(p), foil = isRecordHolder(p);
+  const badges = badgesFor(p).sort((a, b) => (b.rare ? 1 : 0) - (a.rare ? 1 : 0)).slice(0, 3);
+  const faceCls = `tier-${tier}${foil ? ' foil' : ''}${rated ? '' : ' unrated'}`;
+  const tierWord = `${tier === 'icon' ? 'Icon' : tier[0].toUpperCase() + tier.slice(1)}${foil ? ' · Record' : ''}`;
   const photo = driveToImg(p.photo);
   const img = photo ? `<img src="${esc(photo)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="fut-fb" style="display:none">${esc(initials(p.name))}</div>` : `<div class="fut-fb">${esc(initials(p.name))}</div>`;
   const statCells = STAT_KEYS.map(k => `<div class="fut-stat"><b>${rated ? stats[k] : '–'}</b>${k}</div>`).join('');
@@ -1691,11 +1710,12 @@ function futCard(p, stats, opts = {}) {
   if (!meta && rated && opts.n != null) {
     let trend = '';
     if (opts.prev) { const d = avgOf(stats) - avgOf(opts.prev); if (d) trend = ` · <span class="${d>0?'up':'down'}">${d>0?'▲':'▼'}${Math.abs(d)}</span>`; }
-    meta = `${opts.n} vote${opts.n===1?'':'s'}${trend}`;
+    meta = `${tierWord} · ${opts.n} vote${opts.n===1?'':'s'}${trend}`;
   }
-  if (!meta && !rated) meta = opts.n != null ? `${opts.n} of ${RATINGS ? RATINGS.minVotes : 3} votes` : 'preview';
-  const front = `<div class="fut-face fut-front tier-${tier}${rated ? '' : ' unrated'}">
-      <div class="fut-top"><div><div class="fut-ovr" title="appearances">${p.count}</div><div class="fut-pos">${posAbbr(p)}</div></div><div class="fut-crest">${CREST}</div></div>
+  if (!meta && !rated) meta = opts.n != null ? `${tierWord} · ${opts.n} of ${RATINGS ? RATINGS.minVotes : 3} votes` : 'preview';
+  const front = `<div class="fut-face fut-front ${faceCls}">
+      <div class="fut-top"><div class="fut-left"><div class="fut-ovr" title="appearances">${p.count}</div><div class="fut-pos">${posAbbr(p)}</div>
+        <div class="fut-badges">${badges.map(b => `<span title="${esc(b.d || b.t)}">${b.i}</span>`).join('')}</div></div><div class="fut-crest">${CREST}</div></div>
       <div class="fut-photo">${img}</div>
       <div class="fut-name">${esc(p.name)}</div>
       <div class="fut-stats">${statCells}</div>
@@ -1704,10 +1724,13 @@ function futCard(p, stats, opts = {}) {
   if (!opts.back) return `<div class="fut-wrap"><div class="fut">${front}</div></div>`;
   const diffs = rated && opts.prev ? STAT_KEYS.map(k => { const d = stats[k]-opts.prev[k]; return d ? `<div class="fut-stat"><b>${d>0?'+':''}${d}</b>${k}</div>` : `<div class="fut-stat"><b>=</b>${k}</div>`; }).join('') : '';
   const fb = opts.feedback && opts.feedback.length ? `<div class="fut-feedback"><h4>What teammates said</h4>${opts.feedback.map(c=>`<p>“${esc(c)}”</p>`).join('')}</div>` : '';
-  const back = `<div class="fut-face fut-back tier-${tier}">
+  const allBadges = badgesFor(p);
+  const badgeList = allBadges.length ? `<div class="fut-feedback"><h4>${esc(tierWord)} card</h4><p>${allBadges.map(b => `${b.i} ${esc(b.t)}`).join(' · ')}</p></div>` : `<div class="fut-feedback"><h4>${esc(tierWord)} card</h4></div>`;
+  const back = `<div class="fut-face fut-back ${faceCls}">
       <div class="fut-name">${esc(p.name)}</div>
-      ${rated ? radarSvg(stats) : `<div class="fut-feedback"><p>${esc(TIER_NAME[tier])} card · ${p.count} appearances.</p><p>Stats appear once ${RATINGS ? RATINGS.minVotes : 3} teammates have rated them.</p></div>`}
+      ${rated ? radarSvg(stats) : `<div class="fut-feedback"><p>${p.count} appearances. Stats appear once ${RATINGS ? RATINGS.minVotes : 3} teammates have rated them.</p></div>`}
       ${diffs ? `<div class="fut-stats" style="margin-top:2cqw">${diffs}</div>` : ''}
+      ${badgeList}
       ${fb}
       <div class="fut-meta">${rated && opts.prev ? `vs ${esc(RATINGS.prevWindow||'last window')}` : rated ? 'first window' : ''}</div>
     </div>`;
@@ -1735,6 +1758,8 @@ async function renderCards() {
     <div class="cards-status">Window <b>${esc(RATINGS.window)}</b> · ${RATINGS.open ? '<b>open</b> for voting' : 'closed'} · <b>${RATINGS.ballots}</b> ballot${RATINGS.ballots===1?'':'s'} in · <b>${rated.length}</b> of ${ALL_PLAYERS.length} rated<br>
       The number is appearances and the card is earned by turning up — silver at 20, gold at 50, Icon at 100. The six stats are rated anonymously by teammates. Tap a card to flip it.</div>
     ${TOKEN ? `<button class="btn-gold" onclick="openBallot()">Rate your teammates →</button>` : `<span class="cards-status">Got a personal link? Open it to start rating.</span>`}`;
+  intro.insertAdjacentHTML('afterend', document.getElementById('cards-legend') ? '' : `<div class="cards-legend" id="cards-legend">
+      <span><i style="background:#C58A55"></i>Bronze</span><span><i style="background:#CDD1D8"></i>Silver · 20+</span><span><i style="background:#D9B860"></i>Gold · 50+</span><span><i style="background:#F6E8BD"></i>Icon · 100+</span><span><i style="background:#241C08;box-shadow:inset 0 0 0 1px #EBD38A"></i>Black foil · holds a record</span><span>Badges on the left of a card · hover for details</span></div>`);
   const order = [...ALL_PLAYERS].sort((a, b) => b.count - a.count);
   grid.innerHTML = order.map(p => {
     const r = RATINGS.players[p.name] || { n: 0 };
