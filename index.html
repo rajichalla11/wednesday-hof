@@ -1259,7 +1259,6 @@ function computeRecords(players, sessions) {
   const push = (t, key) => { if (t) R.push({ ...key, value: key.value ?? t.value, holders: t.holders, p: t.p }); };
   const gy = (p, y) => { const r = p.years.find(r => r.y === y); return r ? r.got : 0; };
   const dow = (p, days) => sessions.reduce((a, s, i) => a + (p.attendance[i] && s.date && days.includes(s.date.getDay()) ? 1 : 0), 0);
-  const avgTurnout = p => { const t = sessions.filter((s, i) => p.attendance[i]).map(s => s.turnout); return t.length >= 15 ? t.reduce((a, b) => a + b, 0) / t.length : null; };
 
   // Volume
   let t = topAll(players, p => p.maxStreak, { min: 2 });
@@ -1300,12 +1299,6 @@ function computeRecords(players, sessions) {
       const share = sh / a.played; if (!insep || share > insep.share) insep = { a, b, sh, share }; } }
   if (insep) R.push({ key:'insep', glyph:'∞', label:'Inseparable', value: Math.round(insep.share * 100) + '%', unit:`of nights with ${insep.b.name.split(' ')[0]}`, holders:[insep.a], p: insep.a, detail:`${insep.sh} of ${insep.a.played} games alongside ${insep.b.name}` });
 
-  t = topAll(players, avgTurnout, { lowest: true });
-  push(t, { key:'quiet', glyph:'☾', label:'Shows up regardless', value: t ? t.value.toFixed(1) : '', unit:'avg turnout on their nights', detail:'turns up when the numbers are thin' });
-
-  t = topAll(players, avgTurnout);
-  push(t, { key:'party', glyph:'✶', label:'Big-night player', value: t ? t.value.toFixed(1) : '', unit:'avg turnout on their nights', detail:'when they play, everyone plays' });
-
   t = topAll(players.filter(p => p.played >= 20), p => dow(p, [3]) / p.played);
   push(t, { key:'wed', glyph:'W', label:'True Wednesday', value: t ? Math.round(t.value * 100) + '%' : '', unit:'of games on a Wednesday', detail: t ? `${dow(t.p, [3])} of ${t.p.played} games on the namesake night` : '' });
 
@@ -1322,7 +1315,7 @@ function computeRecords(players, sessions) {
   if (founders.length) R.push({ key:'founders', glyph:'⚑', label:'Founding members', value: founders.length, unit:'at session one', holders: founders, noBadge: true,
     detail:`${founders.reduce((a, f) => a + f.count, 0).toLocaleString()} appearances between them` });
 
-  const SECTION = { iron:'season', ystreak:'season', breakout:'season', comeback:'character', month:'character', insep:'character', quiet:'character', party:'character', wed:'character' };
+  const SECTION = { iron:'season', ystreak:'season', breakout:'season', comeback:'character', month:'character', insep:'character', wed:'character' };
   for (const r of R) r.section = SECTION[r.key] || 'alltime';
   const order = { season: 0, character: 1, alltime: 2 };
   R.sort((a, b) => order[a.section] - order[b.section]);
