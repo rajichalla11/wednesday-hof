@@ -456,7 +456,7 @@ const SKIP = new Set(['','player','games played','amount paid','balance','owing 
 const VOTE_API = new URLSearchParams(location.search).get('api') || 'https://script.google.com/macros/s/AKfycby3NDACkLNP9_MKwWQYqPTFPROcDiAoXbpOnbtMxYGOvSAVvfeAHIeKLb4krs-mcHGf/exec';
 const STAT_KEYS = ['PAC','SHO','PAS','DRI','DEF','PHY'];
 const STAT_NAMES = { PAC:'Pace', SHO:'Shooting', PAS:'Passing', DRI:'Dribbling', DEF:'Defending', PHY:'Physical' };
-const STAT_GUIDE = { PAC:'First to loose balls, recovery runs', SHO:'Finishing and shot quality', PAS:'Picks a pass, keeps the ball', DRI:'Close control, beats a man', DEF:'Tackles, blocks, positioning', PHY:'Strength, stamina, wins duels' };
+const STAT_GUIDE = { PAC:'Speed · burst · recovery runs', SHO:'Finishing · heading · long shots · power', PAS:'Short passing · through balls · crosses · keeping the ball', DRI:'Close control · agility · beating a man', DEF:'Tackling · blocking · marking · positioning', PHY:'Strength · stamina · duels · jumping' };
 const LEVELS = [{ v:52, l:'Needs work' }, { v:62, l:'Decent' }, { v:72, l:'Good' }, { v:82, l:'Very good' }, { v:92, l:'Elite' }];
 const levelIdx = v => LEVELS.reduce((b, L, i) => Math.abs(L.v - v) < Math.abs(LEVELS[b].v - v) ? i : b, 0);
 const TRAITS = { ENGINE:'Never stops running', FINISHER:'Puts chances away', PLAYMAKER:'Makes the team tick', WALL:'Nothing gets past', MAGICIAN:'Does things with the ball', ROCKET:'Pure pace', CAPTAIN:'Organises, talks, leads', CLUTCH:'Shows up when it matters', SWEEPER:'Reads danger early', GLOVES:'Goes in goal and means it', WILDCARD:'Anything can happen', ENFORCER:'Wins the physical battles', HEART:'Never hides, never gives up', BRAIN:'Always a step ahead', HUSTLER:'First to press, last to stop', SNIPER:'Dangerous from distance', JOKER:'Keeps everyone laughing', ROCK:'Same standard every week' };
@@ -878,7 +878,7 @@ function openProfile(p) {
         ${heat}
         <div class="heat-legend"><span><i style="background:var(--fg-2)"></i>Played</span><span><i style="background:var(--surface-2)"></i>Missed</span><span><i style="background:var(--fg)"></i>Current streak</span><span><i style="outline:1px solid var(--gold);outline-offset:1px"></i>100th</span></div>
         <div class="yrs">${p.years.map(y=>`<div class="yr"><span class="y">${y.y}</span><i style="--w:${y.eligible ? y.got/maxEligible*100 : 0}%"></i><span class="v">${y.got} / ${y.eligible}</span></div>`).join('')}</div>
-        ${r && r.stats ? `<div class="label" style="margin-top:22px">Ratings · ${r.n ? r.n + ' vote' + (r.n===1?'':'s') : 'starting point, no votes yet'}</div><div class="c-stats" style="margin:8px 0 0">${STAT_KEYS.map(k=>`<div class="c-stat"><span class="label">${k}</span><b class="num">${r.stats[k]}</b></div>`).join('')}</div>` : ''}
+        ${r && r.stats ? `<div class="label" style="margin-top:22px">Ratings · ${r.n ? r.n + ' vote' + (r.n===1?'':'s') : 'starting point, no votes yet'}</div><div class="c-stats" style="margin:8px 0 0">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num">${r.stats[k]}</b></div>`).join('')}</div>` : ''}
         ${r && r.traits && Object.keys(r.traits).length ? `<div class="c-traits" style="padding:10px 0 0">${Object.keys(r.traits).sort((a,b)=>r.traits[b]-r.traits[a]).slice(0,5).map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)} · ${r.traits[t]}</span>`).join('')}</div>` : ''}
         <div class="d-foot">
           <div><span>Seasons</span><b>${seasons}${first&&first.date ? ` <span class="dim" style="font-weight:400">since ${first.date.getFullYear()}</span>` : ''}</b></div>
@@ -941,7 +941,7 @@ function cardHtml(p, stats, opts = {}) {
     <div class="c-photo-wrap">${photo(p,'c-photo')}${p.attendance[0]===1 ? `<span class="founder" title="Played the very first session, ${esc(fmtSession(SESSIONS[0],false))}">⚑ Founder</span>` : ''}</div>
     <div class="c-name"><b>${esc(p.name)}</b><span>${esc([posName(p), p.foot ? p.foot+' foot' : ''].filter(Boolean).join(' · ') || ' ')}</span></div>
     ${traits.length ? `<div class="c-traits">${traits.map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)}</span>`).join('')}</div>` : ''}
-    <div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>
+    <div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>
     <div class="c-foot">${foot}</div></div>`;
 }
 async function renderCards() {
@@ -951,7 +951,7 @@ async function renderCards() {
   const ok = RATINGS && RATINGS.ok;
   const rated = ok ? ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats).length : 0;
   intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from Raji's call and move with anonymous votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>` : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Get your personal link</button>`) : ''}`;
-  legend.innerHTML = `<span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Marks under the tier · badges, hover for details</span>`;
+  legend.innerHTML = `<span style="flex-basis:100%">${STAT_KEYS.map(k=>`<b style="color:var(--fg-2)">${k}</b> ${STAT_GUIDE[k].toLowerCase().replace(/ · /g, ', ')}`).join(' &nbsp;·&nbsp; ')}</span><span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Marks under the tier · badges, hover for details</span>`;
   renderPlayers();
 }
 
@@ -1035,7 +1035,7 @@ function gotoBallot(i) {
 }
 function levelRowsHtml(ns, values, seed) {
   return `<div class="st-rows">${STAT_KEYS.map(k => { const cur = levelIdx(values[k]), sd = seed ? levelIdx(seed[k]) : -1; return `
-    <div class="lv-row"><div class="lv-head"><b>${k}</b><span>${STAT_NAMES[k]} · ${STAT_GUIDE[k]}</span><em id="${ns}-lv-${k}">${LEVELS[cur].l}</em></div>
+    <div class="lv-row"><div class="lv-head"><b>${STAT_NAMES[k]}</b><span>${STAT_GUIDE[k]}</span><em id="${ns}-lv-${k}">${LEVELS[cur].l}</em></div>
       <div class="lv-seg" id="${ns}-seg-${k}">${LEVELS.map((L,i)=>`<button type="button" class="${i===cur?'on':''}${i===sd?' seed':''}" onclick="setLevel('${ns}','${k}',${i})" title="${L.l}"><span class="full">${L.l}</span><span class="short">${i+1}</span></button>`).join('')}</div></div>`; }).join('')}</div>`;
 }
 function traitGridHtml(ns, chosen) {
