@@ -146,7 +146,9 @@ function me_(token) {
   });
   const selfRow = tab_('SelfRatings').filter(function (r) { return r[0] === win && String(r[1]).toLowerCase() === name.toLowerCase(); }).pop();
   const self = selfRow ? rowToRating_(selfRow, 2) : null;
-  return { ok: true, name: name, window: win, open: open, seeds: seeds_(), mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED,
+  const seeds = seeds_(), hide = hiddenNames_();
+  if (!isAdmin_(name)) hide.forEach(function (h) { Object.keys(seeds).forEach(function (n) { if (n.toLowerCase() === h) delete seeds[n]; }); });   // a hidden player's starting point is not sent to voters
+  return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED,
            traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name) };
 }
 
@@ -227,7 +229,9 @@ function results_() {
   const prevWin = windows[windows.indexOf(win) - 1] || null;
   const all = tab_('Votes');
   const seeds = seeds_();
-  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: aggregate_(all.filter(function (r) { return r[0] === win; }), seeds), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds) : {}, prevWindow: prevWin };
+  const hide = hiddenNames_();
+  const strip = function (agg) { Object.keys(agg).forEach(function (n) { if (hide.indexOf(n.toLowerCase()) >= 0) agg[n] = { n: agg[n].n, traits: agg[n].traits, hidden: true }; }); return agg; };
+  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(aggregate_(all.filter(function (r) { return r[0] === win; }), seeds)), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
   out.ballots = Object.keys(all.filter(function (r) { return r[0] === win; }).reduce(function (m, r) { m[r[1]] = 1; return m; }, {})).length;
   cache_().put('results', JSON.stringify(out), 120);
   return out;
@@ -363,6 +367,12 @@ function photoFolder_() {
 }
 function photos_() { const o = {}; if (!ss_().getSheetByName('Photos')) return o; tab_('Photos').forEach(function (r) { if (r[1]) o[String(r[0])] = String(r[1]); }); return o; }
 
+/** Players whose rating is shown as "To be determined": Settings → hide_stats, comma-separated names. If the row is missing, the admin's own rating is hidden; add the row with an empty value to show everyone. */
+function hiddenNames_() {
+  const s = settings_();
+  const raw = Object.prototype.hasOwnProperty.call(s, 'hide_stats') ? s.hide_stats : (s.admin_name || 'Raji');
+  return String(raw || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+}
 function isAdmin_(name) { return String(name || '').toLowerCase() === String(settings_().admin_name || 'Raji').toLowerCase(); }
 function cleanTraits_(arr) { const seen = {}; return (Array.isArray(arr) ? arr : []).map(function (t) { return String(t).toUpperCase(); }).filter(function (t) { if (TRAITS.indexOf(t) < 0 || seen[t]) return false; seen[t] = 1; return true; }).slice(0, MAX_TRAITS); }
 function rowToRating_(r, off) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[off + i]); }); return { stats: st, traits: String(r[off + STATS.length] || '').split(',').filter(Boolean), note: String(r[off + STATS.length + 1] || ''), updated: r[off + STATS.length + 2] ? String(r[off + STATS.length + 2]) : '' }; }

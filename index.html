@@ -116,6 +116,8 @@
   .c-stat .label { letter-spacing: .05em; }
   .c-stat b { font-size: 16px; }
   .c-stat b.top { color: var(--tier); }
+  .c-stats.tbd { display: flex; flex-direction: column; gap: 4px; padding: 10px 0 12px; border-bottom: 1px solid var(--line); }
+  .c-stats.tbd b { font-size: 13px; font-weight: 600; color: var(--fg-2); }
   .card.unrated .c-stat b { color: var(--fg-3); font-weight: 500; }
   .c-foot { display: flex; justify-content: space-between; padding: 0 16px 14px; font-size: 11px; color: var(--fg-3); margin-top: auto; }
   .c-foot .up { color: var(--fg-2); } .c-foot .down { color: var(--neg); }
@@ -1033,6 +1035,7 @@ function openProfile(p) {
         ${heat}
         <div class="heat-legend"><span><i style="background:var(--fg-2)"></i>Played</span><span><i style="background:var(--surface-2)"></i>Missed</span><span><i style="background:var(--fg)"></i>Current streak</span><span><i style="outline:1px solid var(--gold);outline-offset:1px"></i>100th</span></div>
         <div class="yrs">${p.years.map(y=>`<div class="yr"><span class="y">${y.y}</span><i style="--w:${y.eligible ? y.got/maxEligible*100 : 0}%"></i><span class="v">${y.got} / ${y.eligible}</span></div>`).join('')}</div>
+        ${r && r.hidden ? `<div class="label" style="margin-top:22px">Ratings</div><div class="muted" style="font-size:13px;margin-top:6px">To be determined. Not published yet.</div>` : ''}
         ${r && r.stats ? `<div class="label" style="margin-top:22px">Ratings · ${r.n ? r.n + ' vote' + (r.n===1?'':'s') : 'starting point, no votes yet'}</div><div class="c-stats" style="margin:8px 0 0">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num">${r.stats[k]}</b></div>`).join('')}</div>` : ''}
         ${r && r.traits && Object.keys(r.traits).length ? `<div class="c-traits" style="padding:10px 0 0">${Object.keys(r.traits).sort((a,b)=>r.traits[b]-r.traits[a]).slice(0,5).map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)} · ${r.traits[t]}</span>`).join('')}</div>` : ''}
         <div class="d-foot">
@@ -1082,6 +1085,7 @@ const sharedCount = (a,b) => { let s=0; for (let i=0;i<a.attendance.length;i++) 
 const avgOf = stats => Math.round(STAT_KEYS.reduce((a,k)=>a+stats[k],0)/STAT_KEYS.length);
 function cardHtml(p, stats, opts = {}) {
   const rated = !!stats, tier = tierOf(p), foil = isRecordHolder(p);
+  const hidden = !rated && !!(RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].hidden);
   const badges = badgesFor(p).sort((a,b)=>(b.rare?1:0)-(a.rare?1:0)).filter(b => !/^Century member$|^Double century$/.test(b.t)).slice(0,3);
   const top = rated ? STAT_KEYS.reduce((b,k)=>stats[k]>stats[b]?k:b, STAT_KEYS[0]) : null;
   let foot = opts.meta || '';
@@ -1097,8 +1101,8 @@ function cardHtml(p, stats, opts = {}) {
     <div class="c-name"><b>${esc(p.name)}</b><span>${esc([posName(p), p.foot ? p.foot+' foot' : ''].filter(Boolean).join(' · ') || ' ')}</span></div>
     ${badges.length ? `<div class="c-badges">${badges.map(b=>`<span class="medal ${b.m||''}" title="${esc(b.d||b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>` : ''}
     ${traits.length ? `<div class="c-traits">${traits.map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)}</span>`).join('')}</div>` : ''}
-    <div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>
-    <div class="c-foot">${foot}</div></div>`;
+    ${hidden ? `<div class="c-stats tbd"><span class="label">Rating</span><b>To be determined</b></div>` : `<div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>`}
+    <div class="c-foot">${hidden ? `<span>Not published yet</span><span>${TIER_NAME[tier]}</span>` : foot}</div></div>`;
 }
 /* The two Apps Script calls are slow (1–3 s each), so they start the moment the page opens, run alongside the sheet fetch, and are shared by whoever needs them. */
 let ME_PROMISE = null, RESULTS_PROMISE = null, RATINGS_AT = 0, YOU_WAITING = false;
@@ -1399,7 +1403,7 @@ async function renderYou() {
   body.innerHTML = `
     <div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
     <div class="you-grid">
-      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${r.stats ? (r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
+      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
       <div>
         <div class="stats four">
           <div class="stat"><b class="num">${me.count}</b><div class="label">Appearances</div></div>
