@@ -68,6 +68,7 @@ function generateLinks() {
     links.appendRow([p.name, SITE_URL + '#vote/' + token]);
     made++;
   });
+  bust_('Voters');
   Logger.log(made + ' links created. Send them from the Links tab, then run burnLinks().');
 }
 
@@ -90,14 +91,17 @@ function openWindow(id) {
   id = id || defaultWindow_();
   props_().setProperties({ window: id, open: '1' });
   sheet_('Windows').appendRow([id, new Date(), '']);
-  cache_().remove('results');
+  bust_('Windows');
 }
 function closeWindow() {
   props_().setProperty('open', '0');
   const w = sheet_('Windows'), data = w.getDataRange().getValues();
   for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === props_().getProperty('window')) { w.getRange(i + 1, 3).setValue(new Date()); break; }
-  cache_().remove('results');
+  bust_('Windows');
 }
+
+/** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos'].forEach(bust_); cache_().remove('players'); }
 
 /* ───────── web app ───────── */
 
@@ -135,12 +139,12 @@ function me_(token) {
   const win = props_().getProperty('window'), open = props_().getProperty('open') === '1';
   const mine = {}, feedback = [];
   const b = id2_(token);
-  rows_(sheet_('Votes')).forEach(function (r) {
+  tab_('Votes').forEach(function (r) {
     if (r[0] !== win) return;
     if (r[1] === b) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[4 + i]); }); mine[r[2]] = { stats: st, comment: r[4 + STATS.length] || '', traits: String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean) }; }
     if (r[2] === name && r[4 + STATS.length]) feedback.push(String(r[4 + STATS.length]));
   });
-  const selfRow = rows_(sheet_('SelfRatings')).filter(function (r) { return r[0] === win && String(r[1]).toLowerCase() === name.toLowerCase(); }).pop();
+  const selfRow = tab_('SelfRatings').filter(function (r) { return r[0] === win && String(r[1]).toLowerCase() === name.toLowerCase(); }).pop();
   const self = selfRow ? rowToRating_(selfRow, 2) : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds_(), mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED,
            traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name) };
@@ -172,7 +176,7 @@ function rate_(body) {
     const row = [win, b, tp.name, w].concat(stats, [comment, new Date(), traits.join(',')]);
     if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
   } finally { lock.releaseLock(); }
-  cache_().remove('results');
+  bust_('Votes');
   return { ok: true };
 }
 
@@ -182,7 +186,7 @@ function unrate_(body) {
   const win = props_().getProperty('window'), b = id2_(body.t), target = String(body.target || '');
   const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
   for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === win && data[i][1] === b && data[i][2] === target) sh.deleteRow(i + 1);
-  cache_().remove('results');
+  bust_('Votes');
   return { ok: true };
 }
 
@@ -209,7 +213,7 @@ function claim_(body) {
     const token = newToken_();
     const status = String(settings_().require_approval || '').trim() === '1' ? 'pending' : 'approved';   // Settings → require_approval = 1 to make the admin approve each claim
     voters.appendRow([id1_(token), p.name, new Date(), new Date(), status]);
-    cache_().remove(key); cache_().remove('results');
+    cache_().remove(key); bust_('Voters');
     return { ok: true, token: token, name: p.name, pending: status === 'pending' };
   } finally { lock.releaseLock(); }
 }
@@ -219,9 +223,9 @@ function results_() {
   const cached = cache_().get('results');
   if (cached) return JSON.parse(cached);
   const win = props_().getProperty('window'), open = props_().getProperty('open') === '1';
-  const windows = rows_(sheet_('Windows')).map(function (r) { return r[0]; });
+  const windows = tab_('Windows').map(function (r) { return r[0]; });
   const prevWin = windows[windows.indexOf(win) - 1] || null;
-  const all = rows_(sheet_('Votes'));
+  const all = tab_('Votes');
   const seeds = seeds_();
   const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: aggregate_(all.filter(function (r) { return r[0] === win; }), seeds), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds) : {}, prevWindow: prevWin };
   out.ballots = Object.keys(all.filter(function (r) { return r[0] === win; }).reduce(function (m, r) { m[r[1]] = 1; return m; }, {})).length;
@@ -276,6 +280,7 @@ function self_(body) {
     const row = [win, name].concat(stats, [traits.join(','), note, new Date()]);
     if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
   } finally { lock.releaseLock(); }
+  bust_('SelfRatings');
   return { ok: true };
 }
 
@@ -283,8 +288,8 @@ function admin_(token) {
   const name = voterName_(token);
   if (!name || !isAdmin_(name)) return { ok: false, error: 'Admin only.' };
   const win = props_().getProperty('window');
-  const selfRatings = rows_(sheet_('SelfRatings')).filter(function (r) { return r[0] === win; }).map(function (r) { const o = rowToRating_(r, 2); o.name = String(r[1]); return o; });
-  const pending = rows_(sheet_('Voters')).filter(function (r) { return String(r[4]) === 'pending'; }).map(function (r) { return { name: String(r[1]), when: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'd MMM, HH:mm') : '' }; });
+  const selfRatings = tab_('SelfRatings').filter(function (r) { return r[0] === win; }).map(function (r) { const o = rowToRating_(r, 2); o.name = String(r[1]); return o; });
+  const pending = tab_('Voters').filter(function (r) { return String(r[4]) === 'pending'; }).map(function (r) { return { name: String(r[1]), when: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'd MMM, HH:mm') : '' }; });
   return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending };
 }
 
@@ -297,7 +302,7 @@ function approve_(body) {
   for (let i = data.length - 1; i >= 1; i--) {
     if (String(data[i][1]).toLowerCase() !== target || String(data[i][4]) !== 'pending') continue;
     if (body.ok) sh.getRange(i + 1, 5).setValue('approved'); else sh.deleteRow(i + 1);
-    cache_().remove('results');
+    bust_('Voters');
     return { ok: true };
   }
   return { ok: false, error: 'No pending claim for that name.' };
@@ -308,10 +313,10 @@ function unclaim_(body) {
   if (!row) return { ok: false, error: 'This link isn’t recognised.' };
   const id = id1_(String(body.t)), sh = sheet_('Voters'), data = sh.getDataRange().getValues();
   for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === id) sh.deleteRow(i + 1);
-  cache_().remove('results');
+  bust_('Voters');
   return { ok: true };
 }
-function claimedNames_() { return rows_(sheet_('Voters')).filter(function (r) { return r[3]; }).map(function (r) { return String(r[1]); }); }
+function claimedNames_() { return tab_('Voters').filter(function (r) { return r[3]; }).map(function (r) { return String(r[1]); }); }
 
 function setSeed_(body) {
   const name = voterName_(body.t);
@@ -322,6 +327,7 @@ function setSeed_(body) {
   let rowIdx = -1;
   for (let i = 1; i < data.length; i++) if (String(data[i][0]).toLowerCase() === target.toLowerCase()) { rowIdx = i + 1; break; }
   if (rowIdx > 0) sh.getRange(rowIdx, 2, 1, STATS.length).setValues([stats]); else sh.appendRow([target].concat(stats));
+  bust_('Seeds');
   return { ok: true };
 }
 
@@ -336,7 +342,7 @@ function photo_(body) {
   if (body.remove) {
     if (rowIdx > 0) sh.deleteRow(rowIdx);
     if (oldId) try { DriveApp.getFileById(oldId).setTrashed(true); } catch (_) {}
-    cache_().remove('results'); return { ok: true };
+    bust_('Photos'); return { ok: true };
   }
   const m = String(body.data || '').match(/^data:(image\/(jpeg|png|webp));base64,(.+)$/);
   if (!m) return { ok: false, error: 'Send a JPEG, PNG or WebP.' };
@@ -347,7 +353,7 @@ function photo_(body) {
   const row = [target, file.getId(), new Date()];
   if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, 3).setValues([row]); else sh.appendRow(row);
   if (oldId) try { DriveApp.getFileById(oldId).setTrashed(true); } catch (_) {}
-  cache_().remove('results');
+  bust_('Photos');
   return { ok: true, id: file.getId() };
 }
 function photoFolder_() {
@@ -355,13 +361,36 @@ function photoFolder_() {
   if (id) try { return DriveApp.getFolderById(id); } catch (_) {}
   const f = DriveApp.createFolder('W9-10 Photos'); p.setProperty('photo_folder', f.getId()); return f;
 }
-function photos_() { const o = {}, sh = ss_().getSheetByName('Photos'); if (!sh) return o; rows_(sh).forEach(function (r) { if (r[1]) o[String(r[0])] = String(r[1]); }); return o; }
+function photos_() { const o = {}; if (!ss_().getSheetByName('Photos')) return o; tab_('Photos').forEach(function (r) { if (r[1]) o[String(r[0])] = String(r[1]); }); return o; }
 
 function isAdmin_(name) { return String(name || '').toLowerCase() === String(settings_().admin_name || 'Raji').toLowerCase(); }
 function cleanTraits_(arr) { const seen = {}; return (Array.isArray(arr) ? arr : []).map(function (t) { return String(t).toUpperCase(); }).filter(function (t) { if (TRAITS.indexOf(t) < 0 || seen[t]) return false; seen[t] = 1; return true; }).slice(0, MAX_TRAITS); }
 function rowToRating_(r, off) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[off + i]); }); return { stats: st, traits: String(r[off + STATS.length] || '').split(',').filter(Boolean), note: String(r[off + STATS.length + 1] || ''), updated: r[off + STATS.length + 2] ? String(r[off + STATS.length + 2]) : '' }; }
 
 /* ───────── helpers ───────── */
+
+/* Tab reads are the slow part of every call (300–600 ms each), so each tab is cached as JSON for 5 minutes, in 90 KB chunks, and busted by the write that changes it. Dates come back as ISO strings. */
+const ROWS_TTL = 300;
+function tab_(name) {
+  const c = cache_(), meta = c.get('rows|' + name);
+  if (meta) {
+    const n = Number(meta), keys = []; for (let i = 0; i < n; i++) keys.push('rows|' + name + '|' + i);
+    const parts = c.getAll(keys); let str = '';
+    for (let i = 0; i < n; i++) { const k = 'rows|' + name + '|' + i; if (parts[k] == null) { str = null; break; } str += parts[k]; }
+    if (str !== null) return JSON.parse(str);
+  }
+  const rows = rows_(sheet_(name)).map(function (r) { return r.map(function (v) { return v instanceof Date ? v.toISOString() : v; }); });
+  const str = JSON.stringify(rows), size = 90000, n = Math.max(1, Math.ceil(str.length / size)), obj = {};
+  for (let i = 0; i < n; i++) obj['rows|' + name + '|' + i] = str.slice(i * size, (i + 1) * size);
+  obj['rows|' + name] = String(n);
+  try { c.putAll(obj, ROWS_TTL); } catch (_) {}
+  return rows;
+}
+function bust_(name) {
+  const c = cache_(), meta = c.get('rows|' + name);
+  if (meta) { const keys = ['rows|' + name]; for (let i = 0; i < Number(meta); i++) keys.push('rows|' + name + '|' + i); c.removeAll(keys); }
+  c.remove('results');
+}
 
 function ss_() { return SpreadsheetApp.getActive(); }
 function sheet_(n) { return ss_().getSheetByName(n) || ss_().insertSheet(n); }
@@ -376,8 +405,8 @@ function newToken_() { return Utilities.getUuid().replace(/-/g, '') + Utilities.
 function settings_() {
   const sh = sheet_('Settings');
   if (sh.getLastRow() === 0) { sh.appendRow(['key', 'value']); sh.appendRow(['claim_code', '']); }   // leave blank for no code
-  const o = {}; rows_(sh).forEach(function (r) { o[String(r[0])] = String(r[1]); });
-  if (!o.admin_name) { sh.appendRow(['admin_name', 'Raji']); o.admin_name = 'Raji'; }
+  const o = {}; tab_('Settings').forEach(function (r) { o[String(r[0])] = String(r[1]); });
+  if (!o.admin_name) { sh.appendRow(['admin_name', 'Raji']); o.admin_name = 'Raji'; bust_('Settings'); }
   return o;
 }
 function defaultWindow_() { const d = new Date(); return d.getFullYear() + '-Q' + (Math.floor(d.getMonth() / 3) + 1); }
@@ -387,7 +416,7 @@ function shuffle_(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.f
 function voterRow_(token) {
   if (!token || String(token).length < 16) return null;
   const id = id1_(String(token));
-  const hit = rows_(sheet_('Voters')).filter(function (r) { return r[0] === id; })[0];
+  const hit = tab_('Voters').filter(function (r) { return r[0] === id; })[0];
   if (!hit) return null;
   return { name: String(hit[1]), status: String(hit[4] || '') === 'pending' ? 'pending' : 'approved' };
 }
@@ -396,7 +425,7 @@ function voterName_(token) { const r = voterRow_(token); return r && r.status ==
 
 function seeds_() {
   const out = {};
-  rows_(sheet_('Seeds')).forEach(function (r) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[1 + i]) || 65; }); out[String(r[0])] = st; });
+  tab_('Seeds').forEach(function (r) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[1 + i]) || 65; }); out[String(r[0])] = st; });
   return out;
 }
 

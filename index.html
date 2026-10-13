@@ -1101,13 +1101,34 @@ function cardHtml(p, stats, opts = {}) {
     <div class="c-foot">${foot}</div></div>`;
 }
 /* The two Apps Script calls are slow (1–3 s each), so they start the moment the page opens, run alongside the sheet fetch, and are shared by whoever needs them. */
-let ME_PROMISE = null, RESULTS_PROMISE = null, RATINGS_AT = 0;
+let ME_PROMISE = null, RESULTS_PROMISE = null, RATINGS_AT = 0, YOU_WAITING = false;
+const readCache = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (_) { return null; } };
+const writeCache = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+/* Both calls show the last answer this device saw straight away and repaint only if the fresh answer differs. */
 function fetchMe() {
-  if (!ME_PROMISE) ME_PROMISE = api({ action:'me', t: TOKEN }).catch(e => ({ ok:false, error: e.message })).then(v => { ME_PROMISE = null; VOTER = v; try { if (v.ok && v.name) localStorage.setItem('w910_name', v.name); } catch (_) {} return v; });
+  if (!ME_PROMISE) {
+    if (!VOTER) { const c = readCache('w910_me'); if (c && c.ok && c.name) VOTER = c; }
+    const before = JSON.stringify(VOTER);
+    ME_PROMISE = api({ action:'me', t: TOKEN }).catch(e => ({ ok:false, error: e.message })).then(v => {
+      ME_PROMISE = null; VOTER = v;
+      if (v.ok && v.name) { try { localStorage.setItem('w910_name', v.name); } catch (_) {} writeCache('w910_me', v); } else if (!/^Failed to fetch|NetworkError|Load failed/.test(v.error || '')) writeCache('w910_me', null);
+      if (before && before !== JSON.stringify(v) && BOOTED && TOKEN && !YOU_WAITING) { renderYou(); renderBalances(); }
+      return v;
+    });
+  }
   return ME_PROMISE;
 }
 function fetchResults() {
-  if (!RESULTS_PROMISE) RESULTS_PROMISE = api({ action:'results' }).catch(() => null).then(r => { RESULTS_PROMISE = null; RATINGS = r; RATINGS_AT = Date.now(); markTakenTiles(); return r; });
+  if (!RESULTS_PROMISE) {
+    if (!RATINGS) { const c = readCache('w910_results'); if (c && c.ok) RATINGS = c; }
+    const before = JSON.stringify(RATINGS);
+    RESULTS_PROMISE = api({ action:'results' }).catch(() => null).then(r => {
+      RESULTS_PROMISE = null; if (r) RATINGS = r; RATINGS_AT = Date.now(); markTakenTiles();
+      if (r && r.ok) writeCache('w910_results', r);
+      if (r && before && before !== JSON.stringify(r) && BOOTED && TOKEN && !YOU_WAITING) renderYou();
+      return RATINGS;
+    });
+  }
   return RESULTS_PROMISE;
 }
 function markTakenTiles() {
@@ -1222,12 +1243,12 @@ async function openBallot() {
 async function releaseClaim(btn) {
   if (btn) { if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.textContent = 'Tap again to release this card'; setTimeout(() => { btn.dataset.armed = ''; btn.textContent = btn.dataset.label || 'Not me'; }, 4000); return; } btn.disabled = true; btn.textContent = 'Releasing…'; }
   try { await api(null, { action:'unclaim', t: TOKEN }); } catch (_) {}
-  try { localStorage.removeItem('w910_token'); localStorage.removeItem('w910_name'); sessionStorage.removeItem('w910_claim_later'); } catch (_) {}
+  try { localStorage.removeItem('w910_token'); localStorage.removeItem('w910_name'); localStorage.removeItem('w910_me'); sessionStorage.removeItem('w910_claim_later'); } catch (_) {}
   TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); closeClaimDirect();
   await renderCards(); renderBalances(); renderYou(); showTab('hall');
   openClaim();
 }
-function forgetToken() { try { localStorage.removeItem('w910_token'); localStorage.removeItem('w910_name'); } catch (_) {} TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); renderCards(); renderBalances(); renderYou(); showTab('hall'); }
+function forgetToken() { try { localStorage.removeItem('w910_token'); localStorage.removeItem('w910_name'); localStorage.removeItem('w910_me'); } catch (_) {} TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); renderCards(); renderBalances(); renderYou(); showTab('hall'); }
 const doneCount = () => BALLOT.queue.filter(p => VOTER.mine[p.name]).length;
 function ballotTop(label) { const done = doneCount(), n = BALLOT.queue.length; return `<div class="bt-top"><span class="label">${label}</span><div class="b-progress"><i style="width:${n ? done/n*100 : 0}%"></i></div><span class="label">${done} of ${n} rated</span></div>`; }
 function renderBallotIntro() {
@@ -1353,7 +1374,9 @@ async function renderYou() {
           <div class="stat"><b class="num">—</b><div class="label">Balance</div></div></div>
         <div class="loading" style="margin-top:18px">Checking your link…</div></div></div>` : `<div class="loading">Loading your page…</div>`;
   }
-  const [v] = await Promise.all([ensureVoter(), RESULTS_PROMISE || (RATINGS ? null : fetchResults())]);
+  YOU_WAITING = true;
+  const [v] = await Promise.all([ensureVoter(), RATINGS ? null : (RESULTS_PROMISE || fetchResults())]);
+  YOU_WAITING = false;
   if (!v || !v.ok) { body.innerHTML = `<div class="error">${esc((v && v.error) || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === v.name.toLowerCase());
   if (!me) { body.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; return; }
