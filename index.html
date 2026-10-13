@@ -587,7 +587,7 @@ let SELF = null;
 
 let ALL_PLAYERS = [], SESSIONS = [], YEARS = [], RECORDS = [], RECORD_HOLDERS = {};
 let ACTIVE_FILTER = '', CURRENT_PLAYER = null, CURRENT_SESSION = null;
-let RATINGS = null, VOTER = null, PENDING_VOTE = false, BALLOT = null, TOKEN = '';
+let RATINGS = null, VOTER = null, PENDING_VOTE = false, BALLOT = null, TOKEN = '', BOOTED = false;
 const THIS_YEAR = new Date().getFullYear();
 try { TOKEN = localStorage.getItem('w910_token') || ''; } catch (_) {}
 /* Site lock while the ratings are being set up. Set LOCKED to false to open the site to everyone. */
@@ -696,11 +696,8 @@ function fmtSession(s, withDay = true) {
 }
 
 /* ── load ── */
-async function load() {
-  try {
-    const res = await fetch(CSV_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const rows = parseCSV(await res.text());
+function build(text) {
+    const rows = parseCSV(text);
     let headerRow = null, headerIdx = -1;
     for (let i=0;i<rows.length;i++) if (rows[i][0] && rows[i][0].toLowerCase().includes('games played')) { headerRow = rows[i]; headerIdx = i; break; }
     if (!headerRow) throw new Error('Could not find header row');
@@ -747,7 +744,18 @@ async function load() {
     ALL_PLAYERS = unique; SESSIONS = sessionCols;
     derive(ALL_PLAYERS, SESSIONS); RECORDS = computeRecords(ALL_PLAYERS, SESSIONS);
     render();
+}
+/* Paint straight away from the last copy of the sheet on this device, then fetch the live sheet and repaint only if it changed. */
+async function load() {
+  let cached = null; try { cached = localStorage.getItem('w910_csv'); } catch (_) {}
+  if (cached) { try { build(cached); } catch (e) { console.error(e); cached = null; } }
+  try {
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    if (text !== cached) { try { localStorage.setItem('w910_csv', text); } catch (_) {} build(text); }
   } catch (err) {
+    if (cached) { console.error(err); return; }
     document.getElementById('cards-grid').innerHTML = `<div class="error" style="grid-column:1/-1">Could not load the sheet. Make sure it is shared as "Anyone with the link". ${esc(err.message)}</div>`;
     console.error(err);
   }
@@ -874,13 +882,15 @@ function render() {
   document.getElementById('tab-n-records').textContent = RECORDS.length;
   document.getElementById('tab-n-timeline').textContent = n;
   renderPlayers(); renderWall(); renderRecords(); renderTimeline(); renderBalances();
-  renderCards().then(() => {
-    renderYou();
-    if (PENDING_VOTE && TOKEN) { PENDING_VOTE = false; showTab('you', false); return; }
-    if (TOKEN && !location.hash) showTab('you', false);
+  if (!BOOTED) {
+    BOOTED = true;
+    renderYou();   // shows your card at once from the cached name; the link check and ratings fill in behind it
+    if (PENDING_VOTE && TOKEN) { PENDING_VOTE = false; showTab('you', false); }
+    else if (TOKEN && !location.hash) showTab('you', false);
     let later = false; try { later = !!sessionStorage.getItem('w910_claim_later'); } catch (_) {}
-    if (!TOKEN && !later && UNLOCKED && RATINGS && RATINGS.ok) setTimeout(openClaim, 600);
-  });
+    if (!TOKEN && !later && UNLOCKED && VOTE_API) openClaim();
+  } else if (TOKEN) renderYou();
+  renderCards();
   document.getElementById('last-updated').textContent = 'Live from the sheet · ' + new Date().toLocaleString('en-GB', { dateStyle:'medium', timeStyle:'short' });
 }
 document.querySelectorAll('#posfilter button').forEach(b => b.onclick = () => { ACTIVE_FILTER = b.dataset.filter; document.querySelectorAll('#posfilter button').forEach(x=>x.classList.toggle('on', x===b)); renderPlayers(); });
@@ -974,7 +984,7 @@ async function renderBalances() {
   const el = document.getElementById('bal-list');
   document.getElementById('tab-n-balances').textContent = '';
   if (!TOKEN) { el.innerHTML = `<div class="empty">Balances are personal. Claim your card to see yours.<div style="margin-top:12px"><button class="btn" onclick="openClaim()">Find your card</button></div></div>`; return; }
-  if (!VOTER) { el.innerHTML = `<div class="loading">Checking your link…</div>`; try { VOTER = await api({ action:'me', t: TOKEN }); } catch (e) { VOTER = { ok:false, error: e.message }; } }
+  if (!VOTER) { el.innerHTML = `<div class="loading">Checking your link…</div>`; await fetchMe(); }
   if (!VOTER.ok) { el.innerHTML = `<div class="error">${esc(VOTER.error || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   if (!me) { el.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; return; }
@@ -1090,10 +1100,24 @@ function cardHtml(p, stats, opts = {}) {
     <div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>
     <div class="c-foot">${foot}</div></div>`;
 }
+/* The two Apps Script calls are slow (1–3 s each), so they start the moment the page opens, run alongside the sheet fetch, and are shared by whoever needs them. */
+let ME_PROMISE = null, RESULTS_PROMISE = null, RATINGS_AT = 0;
+function fetchMe() {
+  if (!ME_PROMISE) ME_PROMISE = api({ action:'me', t: TOKEN }).catch(e => ({ ok:false, error: e.message })).then(v => { ME_PROMISE = null; VOTER = v; try { if (v.ok && v.name) localStorage.setItem('w910_name', v.name); } catch (_) {} return v; });
+  return ME_PROMISE;
+}
+function fetchResults() {
+  if (!RESULTS_PROMISE) RESULTS_PROMISE = api({ action:'results' }).catch(() => null).then(r => { RESULTS_PROMISE = null; RATINGS = r; RATINGS_AT = Date.now(); markTakenTiles(); return r; });
+  return RESULTS_PROMISE;
+}
+function markTakenTiles() {
+  const taken = new Set(((RATINGS && RATINGS.ok && RATINGS.claimed) || []).map(n => n.toLowerCase()));
+  document.querySelectorAll('#pick-grid .pick').forEach(el => { const t = taken.has(el.dataset.name.toLowerCase()); el.classList.toggle('taken', t); if (t) el.querySelector('span').textContent = 'Taken'; });
+}
 async function renderCards() {
   const intro = document.getElementById('cards-intro'), legend = document.getElementById('cards-legend');
   if (!VOTE_API) { renderPlayers(); return; }
-  try { RATINGS = await api({ action:'results' }); } catch (e) { RATINGS = null; }
+  if (!(RATINGS && Date.now() - RATINGS_AT < 5000)) await fetchResults();   // a repaint within 5 s (cached sheet, then live sheet) reuses the same answer
   const ok = RATINGS && RATINGS.ok;
   const rated = ok ? ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats).length : 0;
   intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from Raji's call and move with anonymous votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? (VOTER && VOTER.pending ? `<p class="muted" style="font-size:12px;margin-bottom:18px">Your claim is waiting for Raji. The ballot opens once he approves it.</p>` : `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>`) : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Find your card</button>`) : ''}`;
@@ -1134,7 +1158,7 @@ async function submitClaim() {
   btn.disabled = true; btn.textContent = 'Sending…'; msg.textContent = ''; msg.classList.remove('show');
   let res; try { res = await api(null, { action:'claim', name, code }); } catch (err) { res = { ok:false, error: err.message }; }
   if (!res.ok) { btn.disabled = false; btn.textContent = `That's me · ${name.split(' ')[0]}`; msg.textContent = res.error || 'Could not claim.'; msg.style.color = 'var(--neg)'; msg.classList.add('show'); return; }
-  TOKEN = res.token; try { localStorage.setItem('w910_token', TOKEN); } catch (_) {}
+  TOKEN = res.token; try { localStorage.setItem('w910_token', TOKEN); localStorage.setItem('w910_name', res.name); } catch (_) {}
   VOTER = null;
   document.getElementById('c-body').innerHTML = `
     <div class="label">This is you</div>
@@ -1185,7 +1209,7 @@ async function openBallot() {
   const overlay = document.getElementById('ballot-overlay'), body = document.getElementById('b-body');
   overlay.classList.add('open'); document.body.style.overflow = 'hidden';
   body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="loading">Checking your link…</div></div></div>`;
-  try { VOTER = await api({ action:'me', t: TOKEN }); } catch (e) { VOTER = { ok:false, error: e.message }; }
+  VOTER = null; await fetchMe();
   if (!VOTER.ok) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="b-title">That link did not work</div><div class="error" style="margin-top:14px">${esc(VOTER.error || 'Unknown error')}</div><div class="b-actions"><button class="btn ghost" onclick="forgetToken()">Forget this link on this device</button></div></div></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   if (!me) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="error">You are not on the attendance sheet yet.</div></div></div>`; return; }
@@ -1198,12 +1222,12 @@ async function openBallot() {
 async function releaseClaim(btn) {
   if (btn) { if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.textContent = 'Tap again to release this card'; setTimeout(() => { btn.dataset.armed = ''; btn.textContent = btn.dataset.label || 'Not me'; }, 4000); return; } btn.disabled = true; btn.textContent = 'Releasing…'; }
   try { await api(null, { action:'unclaim', t: TOKEN }); } catch (_) {}
-  try { localStorage.removeItem('w910_token'); sessionStorage.removeItem('w910_claim_later'); } catch (_) {}
+  try { localStorage.removeItem('w910_token'); localStorage.removeItem('w910_name'); sessionStorage.removeItem('w910_claim_later'); } catch (_) {}
   TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); closeClaimDirect();
   await renderCards(); renderBalances(); renderYou(); showTab('hall');
   openClaim();
 }
-function forgetToken() { try { localStorage.removeItem('w910_token'); } catch (_) {} TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); renderCards(); renderBalances(); renderYou(); showTab('hall'); }
+function forgetToken() { try { localStorage.removeItem('w910_token'); localStorage.removeItem('w910_name'); } catch (_) {} TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); renderCards(); renderBalances(); renderYou(); showTab('hall'); }
 const doneCount = () => BALLOT.queue.filter(p => VOTER.mine[p.name]).length;
 function ballotTop(label) { const done = doneCount(), n = BALLOT.queue.length; return `<div class="bt-top"><span class="label">${label}</span><div class="b-progress"><i style="width:${n ? done/n*100 : 0}%"></i></div><span class="label">${done} of ${n} rated</span></div>`; }
 function renderBallotIntro() {
@@ -1310,15 +1334,26 @@ function closeBallotDirect() { document.getElementById('ballot-overlay').classLi
 /* ── You ── */
 async function ensureVoter() {
   if (!TOKEN) return null;
-  if (!VOTER) { try { VOTER = await api({ action:'me', t: TOKEN }); } catch (e) { VOTER = { ok:false, error: e.message }; } }
+  if (!VOTER) await fetchMe();
   return VOTER;
 }
 async function renderYou() {
   const tab = document.getElementById('tab-you'), body = document.getElementById('you-body');
   tab.hidden = !TOKEN;
   if (!TOKEN) { body.innerHTML = ''; return; }
-  body.innerHTML = `<div class="loading">Loading your page…</div>`;
-  const v = await ensureVoter();
+  if (!VOTER || !RATINGS) {
+    let cachedName = ''; try { cachedName = localStorage.getItem('w910_name') || ''; } catch (_) {}
+    const cp = cachedName && ALL_PLAYERS.find(p => p.name.toLowerCase() === cachedName.toLowerCase());
+    body.innerHTML = cp ? `<div class="sh"><h2>${esc(cp.name)}</h2><span>#${cp.rank} all-time · ${TIER_NAME[tierOf(cp)]} card</span></div>
+      <div class="you-grid"><div>${cardHtml(cp, null, { meta: '<span>Loading ratings…</span><span></span>' })}</div>
+      <div><div class="stats four">
+          <div class="stat"><b class="num">${cp.count}</b><div class="label">Appearances</div></div>
+          <div class="stat"><b class="num">${cp.gamesThisYear}</b><div class="label">In ${THIS_YEAR}</div></div>
+          <div class="stat"><b class="num">${cp.currentStreak || '—'}</b><div class="label">Current streak</div></div>
+          <div class="stat"><b class="num">—</b><div class="label">Balance</div></div></div>
+        <div class="loading" style="margin-top:18px">Checking your link…</div></div></div>` : `<div class="loading">Loading your page…</div>`;
+  }
+  const [v] = await Promise.all([ensureVoter(), RESULTS_PROMISE || (RATINGS ? null : fetchResults())]);
   if (!v || !v.ok) { body.innerHTML = `<div class="error">${esc((v && v.error) || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === v.name.toLowerCase());
   if (!me) { body.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; return; }
@@ -1485,6 +1520,7 @@ function showTab(name, updateHash = true) {
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
 window.addEventListener('hashchange', () => { if (captureToken()) { if (ALL_PLAYERS.length) { PENDING_VOTE = false; VOTER = null; renderBalances(); renderYou().then(() => showTab('you', false)); } return; } showTab(location.hash.slice(1) || (TOKEN ? 'you' : 'hall'), false); });
 showTab(location.hash.slice(1) || 'hall', false);
+if (VOTE_API) { fetchResults(); if (TOKEN) fetchMe(); }
 load();
 </script>
 </body>
