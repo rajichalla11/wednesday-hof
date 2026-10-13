@@ -170,7 +170,38 @@
   .overlay.open .sheet { transform: none; opacity: 1; }
   .sheet.dossier { max-width: 960px; }
   .sheet.session { max-width: 680px; }
-  .sheet.ballot { max-width: 920px; }
+  #ballot-overlay { padding: 0; }
+  .sheet.ballot { max-width: none; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 0; overflow: hidden; }
+  .sheet.ballot #b-body { display: flex; flex-direction: column; height: 100%; }
+  .bt-top { display: flex; align-items: center; gap: 16px; padding: 16px 64px 14px 24px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+  .bt-top .b-progress { flex: 1; margin: 0; }
+  .bt-top .label { white-space: nowrap; }
+  .bt-body { flex: 1; overflow-y: auto; padding: 32px 24px 48px; scrollbar-width: thin; }
+  .bt-inner { max-width: 1000px; margin: 0 auto; }
+  .bt-inner.narrow { max-width: 620px; padding-top: 6vh; }
+  .deck-grid { display: grid; grid-template-columns: 300px 1fr; gap: 40px; align-items: start; }
+  .deck { position: sticky; top: 0; padding-top: 30px; touch-action: pan-y; }
+  .deck .card { cursor: default; } .deck .card:hover { transform: none; border-color: var(--line); }
+  .deck .cur { position: relative; z-index: 3; }
+  .deck .peek1, .deck .peek2 { position: absolute; left: 0; right: 0; top: 30px; bottom: 0; pointer-events: none; transform-origin: top center; }
+  .deck .peek1 .card, .deck .peek2 .card { height: 100%; }
+  .deck .peek1 { z-index: 2; transform: translateY(-15px) scale(.95); opacity: .5; filter: saturate(.6); }
+  .deck .peek2 { z-index: 1; transform: translateY(-30px) scale(.9); opacity: .25; filter: saturate(.4); }
+  .deck-grid .b-nav { position: sticky; bottom: 0; margin-top: 12px; padding: 12px 0 14px; background: linear-gradient(180deg, transparent, var(--bg) 30%); }
+  .deck .cur.enter { animation: deck-in .36s var(--ease); }
+  .deck .cur.enter-r { animation: deck-in-r .36s var(--ease); }
+  .deck .cur.leave-l { animation: deck-out-l .3s var(--ease) forwards; }
+  .deck .cur.leave-r { animation: deck-out-r .3s var(--ease) forwards; }
+  @keyframes deck-in { from { transform: translateY(-15px) scale(.95); opacity: .5; } to { transform: none; opacity: 1; } }
+  @keyframes deck-in-r { from { transform: translateX(-110%) rotate(-5deg); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes deck-out-l { to { transform: translateX(-115%) rotate(-6deg); opacity: 0; } }
+  @keyframes deck-out-r { to { transform: translateX(115%) rotate(6deg); opacity: 0; } }
+  .pane { animation: pane-in .36s var(--ease); }
+  @keyframes pane-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+  .deck-hint { font-size: 11px; color: var(--fg-3); text-align: center; margin-top: 10px; }
+  .compact .trait-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .compact .trait { padding: 6px 10px; border-radius: 999px; }
+  .compact .trait span { display: none; }
   .controls { position: absolute; top: 14px; right: 14px; display: flex; gap: 6px; z-index: 5; }
   .ctl { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--line-2); background: var(--surface); color: var(--fg-2); display: grid; place-items: center; font-size: 15px; }
   .ctl:hover { color: var(--fg); border-color: var(--fg-3); }
@@ -353,6 +384,9 @@
     .sheet { max-width: none !important; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 20px 16px 40px; }
     .d-grid, .b-grid { grid-template-columns: 1fr; gap: 22px; }
     .b-card { position: static; width: 180px; margin: 0 auto; }
+    .bt-top { padding: 12px 56px 10px 16px; } .bt-body { padding: 20px 16px 48px; }
+    .deck-grid { grid-template-columns: 1fr; gap: 20px; } .deck { position: static; width: 220px; margin: 0 auto; padding-top: 24px; }
+    .deck-hint { display: block; }
     .d-foot, .s-kv { grid-template-columns: 1fr 1fr; }
     .st-row { grid-template-columns: 64px 34px 42px 34px 1fr; gap: 6px; padding: 5px 8px; } .st-k small { display: none; }
     .lv-seg button .full { display: none; } .lv-seg button .short { display: inline; }
@@ -1076,21 +1110,22 @@ async function openBallot() {
   if (!TOKEN) return;
   const overlay = document.getElementById('ballot-overlay'), body = document.getElementById('b-body');
   overlay.classList.add('open'); document.body.style.overflow = 'hidden';
-  body.innerHTML = `<div class="loading">Checking your link…</div>`;
+  body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="loading">Checking your link…</div></div></div>`;
   try { VOTER = await api({ action:'me', t: TOKEN }); } catch (e) { VOTER = { ok:false, error: e.message }; }
-  if (!VOTER.ok) { body.innerHTML = `<div class="b-title">That link did not work</div><div class="error" style="margin-top:14px">${esc(VOTER.error || 'Unknown error')}</div><div class="b-actions"><button class="btn ghost" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
+  if (!VOTER.ok) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="b-title">That link did not work</div><div class="error" style="margin-top:14px">${esc(VOTER.error || 'Unknown error')}</div><div class="b-actions"><button class="btn ghost" onclick="forgetToken()">Forget this link on this device</button></div></div></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
-  if (!me) { body.innerHTML = `<div class="error">You are not on the attendance sheet yet.</div>`; return; }
+  if (!me) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="error">You are not on the attendance sheet yet.</div></div></div>`; return; }
   const queue = ALL_PLAYERS.filter(p => p !== me && sharedCount(me,p) >= (VOTER.minShared || 3)).sort((a,b) => sharedCount(me,b)-sharedCount(me,a) || b.count-a.count);
   BALLOT = { me, queue, idx: 0 };
   renderBallotIntro();
 }
 function forgetToken() { try { localStorage.removeItem('w910_token'); } catch (_) {} TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); renderCards(); renderBalances(); renderYou(); showTab('hall'); }
 const doneCount = () => BALLOT.queue.filter(p => VOTER.mine[p.name]).length;
+function ballotTop(label) { const done = doneCount(), n = BALLOT.queue.length; return `<div class="bt-top"><span class="label">${label}</span><div class="b-progress"><i style="width:${n ? done/n*100 : 0}%"></i></div><span class="label">${done} of ${n} rated</span></div>`; }
 function renderBallotIntro() {
   const { me, queue } = BALLOT, done = doneCount(), next = queue.findIndex(p => !VOTER.mine[p.name]);
-  document.getElementById('b-body').innerHTML = `
-    <div class="label">Ratings · ${esc(VOTER.window)} · ${VOTER.open ? 'open' : 'closed'}</div>
+  document.getElementById('b-body').innerHTML = ballotTop(`Ratings · ${esc(VOTER.window)}`) + `<div class="bt-body"><div class="bt-inner narrow">
+    <div class="label">${VOTER.open ? 'Window open' : 'Window closed'}</div>
     <div class="b-title" style="margin-top:8px">${esc(me.name)}</div>
     <div class="b-copy">You have shared the pitch with <b>${queue.length} teammates</b> at least ${VOTER.minShared || 3} times, so those are the ones you can rate. Each comes up with a suggested level for six things. Tap a level, pick up to three traits, add a word if you like. Only they will read the word.<br><br><b>Ratings are anonymous.</b> Nobody, including the admin, can see who gave what. You can come back and change anything while the window is open.</div>
     <div class="b-actions">
@@ -1099,15 +1134,22 @@ function renderBallotIntro() {
       <button class="btn link" onclick="forgetToken()">Not ${esc(me.name.split(' ')[0])}? Forget this link</button>
     </div>
 
-    ${VOTER.feedback && VOTER.feedback.length ? `<div class="b-copy" style="margin-top:26px"><b>What teammates said about you</b> · ${VOTER.feedback.length}${VOTER.feedback.map(c=>`<br>“${esc(c)}”`).join('')}</div>` : ''}`;
+    ${VOTER.feedback && VOTER.feedback.length ? `<div class="b-copy" style="margin-top:26px"><b>What teammates said about you</b> · ${VOTER.feedback.length}${VOTER.feedback.map(c=>`<br>“${esc(c)}”`).join('')}</div>` : ''}
+  </div></div>`;
 }
-function gotoBallot(i) {
+function slideTo(i, dir) {
+  const cur = document.querySelector('#b-body .deck .cur');
+  if (!cur || !dir || cur.classList.contains('leave-l') || cur.classList.contains('leave-r')) return gotoBallot(i, dir);
+  cur.classList.add(dir > 0 ? 'leave-l' : 'leave-r');
+  setTimeout(() => gotoBallot(i, dir), 280);
+}
+function gotoBallot(i, dir) {
   const { queue } = BALLOT; if (i >= queue.length) return renderBallotDone();
   BALLOT.idx = i; const p = queue[i], existing = VOTER.mine[p.name];
   const seed = (VOTER.seeds && VOTER.seeds[p.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{});
   BALLOT.seed = seed; BALLOT.values = Object.assign({}, existing ? existing.stats : seed);
   BALLOT.traits = existing && existing.traits ? existing.traits.slice() : []; BALLOT.comment = existing ? existing.comment : '';
-  renderBallotCard();
+  renderBallotCard(dir);
 }
 function levelRowsHtml(ns, values, seed) {
   return `<div class="st-rows">${STAT_KEYS.map(k => { const cur = levelIdx(values[k]), sd = seed ? levelIdx(seed[k]) : -1; return `
@@ -1115,7 +1157,7 @@ function levelRowsHtml(ns, values, seed) {
       <div class="lv-seg" id="${ns}-seg-${k}">${LEVELS.map((L,i)=>`<button type="button" class="${i===cur?'on':''}${i===sd?' seed':''}" onclick="setLevel('${ns}','${k}',${i})" title="${L.l}"><span class="full">${L.l}</span><span class="short">${i+1}</span></button>`).join('')}</div></div>`; }).join('')}</div>`;
 }
 function traitGridHtml(ns, chosen) {
-  return `<div class="trait-grid">${Object.entries(TRAITS).map(([t,d]) => `<button type="button" class="trait ${chosen.includes(t)?'on':''}" onclick="toggleTrait('${ns}','${t}')" ${!chosen.includes(t) && chosen.length>=MAX_TRAITS ? 'disabled' : ''}><b>${t}</b><span>${d}</span></button>`).join('')}</div>`;
+  return `<div class="trait-grid">${Object.entries(TRAITS).map(([t,d]) => `<button type="button" class="trait ${chosen.includes(t)?'on':''}" title="${esc(d)}" onclick="toggleTrait('${ns}','${t}')" ${!chosen.includes(t) && chosen.length>=MAX_TRAITS ? 'disabled' : ''}><b>${t}</b><span>${d}</span></button>`).join('')}</div>`;
 }
 function stateFor(ns) { return ns === 'b' ? BALLOT : SELF; }
 function setLevel(ns, k, i) {
@@ -1131,24 +1173,29 @@ function toggleTrait(ns, t) {
   const l = document.querySelector(`#${ns}-traits-l span`); if (l) l.textContent = st.traits.length;
   if (ns === 'b') paintCardPreview(); else paintSelfPreview();
 }
-function renderBallotCard() {
-  const { me, queue, idx, values, seed } = BALLOT, p = queue[idx], done = doneCount();
-  document.getElementById('b-body').innerHTML = `
-    <div class="b-progress"><i style="width:${done/queue.length*100}%"></i></div>
-    <div class="label">${idx+1} of ${queue.length} · ${done} rated</div>
-    <div class="b-grid" style="margin-top:12px">
-      <div class="b-card" id="b-card"></div>
+function renderBallotCard(dir) {
+  const { me, queue, idx, values, seed } = BALLOT, p = queue[idx];
+  const peek = (q, cls) => { if (!q) return ''; const st = VOTER.seeds && VOTER.seeds[q.name]; return `<div class="${cls}">${cardHtml(q, st || null, { meta: `<span>Up next</span><span></span>` })}</div>`; };
+  document.getElementById('b-body').innerHTML = ballotTop(`${idx+1} of ${queue.length}`) + `<div class="bt-body" id="bt-body"><div class="bt-inner">
+    <div class="deck-grid">
       <div>
+        <div class="deck" id="deck">${peek(queue[idx+2], 'peek2')}${peek(queue[idx+1], 'peek1')}<div class="cur ${dir < 0 ? 'enter-r' : 'enter'}" id="b-card"></div></div>
+        <div class="deck-hint">${queue.length - idx - 1 > 0 ? `${queue.length - idx - 1} more after this` : 'Last one'} · swipe or use the arrow keys</div>
+      </div>
+      <div class="pane">
         <div class="b-who"><div class="b-title">${esc(p.name)}</div><span>${sharedCount(me,p)} nights together</span></div>
         <p class="muted" style="font-size:12px;margin-bottom:10px">Tap a level for each. The dot marks the suggested level. Five is the best in the group, one needs work.</p>
         ${levelRowsHtml('b', values, seed)}
         <div class="label" style="margin-top:16px" id="b-traits-l">Traits · <span>${BALLOT.traits.length}</span> of ${MAX_TRAITS} chosen</div>
-        <div id="b-traits">${traitGridHtml('b', BALLOT.traits)}</div>
+        <div id="b-traits" class="compact">${traitGridHtml('b', BALLOT.traits)}</div>
         <textarea class="b-comment" id="b-comment" maxlength="280" placeholder="A word for ${esc(p.name.split(' ')[0])}? Optional, private to them.">${esc(BALLOT.comment || '')}</textarea>
-        <div class="b-nav">${idx>0 ? `<button class="btn ghost" onclick="gotoBallot(${idx-1})">Back</button>` : ''}<button class="btn ghost" onclick="gotoBallot(${idx+1})">Skip</button><span class="sp"></span><span class="saved" id="b-saved">Saved</span><button class="btn" id="b-confirm" onclick="confirmRating()">${VOTER.mine[p.name] ? 'Update' : 'Looks right'}</button></div>
+        <div class="b-nav">${idx>0 ? `<button class="btn ghost" onclick="slideTo(${idx-1}, -1)">Back</button>` : ''}<button class="btn ghost" onclick="slideTo(${idx+1}, 1)">Skip</button><span class="sp"></span><span class="saved" id="b-saved">Saved</span><button class="btn" id="b-confirm" onclick="confirmRating()">${VOTER.mine[p.name] ? 'Update' : 'Looks right'}</button></div>
       </div>
-    </div>`;
-  paintCardPreview(); document.getElementById('ballot').scrollTop = 0;
+    </div></div></div>`;
+  paintCardPreview(); document.getElementById('bt-body').scrollTop = 0;
+  const deck = document.getElementById('deck'); let x0 = null, y0 = null;
+  deck.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  deck.addEventListener('touchend', e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx)) return; if (dx < 0) slideTo(BALLOT.idx+1, 1); else if (BALLOT.idx > 0) slideTo(BALLOT.idx-1, -1); }, { passive: true });
 }
 function paintCardPreview() {
   const { queue, idx, values, seed } = BALLOT, p = queue[idx];
@@ -1162,17 +1209,16 @@ async function confirmRating() {
   if (!res.ok) { btn.disabled = false; btn.textContent = 'Retry'; document.getElementById('b-saved').textContent = res.error || 'Could not save'; document.getElementById('b-saved').classList.add('show'); return; }
   VOTER.mine[p.name] = { stats: Object.assign({}, values), comment, traits: BALLOT.traits.slice() };
   document.getElementById('b-saved').classList.add('show');
-  setTimeout(() => { const next = queue.findIndex((q,j) => j>idx && !VOTER.mine[q.name]); gotoBallot(next<0 ? queue.length : next); }, 300);
+  setTimeout(() => { const next = queue.findIndex((q,j) => j>idx && !VOTER.mine[q.name]); slideTo(next<0 ? queue.length : next, 1); }, 250);
 }
 function renderBallotDone() {
   const { queue } = BALLOT, done = doneCount();
-  document.getElementById('b-body').innerHTML = `
-    <div class="b-progress"><i style="width:${done/queue.length*100}%"></i></div>
-    <div class="label">Ratings · ${esc(VOTER.window)}</div>
-    <div class="b-title" style="margin-top:8px">${done===queue.length ? 'All done. Thank you.' : `${done} of ${queue.length} rated`}</div>
+  document.getElementById('b-body').innerHTML = ballotTop(`Ratings · ${esc(VOTER.window)}`) + `<div class="bt-body"><div class="bt-inner narrow">
+    <div class="b-title">${done===queue.length ? 'All done. Thank you.' : `${done} of ${queue.length} rated`}</div>
     <div class="b-copy">Tap any name to change a rating. Cards update as ballots come in; a player needs ${RATINGS ? RATINGS.minVotes : 3} before their stats show.</div>
     <div class="chips">${queue.map((p,i) => { const m = VOTER.mine[p.name]; return `<span class="chip ${m?'':'todo'}" onclick="gotoBallot(${i})">${photo(p,'avatar')}${esc(p.name)} ${m ? `<b>${avgOf(m.stats)}</b>` : '<small>not yet</small>'}</span>`; }).join('')}</div>
-    <div class="b-actions"><button class="btn" onclick="closeBallotDirect()">Back to the cards</button></div>`;
+    <div class="b-actions"><button class="btn" onclick="closeBallotDirect()">Back to the cards</button></div>
+  </div></div>`;
 }
 function closeBallot(e) { if (e.target === document.getElementById('ballot-overlay')) closeBallotDirect(); }
 function closeBallotDirect() { document.getElementById('ballot-overlay').classList.remove('open'); document.body.style.overflow = ''; if (BALLOT) { BALLOT = null; renderCards().then(renderYou); } }
@@ -1316,7 +1362,7 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('claim-overlay').classList.contains('open')) { if (e.key==='Escape') closeClaimDirect(); return; }
   if (BALLOT && document.getElementById('ballot-overlay').classList.contains('open')) {
     if (e.target && e.target.tagName === 'TEXTAREA') return;
-    if (e.key==='Escape') closeBallotDirect(); else if (e.key==='ArrowRight' && BALLOT.values) gotoBallot(BALLOT.idx+1); else if (e.key==='ArrowLeft' && BALLOT.values && BALLOT.idx>0) gotoBallot(BALLOT.idx-1); else if (e.key==='Enter' && BALLOT.values) confirmRating();
+    if (e.key==='Escape') closeBallotDirect(); else if (e.key==='ArrowRight' && BALLOT.values) slideTo(BALLOT.idx+1, 1); else if (e.key==='ArrowLeft' && BALLOT.values && BALLOT.idx>0) slideTo(BALLOT.idx-1, -1); else if (e.key==='Enter' && BALLOT.values) confirmRating();
     return;
   }
   if (CURRENT_SESSION !== null) { if (e.key==='Escape') closeSessionDirect(); else if (e.key==='ArrowLeft') stepSession(-1); else if (e.key==='ArrowRight') stepSession(1); return; }
