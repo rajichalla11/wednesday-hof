@@ -574,6 +574,9 @@ const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?forma
 const SESSION_START_COL = 8;
 /* Rows in the sheet that are the same person: alias (lower case) → the name shown on the site. Counts, attendance and balance are combined. */
 const ALIASES = { 'rj': 'Rahul' };
+/* Founders are whoever played the very first session, plus anyone listed here (lower case) who was there but not marked on the sheet. */
+const FOUNDERS = new Set(['raj']);
+const isFounder = p => p.attendance[0] === 1 || FOUNDERS.has(p.name.toLowerCase());
 const SKIP = new Set(['','player','games played','amount paid','balance','owing from previous sessions','+1s','krish p','images','postion','position','preferred foot']);
 
 /* Ratings backend (Google Apps Script web app — see apps-script/README.md). */
@@ -727,13 +730,23 @@ function build(text) {
       const bal = (row[6]||'').replace(/,/g,'').trim();
       players.push({ name:colB, count, position:(row[2]||'').trim(), foot:(row[3]||'').trim(), photo:(row[4]||'').trim(), balance: bal ? parseFloat(bal) : null, attendance });
     }
-    for (const [alias, main] of Object.entries(ALIASES)) {
-      const a = players.find(p => p.name.toLowerCase() === alias), m = players.find(p => p.name.toLowerCase() === main.toLowerCase());
-      if (!a || !m) continue;
-      m.count += a.count; m.attendance = m.attendance.map((v,i) => v | a.attendance[i]);
+    /* Fold one row into another: sessions are OR'd so a night marked on both rows counts once; column A beyond the tracked
+       sessions (games before the sheet started tracking) is added up; balances are summed. */
+    const tracked = arr => arr.reduce((s,v) => s+v, 0);
+    const mergeInto = (m, a) => {
+      const offset = (m.count - tracked(m.attendance)) + (a.count - tracked(a.attendance));
+      m.attendance = m.attendance.map((v,i) => v | a.attendance[i]);
+      m.count = Math.max(0, offset) + tracked(m.attendance);
       if (a.balance !== null) m.balance = (m.balance || 0) + a.balance;
       m.position = m.position || a.position; m.foot = m.foot || a.foot; m.photo = m.photo || a.photo;
       players.splice(players.indexOf(a), 1);
+    };
+    for (const [alias, main] of Object.entries(ALIASES)) {
+      const a = players.find(p => p.name.toLowerCase() === alias), m = players.find(p => p.name.toLowerCase() === main.toLowerCase());
+      if (a && m) mergeInto(m, a);
+    }
+    for (let i = 0; i < players.length; i++) {   // the same name on two rows is one person (e.g. a second Nirav row added by mistake)
+      for (let j = players.length - 1; j > i; j--) if (players[j].name.toLowerCase() === players[i].name.toLowerCase()) mergeInto(players[i], players[j]);
     }
     for (const p of players) {
       p.firstIdx = p.attendance.findIndex(v=>v===1); p.lastIdx = -1; for (let i=p.attendance.length-1;i>=0;i--) if (p.attendance[i]) { p.lastIdx = i; break; }
@@ -841,7 +854,7 @@ function computeRecords(players, sessions) {
   }
   const bn = maxBy(sessions, s=>s.turnout);
   if (bn) R.push({ key:'night', label:'Biggest night', value: bn.turnout, unit:'players', session: bn, holders: [], detail: bn.date ? DAY_FULL[bn.date.getDay()] : '' });
-  const founders = players.filter(p=>p.attendance[0]===1).sort((a,b)=>b.count-a.count);
+  const founders = players.filter(isFounder).sort((a,b)=>b.count-a.count);
   if (founders.length) R.push({ key:'founders', label:'Founding members', value: founders.length, unit:'at session one', holders: founders, noBadge: true, detail:`${founders.reduce((a,f)=>a+f.count,0).toLocaleString()} appearances between them` });
   const SECTION = { iron:'season', ystreak:'season', breakout:'season', comeback:'character', month:'character', insep:'character', wed:'character' };
   for (const r of R) r.section = SECTION[r.key] || 'alltime';
@@ -851,7 +864,7 @@ function computeRecords(players, sessions) {
 }
 function badgesFor(p) {
   const B = [];
-  if (p.attendance[0]===1) B.push({ i:'⚑', t:'Founder', d:`Played the very first session, ${fmtSession(SESSIONS[0],false)}`, rare:true, m:'gold' });
+  if (isFounder(p)) B.push({ i:'⚑', t:'Founder', d:`Played the very first session, ${fmtSession(SESSIONS[0],false)}`, rare:true, m:'gold' });
   if (p.count>=200) B.push({ i:'★★', t:'Double century', rare:true, m:'gold' }); else if (p.count>=100) B.push({ i:'★', t:'Century member', rare:true, m:'gold' });
   for (const y of p.years) { if (y.y!==THIS_YEAR && y.total>=20 && y.got===y.total) B.push({ i:'♜', t:`Iron man ${y.y}`, d:`Every one of the ${y.total} sessions in ${y.y}`, rare:true, m:'gold' }); if (y.y===THIS_YEAR && y.total>=5 && y.got===y.total) B.push({ i:'◆', t:`Ever-present ${y.y}` }); }
   if (p.currentStreak>=10) B.push({ i:'▲', t:`${p.currentStreak} straight` });

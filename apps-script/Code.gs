@@ -459,9 +459,8 @@ function players_() {
     const n = name.toLowerCase();
     if (SKIP.indexOf(n) >= 0 || /^\d/.test(n) || n.length < 2) return;
     const att = cols.map(function (i) { const v = parseFloat((r[i] || '').replace(/,/g, '')); return (!isNaN(v) && v > 0) ? 1 : 0; });
-    const key = n + '|' + count + '|' + att.join('');
-    if (seen[key]) return; seen[key] = 1;
-    out.push({ name: name, count: count, position: (r[2] || '').trim(), att: att });
+    if (seen[n]) { const m = seen[n]; m.att = m.att.map(function (v, i) { return v | att[i]; }); m.count += count; return; }   // same name twice = one person
+    const p = { name: name, count: count, position: (r[2] || '').trim(), att: att }; seen[n] = p; out.push(p);
   });
   cache_().put('players', JSON.stringify(out), 600);
   return out;
