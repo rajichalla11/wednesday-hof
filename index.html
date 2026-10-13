@@ -20,7 +20,9 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden; }
-  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; touch-action: manipulation; }
+  button, a, .card, .box, .tab, .chip { -webkit-tap-highlight-color: transparent; }
+  .short { display: none; }
   a { color: inherit; text-decoration: none; }
   .wrap { max-width: 1040px; margin: 0 auto; padding-block: 0 96px; padding-inline: 20px; }
   .num { font-variation-settings: 'wdth' 82; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
@@ -394,11 +396,52 @@
     .hint { display: none; }
     .controls { top: 10px; right: 10px; }
   }
+  /* PHONES: most of the group reads this on a phone, so everything below is tuned for one hand and one thumb */
+  @media (max-width: 720px) {
+    .long { display: none; } .short { display: inline; }
+    .wrap { padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right)); padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+    nav.top { padding: 8px 0 6px; background: rgba(14,14,15,.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .wordmark { font-size: 13px; }
+    .tabs { gap: 2px; margin-top: 4px; }
+    .tab { padding: 9px 8px; min-height: 38px; font-size: 12.5px; }
+    .tab small { display: none; }
+    .head { padding: 16px 0 14px; gap: 8px; }
+    h1 { font-size: 24px; } h1 small { font-size: 12px; margin-top: 4px; }
+    .last { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .last .label { margin: 0; } .last b { display: inline; font-size: 13px; } .last span { font-size: 12px; }
+    .stat { padding: 12px 10px 10px; } .stat b { font-size: 22px; } .stat .label { font-size: 9px; letter-spacing: .06em; margin-top: 6px; }
+    .sh { margin-bottom: 12px; }
+    input, select, textarea { font-size: 16px !important; }
+    .btn { padding: 10px 16px; font-size: 14px; min-height: 42px; }
+    .seg button { padding: 7px 10px; }
+    .lv-row { padding: 10px; } .lv-seg button { padding: 11px 2px; font-size: 13px; }
+    .compact .trait { padding: 9px 12px; }
+    .trait-grid { grid-template-columns: 1fr 1fr; }
+    .b-comment { min-height: 48px; }
+    .deck-grid .b-nav { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+    .bt-top { padding-top: calc(12px + env(safe-area-inset-top)); }
+    .chip { padding: 7px 12px 7px 6px; min-height: 36px; }
+    .tl-axis { flex-wrap: wrap; row-gap: 6px; } .tl-axis span:nth-child(2) { order: 3; flex-basis: 100%; }
+    .d-name { font-size: 30px; } .d-photo { max-height: 230px; aspect-ratio: auto; height: 230px; }
+    .box .big { font-size: 28px; }
+  }
   @media (max-width: 480px) {
-    .cards { grid-template-columns: 1fr; gap: 12px; }
-    .c-num { font-size: 44px; } .c-head, .c-name { padding-inline: 16px; } .c-photo-wrap, .c-stats { margin-inline: 16px; } .c-stat b { font-size: 16px; } .c-foot { padding-inline: 16px; }
-    .c-stat { padding-right: 10px; } .c-stat:nth-child(3n+2), .c-stat:nth-child(3n+3) { padding-left: 10px; }
-    .c-photo { aspect-ratio: 16 / 10; }
+    .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .c-head { padding: 12px 12px 0; } .c-head .label { font-size: 9px; letter-spacing: .06em; } .c-num { font-size: 30px; }
+    .pill { font-size: 9px; padding: 2px 5px; letter-spacing: .08em; }
+    .c-photo-wrap { margin: 10px 12px 0; } .c-photo { aspect-ratio: 1 / 1; } .c-photo .fb { font-size: 28px; }
+    .c-name { padding: 10px 12px 0; } .c-name b { font-size: 15px; } .c-name span { font-size: 11px; }
+    .c-badges { padding: 8px 12px 0; gap: 4px; }
+    .c-badges .medal { font-size: 8.5px; letter-spacing: .06em; padding: 2px 7px 2px 2px; gap: 5px; } .c-badges .medal i { width: 16px; height: 16px; font-size: 9px; }
+    .c-badges .medal:nth-child(n+3) { display: none; }
+    .c-traits { padding: 5px 12px 0; gap: 3px; } .c-traits span { font-size: 9px; padding: 1px 6px; }
+    .c-stats { margin: 10px 12px 10px; } .c-stat { padding: 6px 4px 0 0; } .c-stat:nth-child(3n+2), .c-stat:nth-child(3n+3) { padding-left: 4px; }
+    .c-stat b { font-size: 13px; } .c-stat .label { font-size: 9px; letter-spacing: 0; }
+    .c-foot { padding: 0 12px 10px; font-size: 10px; }
+    .you-grid .card, .deck { max-width: 240px; }
+    .you-grid .card .c-num { font-size: 36px; } .you-grid .card .c-badges .medal:nth-child(n+3) { display: inline-flex; }
+    .deck .c-badges .medal:nth-child(n+3) { display: inline-flex; }
+    .stats.four { grid-template-columns: 1fr 1fr; }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 </style>
@@ -410,7 +453,7 @@
     <div class="tabs" id="tabs">
       <button class="tab" data-tab="you" id="tab-you" hidden>You</button>
       <button class="tab active" data-tab="hall">Players<small id="tab-n-hall"></small></button>
-      <button class="tab" data-tab="wall">Century Wall<small id="tab-n-wall"></small></button>
+      <button class="tab" data-tab="wall"><span class="long">Century Wall</span><span class="short">Wall</span><small id="tab-n-wall"></small></button>
       <button class="tab" data-tab="records">Records<small id="tab-n-records"></small></button>
       <button class="tab" data-tab="timeline">Season<small id="tab-n-timeline"></small></button>
       <button class="tab" data-tab="balances">Balance<small id="tab-n-balances"></small></button>
@@ -423,7 +466,7 @@
   </div>
   <div class="stats" id="stats">
     <div class="stat"><b class="num" id="s-sessions">—</b><div class="label">Sessions</div></div>
-    <div class="stat"><b class="num" id="s-members">—</b><div class="label">Century members</div></div>
+    <div class="stat"><b class="num" id="s-members">—</b><div class="label"><span class="long">Century members</span><span class="short">Centuries</span></div></div>
     <div class="stat"><b class="num" id="s-players">—</b><div class="label">Players</div></div>
   </div>
 
