@@ -42,6 +42,7 @@ function setup() {
   const sr = sheet_('SelfRatings'); if (sr.getLastRow() === 0) sr.appendRow(['window', 'name'].concat(STATS, ['traits', 'note', 'updated']));
   const w = sheet_('Windows'); if (w.getLastRow() === 0) w.appendRow(['window', 'opened', 'closed']);
   const ph = sheet_('Photos'); if (ph.getLastRow() === 0) ph.appendRow(['name', 'file_id', 'updated']);
+  photoFolder_();   // creates the Drive folder for player photos (and asks for the Drive permission the first time)
   const s = sheet_('Seeds');
   if (s.getLastRow() === 0) {
     s.appendRow(['name'].concat(STATS));
