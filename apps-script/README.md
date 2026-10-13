@@ -84,3 +84,8 @@ The first upload needs the Drive permission: run `setup` once from the editor af
 ## Claims need approval (backend Version 7, 13 Oct 2026)
 
 Claiming is now "Find your card": a grid of faces with a search box, taken names dimmed. A claim creates a Voters row with status **pending**. The person's device remembers them, but their page stays locked (no ballot, balance or photo) until the admin approves it on the You tab under **Claims waiting** (Approve / Not them). Rejecting deletes the row so the name can be claimed again. Rows from before this version with a `claimed` date and a blank status count as approved. If the admin's own row is ever reset, set its status to `approved` by hand in the Voters tab, since nobody else can approve it.
+
+
+## Instant claims and "Not me" (backend Version 8, 13 Oct 2026)
+
+Claims are approved on the spot again. To go back to admin approval, add a row `require_approval` = `1` on the Settings tab (the Claims waiting section on the You tab still works). Anyone who picked the wrong card taps **Not me** on their page (twice, to confirm): the POST action `unclaim` deletes their Voters row so the name is free again, the device forgets them, and the picker opens.

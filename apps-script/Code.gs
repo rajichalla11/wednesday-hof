@@ -122,6 +122,7 @@ function doPost(e) {
     if (body.action === 'unrate') return json_(unrate_(body));
     if (body.action === 'photo') return json_(photo_(body));
     if (body.action === 'approve') return json_(approve_(body));
+    if (body.action === 'unclaim') return json_(unclaim_(body));
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) { return json_({ ok: false, error: String(err) }); }
 }
@@ -206,9 +207,10 @@ function claim_(body) {
       voters.deleteRow(i + 1);
     }
     const token = newToken_();
-    voters.appendRow([id1_(token), p.name, new Date(), new Date(), 'pending']);   // the admin approves it on the You tab
+    const status = String(settings_().require_approval || '').trim() === '1' ? 'pending' : 'approved';   // Settings → require_approval = 1 to make the admin approve each claim
+    voters.appendRow([id1_(token), p.name, new Date(), new Date(), status]);
     cache_().remove(key); cache_().remove('results');
-    return { ok: true, token: token, name: p.name, pending: true };
+    return { ok: true, token: token, name: p.name, pending: status === 'pending' };
   } finally { lock.releaseLock(); }
 }
 
@@ -299,6 +301,15 @@ function approve_(body) {
     return { ok: true };
   }
   return { ok: false, error: 'No pending claim for that name.' };
+}
+/** "Not me": the voter deletes their own claim so the name can be claimed by the right person. Their ballot rows stay but are orphaned. */
+function unclaim_(body) {
+  const row = voterRow_(body.t);
+  if (!row) return { ok: false, error: 'This link isn’t recognised.' };
+  const id = id1_(String(body.t)), sh = sheet_('Voters'), data = sh.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === id) sh.deleteRow(i + 1);
+  cache_().remove('results');
+  return { ok: true };
 }
 function claimedNames_() { return rows_(sheet_('Voters')).filter(function (r) { return r[3]; }).map(function (r) { return String(r[1]); }); }
 
