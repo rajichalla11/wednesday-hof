@@ -1108,11 +1108,12 @@ const writeCache = (k, v) => { try { if (v == null) localStorage.removeItem(k); 
 function fetchMe() {
   if (!ME_PROMISE) {
     if (!VOTER) { const c = readCache('w910_me'); if (c && c.ok && c.name) VOTER = c; }
-    const before = JSON.stringify(VOTER);
+    const norm = v => JSON.stringify(v && v.ok ? Object.assign({}, v, { feedback: (v.feedback || []).slice().sort() }) : v);   // feedback comes back shuffled; order is not a change
+    const before = norm(VOTER);
     ME_PROMISE = api({ action:'me', t: TOKEN }).catch(e => ({ ok:false, error: e.message })).then(v => {
       ME_PROMISE = null; VOTER = v;
       if (v.ok && v.name) { try { localStorage.setItem('w910_name', v.name); } catch (_) {} writeCache('w910_me', v); } else if (!/^Failed to fetch|NetworkError|Load failed/.test(v.error || '')) writeCache('w910_me', null);
-      if (before && before !== JSON.stringify(v) && BOOTED && TOKEN && !YOU_WAITING) { renderYou(); renderBalances(); }
+      if (before && before !== norm(v) && BOOTED && TOKEN && !YOU_WAITING) { renderYou(); renderBalances(); }
       return v;
     });
   }
