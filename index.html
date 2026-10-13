@@ -1131,7 +1131,7 @@ function cardHtml(p, stats, opts = {}) {
   const rated = !!stats, tier = tierOf(p), foil = isRecordHolder(p);
   const locked = !opts.meta && selfLocked(p), hidden = locked || (!rated && !!(RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].hidden));
   const badges = badgesFor(p).sort((a,b)=>(b.rare?1:0)-(a.rare?1:0)).filter(b => !/^Century member$|^Double century$/.test(b.t)).slice(0,3);
-  const top = rated ? STAT_KEYS.reduce((b,k)=>stats[k]>stats[b]?k:b, STAT_KEYS[0]) : null;
+  const top = rated && STAT_KEYS.every(k => typeof stats[k] === 'number') ? STAT_KEYS.reduce((b,k)=>stats[k]>stats[b]?k:b, STAT_KEYS[0]) : null;
   let foot = opts.meta || '';
   if (!foot) { if (rated) { let trend = ''; if (opts.prev) { const d = avgOf(stats)-avgOf(opts.prev); if (d) trend = `<span class="${d>0?'up':'down'}">${d>0?'▲':'▼'} ${Math.abs(d)}</span>`; } foot = `<span>${opts.n ? `${opts.n} vote${opts.n===1?'':'s'}` : 'Starting point'}</span>${trend || `<span>${TIER_NAME[tier]}</span>`}`; }
     else foot = `<span>${opts.n != null ? `${opts.n} of ${RATINGS ? RATINGS.minVotes : 3} votes` : 'preview'}</span><span>${TIER_NAME[tier]}</span>`; }
@@ -1326,13 +1326,13 @@ function gotoBallot(i, dir) {
   const { queue } = BALLOT; if (i >= queue.length) return renderBallotDone();
   BALLOT.idx = i; const p = queue[i], existing = VOTER.mine[p.name];
   const seed = (VOTER.seeds && VOTER.seeds[p.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{});
-  BALLOT.seed = seed; BALLOT.values = Object.assign({}, existing ? existing.stats : seed);
+  BALLOT.seed = seed; BALLOT.values = existing ? Object.assign({}, existing.stats) : {};   // nothing pre-selected: the voter picks every level
   BALLOT.traits = existing && existing.traits ? existing.traits.slice() : []; BALLOT.comment = existing ? existing.comment : '';
   renderBallotCard(dir);
 }
 function levelRowsHtml(ns, values, seed) {
-  return `<div class="st-rows">${STAT_KEYS.map(k => { const cur = levelIdx(values[k]), sd = seed ? levelIdx(seed[k]) : -1; return `
-    <div class="lv-row"><div class="lv-head"><b>${STAT_NAMES[k]}</b><span>${STAT_GUIDE[k]}</span><em id="${ns}-lv-${k}">${LEVELS[cur].l}</em></div>
+  return `<div class="st-rows">${STAT_KEYS.map(k => { const cur = values[k] != null ? levelIdx(values[k]) : -1, sd = seed ? levelIdx(seed[k]) : -1; return `
+    <div class="lv-row"><div class="lv-head"><b>${STAT_NAMES[k]}</b><span>${STAT_GUIDE[k]}</span><em id="${ns}-lv-${k}">${cur >= 0 ? LEVELS[cur].l : ''}</em></div>
       <div class="lv-seg" id="${ns}-seg-${k}">${LEVELS.map((L,i)=>`<button type="button" class="${i===cur?'on':''}${i===sd?' seed':''}" onclick="setLevel('${ns}','${k}',${i})" title="${L.l}"><span class="full">${L.l}</span><span class="short">${i+1}</span></button>`).join('')}</div></div>`; }).join('')}</div>`;
 }
 function traitGridHtml(ns, chosen) {
@@ -1343,8 +1343,10 @@ function setLevel(ns, k, i) {
   const st = stateFor(ns); st.values[k] = LEVELS[i].v;
   document.getElementById(`${ns}-lv-${k}`).textContent = LEVELS[i].l;
   document.querySelectorAll(`#${ns}-seg-${k} button`).forEach((b,j)=>b.classList.toggle('on', j===i));
-  if (ns === 'b') paintCardPreview(); else paintSelfPreview();
+  if (ns === 'b') { paintCardPreview(); paintConfirmState(); } else paintSelfPreview();
 }
+const ballotComplete = () => STAT_KEYS.every(k => BALLOT.values[k] != null);
+function paintConfirmState() { const btn = document.getElementById('b-confirm'); if (!btn) return; const left = STAT_KEYS.filter(k => BALLOT.values[k] == null).length; btn.disabled = left > 0; btn.textContent = left ? `${left} to pick` : (VOTER.mine[BALLOT.queue[BALLOT.idx].name] ? 'Update' : 'Looks right'); }
 function toggleTrait(ns, t) {
   const st = stateFor(ns); const i = st.traits.indexOf(t);
   if (i >= 0) st.traits.splice(i,1); else if (st.traits.length < MAX_TRAITS) st.traits.push(t);
@@ -1363,12 +1365,12 @@ function renderBallotCard(dir) {
       </div>
       <div class="pane">
         <div class="b-who"><div class="b-title">${esc(p.name)}</div><span>${sharedCount(me,p)} nights together</span></div>
-        <p class="muted" style="font-size:12px;margin-bottom:10px">Tap a level for each. The dot marks the suggested level. Five is the best in the group, one needs work.</p>
+        <p class="muted" style="font-size:12px;margin-bottom:10px">Tap a level for each of the six. The dot marks the suggested level. Five is the best in the group, one needs work.</p>
         ${levelRowsHtml('b', values, seed)}
         <div class="label" style="margin-top:16px" id="b-traits-l">Traits · <span>${BALLOT.traits.length}</span> of ${MAX_TRAITS} chosen</div>
         <div id="b-traits" class="compact">${traitGridHtml('b', BALLOT.traits)}</div>
         <textarea class="b-comment" id="b-comment" maxlength="280" placeholder="A word for ${esc(p.name.split(' ')[0])}? Optional, private to them.">${esc(BALLOT.comment || '')}</textarea>
-        <div class="b-nav">${idx>0 ? `<button class="btn ghost" onclick="slideTo(${idx-1}, -1)">Back</button>` : ''}<button class="btn ghost" onclick="slideTo(${idx+1}, 1)">Skip</button><span class="sp"></span><span class="saved" id="b-saved">Saved</span><button class="btn" id="b-confirm" onclick="confirmRating()">${VOTER.mine[p.name] ? 'Update' : 'Looks right'}</button></div>
+        <div class="b-nav">${idx>0 ? `<button class="btn ghost" onclick="slideTo(${idx-1}, -1)">Back</button>` : ''}<button class="btn ghost" onclick="slideTo(${idx+1}, 1)">Skip</button><span class="sp"></span><span class="saved" id="b-saved">Saved</span><button class="btn" id="b-confirm" onclick="confirmRating()" ${STAT_KEYS.every(k => values[k] != null) ? '' : 'disabled'}>${STAT_KEYS.every(k => values[k] != null) ? (VOTER.mine[p.name] ? 'Update' : 'Looks right') : `${STAT_KEYS.filter(k => values[k] == null).length} to pick`}</button></div>
       </div>
     </div></div></div>`;
   paintCardPreview(); document.getElementById('bt-body').scrollTop = 0;
@@ -1377,8 +1379,11 @@ function renderBallotCard(dir) {
   deck.addEventListener('touchend', e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx)) return; if (dx < 0) slideTo(BALLOT.idx+1, 1); else if (BALLOT.idx > 0) slideTo(BALLOT.idx-1, -1); }, { passive: true });
 }
 function paintCardPreview() {
-  const { queue, idx, values, seed } = BALLOT, p = queue[idx];
-  document.getElementById('b-card').innerHTML = cardHtml(p, values, { meta:`<span>Your rating</span><span>${avgOf(values)} avg</span>`, traits: BALLOT.traits });
+  const { queue, idx, values } = BALLOT, p = queue[idx];
+  const shown = {}; STAT_KEYS.forEach(k => shown[k] = values[k] != null ? values[k] : '–');
+  const picked = STAT_KEYS.filter(k => values[k] != null);
+  const avg = picked.length ? Math.round(picked.reduce((a,k) => a + values[k], 0) / picked.length) : '–';
+  document.getElementById('b-card').innerHTML = cardHtml(p, shown, { meta:`<span>Your rating</span><span>${picked.length === STAT_KEYS.length ? avg + ' avg' : `${picked.length} of ${STAT_KEYS.length} picked`}</span>`, traits: BALLOT.traits });
 }
 /* Ratings save in the background: the deck moves on at once, the request follows, failures retry three times and are shown on the summary screen. */
 const SAVES = { pending: {}, failed: {}, busy: 0 };
@@ -1400,6 +1405,7 @@ async function pushSave(name, payload, attempt = 0) {
 function retrySaves() { for (const [name, payload] of Object.entries(SAVES.failed)) { VOTER.mine[name] = { stats: payload.stats, comment: payload.comment, traits: payload.traits }; pushSave(name, payload); } }
 addEventListener('beforeunload', e => { if (Object.keys(SAVES.pending).length) { e.preventDefault(); e.returnValue = ''; } });
 function confirmRating() {
+  if (!ballotComplete()) { paintConfirmState(); return; }
   const { queue, idx, values } = BALLOT, p = queue[idx], btn = document.getElementById('b-confirm');
   btn.disabled = true; btn.textContent = 'Saved';
   const comment = document.getElementById('b-comment').value.trim();
