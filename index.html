@@ -1072,8 +1072,8 @@ function openProfile(p) {
         ${heat}
         <div class="heat-legend"><span><i style="background:var(--fg-2)"></i>Played</span><span><i style="background:var(--surface-2)"></i>Missed</span><span><i style="background:var(--fg)"></i>Current streak</span><span><i style="outline:1px solid var(--gold);outline-offset:1px"></i>100th</span></div>
         <div class="yrs">${p.years.map(y=>`<div class="yr"><span class="y">${y.y}</span><i style="--w:${y.eligible ? y.got/maxEligible*100 : 0}%"></i><span class="v">${y.got} / ${y.eligible}</span></div>`).join('')}</div>
-        ${r && r.hidden ? `<div class="label" style="margin-top:22px">Ratings</div><div class="muted" style="font-size:13px;margin-top:6px">To be determined. Not published yet.</div>` : ''}
-        ${r && r.stats ? `<div class="label" style="margin-top:22px">Ratings · ${r.n ? r.n + ' vote' + (r.n===1?'':'s') : 'starting point, no votes yet'}</div><div class="c-stats" style="margin:8px 0 0">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num">${r.stats[k]}</b></div>`).join('')}</div>` : ''}
+        ${selfLocked(p) ? `<div class="label" style="margin-top:22px">Ratings</div><div class="muted" style="font-size:13px;margin-top:6px">Yours unlocks once you have rated ${selfNeed()} teammates · ${selfRated()} done.</div>` : r && r.hidden ? `<div class="label" style="margin-top:22px">Ratings</div><div class="muted" style="font-size:13px;margin-top:6px">To be determined. Not published yet.</div>` : ''}
+        ${r && r.stats && !selfLocked(p) ? `<div class="label" style="margin-top:22px">Ratings · ${r.n ? r.n + ' vote' + (r.n===1?'':'s') : 'starting point, no votes yet'}</div><div class="c-stats" style="margin:8px 0 0">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num">${r.stats[k]}</b></div>`).join('')}</div>` : ''}
         ${r && r.traits && Object.keys(r.traits).length ? `<div class="c-traits" style="padding:10px 0 0">${Object.keys(r.traits).sort((a,b)=>r.traits[b]-r.traits[a]).slice(0,5).map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)} · ${r.traits[t]}</span>`).join('')}</div>` : ''}
         <div class="d-foot">
           <div><span>Seasons</span><b>${seasons}${first&&first.date ? ` <span class="dim" style="font-weight:400">since ${first.date.getFullYear()}</span>` : ''}</b></div>
@@ -1120,9 +1120,15 @@ async function api(params, body) {
 }
 const sharedCount = (a,b) => { let s=0; for (let i=0;i<a.attendance.length;i++) s += a.attendance[i] & b.attendance[i]; return s; };
 const avgOf = stats => Math.round(STAT_KEYS.reduce((a,k)=>a+stats[k],0)/STAT_KEYS.length);
+/* A player's own rating stays hidden on their device until they have rated 10 teammates (or everyone they can, if fewer). */
+const SELF_NEED = 10;
+function selfQueue() { if (!VOTER || !VOTER.ok || VOTER.pending) return []; const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()); return me ? ALL_PLAYERS.filter(p => p !== me && sharedCount(me, p) >= (VOTER.minShared || 3)) : []; }
+function selfNeed() { return Math.min(SELF_NEED, selfQueue().length); }
+function selfRated() { return VOTER && VOTER.mine ? Object.keys(VOTER.mine).length : 0; }
+function selfLocked(p) { return !!(VOTER && VOTER.ok && !VOTER.pending && !VOTER.isAdmin && p.name.toLowerCase() === VOTER.name.toLowerCase() && selfRated() < selfNeed()); }
 function cardHtml(p, stats, opts = {}) {
   const rated = !!stats, tier = tierOf(p), foil = isRecordHolder(p);
-  const hidden = !rated && !!(RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].hidden);
+  const locked = !opts.meta && selfLocked(p), hidden = locked || (!rated && !!(RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].hidden));
   const badges = badgesFor(p).sort((a,b)=>(b.rare?1:0)-(a.rare?1:0)).filter(b => !/^Century member$|^Double century$/.test(b.t)).slice(0,3);
   const top = rated ? STAT_KEYS.reduce((b,k)=>stats[k]>stats[b]?k:b, STAT_KEYS[0]) : null;
   let foot = opts.meta || '';
@@ -1138,8 +1144,8 @@ function cardHtml(p, stats, opts = {}) {
     <div class="c-name"><b>${esc(p.name)}</b><span>${esc([posName(p), p.foot ? p.foot+' foot' : ''].filter(Boolean).join(' · ') || ' ')}</span></div>
     ${badges.length ? `<div class="c-badges">${badges.map(b=>`<span class="medal ${b.m||''}" title="${esc(b.d||b.t)}" data-tip="${esc(b.d||b.t)}" data-tip-h="${esc(b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>` : ''}
     ${traits.length ? `<div class="c-traits">${traits.map(t=>`<span title="${esc(TRAITS[t]||'')}" data-tip="${esc(TRAITS[t]||'')}" data-tip-h="${esc(t)}">${esc(t)}</span>`).join('')}</div>` : ''}
-    ${hidden ? `<div class="c-stats tbd"><span class="label">Rating</span><b>To be determined</b></div>` : `<div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>`}
-    <div class="c-foot">${hidden ? `<span>Not published yet</span><span>${TIER_NAME[tier]}</span>` : foot}</div></div>`;
+    ${hidden ? `<div class="c-stats tbd"><span class="label">Rating</span><b>${locked ? `Rate ${selfNeed()} teammates to see yours` : 'To be determined'}</b></div>` : `<div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>`}
+    <div class="c-foot">${hidden ? `<span>${locked ? `${selfRated()} of ${selfNeed()} rated` : 'Not published yet'}</span><span>${TIER_NAME[tier]}</span>` : foot}</div></div>`;
 }
 /* The two Apps Script calls are slow (1–3 s each), so they start the moment the page opens, run alongside the sheet fetch, and are shared by whoever needs them. */
 let ME_PROMISE = null, RESULTS_PROMISE = null, RATINGS_AT = 0, YOU_WAITING = false;
@@ -1155,6 +1161,7 @@ function fetchMe() {
       ME_PROMISE = null; VOTER = v;
       if (v.ok && v.name) { try { localStorage.setItem('w910_name', v.name); } catch (_) {} writeCache('w910_me', v); } else if (!/^Failed to fetch|NetworkError|Load failed/.test(v.error || '')) writeCache('w910_me', null);
       if (before && before !== norm(v) && BOOTED && TOKEN && !YOU_WAITING) { renderYou(); renderBalances(); }
+      if (BOOTED && ALL_PLAYERS.length) renderPlayers();   // the viewer's own card may lock or unlock
       return v;
     });
   }
@@ -1440,7 +1447,7 @@ async function renderYou() {
   body.innerHTML = `
     <div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
     <div class="you-grid">
-      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
+      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${selfLocked(me) ? `Your rating unlocks once you have rated ${selfNeed()} teammates. ${selfRated()} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
       <div>
         <div class="stats four">
           <div class="stat"><b class="num">${me.count}</b><div class="label">Appearances</div></div>
@@ -1594,13 +1601,14 @@ function renderAdminList() { const a = window.__ADMIN, el = document.getElementB
 
 /* ── tap a medal or trait to read what it means (hover titles don't exist on phones) ── */
 (function () {
-  const tip = document.getElementById('tip'); let timer = null;
-  const hide = () => { tip.classList.remove('on'); clearTimeout(timer); };
+  const tip = document.getElementById('tip'); let timer = null, shownAt = 0;
+  const hide = () => { if (Date.now() - shownAt < 350) return; tip.classList.remove('on'); clearTimeout(timer); };   // ignore the echo of the tap that opened it
   document.addEventListener('click', e => {
     const el = e.target.closest('[data-tip]');
     if (!el) { if (tip.classList.contains('on')) hide(); return; }
     e.stopPropagation(); e.preventDefault();
     if (tip.classList.contains('on') && tip.dataset.for === el.dataset.tipH) { hide(); return; }
+    shownAt = Date.now();
     tip.innerHTML = `<b>${esc(el.dataset.tipH || '')}</b>${esc(el.dataset.tip || '')}`; tip.dataset.for = el.dataset.tipH;
     const r = el.getBoundingClientRect(); tip.classList.add('on');
     const w = tip.offsetWidth, left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width/2 - w/2));
