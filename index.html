@@ -203,9 +203,10 @@
   .pane { animation: pane-in .36s var(--ease); }
   @keyframes pane-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
   .deck-hint { font-size: 11px; color: var(--fg-3); text-align: center; margin-top: 10px; }
-  .compact .trait-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-  .compact .trait { padding: 6px 10px; border-radius: 999px; }
-  .compact .trait span { display: none; }
+  .compact .trait-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .compact .trait { padding: 7px 10px; }
+  .compact .trait b { font-size: 10.5px; }
+  .compact .trait span { font-size: 11px; margin-top: 1px; line-height: 1.3; }
   .controls { position: absolute; top: 14px; right: 14px; display: flex; gap: 6px; z-index: 5; }
   .ctl { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--line-2); background: var(--surface); color: var(--fg-2); display: grid; place-items: center; font-size: 15px; }
   .ctl:hover { color: var(--fg); border-color: var(--fg-3); }
@@ -435,7 +436,7 @@
     .btn { padding: 10px 16px; font-size: 14px; min-height: 42px; }
     .seg button { padding: 7px 10px; }
     .lv-row { padding: 10px; } .lv-seg button { padding: 11px 2px; font-size: 13px; }
-    .compact .trait { padding: 9px 12px; }
+    .compact .trait-grid { grid-template-columns: 1fr 1fr; } .compact .trait { padding: 8px 10px; }
     .trait-grid { grid-template-columns: 1fr 1fr; }
     .b-comment { min-height: 48px; }
     .deck-grid .b-nav { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
