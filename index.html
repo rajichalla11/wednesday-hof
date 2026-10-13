@@ -176,8 +176,8 @@
   .bt-top { display: flex; align-items: center; gap: 16px; padding: 16px 64px 14px 24px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
   .bt-top .b-progress { flex: 1; margin: 0; }
   .bt-top .label { white-space: nowrap; }
-  .bt-body { flex: 1; overflow-y: auto; padding: 32px 24px 48px; scrollbar-width: thin; }
-  .bt-inner { max-width: 1000px; margin: 0 auto; }
+  .bt-body { flex: 1; overflow-y: auto; padding: 32px 24px 0; scrollbar-width: thin; }
+  .bt-inner { max-width: 1000px; margin: 0 auto; padding-bottom: 48px; }
   .bt-inner.narrow { max-width: 620px; padding-top: 6vh; }
   .deck-grid { display: grid; grid-template-columns: 300px 1fr; gap: 40px; align-items: start; }
   .deck { position: sticky; top: 0; padding-top: 30px; touch-action: pan-y; }
@@ -384,8 +384,8 @@
     .sheet { max-width: none !important; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 20px 16px 40px; }
     .d-grid, .b-grid { grid-template-columns: 1fr; gap: 22px; }
     .b-card { position: static; width: 180px; margin: 0 auto; }
-    .bt-top { padding: 12px 56px 10px 16px; } .bt-body { padding: 20px 16px 48px; }
-    .deck-grid { grid-template-columns: 1fr; gap: 20px; } .deck { position: static; width: 220px; margin: 0 auto; padding-top: 24px; }
+    .bt-top { padding: 12px 56px 10px 16px; } .bt-body { padding: 20px 16px 0; }
+    .deck-grid { grid-template-columns: 1fr; gap: 20px; } .deck { position: relative; top: auto; width: 220px; margin: 0 auto; padding-top: 24px; }
     .deck-hint { display: block; }
     .d-foot, .s-kv { grid-template-columns: 1fr 1fr; }
     .st-row { grid-template-columns: 64px 34px 42px 34px 1fr; gap: 6px; padding: 5px 8px; } .st-k small { display: none; }
