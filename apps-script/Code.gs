@@ -44,11 +44,8 @@ function setup() {
   const w = sheet_('Windows'); if (w.getLastRow() === 0) w.appendRow(['window', 'opened', 'closed']);
   const ph = sheet_('Photos'); if (ph.getLastRow() === 0) ph.appendRow(['name', 'file_id', 'updated']);
   photoFolder_();   // creates the Drive folder for player photos (and asks for the Drive permission the first time)
-  const s = sheet_('Seeds');
-  if (s.getLastRow() === 0) {
-    s.appendRow(['name'].concat(STATS));
-    players_().forEach(function (p) { s.appendRow([p.name].concat(SEED_BY_POS[posClass_(p.position)])); });
-  }
+  const s = sheet_('Seeds'); if (s.getLastRow() === 0) s.appendRow(['name'].concat(STATS));   // only names the admin sets get a row; everyone else is decided by votes
+  const vi = sheet_('Visits'); if (vi.getLastRow() === 0) vi.appendRow(['ts', 'device', 'name', 'mobile', 'page']);
   if (!props_().getProperty('window')) openWindow();
   if (rows_(sheet_('Voters')).length === 0) generateLinks();   // first run: create everyone's links too
 }
@@ -101,7 +98,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits'].forEach(bust_); cache_().remove('players'); }
 
 /* ───────── web app ───────── */
 
@@ -127,6 +124,8 @@ function doPost(e) {
     if (body.action === 'photo') return json_(photo_(body));
     if (body.action === 'approve') return json_(approve_(body));
     if (body.action === 'unclaim') return json_(unclaim_(body));
+    if (body.action === 'clearSeed') return json_(clearSeed_(body));
+    if (body.action === 'hit') return json_(hit_(body));
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) { return json_({ ok: false, error: String(err) }); }
 }
@@ -294,7 +293,7 @@ function admin_(token) {
   const win = props_().getProperty('window');
   const selfRatings = tab_('SelfRatings').filter(function (r) { return r[0] === win; }).map(function (r) { const o = rowToRating_(r, 2); o.name = String(r[1]); return o; });
   const pending = tab_('Voters').filter(function (r) { return String(r[4]) === 'pending'; }).map(function (r) { return { name: String(r[1]), when: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'd MMM, HH:mm') : '' }; });
-  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending };
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_() };
 }
 
 /** Admin approves (ok: true) or rejects (ok: false, row deleted so the name can be claimed again) a pending claim. */
@@ -321,6 +320,34 @@ function unclaim_(body) {
   return { ok: true };
 }
 function claimedNames_() { return tab_('Voters').filter(function (r) { return r[3]; }).map(function (r) { return String(r[1]); }); }
+
+/** Admin: remove a player's starting point so their rating comes from votes alone. */
+function clearSeed_(body) {
+  const name = voterName_(body.t);
+  if (!name || !isAdmin_(name)) return { ok: false, error: 'Admin only.' };
+  const target = String(body.name || '').trim().toLowerCase();
+  const sh = sheet_('Seeds'), data = sh.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) if (String(data[i][0]).toLowerCase() === target) sh.deleteRow(i + 1);
+  bust_('Seeds');
+  return { ok: true };
+}
+
+/** Anonymous open counter: one row per device per visit (the site sends one per browser session; the server allows one per device per minute). */
+function hit_(body) {
+  const dev = String(body.d || '').replace(/[^\w-]/g, '').slice(0, 40);
+  if (!dev) return { ok: false };
+  const key = 'hit|' + dev; if (cache_().get(key)) return { ok: true, dup: true }; cache_().put(key, '1', 60);
+  sheet_('Visits').appendRow([new Date(), dev, String(body.name || '').slice(0, 60), body.m ? 1 : 0, String(body.p || '').slice(0, 20)]);
+  return { ok: true };
+}
+function activity_() {
+  const rows = tab_('Visits'), now = Date.now(), day = 86400000;
+  const sum = function (since) { const devs = {}; let opens = 0, mobile = 0; rows.forEach(function (r) { const ts = new Date(r[0]).getTime(); if (ts < since) return; opens++; devs[r[1]] = 1; if (Number(r[3])) mobile++; }); return { opens: opens, devices: Object.keys(devs).length, mobile: opens ? Math.round(100 * mobile / opens) : 0 }; };
+  const byName = {};
+  rows.forEach(function (r) { const n = String(r[2] || ''); if (!n) return; const ts = new Date(r[0]).getTime(); byName[n] = byName[n] || { name: n, opens: 0, last: 0 }; byName[n].opens++; if (ts > byName[n].last) byName[n].last = ts; });
+  const names = Object.keys(byName).map(function (n) { return { name: n, opens: byName[n].opens, last: new Date(byName[n].last).toISOString() }; }).sort(function (a, b) { return b.last < a.last ? -1 : 1; });
+  return { today: sum(now - day), week: sum(now - 7 * day), total: sum(0), names: names };
+}
 
 function setSeed_(body) {
   const name = voterName_(body.t);

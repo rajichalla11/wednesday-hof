@@ -345,6 +345,10 @@
   .seed-seg input:focus { outline: none; border-color: var(--fg-3); }
   .seed-seg small { font-size: 10px; color: var(--fg-3); text-align: center; }
   .seed-row .st { font-size: 11px; color: var(--fg-3); text-align: right; }
+  .seed-row.votes input { opacity: .55; }
+  .act { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+  .act > div { background: var(--surface); padding: 12px 14px; } .act b { font-size: 24px; display: block; line-height: 1; } .act .label { margin-top: 6px; } .act small { display: block; color: var(--fg-3); font-size: 11px; margin-top: 4px; }
+  .seen { display: flex; flex-wrap: wrap; gap: 6px; } .seen span { font-size: 12px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); } .seen span b { color: var(--fg); font-weight: 600; } .seen span.never { opacity: .5; }
   @media (max-width: 900px) { .seed-head { display: none; } .seed-row { grid-template-columns: 1fr 1fr 1fr; } .seed-row .n { grid-column: 1 / -1; } .seed-seg { position: relative; } .seed-seg::before { content: attr(data-k); position: absolute; top: -14px; left: 0; font-size: 9px; color: var(--fg-3); letter-spacing: .08em; } .seed-row { row-gap: 20px; padding-top: 10px; } .seed-row .st { grid-column: 1 / -1; text-align: left; } }
   .admin-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); margin-top: 6px; }
   .admin-row .n { font-weight: 600; }
@@ -596,7 +600,7 @@ let RATINGS = null, VOTER = null, PENDING_VOTE = false, BALLOT = null, TOKEN = '
 const THIS_YEAR = new Date().getFullYear();
 try { TOKEN = localStorage.getItem('w910_token') || ''; } catch (_) {}
 /* Site lock while the ratings are being set up. Set LOCKED to false to open the site to everyone. */
-const LOCKED = true, LOCK_CODE = 'nineten';
+const LOCKED = false, LOCK_CODE = 'nineten';
 let UNLOCKED = !LOCKED; try { if (localStorage.getItem('w910_unlock') === LOCK_CODE) UNLOCKED = true; } catch (_) {}
 function tryUnlock(e) { e.preventDefault(); const v = document.getElementById('lock-code').value.trim().toLowerCase();
   if (v === LOCK_CODE) { UNLOCKED = true; try { localStorage.setItem('w910_unlock', LOCK_CODE); } catch (_) {} document.getElementById('lock').classList.remove('on'); document.body.style.overflow = ''; }
@@ -1454,7 +1458,8 @@ async function renderYou() {
         </div>
       </div>
     </section>
-    ${v.isAdmin ? `<section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Only you can see this · approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
+    ${v.isAdmin ? `<section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Only you can see this · approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Starting points</h2><span>Only you can see this · what voters see as the suggested level · saves as you tap</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   paintSelfPreview();
@@ -1483,14 +1488,24 @@ function renderSeedEditor(a) {
   el.innerHTML = `
     <div class="seed-tools"><input id="seed-q" placeholder="Filter by name or position" value="${esc(SEED_FILTER)}" oninput="SEED_FILTER=this.value; renderSeedEditor(window.__ADMIN); document.getElementById('seed-q').focus(); document.getElementById('seed-q').setSelectionRange(99,99)"><span class="muted" style="font-size:12px">${list.length} players · exact numbers 40–99 · these show on the cards now; votes trim them (your number counts like ${RATINGS && RATINGS.priorWeight || 3} votes)</span></div>
     <div class="seed-head"><span class="label">Player</span>${STAT_KEYS.map(k=>`<span class="label">${k}</span>`).join('')}<span></span></div>
-    ${list.map(p => { const seed = a.seeds[p.name] || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{}); const pi = ALL_PLAYERS.indexOf(p);
-      return `<div class="seed-row" id="seed-${pi}"><div class="n">${esc(p.name)}<span>${esc(posName(p) || 'Unassigned')} · ${p.count} apps</span></div>${STAT_KEYS.map(k => `<div class="seed-seg" data-k="${k}"><input type="number" min="40" max="99" step="1" inputmode="numeric" value="${seed[k]}" id="seed-${pi}-${k}" oninput="setSeedValue(${pi},'${k}',this.value)"><small id="seed-${pi}-${k}-l">${LEVELS[levelIdx(seed[k])].l}</small></div>`).join('')}<span class="st" id="seed-st-${pi}"></span></div>`; }).join('')}`;
+    ${list.map(p => { const has = !!a.seeds[p.name], seed = a.seeds[p.name] || {}; const pi = ALL_PLAYERS.indexOf(p); const n = RATINGS && RATINGS.ok && RATINGS.players[p.name] ? RATINGS.players[p.name].n : 0;
+      return `<div class="seed-row${has ? '' : ' votes'}" id="seed-${pi}"><div class="n">${esc(p.name)}<span>${esc(posName(p) || 'Unassigned')} · ${p.count} apps${has ? '' : ` · votes decide · ${n} so far`}</span></div>${STAT_KEYS.map(k => `<div class="seed-seg" data-k="${k}"><input type="number" min="40" max="99" step="1" inputmode="numeric" value="${has ? seed[k] : ''}" placeholder="–" id="seed-${pi}-${k}" oninput="setSeedValue(${pi},'${k}',this.value)"><small id="seed-${pi}-${k}-l">${has ? LEVELS[levelIdx(seed[k])].l : ''}</small></div>`).join('')}<span class="st" id="seed-st-${pi}">${has ? `<button class="btn link" style="font-size:11px;padding:0" onclick="clearSeed(${pi}, this)">Votes decide</button>` : ''}</span></div>`; }).join('')}`;
+}
+const SEED_BY_POS = { attack:{PAC:72,SHO:74,PAS:64,DRI:70,DEF:52,PHY:64}, midfield:{PAC:68,SHO:64,PAS:74,DRI:70,DEF:64,PHY:66}, defense:{PAC:66,SHO:54,PAS:64,DRI:58,DEF:74,PHY:72}, other:{PAC:65,SHO:65,PAS:65,DRI:65,DEF:65,PHY:65} };
+async function clearSeed(pi, btn) {
+  const p = ALL_PLAYERS[pi], a = window.__ADMIN; if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  let res; try { res = await api(null, { action:'clearSeed', t: TOKEN, name: p.name }); } catch (e) { res = { ok:false, error: e.message }; }
+  if (!res.ok) { if (btn) { btn.disabled = false; btn.textContent = res.error || 'Failed'; } return; }
+  delete a.seeds[p.name]; if (VOTER && VOTER.seeds) delete VOTER.seeds[p.name];
+  renderSeedEditor(a); RATINGS = null; renderCards();
 }
 const SEED_TIMERS = {};
 function setSeedValue(pi, k, raw) {
   const v = Math.round(Number(raw)); if (isNaN(v) || v < 40 || v > 99) return;
   const p = ALL_PLAYERS[pi], a = window.__ADMIN;
-  a.seeds[p.name] = Object.assign(STAT_KEYS.reduce((o,kk)=>(o[kk]=72,o),{}), a.seeds[p.name] || {}); a.seeds[p.name][k] = v;
+  const fresh = !a.seeds[p.name];
+  a.seeds[p.name] = Object.assign({}, SEED_BY_POS[posClass(p.position)], a.seeds[p.name] || {}); a.seeds[p.name][k] = v;
+  if (fresh) STAT_KEYS.forEach(kk => { const inp = document.getElementById(`seed-${pi}-${kk}`); if (inp && kk !== k) inp.value = a.seeds[p.name][kk]; const l = document.getElementById(`seed-${pi}-${kk}-l`); if (l) l.textContent = LEVELS[levelIdx(a.seeds[p.name][kk])].l; });
   const lab = document.getElementById(`seed-${pi}-${k}-l`); if (lab) lab.textContent = LEVELS[levelIdx(v)].l;
   const st = document.getElementById('seed-st-'+pi); st.textContent = 'Saving…';
   clearTimeout(SEED_TIMERS[pi]);
@@ -1506,6 +1521,18 @@ async function renderAdmin(me) {
   if (!a.ok) { el.innerHTML = `<div class="error">${esc(a.error || 'Could not load')}</div>`; const se = document.getElementById('seed-body'); if (se) se.innerHTML = ''; return; }
   window.__ADMIN = a;
   renderSeedEditor(a);
+  const ab = document.getElementById('activity-body');
+  if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
+    const claimed = new Set(((RATINGS && RATINGS.claimed) || []).map(n => n.toLowerCase())), seenNames = new Set(x.names.map(n => n.name.toLowerCase()));
+    const never = [...claimed].filter(n => !seenNames.has(n));
+    const ago = iso => { const d = (Date.now() - new Date(iso)) / 60000; return d < 60 ? `${Math.max(1, Math.round(d))} min ago` : d < 1440 ? `${Math.round(d/60)} h ago` : `${Math.round(d/1440)} d ago`; };
+    ab.innerHTML = `<div class="act">
+        <div><b class="num">${x.today.devices}</b><div class="label">People today</div><small>${x.today.opens} opens</small></div>
+        <div><b class="num">${x.week.devices}</b><div class="label">People, 7 days</div><small>${x.week.opens} opens</small></div>
+        <div><b class="num">${x.total.devices}</b><div class="label">People, all time</div><small>${x.total.opens} opens · ${x.total.mobile}% on phones</small></div></div>
+      <div class="label" style="margin-bottom:8px">Claimed and opened · ${x.names.length}</div>
+      <div class="seen">${x.names.map(n => `<span><b>${esc(n.name)}</b> · ${ago(n.last)}${n.opens > 1 ? ` · ${n.opens}×` : ''}</span>`).join('') || '<span>Nobody yet</span>'}</div>
+      ${never.length ? `<div class="label" style="margin:14px 0 8px">Claimed, not seen since · ${never.length}</div><div class="seen">${never.map(n => `<span class="never">${esc(n)}</span>`).join('')}</div>` : ''}`; } }
   const pe = document.getElementById('pending-body');
   if (pe) { const pend = a.pending || []; document.getElementById('pending-n').textContent = pend.length ? pend.length : '';
     pe.innerHTML = pend.length ? pend.map(c => { const p = ALL_PLAYERS.find(x => x.name.toLowerCase() === c.name.toLowerCase()); return `<div class="pend"><div class="who">${p ? photo(p,'avatar') : ''}<div><b>${esc(c.name)}</b><span>${esc(c.when || '')}${p ? ` · ${p.count} games` : ''}</span></div></div><div class="acts"><button class="btn" onclick="approveClaim('${esc(c.name)}', true, this)">Approve</button><button class="btn ghost" onclick="approveClaim('${esc(c.name)}', false, this)">Not them</button></div></div>`; }).join('') : `<div class="empty">No claims waiting.</div>`; }
@@ -1562,6 +1589,15 @@ document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.datas
 window.addEventListener('hashchange', () => { if (captureToken()) { if (ALL_PLAYERS.length) { PENDING_VOTE = false; VOTER = null; renderBalances(); renderYou().then(() => showTab('you', false)); } return; } showTab(location.hash.slice(1) || (TOKEN ? 'you' : 'hall'), false); });
 showTab(location.hash.slice(1) || 'hall', false);
 if (VOTE_API) { fetchResults(); if (TOKEN) fetchMe(); }
+/* Anonymous open counter for the admin: one ping per browser session with a random device id (never the token) and the claimed name if there is one. */
+(function sendHit() {
+  try {
+    if (!VOTE_API || sessionStorage.getItem('w910_hit')) return;
+    let dev = localStorage.getItem('w910_dev'); if (!dev) { dev = Math.random().toString(36).slice(2, 12) + Date.now().toString(36); localStorage.setItem('w910_dev', dev); }
+    sessionStorage.setItem('w910_hit', '1');
+    fetch(VOTE_API, { method:'POST', body: JSON.stringify({ action:'hit', d: dev, name: localStorage.getItem('w910_name') || '', m: innerWidth < 720, p: (location.hash || '#home').slice(1) }), headers: { 'Content-Type':'text/plain;charset=utf-8' }, keepalive: true, redirect:'follow' }).catch(() => {});
+  } catch (_) {}
+})();
 load();
 </script>
 </body>
