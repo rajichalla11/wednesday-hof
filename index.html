@@ -856,9 +856,6 @@ function computeRecords(players, sessions) {
   const bounce = p => { let m=0; for (let i=Math.max(1,p.firstIdx+1);i<n;i++) if (p.attendance[i] && !p.attendance[i-1]) m++; return m; };
   t = topAll(players.filter(p=>p.played>=15), bounce, { min:5 });
   push(t, { key:'boomerang', label:'The boomerang', unit:'times straight back after a miss', detail:'most returns on the very next night after missing one' });
-  const avgTurnout = p => { let s=0; sessions.forEach((x,i) => { if (p.attendance[i]) s += x.turnout; }); return Math.round(10*s/p.played)/10; };
-  t = topAll(players.filter(p=>p.played>=15), avgTurnout);
-  push(t, { key:'fullhouse', label:'Full house', unit:'players on average on their nights', detail:'the busiest nights, on average, of anyone with 15 games' });
   t = topAll(players.filter(p=>p.played>=20), p=>dow(p,[3])/p.played);
   push(t, { key:'wed', label:'True Wednesday', value: t ? Math.round(t.value*100)+'%' : '', unit:'of games on a Wednesday', detail: t ? `${dow(t.p,[3])} of ${t.p.played} games on the namesake night` : '' });
   for (const [pos,label] of [['attack','Top attacker'],['midfield','Top midfielder'],['defense','Top defender']]) {
@@ -869,7 +866,7 @@ function computeRecords(players, sessions) {
   if (bn) R.push({ key:'night', label:'Biggest night', value: bn.turnout, unit:'players', session: bn, holders: [], detail: bn.date ? DAY_FULL[bn.date.getDay()] : '' });
   const founders = players.filter(isFounder).sort((a,b)=>b.count-a.count);
   if (founders.length) R.push({ key:'founders', label:'Founding members', value: founders.length, unit:'at session one', holders: founders, noBadge: true, detail:`${founders.reduce((a,f)=>a+f.count,0).toLocaleString()} appearances between them` });
-  const SECTION = { iron:'season', ystreak:'season', breakout:'season', newcomer:'season', comeback:'character', month:'character', boomerang:'character', fullhouse:'character', wed:'character', debut:'alltime' };
+  const SECTION = { iron:'season', ystreak:'season', breakout:'season', newcomer:'season', comeback:'character', month:'character', boomerang:'character', wed:'character', debut:'alltime' };
   for (const r of R) r.section = SECTION[r.key] || 'alltime';
   const order = { season:0, character:1, alltime:2 }; R.sort((a,b) => order[a.section]-order[b.section]);
   RECORD_HOLDERS = {}; for (const r of R) if (!r.noBadge) for (const p of r.holders) (RECORD_HOLDERS[p.name] ||= []).push(r.label);
