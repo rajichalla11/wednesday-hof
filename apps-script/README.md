@@ -89,3 +89,8 @@ Claiming is now "Find your card": a grid of faces with a search box, taken names
 ## Instant claims and "Not me" (backend Version 8, 13 Oct 2026)
 
 Claims are approved on the spot again. To go back to admin approval, add a row `require_approval` = `1` on the Settings tab (the Claims waiting section on the You tab still works). Anyone who picked the wrong card taps **Not me** on their page (twice, to confirm): the POST action `unclaim` deletes their Voters row so the name is free again, the device forgets them, and the picker opens.
+
+
+## Speed (backend Version 9, 13 Oct 2026)
+
+Every tab the web app reads (Voters, Votes, SelfRatings, Windows, Seeds, Settings, Photos) is cached in CacheService for 5 minutes and busted by the write that changes it, so a call does one or two sheet reads instead of five. If you edit Settings, Seeds or Voters by hand and want it live at once, run `clearCaches` from the editor. The floor for any call is about 1.2 s (Apps Script start-up plus its redirect); the site hides that by showing the last answer it saw on that device and repainting only if the fresh one differs.
