@@ -37,6 +37,7 @@ function setup() {
   const v = sheet_('Voters');  if (v.getLastRow() === 0) v.appendRow(['voter_id', 'name', 'created', 'claimed', 'status']);
   if (v.getLastColumn() < 4) v.getRange(1, 4).setValue('claimed');
   if (v.getLastColumn() < 5) v.getRange(1, 5).setValue('status');   // pending | approved (blank on an old claimed row = approved)
+  if (v.getLastColumn() < 7) v.getRange(1, 6, 1, 2).setValues([['rated', 'last_vote']]);   // how many teammates this voter has rated (count only; which ballot is theirs stays unknown)
   settings_();   // creates the Settings tab with a group code if missing
   const b = sheet_('Votes');   if (b.getLastRow() === 0) b.appendRow(['window', 'ballot_id', 'target', 'w'].concat(STATS, ['comment', 'updated', 'traits']));
   if (b.getLastColumn() < 4 + STATS.length + 3) b.getRange(1, 4 + STATS.length + 3).setValue('traits');
@@ -143,6 +144,7 @@ function me_(token) {
     if (r[1] === b) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[4 + i]); }); mine[r[2]] = { stats: st, comment: r[4 + STATS.length] || '', traits: String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean) }; }
     if (r[2] === name && r[4 + STATS.length]) feedback.push(String(r[4 + STATS.length]));
   });
+  voterStats_(token);   // keeps the admin's "rated" count current
   const selfRow = tab_('SelfRatings').filter(function (r) { return r[0] === win && String(r[1]).toLowerCase() === name.toLowerCase(); }).pop();
   const self = selfRow ? rowToRating_(selfRow, 2) : null;
   const seeds = seeds_(), hide = hiddenNames_();
@@ -177,7 +179,7 @@ function rate_(body) {
     const row = [win, b, tp.name, w].concat(stats, [comment, new Date(), traits.join(',')]);
     if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
   } finally { lock.releaseLock(); }
-  bust_('Votes');
+  bust_('Votes'); voterStats_(body.t);
   return { ok: true };
 }
 
@@ -187,7 +189,7 @@ function unrate_(body) {
   const win = props_().getProperty('window'), b = id2_(body.t), target = String(body.target || '');
   const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
   for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === win && data[i][1] === b && data[i][2] === target) sh.deleteRow(i + 1);
-  bust_('Votes');
+  bust_('Votes'); voterStats_(body.t);
   return { ok: true };
 }
 
@@ -293,7 +295,8 @@ function admin_(token) {
   const win = props_().getProperty('window');
   const selfRatings = tab_('SelfRatings').filter(function (r) { return r[0] === win; }).map(function (r) { const o = rowToRating_(r, 2); o.name = String(r[1]); return o; });
   const pending = tab_('Voters').filter(function (r) { return String(r[4]) === 'pending'; }).map(function (r) { return { name: String(r[1]), when: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'd MMM, HH:mm') : '' }; });
-  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_() };
+  const claims = tab_('Voters').filter(function (r) { return r[3]; }).map(function (r) { return { name: String(r[1]), claimed: String(r[3]), status: String(r[4] || 'approved'), rated: Number(r[5] || 0), lastVote: r[6] ? String(r[6]) : '' }; });
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims };
 }
 
 /** Admin approves (ok: true) or rejects (ok: false, row deleted so the name can be claimed again) a pending claim. */
@@ -456,6 +459,17 @@ function voterRow_(token) {
   const hit = tab_('Voters').filter(function (r) { return r[0] === id; })[0];
   if (!hit) return null;
   return { name: String(hit[1]), status: String(hit[4] || '') === 'pending' ? 'pending' : 'approved' };
+}
+/** Writes how many teammates this token's ballot has rated this window onto the voter's own row (count only). Only touches the sheet when the number changed. */
+function voterStats_(token) {
+  if (!token) return;
+  const win = props_().getProperty('window'), b = id2_(String(token)), id = id1_(String(token));
+  const n = tab_('Votes').filter(function (r) { return r[0] === win && r[1] === b; }).length;
+  const row = tab_('Voters').filter(function (r) { return r[0] === id; })[0];
+  if (!row || Number(row[5] || 0) === n) return;
+  const sh = sheet_('Voters'), data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) if (data[i][0] === id) { sh.getRange(i + 1, 6, 1, 2).setValues([[n, new Date()]]); break; }
+  bust_('Voters');
 }
 /** Approved voter name for a token, or null. Everything except me_ goes through this, so a pending claim can't act. */
 function voterName_(token) { const r = voterRow_(token); return r && r.status === 'approved' ? r.name : null; }

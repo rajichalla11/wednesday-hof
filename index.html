@@ -313,6 +313,10 @@
   .trait.on b { color: var(--fg); }
   .trait:disabled { opacity: .4; cursor: default; }
   .c-badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px 0; }
+  .tip { position: fixed; z-index: 200; max-width: 240px; padding: 8px 10px; background: var(--fg); color: var(--bg); border-radius: 6px; font-size: 12px; line-height: 1.4; box-shadow: 0 6px 20px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .15s, transform .15s; }
+  .tip.on { opacity: 1; transform: none; }
+  .tip b { display: block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; opacity: .7; }
+  [data-tip] { cursor: pointer; }
   .medal { --m1:#d4d5da; --m2:#75777f; --m3:#ffffff; --mt:#e4e4e8; position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 3px 10px 3px 3px; border-radius: 999px; background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 60%), #18181a; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--mt); cursor: help; isolation: isolate; overflow: hidden; }
   .medal::before { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; background: linear-gradient(120deg, var(--m3), var(--m2) 38%, var(--m1) 62%, var(--m2)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: .85; pointer-events: none; }
   .medal::after { content: ''; position: absolute; top: -40%; bottom: -40%; width: 36%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.22), transparent); transform: skewX(-20deg); pointer-events: none; }
@@ -349,6 +353,7 @@
   .seed-row.votes input { opacity: .55; }
   .act { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
   .act > div { background: var(--surface); padding: 12px 14px; } .act b { font-size: 24px; display: block; line-height: 1; } .act .label { margin-top: 6px; } .act small { display: block; color: var(--fg-3); font-size: 11px; margin-top: 4px; }
+  table.claims { width: 100%; border-collapse: collapse; font-size: 12px; } table.claims th { text-align: left; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); } table.claims td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; } table.claims td small { color: var(--fg-3); } table.claims tr.novote td { color: var(--fg-2); }
   .seen { display: flex; flex-wrap: wrap; gap: 6px; } .seen span { font-size: 12px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); } .seen span b { color: var(--fg); font-weight: 600; } .seen span.never { opacity: .5; }
   @media (max-width: 900px) { .seed-head { display: none; } .seed-row { grid-template-columns: 1fr 1fr 1fr; } .seed-row .n { grid-column: 1 / -1; } .seed-seg { position: relative; } .seed-seg::before { content: attr(data-k); position: absolute; top: -14px; left: 0; font-size: 9px; color: var(--fg-3); letter-spacing: .08em; } .seed-row { row-gap: 20px; padding-top: 10px; } .seed-row .st { grid-column: 1 / -1; text-align: left; } }
   .admin-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); margin-top: 6px; }
@@ -575,6 +580,7 @@
   </div>
 </div>
 <div class="tl-tip" id="tl-tip"></div>
+<div class="tip" id="tip" role="tooltip"></div>
 
 <script>
 /*
@@ -1059,7 +1065,7 @@ function openProfile(p) {
           <div><b class="num">${p.currentStreak||'—'}</b><div class="label">Current streak</div></div>
         </div>
         <div class="mile"><div class="l"><span>${p.count<100 ? 'To the century' : `Next milestone ${ms.next}`}</span><span>${ms.toGo} to go · ${esc(fmtEta(ms.eta))}</span></div><i style="--w:${ms.pct}%"></i></div>
-        <div class="badges">${badgesFor(p).map(b=>`<span class="medal ${b.m||''}" title="${esc(b.d||b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>
+        <div class="badges">${badgesFor(p).map(b=>`<span class="medal ${b.m||''}" title="${esc(b.d||b.t)}" data-tip="${esc(b.d||b.t)}" data-tip-h="${esc(b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>
       </div>
       <div>
         <div class="label">Every session · ${Math.round(100*played/Math.max(1,sinceDebut))}% of ${sinceDebut} since debut</div>
@@ -1130,8 +1136,8 @@ function cardHtml(p, stats, opts = {}) {
     <div class="c-head"><div><div class="c-num num">${p.count}</div><div class="label">Appearances</div></div><div class="c-tier"><span class="pill">${TIER_NAME[tier]}</span></div></div>
     <div class="c-photo-wrap">${photo(p,'c-photo')}</div>
     <div class="c-name"><b>${esc(p.name)}</b><span>${esc([posName(p), p.foot ? p.foot+' foot' : ''].filter(Boolean).join(' · ') || ' ')}</span></div>
-    ${badges.length ? `<div class="c-badges">${badges.map(b=>`<span class="medal ${b.m||''}" title="${esc(b.d||b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>` : ''}
-    ${traits.length ? `<div class="c-traits">${traits.map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)}</span>`).join('')}</div>` : ''}
+    ${badges.length ? `<div class="c-badges">${badges.map(b=>`<span class="medal ${b.m||''}" title="${esc(b.d||b.t)}" data-tip="${esc(b.d||b.t)}" data-tip-h="${esc(b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>` : ''}
+    ${traits.length ? `<div class="c-traits">${traits.map(t=>`<span title="${esc(TRAITS[t]||'')}" data-tip="${esc(TRAITS[t]||'')}" data-tip-h="${esc(t)}">${esc(t)}</span>`).join('')}</div>` : ''}
     ${hidden ? `<div class="c-stats tbd"><span class="label">Rating</span><b>To be determined</b></div>` : `<div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>`}
     <div class="c-foot">${hidden ? `<span>Not published yet</span><span>${TIER_NAME[tier]}</span>` : foot}</div></div>`;
 }
@@ -1558,9 +1564,10 @@ async function renderAdmin(me) {
         <div><b class="num">${x.today.devices}</b><div class="label">People today</div><small>${x.today.opens} opens</small></div>
         <div><b class="num">${x.week.devices}</b><div class="label">People, 7 days</div><small>${x.week.opens} opens</small></div>
         <div><b class="num">${x.total.devices}</b><div class="label">People, all time</div><small>${x.total.opens} opens · ${x.total.mobile}% on phones</small></div></div>
-      <div class="label" style="margin-bottom:8px">Claimed and opened · ${x.names.length}</div>
-      <div class="seen">${x.names.map(n => `<span><b>${esc(n.name)}</b> · ${ago(n.last)}${n.opens > 1 ? ` · ${n.opens}×` : ''}</span>`).join('') || '<span>Nobody yet</span>'}</div>
-      ${never.length ? `<div class="label" style="margin:14px 0 8px">Claimed, not seen since · ${never.length}</div><div class="seen">${never.map(n => `<span class="never">${esc(n)}</span>`).join('')}</div>` : ''}`; } }
+      ${(() => { const seen = {}; x.names.forEach(n => seen[n.name.toLowerCase()] = n); const claims = (a.claims || []).slice().sort((p, q) => (q.rated - p.rated) || p.name.localeCompare(q.name)); const voted = claims.filter(c => c.rated > 0).length;
+        const fmtD = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); };
+        return `<div class="label" style="margin:16px 0 8px">Claimed · ${claims.length} of ${ALL_PLAYERS.length} · ${voted} have voted</div>
+        <table class="claims"><thead><tr><th>Player</th><th>Claimed</th><th>Rated</th><th>Last open</th></tr></thead><tbody>${claims.map(c => { const sn = seen[c.name.toLowerCase()]; const p = ALL_PLAYERS.find(q => q.name.toLowerCase() === c.name.toLowerCase()); return `<tr class="${c.rated ? '' : 'novote'}"><td><b>${esc(c.name)}</b>${c.status === 'pending' ? ' <small>pending</small>' : ''}</td><td>${fmtD(c.claimed)}</td><td>${c.rated ? `<b>${c.rated}</b>${p ? ` <small>of ${ALL_PLAYERS.filter(q => q !== p && sharedCount(p, q) >= 3).length}</small>` : ''}` : '<span class="muted">—</span>'}</td><td>${sn ? `${ago(sn.last)}${sn.opens > 1 ? ` · ${sn.opens}×` : ''}` : '<span class="muted">not yet</span>'}</td></tr>`; }).join('')}</tbody></table>`; })()}`; } }
   const pe = document.getElementById('pending-body');
   if (pe) { const pend = a.pending || []; document.getElementById('pending-n').textContent = pend.length ? pend.length : '';
     pe.innerHTML = pend.length ? pend.map(c => { const p = ALL_PLAYERS.find(x => x.name.toLowerCase() === c.name.toLowerCase()); return `<div class="pend"><div class="who">${p ? photo(p,'avatar') : ''}<div><b>${esc(c.name)}</b><span>${esc(c.when || '')}${p ? ` · ${p.count} games` : ''}</span></div></div><div class="acts"><button class="btn" onclick="approveClaim('${esc(c.name)}', true, this)">Approve</button><button class="btn ghost" onclick="approveClaim('${esc(c.name)}', false, this)">Not them</button></div></div>`; }).join('') : `<div class="empty">No claims waiting.</div>`; }
@@ -1584,6 +1591,24 @@ function renderAdminList() { const a = window.__ADMIN, el = document.getElementB
       <div class="st">${STAT_KEYS.map(k => `${k} <b>${LEVELS[levelIdx(sr.stats[k])].l}</b>${seed[k] != null && levelIdx(seed[k]) !== levelIdx(sr.stats[k]) ? ` <span class="dim">(seed ${LEVELS[levelIdx(seed[k])].l})</span>` : ''}`).join(' · ')}${sr.note ? `<br>“${esc(sr.note)}”` : ''}</div></div>
       <button class="btn ghost" ${same ? 'disabled' : ''} onclick="useAsSeed(${i})">${same ? 'Matches seed' : 'Use as seed'}</button></div>`; }).join('');
 }
+
+/* ── tap a medal or trait to read what it means (hover titles don't exist on phones) ── */
+(function () {
+  const tip = document.getElementById('tip'); let timer = null;
+  const hide = () => { tip.classList.remove('on'); clearTimeout(timer); };
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-tip]');
+    if (!el) { if (tip.classList.contains('on')) hide(); return; }
+    e.stopPropagation(); e.preventDefault();
+    if (tip.classList.contains('on') && tip.dataset.for === el.dataset.tipH) { hide(); return; }
+    tip.innerHTML = `<b>${esc(el.dataset.tipH || '')}</b>${esc(el.dataset.tip || '')}`; tip.dataset.for = el.dataset.tipH;
+    const r = el.getBoundingClientRect(); tip.classList.add('on');
+    const w = tip.offsetWidth, left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width/2 - w/2));
+    tip.style.left = left + 'px'; tip.style.top = (r.bottom + 8) + 'px';
+    clearTimeout(timer); timer = setTimeout(hide, 4500);
+  }, true);
+  addEventListener('scroll', hide, { passive: true }); document.querySelectorAll('.sheet').forEach(sh => sh.addEventListener('scroll', hide, { passive: true }));
+})();
 
 /* ── keyboard ── */
 document.addEventListener('keydown', e => {
