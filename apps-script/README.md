@@ -99,3 +99,10 @@ Every tab the web app reads (Voters, Votes, SelfRatings, Windows, Seeds, Setting
 ## Hidden ratings (backend Version 10, 13 Oct 2026)
 
 Players listed in Settings → `hide_stats` (comma-separated names) show **To be determined** instead of numbers, on the cards, the profile overlay and the Players intro count. Their starting point is also left out of what voters receive, so nothing leaks through the ballot. If the `hide_stats` row is missing, the admin's own rating is hidden by default. To publish Raji's rating later, add a Settings row `hide_stats` with an empty value (or list other names), then run `clearCaches` or wait up to 5 minutes.
+
+
+## Votes decide, open counter (backend Version 12, 13 Oct 2026)
+
+- The site is open to everyone (`LOCKED = false` in index.html).
+- Only players with a row in the Seeds tab have a starting point. Everyone else is decided by votes alone (their card shows dashes until 3 ballots). In the admin Starting points editor a player with no row reads "votes decide"; typing a number creates a row (the other five stats fill from the position defaults), and the **Votes decide** button on a row deletes it (POST `clearSeed`). `setup` no longer pre-fills the Seeds tab.
+- Every page open sends one anonymous ping per browser session (`hit`: a random device id, the claimed name if any, phone or not, which tab). Rows land in the **Visits** tab. The admin's You tab shows Site activity: people and opens today / 7 days / all time, share on phones, who has opened and when, and claimed names not seen yet.
