@@ -146,6 +146,7 @@
   .chip b { font-weight: 700; }
   .chip small { color: var(--fg-3); }
   .chip.todo { opacity: .6; }
+  .chip.saving { border-style: dashed; }
   .foot-note { font-size: 12px; color: var(--fg-3); margin-top: 14px; }
 
   /* TIMELINE */
@@ -1379,22 +1380,41 @@ function paintCardPreview() {
   const { queue, idx, values, seed } = BALLOT, p = queue[idx];
   document.getElementById('b-card').innerHTML = cardHtml(p, values, { meta:`<span>Your rating</span><span>${avgOf(values)} avg</span>`, traits: BALLOT.traits });
 }
-async function confirmRating() {
+/* Ratings save in the background: the deck moves on at once, the request follows, failures retry three times and are shown on the summary screen. */
+const SAVES = { pending: {}, failed: {}, busy: 0 };
+function saveStatusHtml() {
+  const n = Object.keys(SAVES.pending).length, f = Object.keys(SAVES.failed);
+  if (f.length) return `<span class="error" style="padding:6px 10px;font-size:12px">Could not save ${f.map(esc).join(', ')}. <button class="btn link" style="font-size:12px" onclick="retrySaves()">Try again</button></span>`;
+  return n ? `<span class="muted" style="font-size:12px">Saving ${n}…</span>` : '';
+}
+function paintSaveStatus() { const el = document.getElementById('save-status'); if (el) el.innerHTML = saveStatusHtml(); document.querySelectorAll('.chip[data-name]').forEach(c => c.classList.toggle('saving', !!SAVES.pending[c.dataset.name])); }
+async function pushSave(name, payload, attempt = 0) {
+  SAVES.pending[name] = payload; delete SAVES.failed[name]; paintSaveStatus();
+  let res; try { res = await api(null, payload); } catch (e) { res = { ok:false, error: e.message }; }
+  if (SAVES.pending[name] !== payload) return;   // a newer rating for the same player replaced this one
+  if (!res.ok && attempt < 3 && !/enough sessions|rate yourself|closed|recognised/.test(res.error || '')) { await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); return pushSave(name, payload, attempt + 1); }
+  delete SAVES.pending[name];
+  if (!res.ok) { SAVES.failed[name] = payload; delete VOTER.mine[name]; }
+  paintSaveStatus();
+}
+function retrySaves() { for (const [name, payload] of Object.entries(SAVES.failed)) { VOTER.mine[name] = { stats: payload.stats, comment: payload.comment, traits: payload.traits }; pushSave(name, payload); } }
+addEventListener('beforeunload', e => { if (Object.keys(SAVES.pending).length) { e.preventDefault(); e.returnValue = ''; } });
+function confirmRating() {
   const { queue, idx, values } = BALLOT, p = queue[idx], btn = document.getElementById('b-confirm');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  btn.disabled = true; btn.textContent = 'Saved';
   const comment = document.getElementById('b-comment').value.trim();
-  let res; try { res = await api(null, { action:'rate', t: TOKEN, target: p.name, stats: values, comment, traits: BALLOT.traits }); } catch (e) { res = { ok:false, error: e.message }; }
-  if (!res.ok) { btn.disabled = false; btn.textContent = 'Retry'; document.getElementById('b-saved').textContent = res.error || 'Could not save'; document.getElementById('b-saved').classList.add('show'); return; }
   VOTER.mine[p.name] = { stats: Object.assign({}, values), comment, traits: BALLOT.traits.slice() };
+  pushSave(p.name, { action:'rate', t: TOKEN, target: p.name, stats: Object.assign({}, values), comment, traits: BALLOT.traits.slice() });
   document.getElementById('b-saved').classList.add('show');
-  setTimeout(() => { const next = queue.findIndex((q,j) => j>idx && !VOTER.mine[q.name]); slideTo(next<0 ? queue.length : next, 1); }, 250);
+  setTimeout(() => { const next = queue.findIndex((q,j) => j>idx && !VOTER.mine[q.name]); slideTo(next<0 ? queue.length : next, 1); }, 120);
 }
 function renderBallotDone() {
   const { queue } = BALLOT, done = doneCount();
   document.getElementById('b-body').innerHTML = ballotTop(`Ratings · ${esc(VOTER.window)}`) + `<div class="bt-body"><div class="bt-inner narrow">
     <div class="b-title">${done===queue.length ? 'All done. Thank you.' : `${done} of ${queue.length} rated`}</div>
     <div class="b-copy">Tap any name to change a rating. Cards update as ballots come in; a player needs ${RATINGS ? RATINGS.minVotes : 3} before their stats show.</div>
-    <div class="chips">${queue.map((p,i) => { const m = VOTER.mine[p.name]; return `<span class="chip ${m?'':'todo'}" onclick="gotoBallot(${i})">${photo(p,'avatar')}${esc(p.name)} ${m ? `<b>${avgOf(m.stats)}</b>` : '<small>not yet</small>'}</span>`; }).join('')}</div>
+    <div id="save-status" style="margin-top:10px">${saveStatusHtml()}</div>
+    <div class="chips">${queue.map((p,i) => { const m = VOTER.mine[p.name]; return `<span class="chip ${m?'':'todo'}${SAVES.pending[p.name] ? ' saving' : ''}" data-name="${esc(p.name)}" onclick="gotoBallot(${i})">${photo(p,'avatar')}${esc(p.name)} ${m ? `<b>${avgOf(m.stats)}</b>` : '<small>not yet</small>'}</span>`; }).join('')}</div>
     <div class="b-actions"><button class="btn" onclick="closeBallotDirect()">Back to the cards</button></div>
   </div></div>`;
 }
