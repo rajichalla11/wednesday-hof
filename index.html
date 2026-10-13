@@ -840,7 +840,7 @@ function computeRecords(players, sessions) {
   const yearStreak = p => { let m=0,c=0; sessions.forEach((s,i) => { if (s.year!==THIS_YEAR) return; if (p.attendance[i]) { c++; m=Math.max(m,c); } else c=0; }); return m; };
   t = topAll(players, yearStreak, { min:3 });
   push(t, { key:'ystreak', label:`Streak of ${THIS_YEAR}`, unit:'in a row this year', detail:'longest unbroken run this season' });
-  t = topAll(players.filter(p=>p.gamesThisYear>=10), p=>gy(p,THIS_YEAR)-gy(p,THIS_YEAR-1), { min:5 });
+  t = topAll(players.filter(p=>p.gamesThisYear>=10 && gy(p,THIS_YEAR-1)>=5), p=>gy(p,THIS_YEAR)-gy(p,THIS_YEAR-1), { min:5 });
   push(t, { key:'breakout', label:'Breakout season', value: t ? '+'+t.value : '', unit:'on last year', detail: t ? `${gy(t.p,THIS_YEAR-1)} in ${THIS_YEAR-1} to ${gy(t.p,THIS_YEAR)} in ${THIS_YEAR}` : '' });
   t = topAll(players.filter(p=>p.longestGap>=5), p=>p.longestGap);
   push(t, { key:'comeback', label:'Greatest comeback', unit:'missed', detail: t ? `then back on ${fmtSession(sessions[t.p.comebackIdx],false)}` : '' });
@@ -848,9 +848,17 @@ function computeRecords(players, sessions) {
   const bestMonth = p => { const m={}; sessions.forEach((s,i) => { const k=monthKey(s); if (p.attendance[i] && k) m[k]=(m[k]||0)+1; }); let b=null; for (const k in m) if (!b || m[k]>b.n) b={k,n:m[k]}; return b; };
   t = topAll(players, p=>(bestMonth(p)||{}).n, { min:4 });
   push(t, { key:'month', label:'Busiest month', unit:'in one month', detail: t ? t.holders.map(p => { const b=bestMonth(p); const [y,m]=b.k.split('-'); return `${p.name.split(' ')[0]} ${MONTH_LABELS[+m]} ${y}`; }).join(' · ') : '' });
-  let insep = null;
-  for (const a of players) { if (a.played < 20) continue; for (const b of players) { if (b===a || b.played < 20) continue; let sh=0; for (let i=0;i<n;i++) sh += a.attendance[i] & b.attendance[i]; const share = sh/a.played; if (!insep || share > insep.share) insep = { a, b, sh, share }; } }
-  if (insep) R.push({ key:'insep', label:'Inseparable', value: Math.round(insep.share*100)+'%', unit:`of nights with ${insep.b.name.split(' ')[0]}`, holders:[insep.a], p: insep.a, detail:`${insep.sh} of ${insep.a.played} games alongside ${insep.b.name}` });
+  t = topAll(players.filter(p=>p.firstIdx>=0 && sessions[p.firstIdx].year===THIS_YEAR), p=>p.gamesThisYear, { min:3 });
+  push(t, { key:'newcomer', label:`Newcomer of ${THIS_YEAR}`, unit:'games since debuting this year', detail: t ? `first night ${fmtSession(sessions[t.p.firstIdx],false)}` : '' });
+  const debutGames = p => { if (p.firstIdx < 0) return 0; const y = sessions[p.firstIdx].year; return y === sessions[0].year ? 0 : gy(p, y); };
+  t = topAll(players, debutGames, { min:5 });
+  push(t, { key:'debut', label:'Best debut season', unit:'games in a first year', detail: t ? t.holders.map(p=>`${p.name.split(' ')[0]} in ${sessions[p.firstIdx].year}`).join(' · ') : '' });
+  const bounce = p => { let m=0; for (let i=Math.max(1,p.firstIdx+1);i<n;i++) if (p.attendance[i] && !p.attendance[i-1]) m++; return m; };
+  t = topAll(players.filter(p=>p.played>=15), bounce, { min:5 });
+  push(t, { key:'boomerang', label:'The boomerang', unit:'times straight back after a miss', detail:'most returns on the very next night after missing one' });
+  const avgTurnout = p => { let s=0; sessions.forEach((x,i) => { if (p.attendance[i]) s += x.turnout; }); return Math.round(10*s/p.played)/10; };
+  t = topAll(players.filter(p=>p.played>=15), avgTurnout);
+  push(t, { key:'fullhouse', label:'Full house', unit:'players on average on their nights', detail:'the busiest nights, on average, of anyone with 15 games' });
   t = topAll(players.filter(p=>p.played>=20), p=>dow(p,[3])/p.played);
   push(t, { key:'wed', label:'True Wednesday', value: t ? Math.round(t.value*100)+'%' : '', unit:'of games on a Wednesday', detail: t ? `${dow(t.p,[3])} of ${t.p.played} games on the namesake night` : '' });
   for (const [pos,label] of [['attack','Top attacker'],['midfield','Top midfielder'],['defense','Top defender']]) {
@@ -861,7 +869,7 @@ function computeRecords(players, sessions) {
   if (bn) R.push({ key:'night', label:'Biggest night', value: bn.turnout, unit:'players', session: bn, holders: [], detail: bn.date ? DAY_FULL[bn.date.getDay()] : '' });
   const founders = players.filter(isFounder).sort((a,b)=>b.count-a.count);
   if (founders.length) R.push({ key:'founders', label:'Founding members', value: founders.length, unit:'at session one', holders: founders, noBadge: true, detail:`${founders.reduce((a,f)=>a+f.count,0).toLocaleString()} appearances between them` });
-  const SECTION = { iron:'season', ystreak:'season', breakout:'season', comeback:'character', month:'character', insep:'character', wed:'character' };
+  const SECTION = { iron:'season', ystreak:'season', breakout:'season', newcomer:'season', comeback:'character', month:'character', boomerang:'character', fullhouse:'character', wed:'character', debut:'alltime' };
   for (const r of R) r.section = SECTION[r.key] || 'alltime';
   const order = { season:0, character:1, alltime:2 }; R.sort((a,b) => order[a.section]-order[b.section]);
   RECORD_HOLDERS = {}; for (const r of R) if (!r.noBadge) for (const p of r.holders) (RECORD_HOLDERS[p.name] ||= []).push(r.label);
