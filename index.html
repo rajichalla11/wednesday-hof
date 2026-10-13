@@ -1523,8 +1523,8 @@ async function renderAdmin(me) {
   renderSeedEditor(a);
   const ab = document.getElementById('activity-body');
   if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
-    const claimed = new Set(((RATINGS && RATINGS.claimed) || []).map(n => n.toLowerCase())), seenNames = new Set(x.names.map(n => n.name.toLowerCase()));
-    const never = [...claimed].filter(n => !seenNames.has(n));
+    const seenNames = new Set(x.names.map(n => n.name.toLowerCase()));
+    const never = ((RATINGS && RATINGS.claimed) || []).filter(n => !seenNames.has(n.toLowerCase()));
     const ago = iso => { const d = (Date.now() - new Date(iso)) / 60000; return d < 60 ? `${Math.max(1, Math.round(d))} min ago` : d < 1440 ? `${Math.round(d/60)} h ago` : `${Math.round(d/1440)} d ago`; };
     ab.innerHTML = `<div class="act">
         <div><b class="num">${x.today.devices}</b><div class="label">People today</div><small>${x.today.opens} opens</small></div>
