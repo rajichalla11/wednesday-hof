@@ -41,6 +41,7 @@ function setup() {
   if (b.getLastColumn() < 4 + STATS.length + 3) b.getRange(1, 4 + STATS.length + 3).setValue('traits');
   const sr = sheet_('SelfRatings'); if (sr.getLastRow() === 0) sr.appendRow(['window', 'name'].concat(STATS, ['traits', 'note', 'updated']));
   const w = sheet_('Windows'); if (w.getLastRow() === 0) w.appendRow(['window', 'opened', 'closed']);
+  const ph = sheet_('Photos'); if (ph.getLastRow() === 0) ph.appendRow(['name', 'file_id', 'updated']);
   const s = sheet_('Seeds');
   if (s.getLastRow() === 0) {
     s.appendRow(['name'].concat(STATS));
@@ -117,6 +118,7 @@ function doPost(e) {
     if (body.action === 'self') return json_(self_(body));
     if (body.action === 'setSeed') return json_(setSeed_(body));
     if (body.action === 'unrate') return json_(unrate_(body));
+    if (body.action === 'photo') return json_(photo_(body));
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) { return json_({ ok: false, error: String(err) }); }
 }
@@ -214,7 +216,7 @@ function results_() {
   const prevWin = windows[windows.indexOf(win) - 1] || null;
   const all = rows_(sheet_('Votes'));
   const seeds = seeds_();
-  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), players: aggregate_(all.filter(function (r) { return r[0] === win; }), seeds), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds) : {}, prevWindow: prevWin };
+  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), players: aggregate_(all.filter(function (r) { return r[0] === win; }), seeds), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds) : {}, prevWindow: prevWin };
   out.ballots = Object.keys(all.filter(function (r) { return r[0] === win; }).reduce(function (m, r) { m[r[1]] = 1; return m; }, {})).length;
   cache_().put('results', JSON.stringify(out), 120);
   return out;
@@ -289,6 +291,38 @@ function setSeed_(body) {
   if (rowIdx > 0) sh.getRange(rowIdx, 2, 1, STATS.length).setValues([stats]); else sh.appendRow([target].concat(stats));
   return { ok: true };
 }
+
+/** A player's own photo. Saved to a Drive folder ("W9-10 Photos") owned by the script owner, shared view-only by link; the file id goes in the Photos tab. Admin can pass body.name to set or remove someone else's. */
+function photo_(body) {
+  const name = voterName_(body.t);
+  if (!name) return { ok: false, error: 'This link isn’t recognised.' };
+  const target = (body.name && isAdmin_(name)) ? String(body.name).trim() : name;
+  const sh = sheet_('Photos'); if (sh.getLastRow() === 0) sh.appendRow(['name', 'file_id', 'updated']);
+  const data = sh.getDataRange().getValues(); let rowIdx = -1, oldId = '';
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]).toLowerCase() === target.toLowerCase()) { rowIdx = i + 1; oldId = String(data[i][1] || ''); break; }
+  if (body.remove) {
+    if (rowIdx > 0) sh.deleteRow(rowIdx);
+    if (oldId) try { DriveApp.getFileById(oldId).setTrashed(true); } catch (_) {}
+    cache_().remove('results'); return { ok: true };
+  }
+  const m = String(body.data || '').match(/^data:(image\/(jpeg|png|webp));base64,(.+)$/);
+  if (!m) return { ok: false, error: 'Send a JPEG, PNG or WebP.' };
+  const bytes = Utilities.base64Decode(m[3]);
+  if (bytes.length > 1500000) return { ok: false, error: 'That photo is too large.' };
+  const file = photoFolder_().createFile(Utilities.newBlob(bytes, m[1], target.replace(/[^\w ]+/g, '') + '.' + (m[2] === 'jpeg' ? 'jpg' : m[2])));
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  const row = [target, file.getId(), new Date()];
+  if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, 3).setValues([row]); else sh.appendRow(row);
+  if (oldId) try { DriveApp.getFileById(oldId).setTrashed(true); } catch (_) {}
+  cache_().remove('results');
+  return { ok: true, id: file.getId() };
+}
+function photoFolder_() {
+  const p = props_(), id = p.getProperty('photo_folder');
+  if (id) try { return DriveApp.getFolderById(id); } catch (_) {}
+  const f = DriveApp.createFolder('W9-10 Photos'); p.setProperty('photo_folder', f.getId()); return f;
+}
+function photos_() { const o = {}, sh = ss_().getSheetByName('Photos'); if (!sh) return o; rows_(sh).forEach(function (r) { if (r[1]) o[String(r[0])] = String(r[1]); }); return o; }
 
 function isAdmin_(name) { return String(name || '').toLowerCase() === String(settings_().admin_name || 'Raji').toLowerCase(); }
 function cleanTraits_(arr) { const seen = {}; return (Array.isArray(arr) ? arr : []).map(function (t) { return String(t).toUpperCase(); }).filter(function (t) { if (TRAITS.indexOf(t) < 0 || seen[t]) return false; seen[t] = 1; return true; }).slice(0, MAX_TRAITS); }

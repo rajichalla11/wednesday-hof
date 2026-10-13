@@ -72,3 +72,10 @@ Vercel rewrite that proxies https://rajichalla11.github.io/wednesday-hof/, so de
 by pushing to `main` on GitHub; nothing on Vercel needs touching. Do not add a redirect on the
 GitHub Pages side, or the proxy would loop. Personal links use whichever address the player opened,
 so links claimed on the Vercel address work there.
+
+
+## Photos (backend Version 6, 13 Oct 2026)
+
+Players can add their own photo from the You tab (Add a photo / Change photo / Remove photo). The site shrinks it to 720px, posts it to the web app, and the script saves it in a Drive folder called **W9-10 Photos** (created on first upload, shared view-only by link) and records the file id in the **Photos** tab. A photo set this way wins over the Images column in the attendance sheet. To remove someone's photo as admin, delete their row in the Photos tab (and trash the file in Drive if you like).
+
+The first upload needs the Drive permission: run `setup` once from the editor after deploying and approve the permissions prompt.
