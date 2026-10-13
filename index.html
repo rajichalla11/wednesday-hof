@@ -380,6 +380,13 @@
   .st-bar s { position: absolute; top: -3px; width: 1px; height: 9px; background: var(--fg-3); text-decoration: none; }
   .st-bar em { position: absolute; right: 0; top: -16px; font-size: 11px; font-style: normal; color: var(--fg-3); }
   .st-bar em.up { color: var(--fg-2); } .st-bar em.down { color: var(--neg); }
+  .ex-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+  .ex-head { min-width: 0; } .ex-head b { font-size: 13px; display: block; } .ex-head span { font-size: 11px; color: var(--fg-2); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ex-ctl { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .ex-ctl input { width: 58px; height: 36px; text-align: center; font: inherit; font-size: 18px; font-weight: 700; font-variation-settings: 'wdth' 90; color: var(--fg); background: var(--bg); border: 1px solid var(--line-2); border-radius: 5px; -moz-appearance: textfield; }
+  .ex-ctl input::-webkit-outer-spin-button, .ex-ctl input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .ex-ctl input:focus { outline: none; border-color: var(--fg-3); }
+  .ex-ctl em { font-style: normal; font-size: 11px; color: var(--fg-2); width: 64px; text-align: right; }
   .b-comment { width: 100%; margin-top: 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; color: var(--fg); font: inherit; font-size: 13px; resize: vertical; min-height: 56px; }
   .b-comment:focus { outline: none; border-color: var(--fg-3); }
   .b-nav { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
@@ -460,6 +467,7 @@
     .c-stat b { font-size: 13px; } .c-stat .label { font-size: 9px; letter-spacing: 0; }
     .c-foot { padding: 0 12px 10px; font-size: 10px; }
     .you-grid .card, .deck { max-width: 240px; }
+    .ex-row { padding: 8px 10px; } .ex-ctl em { display: none; } .ex-head span { white-space: normal; }
     .pick-grid { grid-template-columns: repeat(3, 1fr); max-height: none; }
     .sheet.claim .b-copy { font-size: 13px; }
     .you-grid .card .c-num { font-size: 36px; } .you-grid .card .c-badges .medal:nth-child(n+3) { display: inline-flex; }
@@ -1456,7 +1464,8 @@ async function renderYou() {
       <div class="you-grid">
         <div id="self-card"></div>
         <div>
-          ${levelRowsHtml('s', SELF.values, v.seeds && v.seeds[me.name])}
+          <p class="muted" style="font-size:12px;margin-bottom:10px">Exact numbers, 40 to 99, like a FIFA card. Be honest: Raji compares this with how teammates rate you.</p>
+          ${exactRowsHtml(SELF.values)}
           <div class="label" style="margin-top:16px" id="s-traits-l">Your traits · <span>${SELF.traits.length}</span> of ${MAX_TRAITS} chosen</div>
           <div id="s-traits">${traitGridHtml('s', SELF.traits)}</div>
           <textarea class="b-comment" id="s-note" maxlength="280" placeholder="Anything Raji should know? Optional.">${esc(SELF.note)}</textarea>
@@ -1470,6 +1479,19 @@ async function renderYou() {
     <section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   paintSelfPreview();
   if (v.isAdmin) renderAdmin(me);
+}
+function exactRowsHtml(values) {
+  return `<div class="st-rows">${STAT_KEYS.map(k => `
+    <div class="ex-row"><div class="ex-head"><b>${STAT_NAMES[k]}</b><span>${STAT_GUIDE[k]}</span></div>
+      <div class="ex-ctl"><button type="button" class="st-btn" onclick="setExact('${k}', SELF.values['${k}'] - 1)" aria-label="Lower">−</button><input type="number" min="40" max="99" step="1" inputmode="numeric" id="s-ex-${k}" value="${values[k]}" oninput="setExact('${k}', this.value, true)" onblur="setExact('${k}', this.value)"><button type="button" class="st-btn" onclick="setExact('${k}', SELF.values['${k}'] + 1)" aria-label="Higher">+</button><em id="s-exl-${k}">${LEVELS[levelIdx(values[k])].l}</em></div></div>`).join('')}</div>`;
+}
+function setExact(k, raw, typing) {
+  let v = Math.round(Number(raw)); if (isNaN(v)) return;
+  if (!typing) v = Math.max(40, Math.min(99, v)); else if (v < 40 || v > 99) return;
+  SELF.values[k] = v;
+  const inp = document.getElementById(`s-ex-${k}`); if (inp && !typing) inp.value = v;
+  const l = document.getElementById(`s-exl-${k}`); if (l) l.textContent = LEVELS[levelIdx(v)].l;
+  paintSelfPreview();
 }
 function paintSelfPreview() {
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
