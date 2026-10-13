@@ -94,3 +94,8 @@ Claims are approved on the spot again. To go back to admin approval, add a row `
 ## Speed (backend Version 9, 13 Oct 2026)
 
 Every tab the web app reads (Voters, Votes, SelfRatings, Windows, Seeds, Settings, Photos) is cached in CacheService for 5 minutes and busted by the write that changes it, so a call does one or two sheet reads instead of five. If you edit Settings, Seeds or Voters by hand and want it live at once, run `clearCaches` from the editor. The floor for any call is about 1.2 s (Apps Script start-up plus its redirect); the site hides that by showing the last answer it saw on that device and repainting only if the fresh one differs.
+
+
+## Hidden ratings (backend Version 10, 13 Oct 2026)
+
+Players listed in Settings → `hide_stats` (comma-separated names) show **To be determined** instead of numbers, on the cards, the profile overlay and the Players intro count. Their starting point is also left out of what voters receive, so nothing leaks through the ballot. If the `hide_stats` row is missing, the admin's own rating is hidden by default. To publish Raji's rating later, add a Settings row `hide_stats` with an empty value (or list other names), then run `clearCaches` or wait up to 5 minutes.
