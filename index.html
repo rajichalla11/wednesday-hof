@@ -266,7 +266,21 @@
   .s-player.century small { color: var(--gold); }
 
   /* CLAIM */
-  .sheet.claim { max-width: 520px; }
+  .sheet.claim { max-width: 640px; }
+  .pick-search { width: 100%; margin-top: 14px; padding: 11px 12px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; font-size: 14px; }
+  .pick-search:focus { outline: none; border-color: var(--fg-3); }
+  .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; margin-top: 12px; max-height: 46vh; overflow-y: auto; padding: 2px; scrollbar-width: thin; }
+  .pick { text-align: left; padding: 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); display: grid; gap: 6px; transition: border-color .15s, transform .15s var(--ease); }
+  .pick:hover { border-color: var(--fg-3); }
+  .pick.on { border-color: var(--fg); background: var(--surface-3); transform: scale(1.03); }
+  .pick b { font-size: 12px; font-weight: 600; display: block; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pick span { font-size: 10px; color: var(--fg-3); display: block; }
+  .pick.taken { opacity: .38; } .pick.taken:hover { border-color: var(--line); }
+  .pick-ph { aspect-ratio: 1 / 1; border-radius: 5px; } .pick-ph .fb { font-size: 22px; }
+  .pick.hide { display: none; }
+  .pend { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); margin-bottom: 8px; flex-wrap: wrap; }
+  .pend .who { display: flex; align-items: center; gap: 10px; } .pend .who b { display: block; } .pend .who span { font-size: 12px; color: var(--fg-3); }
+  .pend .acts { display: flex; gap: 8px; }
   .field { display: grid; gap: 6px; margin-top: 16px; }
   .field label { font-size: 12px; color: var(--fg-2); }
   .field select, .field input { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; font-size: 14px; }
@@ -439,6 +453,8 @@
     .c-stat b { font-size: 13px; } .c-stat .label { font-size: 9px; letter-spacing: 0; }
     .c-foot { padding: 0 12px 10px; font-size: 10px; }
     .you-grid .card, .deck { max-width: 240px; }
+    .pick-grid { grid-template-columns: repeat(3, 1fr); max-height: none; }
+    .sheet.claim .b-copy { font-size: 13px; }
     .you-grid .card .c-num { font-size: 36px; } .you-grid .card .c-badges .medal:nth-child(n+3) { display: inline-flex; }
     .deck .c-badges .medal:nth-child(n+3) { display: inline-flex; }
     .stats.four { grid-template-columns: 1fr 1fr; }
@@ -957,11 +973,12 @@ const kes = n => `KES ${Math.abs(Math.round(n)).toLocaleString()}`;
 async function renderBalances() {
   const el = document.getElementById('bal-list');
   document.getElementById('tab-n-balances').textContent = '';
-  if (!TOKEN) { el.innerHTML = `<div class="empty">Balances are personal. Get your personal link to see yours.<div style="margin-top:12px"><button class="btn" onclick="openClaim()">Get your personal link</button></div></div>`; return; }
+  if (!TOKEN) { el.innerHTML = `<div class="empty">Balances are personal. Claim your card to see yours.<div style="margin-top:12px"><button class="btn" onclick="openClaim()">Find your card</button></div></div>`; return; }
   if (!VOTER) { el.innerHTML = `<div class="loading">Checking your link…</div>`; try { VOTER = await api({ action:'me', t: TOKEN }); } catch (e) { VOTER = { ok:false, error: e.message }; } }
   if (!VOTER.ok) { el.innerHTML = `<div class="error">${esc(VOTER.error || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   if (!me) { el.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; return; }
+  if (VOTER.pending) { el.innerHTML = `<div class="empty">Your balance shows here once Raji approves your claim.</div>`; return; }
   const known = me.balance !== null && !isNaN(me.balance), last = me.lastIdx>=0 ? SESSIONS[me.lastIdx] : null;
   const status = !known ? 'Not recorded on the sheet' : me.balance < 0 ? 'Owing to the pot' : me.balance > 0 ? 'In credit' : 'Settled';
   el.innerHTML = `<div class="box" style="cursor:default;max-width:420px">
@@ -1079,45 +1096,59 @@ async function renderCards() {
   try { RATINGS = await api({ action:'results' }); } catch (e) { RATINGS = null; }
   const ok = RATINGS && RATINGS.ok;
   const rated = ok ? ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats).length : 0;
-  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from Raji's call and move with anonymous votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>` : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Get your personal link</button>`) : ''}`;
+  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from Raji's call and move with anonymous votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? (VOTER && VOTER.pending ? `<p class="muted" style="font-size:12px;margin-bottom:18px">Your claim is waiting for Raji. The ballot opens once he approves it.</p>` : `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>`) : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Find your card</button>`) : ''}`;
   legend.innerHTML = `<span style="flex-basis:100%">${STAT_KEYS.map(k=>`<b style="color:var(--fg-2)">${k}</b> ${STAT_GUIDE[k].toLowerCase().replace(/ · /g, ', ')}`).join(' &nbsp;·&nbsp; ')}</span><span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Medals · gold for founders and iron men, platinum for record holders</span>`;
   renderPlayers();
 }
 
 /* ── claim your link ── */
 const myLink = () => `${location.origin}${location.pathname}#vote/${TOKEN}`;
+let CLAIM_PICK = '';
 function openClaim() {
   const names = [...ALL_PLAYERS].sort((a,b)=>a.name.localeCompare(b.name));
   const needCode = !!(RATINGS && RATINGS.requireCode);
+  const taken = new Set(((RATINGS && RATINGS.claimed) || []).map(n => n.toLowerCase()));
+  CLAIM_PICK = '';
   document.getElementById('c-body').innerHTML = `
-    <div class="label">Personal link</div>
-    <div class="b-title" style="margin-top:8px">Get your personal link</div>
-    <div class="b-copy">Pick your name${needCode ? ' and enter the group code from the WhatsApp group' : ''}. Your link is saved on this device and shown once so you can keep it. One claim per name: if yours is already taken, ask Raji to reset it.</div>
-    <form id="claim-form" onsubmit="return submitClaim(event)">
-      <div class="field"><label for="claim-name">Your name</label><select id="claim-name" required><option value="">Choose…</option>${names.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}</select></div>
-      ${needCode ? `<div class="field"><label for="claim-code">Group code</label><input id="claim-code" autocomplete="one-time-code" inputmode="text" placeholder="e.g. W1234" required></div>` : ''}
-      <div class="b-actions"><button class="btn" id="claim-btn" type="submit">Get my link</button><button class="btn ghost" type="button" onclick="closeClaimDirect(); try { sessionStorage.setItem('w910_claim_later','1'); } catch(_) {}">Not now</button><span class="saved" id="claim-msg"></span></div>
-    </form>`;
+    <div class="label">This is you</div>
+    <div class="b-title" style="margin-top:8px">Find your card</div>
+    <div class="b-copy">Tap your name. Raji approves each claim, then your page unlocks: your balance, the ballot and your photo. This device remembers you.</div>
+    <input class="pick-search" id="pick-q" placeholder="Search names" autocomplete="off" oninput="filterPick(this.value)">
+    <div class="pick-grid" id="pick-grid">${names.map(p => { const t = taken.has(p.name.toLowerCase()); return `<button type="button" class="pick${t?' taken':''}" data-name="${esc(p.name)}" onclick="pickName(this)">${photo(p,'pick-ph')}<b>${esc(p.name)}</b><span>${t ? 'Taken' : `${p.count} game${p.count===1?'':'s'}`}</span></button>`; }).join('')}</div>
+    ${needCode ? `<div class="field"><label for="claim-code">Group code</label><input id="claim-code" autocomplete="one-time-code" inputmode="text" placeholder="e.g. W1234"></div>` : ''}
+    <div class="b-actions"><button class="btn" id="claim-btn" type="button" disabled onclick="submitClaim()">That's me</button><button class="btn ghost" type="button" onclick="closeClaimDirect(); try { sessionStorage.setItem('w910_claim_later','1'); } catch(_) {}">Not now</button><span class="saved" id="claim-msg"></span></div>`;
   document.getElementById('claim-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
-  setTimeout(() => document.getElementById('claim-name').focus(), 50);
 }
-async function submitClaim(e) {
-  e.preventDefault();
-  const name = document.getElementById('claim-name').value, codeEl = document.getElementById('claim-code'), code = codeEl ? codeEl.value.trim() : '';
+function filterPick(q) { q = q.trim().toLowerCase(); document.querySelectorAll('#pick-grid .pick').forEach(el => el.classList.toggle('hide', !!q && !el.dataset.name.toLowerCase().includes(q))); }
+function pickName(el) {
+  const msg = document.getElementById('claim-msg'), btn = document.getElementById('claim-btn');
+  if (el.classList.contains('taken')) { msg.textContent = `${el.dataset.name} is already claimed. If that is you, ask Raji to reset it.`; msg.style.color = 'var(--neg)'; msg.classList.add('show'); return; }
+  document.querySelectorAll('#pick-grid .pick').forEach(x => x.classList.toggle('on', x === el));
+  CLAIM_PICK = el.dataset.name; btn.disabled = false; btn.textContent = `That's me · ${CLAIM_PICK.split(' ')[0]}`;
+  msg.classList.remove('show');
+}
+async function submitClaim() {
+  const name = CLAIM_PICK, codeEl = document.getElementById('claim-code'), code = codeEl ? codeEl.value.trim() : '';
   const btn = document.getElementById('claim-btn'), msg = document.getElementById('claim-msg');
-  btn.disabled = true; btn.textContent = 'Checking…'; msg.textContent = ''; msg.classList.remove('show');
+  if (!name) return;
+  btn.disabled = true; btn.textContent = 'Sending…'; msg.textContent = ''; msg.classList.remove('show');
   let res; try { res = await api(null, { action:'claim', name, code }); } catch (err) { res = { ok:false, error: err.message }; }
-  if (!res.ok) { btn.disabled = false; btn.textContent = 'Get my link'; msg.textContent = res.error || 'Could not claim.'; msg.style.color = 'var(--neg)'; msg.classList.add('show'); return false; }
+  if (!res.ok) { btn.disabled = false; btn.textContent = `That's me · ${name.split(' ')[0]}`; msg.textContent = res.error || 'Could not claim.'; msg.style.color = 'var(--neg)'; msg.classList.add('show'); return; }
   TOKEN = res.token; try { localStorage.setItem('w910_token', TOKEN); } catch (_) {}
   VOTER = null;
   document.getElementById('c-body').innerHTML = `
-    <div class="label">Personal link</div>
-    <div class="b-title" style="margin-top:8px">You're set, ${esc(res.name.split(' ')[0])}.</div>
-    <div class="b-copy">This device now remembers you. To use another phone or laptop, open this link there. Keep it to yourself: whoever has it can vote as you and see your balance.</div>
-    <div class="linkbox">Your link<code id="mylink">${esc(myLink())}</code></div>
-    <div class="b-actions"><button class="btn" onclick="closeClaimDirect(); showTab('you')">Go to my page</button><button class="btn ghost" onclick="copyLink(this)">Copy link</button></div>`;
+    <div class="label">This is you</div>
+    <div class="b-title" style="margin-top:8px">${res.pending ? `Sent to Raji, ${esc(res.name.split(' ')[0])}.` : `You're set, ${esc(res.name.split(' ')[0])}.`}</div>
+    <div class="b-copy">${res.pending ? 'Your page unlocks once Raji approves the claim, usually the same day. This device already remembers you, so just come back.' : 'This device now remembers you.'}</div>
+    <div class="b-actions"><button class="btn" onclick="closeClaimDirect(); showTab('you')">Go to my page</button></div>`;
   renderCards(); renderBalances(); renderYou();
-  return false;
+}
+async function approveClaim(name, ok, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  let res; try { res = await api(null, { action:'approve', t: TOKEN, name, ok }); } catch (e) { res = { ok:false, error: e.message }; }
+  if (!res.ok) { if (btn) { btn.disabled = false; btn.textContent = res.error || 'Failed'; } return; }
+  const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
+  await renderCards(); renderAdmin(me);
 }
 async function uploadPhoto(input) {
   const file = input.files && input.files[0]; if (!file) return; input.value = '';
@@ -1158,6 +1189,7 @@ async function openBallot() {
   if (!VOTER.ok) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="b-title">That link did not work</div><div class="error" style="margin-top:14px">${esc(VOTER.error || 'Unknown error')}</div><div class="b-actions"><button class="btn ghost" onclick="forgetToken()">Forget this link on this device</button></div></div></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   if (!me) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="error">You are not on the attendance sheet yet.</div></div></div>`; return; }
+  if (VOTER.pending) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="label">Waiting for Raji</div><div class="b-title" style="margin-top:8px">Claim sent.</div><div class="b-copy">The ballot opens once Raji approves your claim.</div><div class="b-actions"><button class="btn" onclick="closeBallotDirect()">Back</button></div></div></div>`; return; }
   const queue = ALL_PLAYERS.filter(p => p !== me && sharedCount(me,p) >= (VOTER.minShared || 3)).sort((a,b) => sharedCount(me,b)-sharedCount(me,a) || b.count-a.count);
   BALLOT = { me, queue, idx: 0 };
   renderBallotIntro();
@@ -1281,6 +1313,14 @@ async function renderYou() {
   if (!v || !v.ok) { body.innerHTML = `<div class="error">${esc((v && v.error) || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === v.name.toLowerCase());
   if (!me) { body.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; return; }
+  if (v.pending) {
+    body.innerHTML = `<div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card</span></div>
+      <div class="you-grid"><div>${cardHtml(me, (RATINGS && RATINGS.ok && RATINGS.players[me.name] && RATINGS.players[me.name].stats) || null)}</div>
+      <div><div class="label">Waiting for Raji</div><div class="b-title" style="margin-top:8px">Claim sent.</div>
+      <div class="b-copy">Raji approves each claim so nobody can pick someone else's name. Once he does, this page unlocks: your balance, the ballot and your photo. Nothing to do until then, just come back.</div>
+      <div class="b-actions"><button class="btn ghost" onclick="VOTER = null; renderYou()">Check again</button><button class="btn link" onclick="forgetToken()">Not ${esc(me.name.split(' ')[0])}? Forget this</button></div></div></div>`;
+    return;
+  }
   const r = RATINGS && RATINGS.ok ? (RATINGS.players[me.name] || { n:0 }) : { n:0 };
   const queue = ALL_PLAYERS.filter(p => p !== me && sharedCount(me,p) >= (v.minShared || 3));
   const done = queue.filter(p => v.mine[p.name]).length;
@@ -1328,7 +1368,8 @@ async function renderYou() {
         </div>
       </div>
     </section>
-    ${v.isAdmin ? `<section><div class="sh"><h2>Starting points</h2><span>Only you can see this · what voters see as the suggested level · saves as you tap</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
+    ${v.isAdmin ? `<section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Only you can see this · approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Starting points</h2><span>Only you can see this · what voters see as the suggested level · saves as you tap</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   paintSelfPreview();
   if (v.isAdmin) renderAdmin(me);
@@ -1379,6 +1420,9 @@ async function renderAdmin(me) {
   if (!a.ok) { el.innerHTML = `<div class="error">${esc(a.error || 'Could not load')}</div>`; const se = document.getElementById('seed-body'); if (se) se.innerHTML = ''; return; }
   window.__ADMIN = a;
   renderSeedEditor(a);
+  const pe = document.getElementById('pending-body');
+  if (pe) { const pend = a.pending || []; document.getElementById('pending-n').textContent = pend.length ? pend.length : '';
+    pe.innerHTML = pend.length ? pend.map(c => { const p = ALL_PLAYERS.find(x => x.name.toLowerCase() === c.name.toLowerCase()); return `<div class="pend"><div class="who">${p ? photo(p,'avatar') : ''}<div><b>${esc(c.name)}</b><span>${esc(c.when || '')}${p ? ` · ${p.count} games` : ''}</span></div></div><div class="acts"><button class="btn" onclick="approveClaim('${esc(c.name)}', true, this)">Approve</button><button class="btn ghost" onclick="approveClaim('${esc(c.name)}', false, this)">Not them</button></div></div>`; }).join('') : `<div class="empty">No claims waiting.</div>`; }
   if (!a.selfRatings.length) { el.innerHTML = `<div class="empty">Nobody has rated themselves yet.</div>`; return; }
   el.innerHTML = a.selfRatings.sort((x,y)=>x.name.localeCompare(y.name)).map((sr, i) => {
     const seed = a.seeds[sr.name] || {};

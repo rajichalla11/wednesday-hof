@@ -79,3 +79,8 @@ so links claimed on the Vercel address work there.
 Players can add their own photo from the You tab (Add a photo / Change photo / Remove photo). The site shrinks it to 720px, posts it to the web app, and the script saves it in a Drive folder called **W9-10 Photos** (created on first upload, shared view-only by link) and records the file id in the **Photos** tab. A photo set this way wins over the Images column in the attendance sheet. To remove someone's photo as admin, delete their row in the Photos tab (and trash the file in Drive if you like).
 
 The first upload needs the Drive permission: run `setup` once from the editor after deploying and approve the permissions prompt.
+
+
+## Claims need approval (backend Version 7, 13 Oct 2026)
+
+Claiming is now "Find your card": a grid of faces with a search box, taken names dimmed. A claim creates a Voters row with status **pending**. The person's device remembers them, but their page stays locked (no ballot, balance or photo) until the admin approves it on the You tab under **Claims waiting** (Approve / Not them). Rejecting deletes the row so the name can be claimed again. Rows from before this version with a `claimed` date and a blank status count as approved. If the admin's own row is ever reset, set its status to `approved` by hand in the Voters tab, since nobody else can approve it.

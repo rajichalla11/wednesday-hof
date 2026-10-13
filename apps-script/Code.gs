@@ -34,8 +34,9 @@ const SKIP = ['', 'player', 'games played', 'amount paid', 'balance', 'owing fro
 /* ───────── admin: run these from the editor ───────── */
 
 function setup() {
-  const v = sheet_('Voters');  if (v.getLastRow() === 0) v.appendRow(['voter_id', 'name', 'created', 'claimed']);
+  const v = sheet_('Voters');  if (v.getLastRow() === 0) v.appendRow(['voter_id', 'name', 'created', 'claimed', 'status']);
   if (v.getLastColumn() < 4) v.getRange(1, 4).setValue('claimed');
+  if (v.getLastColumn() < 5) v.getRange(1, 5).setValue('status');   // pending | approved (blank on an old claimed row = approved)
   settings_();   // creates the Settings tab with a group code if missing
   const b = sheet_('Votes');   if (b.getLastRow() === 0) b.appendRow(['window', 'ballot_id', 'target', 'w'].concat(STATS, ['comment', 'updated', 'traits']));
   if (b.getLastColumn() < 4 + STATS.length + 3) b.getRange(1, 4 + STATS.length + 3).setValue('traits');
@@ -120,13 +121,16 @@ function doPost(e) {
     if (body.action === 'setSeed') return json_(setSeed_(body));
     if (body.action === 'unrate') return json_(unrate_(body));
     if (body.action === 'photo') return json_(photo_(body));
+    if (body.action === 'approve') return json_(approve_(body));
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) { return json_({ ok: false, error: String(err) }); }
 }
 
 function me_(token) {
-  const name = voterName_(token);
-  if (!name) return { ok: false, error: 'This link isn’t recognised.' };
+  const row = voterRow_(token);
+  if (!row) return { ok: false, error: 'This link isn’t recognised.' };
+  if (row.status === 'pending') return { ok: true, pending: true, name: row.name };
+  const name = row.name;
   const win = props_().getProperty('window'), open = props_().getProperty('open') === '1';
   const mine = {}, feedback = [];
   const b = id2_(token);
@@ -202,9 +206,9 @@ function claim_(body) {
       voters.deleteRow(i + 1);
     }
     const token = newToken_();
-    voters.appendRow([id1_(token), p.name, new Date(), new Date()]);
-    cache_().remove(key);
-    return { ok: true, token: token, name: p.name };
+    voters.appendRow([id1_(token), p.name, new Date(), new Date(), 'pending']);   // the admin approves it on the You tab
+    cache_().remove(key); cache_().remove('results');
+    return { ok: true, token: token, name: p.name, pending: true };
   } finally { lock.releaseLock(); }
 }
 
@@ -217,7 +221,7 @@ function results_() {
   const prevWin = windows[windows.indexOf(win) - 1] || null;
   const all = rows_(sheet_('Votes'));
   const seeds = seeds_();
-  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), players: aggregate_(all.filter(function (r) { return r[0] === win; }), seeds), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds) : {}, prevWindow: prevWin };
+  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: aggregate_(all.filter(function (r) { return r[0] === win; }), seeds), prev: prevWin ? aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds) : {}, prevWindow: prevWin };
   out.ballots = Object.keys(all.filter(function (r) { return r[0] === win; }).reduce(function (m, r) { m[r[1]] = 1; return m; }, {})).length;
   cache_().put('results', JSON.stringify(out), 120);
   return out;
@@ -278,8 +282,25 @@ function admin_(token) {
   if (!name || !isAdmin_(name)) return { ok: false, error: 'Admin only.' };
   const win = props_().getProperty('window');
   const selfRatings = rows_(sheet_('SelfRatings')).filter(function (r) { return r[0] === win; }).map(function (r) { const o = rowToRating_(r, 2); o.name = String(r[1]); return o; });
-  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS };
+  const pending = rows_(sheet_('Voters')).filter(function (r) { return String(r[4]) === 'pending'; }).map(function (r) { return { name: String(r[1]), when: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'd MMM, HH:mm') : '' }; });
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending };
 }
+
+/** Admin approves (ok: true) or rejects (ok: false, row deleted so the name can be claimed again) a pending claim. */
+function approve_(body) {
+  const admin = voterName_(body.t);
+  if (!admin || !isAdmin_(admin)) return { ok: false, error: 'Admin only.' };
+  const target = String(body.name || '').trim().toLowerCase();
+  const sh = sheet_('Voters'), data = sh.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][1]).toLowerCase() !== target || String(data[i][4]) !== 'pending') continue;
+    if (body.ok) sh.getRange(i + 1, 5).setValue('approved'); else sh.deleteRow(i + 1);
+    cache_().remove('results');
+    return { ok: true };
+  }
+  return { ok: false, error: 'No pending claim for that name.' };
+}
+function claimedNames_() { return rows_(sheet_('Voters')).filter(function (r) { return r[3]; }).map(function (r) { return String(r[1]); }); }
 
 function setSeed_(body) {
   const name = voterName_(body.t);
@@ -351,12 +372,16 @@ function settings_() {
 function defaultWindow_() { const d = new Date(); return d.getFullYear() + '-Q' + (Math.floor(d.getMonth() / 3) + 1); }
 function shuffle_(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
-function voterName_(token) {
+/** The Voters row for a token: { name, status }. An old claimed row with no status counts as approved. */
+function voterRow_(token) {
   if (!token || String(token).length < 16) return null;
   const id = id1_(String(token));
   const hit = rows_(sheet_('Voters')).filter(function (r) { return r[0] === id; })[0];
-  return hit ? String(hit[1]) : null;
+  if (!hit) return null;
+  return { name: String(hit[1]), status: String(hit[4] || '') === 'pending' ? 'pending' : 'approved' };
 }
+/** Approved voter name for a token, or null. Everything except me_ goes through this, so a pending claim can't act. */
+function voterName_(token) { const r = voterRow_(token); return r && r.status === 'approved' ? r.name : null; }
 
 function seeds_() {
   const out = {};
