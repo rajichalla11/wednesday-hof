@@ -231,7 +231,7 @@ function results_() {
   const all = tab_('Votes');
   const seeds = seeds_();
   const hide = hiddenNames_();
-  const strip = function (agg) { Object.keys(agg).forEach(function (n) { if (hide.indexOf(n.toLowerCase()) >= 0) agg[n] = { n: agg[n].n, traits: agg[n].traits, hidden: true }; }); return agg; };
+  const strip = function (agg) { Object.keys(agg).forEach(function (n) { delete agg[n].vote; delete agg[n].vw; if (hide.indexOf(n.toLowerCase()) >= 0) agg[n] = { n: agg[n].n, traits: agg[n].traits, hidden: true }; }); return agg; };
   const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(aggregate_(all.filter(function (r) { return r[0] === win; }), seeds)), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
   out.ballots = Object.keys(all.filter(function (r) { return r[0] === win; }).reduce(function (m, r) { m[r[1]] = 1; return m; }, {})).length;
   cache_().put('results', JSON.stringify(out), 120);
@@ -255,15 +255,18 @@ function aggregate_(rows, seeds) {
     const entry = { n: n, traits: {} };
     vs.forEach(function (r) { String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean).forEach(function (t) { entry.traits[t] = (entry.traits[t] || 0) + 1; }); });
     if (base) entry.base = base;
-    if (base || n >= MIN_VOTES) {
+    if (n) { entry.vote = {}; entry.vw = {}; }   // votes alone (calibrated, trimmed, weighted) and their total weight; admin only, stripped from public results
+    if (base || n >= MIN_VOTES || n) {
       entry.stats = {};
       STATS.forEach(function (k, i) {
         let items = vs.map(function (r) { return { v: Number(r[4 + i]) - 0.5 * offset[r[1]], w: Number(r[3]) || 1 }; }).sort(function (a, b) { return a.v - b.v; });
         if (n >= 5) { const cut = Math.floor(n * 0.2); items = items.slice(cut, items.length - cut); }
         let sum = items.reduce(function (a, x) { return a + x.v * x.w; }, 0), ws = items.reduce(function (a, x) { return a + x.w; }, 0);
+        if (n && ws) { entry.vote[k] = Math.round(10 * sum / ws) / 10; entry.vw[k] = Math.round(ws * 100) / 100; }   // one decimal so the site's live preview matches the card exactly
         if (base) { sum += PRIOR_WEIGHT * base[k]; ws += PRIOR_WEIGHT; }   // the baseline is a strong prior; votes trim it
         entry.stats[k] = Math.max(RMIN, Math.min(RMAX, Math.round(sum / ws)));
       });
+      if (!base && n < MIN_VOTES) delete entry.stats;   // too few votes to show on a card yet
     }
     res[t] = entry;
   });
@@ -296,7 +299,8 @@ function admin_(token) {
   const selfRatings = tab_('SelfRatings').filter(function (r) { return r[0] === win; }).map(function (r) { const o = rowToRating_(r, 2); o.name = String(r[1]); return o; });
   const pending = tab_('Voters').filter(function (r) { return String(r[4]) === 'pending'; }).map(function (r) { return { name: String(r[1]), when: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'd MMM, HH:mm') : '' }; });
   const claims = tab_('Voters').filter(function (r) { return r[3]; }).map(function (r) { return { name: String(r[1]), claimed: String(r[3]), status: String(r[4] || 'approved'), rated: Number(r[5] || 0), lastVote: r[6] ? String(r[6]) : '', anyone: voteAll_(String(r[1])) }; });
-  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims };
+  const agg = aggregate_(tab_('Votes').filter(function (r) { return r[0] === win; }), seeds_());   // unstripped, so the admin sees what votes are doing (including hidden players)
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg };
 }
 
 /** Admin approves (ok: true) or rejects (ok: false, row deleted so the name can be claimed again) a pending claim. */

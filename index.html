@@ -356,11 +356,18 @@
   .seed-seg small { font-size: 10px; color: var(--fg-3); text-align: center; }
   .seed-row .st { font-size: 11px; color: var(--fg-3); text-align: right; }
   .seed-row.votes input { opacity: .55; }
+  .seed-sub { grid-column: 1 / -1; display: grid; grid-template-columns: 150px repeat(6, 1fr) 70px; gap: 3px 8px; align-items: baseline; padding-top: 7px; margin-top: 2px; border-top: 1px dashed var(--line); font-size: 11px; color: var(--fg-3); }
+  .seed-sub .ss-l small { display: block; font-size: 10px; }
+  .seed-sub .ss-v { text-align: center; } .seed-sub .ss-v .k { display: none; }
+  .seed-sub .ss-v b { color: var(--fg); font-size: 13px; font-weight: 600; font-variation-settings: 'wdth' 90; }
+  .seed-sub .ss-v i { font-style: normal; font-size: 10px; margin-left: 3px; color: var(--fg-2); } .seed-sub .ss-v i.down { color: var(--fg-3); }
+  .seed-sub .ss-t { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; padding-top: 3px; }
+  .seed-sub .ss-t span { font-size: 10px; letter-spacing: .05em; padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); } .seed-sub .ss-t b { color: var(--fg); }
   .act { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
   .act > div { background: var(--surface); padding: 12px 14px; } .act b { font-size: 24px; display: block; line-height: 1; } .act .label { margin-top: 6px; } .act small { display: block; color: var(--fg-3); font-size: 11px; margin-top: 4px; }
   table.claims { width: 100%; border-collapse: collapse; font-size: 12px; } table.claims th { text-align: left; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); } table.claims td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; } table.claims td small { color: var(--fg-3); } table.claims tr.novote td { color: var(--fg-2); }
   .seen { display: flex; flex-wrap: wrap; gap: 6px; } .seen span { font-size: 12px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); } .seen span b { color: var(--fg); font-weight: 600; } .seen span.never { opacity: .5; }
-  @media (max-width: 900px) { .seed-head { display: none; } .seed-row { grid-template-columns: 1fr 1fr 1fr; } .seed-row .n { grid-column: 1 / -1; } .seed-seg { position: relative; } .seed-seg::before { content: attr(data-k); position: absolute; top: -14px; left: 0; font-size: 9px; color: var(--fg-3); letter-spacing: .08em; } .seed-row { row-gap: 20px; padding-top: 10px; } .seed-row .st { grid-column: 1 / -1; text-align: left; } }
+  @media (max-width: 900px) { .seed-sub { grid-template-columns: repeat(3, 1fr); } .seed-sub .ss-l { grid-column: 1 / -1; } .seed-sub .ss-v { text-align: left; } .seed-sub .ss-v .k { display: inline; margin-right: 4px; font-size: 9px; letter-spacing: .06em; } .seed-sub > div:empty { display: none; } .seed-head { display: none; } .seed-row { grid-template-columns: 1fr 1fr 1fr; } .seed-row .n { grid-column: 1 / -1; } .seed-seg { position: relative; } .seed-seg::before { content: attr(data-k); position: absolute; top: -14px; left: 0; font-size: 9px; color: var(--fg-3); letter-spacing: .08em; } .seed-row { row-gap: 20px; padding-top: 10px; } .seed-row .st { grid-column: 1 / -1; text-align: left; } }
   .admin-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); margin-top: 6px; }
   .admin-row .n { font-weight: 600; }
   .admin-row .st { font-size: 12px; color: var(--fg-2); margin-top: 2px; }
@@ -1574,7 +1581,29 @@ function renderSeedEditor(a) {
     <div class="seed-tools"><input id="seed-q" placeholder="Filter by name or position" value="${esc(SEED_FILTER)}" oninput="SEED_FILTER=this.value; renderSeedEditor(window.__ADMIN); document.getElementById('seed-q').focus(); document.getElementById('seed-q').setSelectionRange(99,99)"><span class="muted" style="font-size:12px">${list.length} players · exact numbers 40–99 · these show on the cards now; votes trim them (your number counts like ${RATINGS && RATINGS.priorWeight || 3} votes)</span></div>
     <div class="seed-head"><span class="label">Player</span>${STAT_KEYS.map(k=>`<span class="label">${k}</span>`).join('')}<span></span></div>
     ${list.map(p => { const has = !!a.seeds[p.name], seed = a.seeds[p.name] || {}; const pi = ALL_PLAYERS.indexOf(p); const n = RATINGS && RATINGS.ok && RATINGS.players[p.name] ? RATINGS.players[p.name].n : 0;
-      return `<div class="seed-row${has ? '' : ' votes'}" id="seed-${pi}"><div class="n">${esc(p.name)}<span>${esc(posName(p) || 'Unassigned')} · ${p.count} apps${has ? '' : ` · votes decide · ${n} so far`}</span></div>${STAT_KEYS.map(k => `<div class="seed-seg" data-k="${k}"><input type="number" min="40" max="99" step="1" inputmode="numeric" value="${has ? seed[k] : ''}" placeholder="–" id="seed-${pi}-${k}" oninput="setSeedValue(${pi},'${k}',this.value)"><small id="seed-${pi}-${k}-l">${has ? LEVELS[levelIdx(seed[k])].l : ''}</small></div>`).join('')}<span class="st" id="seed-st-${pi}">${has ? `<button class="btn link" style="font-size:11px;padding:0" onclick="clearSeed(${pi}, this)">Votes decide</button>` : ''}</span></div>`; }).join('')}`;
+      return `<div class="seed-row${has ? '' : ' votes'}" id="seed-${pi}"><div class="n">${esc(p.name)}<span>${esc(posName(p) || 'Unassigned')} · ${p.count} apps${has ? '' : ` · votes decide · ${n} so far`}</span></div>${STAT_KEYS.map(k => `<div class="seed-seg" data-k="${k}"><input type="number" min="40" max="99" step="1" inputmode="numeric" value="${has ? seed[k] : ''}" placeholder="–" id="seed-${pi}-${k}" oninput="setSeedValue(${pi},'${k}',this.value)"><small id="seed-${pi}-${k}-l">${has ? LEVELS[levelIdx(seed[k])].l : ''}</small></div>`).join('')}<span class="st" id="seed-st-${pi}">${has ? `<button class="btn link" style="font-size:11px;padding:0" onclick="clearSeed(${pi}, this)">Votes decide</button>` : ''}</span><div class="seed-sub" id="seed-sub-${pi}">${seedSubHtml(p, a)}</div></div>`; }).join('')}`;
+}
+/* What the votes are doing to each player, for the admin: the card as it stands (starting point blended with votes, with the
+   change from the starting point), what the votes alone say, and the traits teammates picked. Recomputed live as the
+   starting point is edited, using the same blend as the backend. */
+function predictCard(name, seed, a) {
+  const g = a.agg && a.agg[name], W = (RATINGS && RATINGS.priorWeight) || 3, out = {};
+  STAT_KEYS.forEach(k => {
+    const has = g && g.vote && g.vw && g.vw[k] > 0;
+    if (seed) out[k] = has ? Math.max(40, Math.min(99, Math.round((g.vote[k] * g.vw[k] + W * seed[k]) / (g.vw[k] + W)))) : seed[k];
+    else out[k] = has && g.n >= 3 ? Math.max(40, Math.min(99, Math.round(g.vote[k]))) : null;
+  });
+  return out;
+}
+function seedSubHtml(p, a) {
+  const g = a.agg && a.agg[p.name], seed = a.seeds[p.name] || null, n = g ? g.n : 0;
+  if (!n) return `<div class="ss-l">No votes yet</div>`;
+  const now = predictCard(p.name, seed, a);
+  const cell = (k, v, d) => `<div class="ss-v"><span class="k">${k}</span>${v == null ? '–' : `<b>${v}</b>`}${d ? `<i class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</i>` : ''}</div>`;
+  const traits = Object.entries(g.traits || {}).sort((x, y) => y[1] - x[1]);
+  return `<div class="ss-l">Card now<small>${n} vote${n === 1 ? '' : 's'}${seed ? '' : n < 3 ? ' · shows at 3' : ''}</small></div>${STAT_KEYS.map(k => cell(k, now[k], seed && now[k] != null ? now[k] - seed[k] : 0)).join('')}<div></div>
+    <div class="ss-l">Votes alone</div>${STAT_KEYS.map(k => cell(k, g.vote && g.vote[k] != null ? Math.round(g.vote[k]) : null, 0)).join('')}<div></div>
+    <div class="ss-t">${traits.length ? traits.map(([t, c]) => `<span title="${esc(TRAITS[t] || '')}">${esc(t)} <b>×${c}</b></span>`).join('') : '<span class="muted">No traits picked yet</span>'}</div>`;
 }
 const SEED_BY_POS = { attack:{PAC:72,SHO:74,PAS:64,DRI:70,DEF:52,PHY:64}, midfield:{PAC:68,SHO:64,PAS:74,DRI:70,DEF:64,PHY:66}, defense:{PAC:66,SHO:54,PAS:64,DRI:58,DEF:74,PHY:72}, other:{PAC:65,SHO:65,PAS:65,DRI:65,DEF:65,PHY:65} };
 async function clearSeed(pi, btn) {
@@ -1592,6 +1621,7 @@ function setSeedValue(pi, k, raw) {
   a.seeds[p.name] = Object.assign({}, SEED_BY_POS[posClass(p.position)], a.seeds[p.name] || {}); a.seeds[p.name][k] = v;
   if (fresh) STAT_KEYS.forEach(kk => { const inp = document.getElementById(`seed-${pi}-${kk}`); if (inp && kk !== k) inp.value = a.seeds[p.name][kk]; const l = document.getElementById(`seed-${pi}-${kk}-l`); if (l) l.textContent = LEVELS[levelIdx(a.seeds[p.name][kk])].l; });
   const lab = document.getElementById(`seed-${pi}-${k}-l`); if (lab) lab.textContent = LEVELS[levelIdx(v)].l;
+  const sub = document.getElementById(`seed-sub-${pi}`); if (sub) sub.innerHTML = seedSubHtml(p, a);
   const st = document.getElementById('seed-st-'+pi); st.textContent = 'Saving…';
   clearTimeout(SEED_TIMERS[pi]);
   SEED_TIMERS[pi] = setTimeout(async () => {
