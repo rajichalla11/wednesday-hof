@@ -115,3 +115,8 @@ Set it on your You tab under **Game day**: date, kick-off (Nairobi time) and gat
 - On the day, before kick-off, the site shows a Game day banner: countdown, gate code (only to players with a claimed card; it never goes into the public data), who's in tonight, and storylines (milestones and streaks). Players tap **I'm in** to check in (Checkins tab). If the attendance sheet already has tonight's column, those players count as in.
 - During the hour it shows **Playing now**. From kick-off for 36 hours, players can **Rate tonight**: each teammate out of 10 (4–10 on the buttons) plus one man of the match. Anonymous like the season ballot (MatchVotes tab, ballot hash). A resubmission replaces the old one. Rating someone adds them to the squad.
 - After the game the banner shows the live match-ratings leaderboard once 3 players have rated, and the man-of-the-match leader. Each night's man of the match (most votes, at least 2, ties share) earns a gold **Man of the match** medal, counted across games.
+
+
+## Lineups and scores (backend Version 18, 14 Oct 2026)
+
+Sign-up stays on WhatsApp. In the Game day panel, paste the BLACK / WHITE message exactly as posted (asterisks, dots and spacing are fine); the preview shows each side, and names it can't match to a player are marked as guests. After the game, fill in Black goals and White goals and Save again. Each game is kept in the **Games** tab (date, black, white, goals), and players' profiles show their won / drawn / lost record from games with a score. The I'm in button is gone; tonight's squad is the two lineups plus anyone already on the attendance sheet's column for the day.
