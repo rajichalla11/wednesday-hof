@@ -180,10 +180,10 @@ function me_(token) {
   const name = row.name;
   const win = props_().getProperty('window'), open = props_().getProperty('open') === '1';
   const mine = {}, feedback = [];
-  const b = id2_(token);
+  const b = id2_(token), b3 = id3_(token);
   tab_('Votes').forEach(function (r) {
     if (r[0] !== win) return;
-    if (r[1] === b) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[4 + i]); }); mine[r[2]] = { stats: st, comment: r[4 + STATS.length] || '', traits: String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean) }; }
+    if (r[1] === b || r[1] === b3) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[4 + i]); }); mine[r[2]] = { stats: st, comment: r[4 + STATS.length] || '', traits: String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean), locked: r[1] === b }; }   // locked: made anonymously before names were kept, so it stays as it is
     if (r[2] === name && r[4 + STATS.length]) feedback.push(String(r[4 + STATS.length]));
   });
   voterStats_(token);   // keeps the admin's "rated" count current
@@ -212,14 +212,16 @@ function rate_(body) {
   const comment = String(body.comment || '').replace(/\s+/g, ' ').trim().slice(0, 280);
   const traits = cleanTraits_(body.traits);
   const w = shared >= 20 ? 1 : shared >= 8 ? 0.8 : 0.6;   // familiarity, bucketed so it can't identify the voter
-  const win = props_().getProperty('window'), b = id2_(body.t);
+  const win = props_().getProperty('window'), b = id3_(body.t), old = id2_(body.t);
+  if (tab_('Votes').some(function (r) { return r[0] === win && r[1] === old && r[2] === tp.name; })) return { ok: false, error: 'You rated ' + tp.name + ' anonymously before names were kept. That rating stays as it is.' };
 
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
+    if (data[0].length < 4 + STATS.length + 4 || data[0][4 + STATS.length + 3] !== 'voter') sh.getRange(1, 4 + STATS.length + 4).setValue('voter');
     let rowIdx = -1;
     for (let i = 1; i < data.length; i++) if (data[i][0] === win && data[i][1] === b && data[i][2] === tp.name) { rowIdx = i + 1; break; }
-    const row = [win, b, tp.name, w].concat(stats, [comment, today_(), traits.join(',')]);   // the day only: an exact time could be matched against who opened the site
+    const row = [win, b, tp.name, w].concat(stats, [comment, today_(), traits.join(','), name]);   // name: admin only, never in public results   // the day only: an exact time could be matched against who opened the site
     if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]); else insertRandom_(sh, row);
   } finally { lock.releaseLock(); }
   bust_('Votes');   // the voter's rough count is refreshed on their next open (me_), not at the moment they vote
@@ -229,7 +231,7 @@ function rate_(body) {
 function unrate_(body) {
   const name = voterName_(body.t);
   if (!name) return { ok: false, error: 'This link isn’t recognised.' };
-  const win = props_().getProperty('window'), b = id2_(body.t), target = String(body.target || '');
+  const win = props_().getProperty('window'), b = id3_(body.t), target = String(body.target || '');   // only named votes can be withdrawn; earlier anonymous ones stay
   const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
   for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === win && data[i][1] === b && data[i][2] === target) sh.deleteRow(i + 1);
   bust_('Votes');
@@ -277,7 +279,7 @@ function results_() {
   const strip = function (agg) { Object.keys(agg).forEach(function (n) { delete agg[n].vote; delete agg[n].vw; if (hide.indexOf(n.toLowerCase()) >= 0) agg[n] = { n: agg[n].n, traits: agg[n].traits, hidden: true }; }); return agg; };
   const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(aggregate_(all.filter(function (r) { return r[0] === win; }), seeds)), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
   out.game = gamePublic_(); out.motm = motmTally_(); out.games = gamesPublic_();
-  out.ballots = Object.keys(all.filter(function (r) { return r[0] === win; }).reduce(function (m, r) { m[r[1]] = 1; return m; }, {})).length;
+  out.ballots = tab_('Voters').filter(function (r) { return r[3] && String(r[5] || '') && String(r[5]) !== '0'; }).length;   // people who have voted (a voter can hold an older anonymous ballot and a newer named one, so ballot ids would count them twice)
   cache_().put('results', JSON.stringify(out), 120);
   return out;
 }
@@ -344,7 +346,10 @@ function admin_(token) {
   const pending = tab_('Voters').filter(function (r) { return String(r[4]) === 'pending'; }).map(function (r) { return { name: String(r[1]), when: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'd MMM, HH:mm') : '' }; });
   const claims = tab_('Voters').filter(function (r) { return r[3]; }).map(function (r) { return { name: String(r[1]), claimed: String(r[3]), status: String(r[4] || 'approved'), rated: typeof r[5] === 'number' ? band_(r[5]) : String(r[5] || ''), anyone: voteAll_(String(r[1])) }; });
   const agg = aggregate_(tab_('Votes').filter(function (r) { return r[0] === win; }), seeds_());   // unstripped, so the admin sees what votes are doing (including hidden players)
-  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg };
+  const named = tab_('Votes').filter(function (r) { return r[0] === win && r[4 + STATS.length + 3]; }).map(function (r) { const o = rowToRating_(r, 4); return { voter: String(r[4 + STATS.length + 3]), target: String(r[2]), stats: o.stats, comment: String(r[4 + STATS.length] || ''), traits: String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean) }; });
+  const anon = {}; tab_('Votes').forEach(function (r) { if (r[0] === win && !r[4 + STATS.length + 3]) anon[r[2]] = (anon[r[2]] || 0) + 1; });   // earlier anonymous ballots: counts only
+  const matchNamed = ss_().getSheetByName('MatchVotes') ? tab_('MatchVotes').filter(function (r) { return r[6]; }).map(function (r) { return { date: String(r[0]).slice(0, 10), voter: String(r[6]), target: String(r[2]), rating: Number(r[3]), motm: !!Number(r[4]) }; }) : [];
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed };
 }
 
 /** Admin approves (ok: true) or rejects (ok: false, row deleted so the name can be claimed again) a pending claim. */
@@ -535,15 +540,16 @@ function matchRate_(body) {
   if (now < ko) return { ok: false, error: 'Match ratings open at kick-off.' };
   if (now > ko + 36 * 3600000) return { ok: false, error: 'Match ratings for this game have closed.' };
   const names = {}; players_().forEach(function (p) { names[p.name.toLowerCase()] = p.name; });
-  const ratings = body.ratings || {}, motm = String(body.motm || '').toLowerCase(), b = id2_(body.t), rows = [];
+  const ratings = body.ratings || {}, motm = String(body.motm || '').toLowerCase(), b = id3_(body.t), rows = [];
   Object.keys(ratings).forEach(function (k) {
     const who = names[k.toLowerCase()], v = Math.round(Number(ratings[k]) * 2) / 2;
     if (!who || who.toLowerCase() === name.toLowerCase() || isNaN(v) || v < 1 || v > 10) return;
-    rows.push([g.date, b, who, v, who.toLowerCase() === motm ? 1 : 0, today_()]);
+    rows.push([g.date, b, who, v, who.toLowerCase() === motm ? 1 : 0, today_(), name]);
   });
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
-    const sh = sheet_('MatchVotes'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'ballot_id', 'target', 'rating', 'motm', 'updated']);
+    const sh = sheet_('MatchVotes'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'ballot_id', 'target', 'rating', 'motm', 'updated', 'voter']);
+    if (sh.getRange(1, 7).getValue() !== 'voter') sh.getRange(1, 7).setValue('voter');
     const data = sh.getDataRange().getValues();
     for (let i = data.length - 1; i >= 1; i--) if (String(data[i][0]).slice(0, 10) === g.date && data[i][1] === b) sh.deleteRow(i + 1);   // a resubmission replaces the old one
     rows.forEach(function (r) { insertRandom_(sh, ["'" + r[0]].concat(r.slice(1))); });
@@ -555,7 +561,7 @@ function matchRate_(body) {
   return { ok: true, saved: rows.length };
 }
 function myMatch_(date, token) {
-  const b = id2_(String(token)), out = { ratings: {}, motm: '' };
+  const b = id3_(String(token)), out = { ratings: {}, motm: '' };
   tab_('MatchVotes').forEach(function (r) { if (String(r[0]).slice(0, 10) !== date || r[1] !== b) return; out.ratings[String(r[2])] = Number(r[3]); if (Number(r[4])) out.motm = String(r[2]); });
   return out;
 }
@@ -617,6 +623,9 @@ function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).se
 function sha_(s) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8).map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join(''); }
 function id1_(t) { return sha_('voter|' + t); }
 function id2_(t) { return sha_('ballot|' + t); }
+/** Ballot id from 14 Oct 2026 (Version 21) on: votes are saved with the voter's name, which only the admin sees. A different
+ *  hash from id2_, so a named vote can't be tied back to the same person's earlier anonymous ballot. */
+function id3_(t) { return sha_('named|' + t); }
 function newToken_() { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); }
 function settings_() {
   const sh = sheet_('Settings');
@@ -639,8 +648,8 @@ function voterRow_(token) {
 /** Writes a rough band (1–4, 5–9, 10+) of how many teammates this token's ballot has rated onto the voter's own row; never the exact number or a time, so a ballot can't be matched to a voter by watching counts change. */
 function voterStats_(token) {
   if (!token) return;
-  const win = props_().getProperty('window'), b = id2_(String(token)), id = id1_(String(token));
-  const n = tab_('Votes').filter(function (r) { return r[0] === win && r[1] === b; }).length;
+  const win = props_().getProperty('window'), b = id2_(String(token)), b3 = id3_(String(token)), id = id1_(String(token));
+  const n = tab_('Votes').filter(function (r) { return r[0] === win && (r[1] === b || r[1] === b3); }).length;
   const row = tab_('Voters').filter(function (r) { return r[0] === id; })[0];
   if (!row || String(row[5] || '') === band_(n)) return;
   const sh = sheet_('Voters'), data = sh.getDataRange().getValues();

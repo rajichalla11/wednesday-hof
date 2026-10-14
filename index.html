@@ -455,6 +455,11 @@
   .seed-sub .ss-t span { font-size: 10px; letter-spacing: .05em; padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); } .seed-sub .ss-t b { color: var(--fg); }
   .act { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
   .act > div { background: var(--surface); padding: 12px 14px; } .act b { font-size: 24px; display: block; line-height: 1; } .act .label { margin-top: 6px; } .act small { display: block; color: var(--fg-3); font-size: 11px; margin-top: 4px; }
+  .b-locked { font-size: 12px; color: var(--fg-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; } .b-frozen { pointer-events: none; opacity: .5; }
+  .named-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; } .named-top .muted { font-size: 12px; }
+  .named-pick { appearance: none; -webkit-appearance: none; background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 12px center; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 32px 9px 12px; font: inherit; font-size: 14px; min-width: 160px; }
+  table.claims.named td, table.claims.named th { text-align: center; padding: 7px 4px; font-variant-numeric: tabular-nums; } table.claims.named td:first-child, table.claims.named th:first-child { text-align: left; padding-left: 8px; }
+  table.claims.named tr:has(+ tr.sub) td { border-bottom: 0; padding-bottom: 2px; } table.claims.named tr.sub td { text-align: left; padding: 0 8px 9px; color: var(--fg-2); font-size: 11px; } .nt { display: inline-block; border: 1px solid var(--line); border-radius: 99px; padding: 1px 7px; margin: 0 4px 3px 0; font-size: 10px; letter-spacing: .04em; } table.claims.named tr.sub i { color: var(--fg-2); }
   table.claims { width: 100%; border-collapse: collapse; font-size: 12px; } table.claims th { text-align: left; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); } table.claims td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; } table.claims td small { color: var(--fg-3); } table.claims tr.novote td { color: var(--fg-2); }
   .seen { display: flex; flex-wrap: wrap; gap: 6px; } .seen span { font-size: 12px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); } .seen span b { color: var(--fg); font-weight: 600; } .seen span.never { opacity: .5; }
   @media (max-width: 900px) { .seed-sub { grid-template-columns: repeat(3, 1fr); } .seed-sub .ss-l { grid-column: 1 / -1; } .seed-sub .ss-v { text-align: left; } .seed-sub .ss-v .k { display: inline; margin-right: 4px; font-size: 9px; letter-spacing: .06em; } .seed-sub > div:empty { display: none; } .seed-head { display: none; } .seed-row { grid-template-columns: 1fr 1fr 1fr; } .seed-row .n { grid-column: 1 / -1; } .seed-seg { position: relative; } .seed-seg::before { content: attr(data-k); position: absolute; top: -14px; left: 0; font-size: 9px; color: var(--fg-3); letter-spacing: .08em; } .seed-row { row-gap: 20px; padding-top: 10px; } .seed-row .st { grid-column: 1 / -1; text-align: left; } }
@@ -1305,7 +1310,7 @@ async function renderCards() {
   if (!(RATINGS && Date.now() - RATINGS_AT < 5000)) await fetchResults();   // a repaint within 5 s (cached sheet, then live sheet) reuses the same answer
   const ok = RATINGS && RATINGS.ok;
   const rated = ok ? ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats).length : 0;
-  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from Raji's call and move with anonymous votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? (VOTER && VOTER.pending ? `<p class="muted" style="font-size:12px;margin-bottom:18px">Your claim is waiting for Raji. The ballot opens once he approves it.</p>` : `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>`) : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Find your card</button>`) : ''}`;
+  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from Raji's call and move with votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? (VOTER && VOTER.pending ? `<p class="muted" style="font-size:12px;margin-bottom:18px">Your claim is waiting for Raji. The ballot opens once he approves it.</p>` : `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>`) : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Find your card</button>`) : ''}`;
   legend.innerHTML = `<span style="flex-basis:100%">${STAT_KEYS.map(k=>`<b style="color:var(--fg-2)">${k}</b> ${STAT_GUIDE[k].toLowerCase().replace(/ · /g, ', ')}`).join(' &nbsp;·&nbsp; ')}</span><span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Medals · gold for founders and iron men, platinum for record holders</span>`;
   renderPlayers();
 }
@@ -1432,7 +1437,7 @@ function renderBallotIntro() {
   document.getElementById('b-body').innerHTML = ballotTop(`Ratings · ${esc(VOTER.window)}`) + `<div class="bt-body"><div class="bt-inner narrow">
     <div class="label">${VOTER.open ? 'Window open' : 'Window closed'}</div>
     <div class="b-title" style="margin-top:8px">${esc(me.name)}</div>
-    <div class="b-copy">${VOTER.voteAll ? `You can rate <b>all ${queue.length} teammates</b>.` : `You have shared the pitch with <b>${queue.length} teammates</b> at least ${VOTER.minShared || 3} times, so those are the ones you can rate.`} Each comes up with a suggested level for six things. Tap a level, pick up to three traits, add a word if you like. Only they will read the word.<br><br><b>Ratings are anonymous.</b> Nobody, including the admin, can see who gave what. You can come back and change anything while the window is open.</div>
+    <div class="b-copy">${VOTER.voteAll ? `You can rate <b>all ${queue.length} teammates</b>.` : `You have shared the pitch with <b>${queue.length} teammates</b> at least ${VOTER.minShared || 3} times, so those are the ones you can rate.`} Each comes up with a suggested level for six things. Tap a level, pick up to three traits, add a word if you like. Only they will read the word.<br><br><b>Raji can see who gave what.</b> Other players only ever see the totals on the cards. You can come back and change anything while the window is open.${Object.values(VOTER.mine || {}).some(m => m.locked) ? ' Ratings you gave before 14 Oct were fully anonymous and stay that way, so those can’t be changed.' : ''}</div>
     <div class="b-actions">
       ${VOTER.open ? `<button class="btn" onclick="gotoBallot(${next<0?0:next})">${done ? `Continue · ${done} of ${queue.length} done` : 'Start'}</button>` : `<span class="error">The window is closed. Ratings are frozen until the next one opens.</span>`}
       ${done ? `<button class="btn ghost" onclick="renderBallotDone()">Review my ratings</button>` : ''}
@@ -1453,7 +1458,7 @@ function gotoBallot(i, dir) {
   BALLOT.idx = i; const p = queue[i], existing = VOTER.mine[p.name];
   const seed = (VOTER.seeds && VOTER.seeds[p.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{});
   BALLOT.seed = seed; BALLOT.values = existing ? Object.assign({}, existing.stats) : {};   // nothing pre-selected: the voter picks every level
-  BALLOT.traits = existing && existing.traits ? existing.traits.slice() : []; BALLOT.comment = existing ? existing.comment : '';
+  BALLOT.traits = existing && existing.traits ? existing.traits.slice() : []; BALLOT.comment = existing ? existing.comment : ''; BALLOT.locked = !!(existing && existing.locked);
   renderBallotCard(dir);
 }
 function levelRowsHtml(ns, values, seed) {
@@ -1504,12 +1509,12 @@ function renderBallotCard(dir) {
       </div>
       <div class="pane">
         <div class="b-who"><div class="b-title">${esc(p.name)}</div><span>${sharedCount(me,p)} nights together</span></div>
-        <p class="muted" style="font-size:12px;margin-bottom:10px">Tap a level for each of the six. The dot marks the suggested level. Five is the best in the group, one needs work.</p>
-        ${levelRowsHtml('b', values, seed)}
+        ${BALLOT.locked ? `<p class="b-locked">You rated ${esc(p.name.split(' ')[0])} before 14 Oct, when ratings were fully anonymous. That rating stays as it is and can’t be changed.</p>` : `<p class="muted" style="font-size:12px;margin-bottom:10px">Tap a level for each of the six. The dot marks the suggested level. Five is the best in the group, one needs work.</p>`}
+        <div class="${BALLOT.locked ? 'b-frozen' : ''}">${levelRowsHtml('b', values, seed)}
         <div class="label" style="margin-top:16px" id="b-traits-l">Traits · <span>${BALLOT.traits.length}</span> of ${MAX_TRAITS} chosen</div>
-        <div id="b-traits" class="compact">${traitGridHtml('b', BALLOT.traits)}</div>
-        <textarea class="b-comment" id="b-comment" maxlength="280" placeholder="A word for ${esc(p.name.split(' ')[0])}? Optional, private to them.">${esc(BALLOT.comment || '')}</textarea>
-        <div class="b-nav">${idx>0 ? `<button class="btn ghost" onclick="slideTo(${idx-1}, -1)">Back</button>` : ''}<button class="btn ghost" onclick="slideTo(${idx+1}, 1)">Skip</button><span class="sp"></span><span class="saved" id="b-saved">Saved</span><button class="btn" id="b-confirm" onclick="confirmRating()">Looks right</button></div>
+        <div id="b-traits" class="compact">${traitGridHtml('b', BALLOT.traits)}</div></div>
+        <textarea class="b-comment" id="b-comment" maxlength="280" placeholder="A word for ${esc(p.name.split(' ')[0])}? Optional · only they and Raji read it." ${BALLOT.locked ? 'disabled' : ''}>${esc(BALLOT.comment || '')}</textarea>
+        <div class="b-nav">${idx>0 ? `<button class="btn ghost" onclick="slideTo(${idx-1}, -1)">Back</button>` : ''}<button class="btn ghost" onclick="slideTo(${idx+1}, 1)">Skip</button><span class="sp"></span><span class="saved" id="b-saved">Saved</span>${BALLOT.locked ? `<button class="btn" onclick="slideTo(${idx+1}, 1)">Next</button>` : `<button class="btn" id="b-confirm" onclick="confirmRating()">Looks right</button>`}</div>
       </div>
     </div></div></div>`;
   paintCardPreview(); paintConfirmState(); document.getElementById('bt-body').scrollTop = 0;
@@ -1536,7 +1541,7 @@ async function pushSave(name, payload, attempt = 0) {
   SAVES.pending[name] = payload; delete SAVES.failed[name]; paintSaveStatus();
   let res; try { res = await api(null, payload); } catch (e) { res = { ok:false, error: e.message }; }
   if (SAVES.pending[name] !== payload) return;   // a newer rating for the same player replaced this one
-  if (!res.ok && attempt < 3 && !/enough sessions|rate yourself|closed|recognised/.test(res.error || '')) { await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); return pushSave(name, payload, attempt + 1); }
+  if (!res.ok && attempt < 3 && !/enough sessions|rate yourself|closed|recognised|anonymously/.test(res.error || '')) { await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); return pushSave(name, payload, attempt + 1); }
   delete SAVES.pending[name];
   if (!res.ok) { SAVES.failed[name] = payload; delete VOTER.mine[name]; }
   paintSaveStatus();
@@ -1667,6 +1672,7 @@ async function renderYou() {
         <div class="gp-foot"><button class="btn link" onclick="saveGame(true)">Clear · no game</button><span class="muted" id="gd-admin-st"></span><button class="btn" onclick="saveGame(false)">Save game day</button></div>
       </div></section>
     <section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Who voted what</h2><span>Only you can see this · votes from 14 Oct on · earlier ballots stay anonymous</span></div><div id="named-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Only you can see this · approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Starting points</h2><span>Only you can see this · what voters see as the suggested level · saves as you tap</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
@@ -1761,6 +1767,26 @@ function setSeedValue(pi, k, raw) {
 }
 /* The admin panels refresh whenever the page comes back into view (phones keep tabs open for days), at most every 20 s, or on demand. */
 let ADMIN_AT = 0;
+let NAMED_FOR = '';
+function renderNamed(pick) {
+  const a = window.__ADMIN, el = document.getElementById('named-body'); if (!a || !el) return;
+  if (pick !== undefined) NAMED_FOR = pick;
+  const named = a.named || [], anon = a.anon || {}, byT = {};
+  named.forEach(v => (byT[v.target] = byT[v.target] || []).push(v));
+  const targets = Object.keys(Object.assign({}, byT, anon)).sort((x, y) => x.localeCompare(y));
+  if (!NAMED_FOR || !targets.includes(NAMED_FOR)) NAMED_FOR = targets.find(t => VOTER && t.toLowerCase() === VOTER.name.toLowerCase()) || targets[0] || '';
+  const rows = (byT[NAMED_FOR] || []).slice().sort((x, y) => x.voter.localeCompare(y.voter)), old = anon[NAMED_FOR] || 0;
+  const avg = st => Math.round(STAT_KEYS.reduce((t, k) => t + st[k], 0) / STAT_KEYS.length);
+  const match = (a.matchNamed || []).slice().sort((x, y) => y.date.localeCompare(x.date) || x.target.localeCompare(y.target) || y.rating - x.rating);
+  const lastDate = match.length ? match[0].date : '', tonight = match.filter(m => m.date === lastDate);
+  el.innerHTML = `<div class="named-top"><select class="named-pick" onchange="renderNamed(this.value)">${targets.map(t => `<option ${t === NAMED_FOR ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+      <span class="muted">${rows.length} named${old ? ` · ${old} earlier anonymous` : ''}</span></div>
+    ${rows.length ? `<table class="claims named"><thead><tr><th>Voter</th>${STAT_KEYS.map(k => `<th>${k}</th>`).join('')}<th>Avg</th></tr></thead><tbody>${rows.map(v => `
+      <tr><td><b>${esc(v.voter)}</b></td>${STAT_KEYS.map(k => `<td>${v.stats[k]}</td>`).join('')}<td><b>${avg(v.stats)}</b></td></tr>
+      ${v.traits.length || v.comment ? `<tr class="sub"><td colspan="${STAT_KEYS.length + 2}">${v.traits.map(t => `<span class="nt">${esc(t)}</span>`).join('')}${v.comment ? ` <i>“${esc(v.comment)}”</i>` : ''}</td></tr>` : ''}`).join('')}</tbody></table>`
+      : `<div class="empty">${targets.length ? `No named votes for ${esc(NAMED_FOR)} yet.` : 'No named votes yet.'} ${old ? `The ${old} earlier ballot${old === 1 ? '' : 's'} stay anonymous.` : ''}</div>`}
+    ${tonight.length ? `<div class="label" style="margin:18px 0 8px">Match ratings · ${esc(fmtD(lastDate))}</div><table class="claims"><thead><tr><th>Player</th><th>Voter</th><th>Rating</th></tr></thead><tbody>${tonight.map(m => `<tr><td><b>${esc(m.target)}</b></td><td>${esc(m.voter)}</td><td>${m.rating}${m.motm ? ' ★' : ''}</td></tr>`).join('')}</tbody></table>` : ''}`;
+}
 function refreshAdmin(force) {
   if (!VOTER || !VOTER.isAdmin || !document.getElementById('admin-body')) return;
   if (!force && Date.now() - ADMIN_AT < 20000) return;
@@ -1774,7 +1800,7 @@ async function renderAdmin(me) {
   let a; try { a = await api({ action:'admin', t: TOKEN }); } catch (e) { a = { ok:false, error: e.message }; }
   if (!a.ok) { el.innerHTML = `<div class="error">${esc(a.error || 'Could not load')}</div>`; const se = document.getElementById('seed-body'); if (se) se.innerHTML = ''; return; }
   window.__ADMIN = a;
-  renderSeedEditor(a);
+  renderSeedEditor(a); renderNamed();
   const ab = document.getElementById('activity-body');
   if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
     const seenNames = new Set(x.names.map(n => n.name.toLowerCase()));
@@ -1787,7 +1813,7 @@ async function renderAdmin(me) {
       ${(() => { const seen = {}; x.names.forEach(n => seen[n.name.toLowerCase()] = n); const BAND = ['', '1–4', '5–9', '10+'], band = r => typeof r === 'number' ? (r <= 0 ? '' : r < 5 ? '1–4' : r < 10 ? '5–9' : '10+') : String(r || ''); const claims = (a.claims || []).map(c => ({ ...c, rated: band(c.rated) })).sort((p, q) => (BAND.indexOf(q.rated) - BAND.indexOf(p.rated)) || p.name.localeCompare(q.name)); const voted = claims.filter(c => c.rated).length;
         const fmtD = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); };
         return `<div class="label" style="margin:16px 0 8px;display:flex;justify-content:space-between;gap:8px"><span>Claimed · ${claims.length} of ${ALL_PLAYERS.length} · ${voted} have voted</span><button class="btn link" style="font-size:11px;padding:0" onclick="refreshAdmin(true)">Refresh · ${new Date(ADMIN_AT).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' })}</button></div>
-        <p class="muted" style="font-size:12px;margin:0 0 8px">Rated counts are rough (1–4, 5–9, 10+) and update when a player next opens the site, so nobody's ballot can be matched to them.</p><table class="claims"><thead><tr><th>Player</th><th>Claimed</th><th>Rated</th><th>Last open</th></tr></thead><tbody>${claims.map(c => { const sn = seen[c.name.toLowerCase()]; return `<tr class="${c.rated ? '' : 'novote'}"><td><b>${esc(c.name)}</b>${c.status === 'pending' ? ' <small>pending</small>' : ''}</td><td>${fmtD(c.claimed)}</td><td>${c.rated ? `<b>${c.rated}</b>` : '<span class="muted">—</span>'}</td><td>${sn ? `${ago(sn.last)}${sn.opens > 1 ? ` · ${sn.opens}×` : ''}` : '<span class="muted">not yet</span>'}</td></tr>`; }).join('')}</tbody></table>`; })()}`; } }
+        <p class="muted" style="font-size:12px;margin:0 0 8px">Rated counts are rough (1–4, 5–9, 10+) and update when a player next opens the site, so the earlier anonymous ballots can't be matched to anyone.</p><table class="claims"><thead><tr><th>Player</th><th>Claimed</th><th>Rated</th><th>Last open</th></tr></thead><tbody>${claims.map(c => { const sn = seen[c.name.toLowerCase()]; return `<tr class="${c.rated ? '' : 'novote'}"><td><b>${esc(c.name)}</b>${c.status === 'pending' ? ' <small>pending</small>' : ''}</td><td>${fmtD(c.claimed)}</td><td>${c.rated ? `<b>${c.rated}</b>` : '<span class="muted">—</span>'}</td><td>${sn ? `${ago(sn.last)}${sn.opens > 1 ? ` · ${sn.opens}×` : ''}` : '<span class="muted">not yet</span>'}</td></tr>`; }).join('')}</tbody></table>`; })()}`; } }
   const pe = document.getElementById('pending-body');
   if (pe) { const pend = a.pending || []; document.getElementById('pending-n').textContent = pend.length ? pend.length : '';
     pe.innerHTML = pend.length ? pend.map(c => { const p = ALL_PLAYERS.find(x => x.name.toLowerCase() === c.name.toLowerCase()); return `<div class="pend"><div class="who">${p ? photo(p,'avatar') : ''}<div><b>${esc(c.name)}</b><span>${esc(c.when || '')}${p ? ` · ${p.count} games` : ''}</span></div></div><div class="acts"><button class="btn" onclick="approveClaim('${esc(c.name)}', true, this)">Approve</button><button class="btn ghost" onclick="approveClaim('${esc(c.name)}', false, this)">Not them</button></div></div>`; }).join('') : `<div class="empty">No claims waiting.</div>`; }
@@ -1947,9 +1973,9 @@ function openMatch() {
 function paintMatch() {
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()), n = Object.keys(MATCH.ratings).length;
   const others = ALL_PLAYERS.filter(p => p !== me && !MATCH.list.includes(p)).sort((a, b) => a.name.localeCompare(b.name));
-  document.getElementById('m-body').innerHTML = `<div class="label">Tonight's game · anonymous</div>
+  document.getElementById('m-body').innerHTML = `<div class="label">Tonight's game</div>
     <div class="b-title" style="margin-top:8px">Rate tonight</div>
-    <div class="b-copy">Out of 10 for how they played tonight, not in general. Tap the star for your man of the match. Nobody sees who gave what.</div>
+    <div class="b-copy">Out of 10 for how they played tonight, not in general. Tap the star for your man of the match. Raji can see who gave what; other players only see the totals.</div>
     ${MATCH.list.map((p, i) => { const v = MATCH.ratings[p.name], sd = MATCH.side(p), prevSd = i ? MATCH.side(MATCH.list[i - 1]) : null; return `${sd && sd !== prevSd ? `<div class="label" style="margin-top:16px">${sd === MATCH.mySide ? 'Your team' : 'Opposition'} · ${sd === 'black' ? 'Black' : 'White'}</div>` : ''}<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="Man of the match">★</button>
       <div class="mr-seg">${[4,5,6,7,8,9,10].map(x => `<button class="${v === x ? 'on' : ''}" onclick="setMr('${esc(p.name)}', ${x})">${x}</button>`).join('')}</div></div>`; }).join('') || '<div class="empty" style="margin-top:14px">Nobody has checked in yet. Add who played below.</div>'}
     <select class="mr-add" onchange="addMr(this.value)"><option value="">+ Add someone who played tonight</option>${others.map(p => `<option>${esc(p.name)}</option>`).join('')}</select>
