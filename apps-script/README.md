@@ -106,3 +106,12 @@ Players listed in Settings → `hide_stats` (comma-separated names) show **To be
 - The site is open to everyone (`LOCKED = false` in index.html).
 - Only players with a row in the Seeds tab have a starting point. Everyone else is decided by votes alone (their card shows dashes until 3 ballots). In the admin Starting points editor a player with no row reads "votes decide"; typing a number creates a row (the other five stats fill from the position defaults), and the **Votes decide** button on a row deletes it (POST `clearSeed`). `setup` no longer pre-fills the Seeds tab.
 - Every page open sends one anonymous ping per browser session (`hit`: a random device id, the claimed name if any, phone or not, which tab). Rows land in the **Visits** tab. The admin's You tab shows Site activity: people and opens today / 7 days / all time, share on phones, who has opened and when, and claimed names not seen yet.
+
+
+## Game day (backend Version 17, 14 Oct 2026)
+
+Set it on your You tab under **Game day**: date, kick-off (Nairobi time) and gate code, then Save; **No game** clears it. Stored in Settings as `game_date`, `game_time`, `gate_code`.
+
+- On the day, before kick-off, the site shows a Game day banner: countdown, gate code (only to players with a claimed card; it never goes into the public data), who's in tonight, and storylines (milestones and streaks). Players tap **I'm in** to check in (Checkins tab). If the attendance sheet already has tonight's column, those players count as in.
+- During the hour it shows **Playing now**. From kick-off for 36 hours, players can **Rate tonight**: each teammate out of 10 (4–10 on the buttons) plus one man of the match. Anonymous like the season ballot (MatchVotes tab, ballot hash). A resubmission replaces the old one. Rating someone adds them to the squad.
+- After the game the banner shows the live match-ratings leaderboard once 3 players have rated, and the man-of-the-match leader. Each night's man of the match (most votes, at least 2, ties share) earns a gold **Man of the match** medal, counted across games.
