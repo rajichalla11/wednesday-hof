@@ -137,7 +137,7 @@ The ballot id is still a one-way hash of the player's private link. Nobody, incl
 From 14 Oct 2026, Raji chose to see who voted what, while other players still only see totals. The ballot and the match-rating sheet say so plainly.
 
 - New season votes are stored under a different ballot id (`id3_`, a separate hash from the old `id2_`) with the voter's name in a `voter` column at the end of the Votes tab. MatchVotes gets a `voter` column too. Because the hash is different, a named vote can't be used to find the same person's earlier anonymous ballot.
-- Ballots made before the switch keep the old id and no name, and they still count. A voter can change one: the site first warns them that the changed rating is saved with their name and that the admin may then be able to work out their other earlier ratings. `rate` overwrites the old row in place with a named one, and `unrate` removes either kind. Raji decided on 14 Oct that this link was fine.
+- Ballots made before the switch keep the old id and no name, and they still count. A voter can change one like any other rating (no separate warning; the ballot intro says Raji can see who gave what). `rate` overwrites the old row in place with a named one, and `unrate` removes either kind. Raji decided on 14 Oct that this link was fine.
 - `admin` returns `named` (voter, target, stats, traits, comment), `anon` (per player, how many earlier anonymous ballots there are) and `matchNamed`. The You tab's "Who voted what" panel shows them, one player at a time.
 - Public results never include names. The ballot count on the Players tab counts people who have voted (from the Voters band) rather than ballot ids, since one person can now hold one of each.
 

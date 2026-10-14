@@ -455,7 +455,6 @@
   .seed-sub .ss-t span { font-size: 10px; letter-spacing: .05em; padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); } .seed-sub .ss-t b { color: var(--fg); }
   .act { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
   .act > div { background: var(--surface); padding: 12px 14px; } .act b { font-size: 24px; display: block; line-height: 1; } .act .label { margin-top: 6px; } .act small { display: block; color: var(--fg-3); font-size: 11px; margin-top: 4px; }
-  .b-locked { font-size: 12px; color: var(--fg-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
   .named-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; } .named-top .muted { font-size: 12px; }
   .named-pick { appearance: none; -webkit-appearance: none; background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 12px center; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 32px 9px 12px; font: inherit; font-size: 14px; min-width: 160px; }
   table.claims.named td, table.claims.named th { text-align: center; padding: 7px 4px; font-variant-numeric: tabular-nums; } table.claims.named td:first-child, table.claims.named th:first-child { text-align: left; padding-left: 8px; }
@@ -1458,7 +1457,7 @@ function gotoBallot(i, dir) {
   BALLOT.idx = i; const p = queue[i], existing = VOTER.mine[p.name];
   const seed = (VOTER.seeds && VOTER.seeds[p.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{});
   BALLOT.seed = seed; BALLOT.values = existing ? Object.assign({}, existing.stats) : {};   // nothing pre-selected: the voter picks every level
-  BALLOT.traits = existing && existing.traits ? existing.traits.slice() : []; BALLOT.comment = existing ? existing.comment : ''; BALLOT.anon = !!(existing && existing.anon);
+  BALLOT.traits = existing && existing.traits ? existing.traits.slice() : []; BALLOT.comment = existing ? existing.comment : '';
   renderBallotCard(dir);
 }
 function levelRowsHtml(ns, values, seed) {
@@ -1481,7 +1480,7 @@ function paintConfirmState() {
   const btn = document.getElementById('b-confirm'); if (!btn) return;
   const left = STAT_KEYS.filter(k => BALLOT.values[k] == null);
   btn.disabled = false; btn.classList.toggle('ghost', left.length > 0);
-  btn.textContent = left.length ? `Pick ${left.map(k => STAT_NAMES[k]).join(', ')}` : (BALLOT.anon ? 'Update with my name' : VOTER.mine[BALLOT.queue[BALLOT.idx].name] ? 'Update' : 'Looks right');
+  btn.textContent = left.length ? `Pick ${left.map(k => STAT_NAMES[k]).join(', ')}` : (VOTER.mine[BALLOT.queue[BALLOT.idx].name] ? 'Update' : 'Looks right');
   STAT_KEYS.forEach(k => { const row = document.getElementById(`b-seg-${k}`)?.closest('.lv-row'); if (row) row.classList.toggle('done', BALLOT.values[k] != null); });
 }
 function showMissing() {
@@ -1509,7 +1508,7 @@ function renderBallotCard(dir) {
       </div>
       <div class="pane">
         <div class="b-who"><div class="b-title">${esc(p.name)}</div><span>${sharedCount(me,p)} nights together</span></div>
-        ${BALLOT.anon ? `<p class="b-locked">You rated ${esc(p.name.split(' ')[0])} anonymously before 14 Oct. If you change it, it’s saved with your name, and Raji may be able to work out your other earlier ratings too. Leave it and it stays anonymous.</p>` : `<p class="muted" style="font-size:12px;margin-bottom:10px">Tap a level for each of the six. The dot marks the suggested level. Five is the best in the group, one needs work.</p>`}
+        <p class="muted" style="font-size:12px;margin-bottom:10px">Tap a level for each of the six. The dot marks the suggested level. Five is the best in the group, one needs work.</p>
         ${levelRowsHtml('b', values, seed)}
         <div class="label" style="margin-top:16px" id="b-traits-l">Traits · <span>${BALLOT.traits.length}</span> of ${MAX_TRAITS} chosen</div>
         <div id="b-traits" class="compact">${traitGridHtml('b', BALLOT.traits)}</div>
