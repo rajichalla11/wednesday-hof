@@ -351,6 +351,25 @@
   .rt { min-width: 38px; text-align: center; font-weight: 700; font-size: 13px; padding: 2px 6px; border-radius: 5px; background: var(--surface-3); border: 1px solid var(--line-2); }
   .rt.hi { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   .sheet.match { max-width: 560px; }
+  .gd-teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; margin-top: 14px; align-items: start; }
+  .gd-vs { align-self: center; font-size: 12px; color: var(--fg-3); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding-top: 4px; }
+  .gd-team { display: grid; gap: 5px; min-width: 0; }
+  .gd-kit { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 3px; }
+  .gd-kit b { margin-left: auto; font-size: 26px; line-height: 1; letter-spacing: 0; }
+  .gd-team.white .gd-kit { flex-direction: row-reverse; } .gd-team.white .gd-kit b { margin-left: 0; margin-right: auto; }
+  .gd-shirt { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--fg-3); flex-shrink: 0; }
+  .gd-team.black .gd-shirt { background: #000; } .gd-team.white .gd-shirt { background: #f4f4f2; border-color: #f4f4f2; }
+  .gd-pl { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 4px 6px; border-radius: 6px; background: rgba(0,0,0,.22); min-width: 0; }
+  .gd-pl span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gd-pl .avatar { width: 22px; height: 22px; flex-shrink: 0; }
+  .gd-team.white .gd-pl { flex-direction: row-reverse; text-align: right; }
+  .gd-pl.me { outline: 1px solid var(--fg); font-weight: 600; }
+  .gd-paste { display: grid; gap: 6px; margin-top: 12px; font-size: 11px; color: var(--fg-3); }
+  .gd-paste textarea { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; }
+  .ga-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; font-size: 12px; }
+  .ga-preview div { display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; } .ga-preview b { flex-basis: 100%; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); }
+  .ga-preview span { padding: 2px 8px; border: 1px solid var(--line-2); border-radius: 999px; } .ga-preview span.guest { border-style: dashed; color: var(--fg-3); }
+  @media (max-width: 480px) { .gd-teams { gap: 6px; } .gd-pl { font-size: 12px; padding: 4px; gap: 6px; } .gd-pl .avatar { width: 18px; height: 18px; } }
   .mr-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
   .mr-who { display: flex; align-items: center; gap: 10px; min-width: 0; } .mr-who b { font-size: 14px; } .mr-who .avatar { width: 30px; height: 30px; }
   .mr-star { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-2); font-size: 16px; color: var(--fg-3); }
@@ -1126,6 +1145,7 @@ function openProfile(p) {
         <div class="d-name">${esc(p.name)}</div>
         <div class="d-sub">First game ${esc(fmtSession(first,false))} · Last game ${esc(fmtSession(last,false))}${daysSince!==null ? ` (${daysSince===0?'today':daysSince===1?'yesterday':daysSince+' days ago'})` : ''}</div>
         ${photo(p,'d-photo')}
+        ${(() => { const rec = recordFor(p); return rec ? `<div class="label" style="margin-top:14px">Recorded results · ${rec.w + rec.d + rec.l} games</div><div class="d-sub" style="margin-top:4px"><b>${rec.w}</b> won · <b>${rec.d}</b> drawn · <b>${rec.l}</b> lost</div>` : ''; })()}
         <div class="kv">
           <div><b class="num">${p.count}</b><div class="label">Appearances</div></div>
           <div><b class="num">${p.gamesThisYear}</b><div class="label">In ${THIS_YEAR}</div></div>
@@ -1608,6 +1628,9 @@ async function renderYou() {
     </section>
     ${v.isAdmin ? `<section><div class="sh"><h2>Game day</h2><span>Only you can set this · the gate code shows only to players with a claimed card</span></div>
       <div class="gd-admin"><label>Date<input type="date" id="ga-date" value="${esc((v.game && v.game.date) || todayNbo())}"></label><label>Kick-off<input type="time" id="ga-time" value="${esc((v.game && v.game.time) || '21:00')}"></label><label>Gate code<input id="ga-gate" value="${esc((v.game && v.game.gate) || '')}" autocomplete="off" autocapitalize="characters"></label><button class="btn" onclick="saveGame(false)">Save</button></div>
+      <label class="gd-paste"><span>Teams · paste the BLACK / WHITE message from WhatsApp</span><textarea id="ga-teams" rows="7" placeholder="*BLACK        WHITE*&#10;Priyam.       Raj&#10;Aayush.       Sahil M" oninput="previewTeams()">${esc(teamsToText(v.game && v.game.teams))}</textarea></label>
+      <div id="ga-preview" class="ga-preview">${teamsPreviewHtml(v.game && v.game.teams)}</div>
+      <div class="gd-admin" style="margin-top:10px"><label>Black goals<input id="ga-sb" inputmode="numeric" value="${v.game && v.game.score ? v.game.score.black : ''}" placeholder="after the game"></label><label>White goals<input id="ga-sw" inputmode="numeric" value="${v.game && v.game.score ? v.game.score.white : ''}" placeholder="after the game"></label></div>
       <div style="margin-top:8px;display:flex;gap:12px;align-items:center"><button class="btn link" style="font-size:12px" onclick="saveGame(true)">No game</button><span class="muted" id="gd-admin-st" style="font-size:12px"></span></div></section>
     <section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Only you can see this · approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
@@ -1787,8 +1810,39 @@ function gamePhase(g) {
 }
 const fmtLeft = ms => { const m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60); return h ? `${h}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`; };
 const fmtKo = (g) => new Date(`${g.date}T${g.time}:00+03:00`).toLocaleTimeString('en-GB', { timeZone: NBO, hour: 'numeric', minute: '2-digit', hour12: true }).replace(':00', '').replace(' ', '');
+/* The lineup Raji posts in WhatsApp, e.g.
+     *BLACK                WHITE*
+     Priyam.                 Raj
+   Columns are split on runs of 2+ spaces or a tab; trailing dots and asterisks are dropped; names are matched to players
+   (exact, then "Mihir" → "Mihir N" when unique, then first name when unique). Unmatched names stay as typed, as guests. */
+function resolvePlayer(raw) {
+  const n = raw.toLowerCase();
+  let hit = ALL_PLAYERS.find(p => p.name.toLowerCase() === n); if (hit) return hit.name;
+  let c = ALL_PLAYERS.filter(p => p.name.toLowerCase().startsWith(n + ' ') || p.name.toLowerCase().replace(/\.$/, '') === n); if (c.length === 1) return c[0].name;
+  c = ALL_PLAYERS.filter(p => p.name.split(' ')[0].toLowerCase() === n); if (c.length === 1) return c[0].name;
+  c = ALL_PLAYERS.filter(p => p.name.toLowerCase().startsWith(n)); if (c.length === 1) return c[0].name;
+  return raw;
+}
+function parseTeams(text) {
+  const lines = String(text || '').split(/\r?\n/).map(l => l.replace(/[*_~]/g, '').replace(/\u00a0/g, ' ').trim()).filter(Boolean);
+  let order = ['black', 'white'], start = 0;
+  if (lines.length && /black|white/i.test(lines[0])) { const w = lines[0].toLowerCase().match(/black|white/g); if (w && w.length === 2) order = w; start = 1; }
+  const teams = { black: [], white: [] };
+  lines.slice(start).forEach(l => {
+    const cells = l.split(/\t+|\s{2,}|\s*\|\s*|\s+[-–]\s+/).map(x => x.replace(/\.+$/, '').trim()).filter(x => x && x !== '-');
+    cells.slice(0, 2).forEach((c, i) => teams[order[i]].push(resolvePlayer(c)));
+  });
+  return teams;
+}
+function recordFor(p) {
+  const r = { w: 0, d: 0, l: 0 }; ((RATINGS && RATINGS.ok && RATINGS.games) || []).forEach(gm => { if (gm.b == null || gm.w == null) return;
+    const side = gm.black.includes(p.name) ? 'b' : gm.white.includes(p.name) ? 'w' : null; if (!side) return;
+    const mine = side === 'b' ? gm.b : gm.w, theirs = side === 'b' ? gm.w : gm.b; if (mine > theirs) r.w++; else if (mine < theirs) r.l++; else r.d++; });
+  return r.w + r.d + r.l ? r : null;
+}
 function gameSquad(g) {
   const names = new Set((g.squad || []).map(n => n.toLowerCase()));
+  if (g.teams) [...(g.teams.black || []), ...(g.teams.white || [])].forEach(n => names.add(n.toLowerCase()));
   const s = SESSIONS.find(x => x.date && new Intl.DateTimeFormat('en-CA', { timeZone: NBO }).format(x.date) === g.date);   // once the sheet has tonight's column, those players count too
   if (s) s.players.forEach(p => names.add(p.name.toLowerCase()));
   return ALL_PLAYERS.filter(p => names.has(p.name.toLowerCase()));
@@ -1819,8 +1873,11 @@ function renderGameday() {
     ? `<button class="gd-gate" onclick="copyGate(this)"><span><span class="label">Gate code · tonight</span><b>${esc(mine.gate)}</b></span><small>Tap to copy</small></button>`
     : `<button class="gd-gate locked" onclick="${TOKEN ? '' : 'openClaim()'}"><span><span class="label">Gate code · tonight</span><b>XXXXX</b></span><small>${TOKEN ? 'Loading…' : 'Find your card to see it'}</small></button>`;
   const faces = squad.slice(0, 9).map(p => photo(p, 'avatar')).join('');
-  const checkBtn = !TOKEN ? '' : ph === 'post' ? (inSquad || mine ? `<button class="btn" onclick="openMatch()">${mine && Object.keys(mine.mine.ratings || {}).length ? 'Edit my match ratings' : 'Rate tonight'}</button>` : '')
-    : `<button class="btn ${inSquad ? 'ghost' : ''}" id="gd-in" onclick="toggleIn(${inSquad ? 'true' : 'false'})">${inSquad ? "I'm in ✓" : "I'm in"}</button>`;
+  const checkBtn = TOKEN && ph === 'post' && mine ? `<button class="btn" onclick="openMatch()">${Object.keys((mine.mine && mine.mine.ratings) || {}).length ? 'Edit my match ratings' : 'Rate tonight'}</button>` : '';
+  const T = g.teams && ((g.teams.black || []).length || (g.teams.white || []).length) ? g.teams : null, sc = g.score;
+  const meName = me ? me.name : '';
+  const col = (side) => `<div class="gd-team ${side}"><div class="gd-kit"><span class="gd-shirt"></span>${side === 'black' ? 'Black' : 'White'}${sc ? `<b class="num">${sc[side]}</b>` : ''}</div>${(T[side] || []).map(n => { const p = ALL_PLAYERS.find(x => x.name === n); return `<div class="gd-pl${n === meName ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span>${esc(n)}</span></div>`; }).join('')}</div>`;
+  const lineup = T ? `<div class="gd-teams">${col('black')}<div class="gd-vs">${sc ? '–' : 'vs'}</div>${col('white')}</div>` : '';
   const r = g.ratings || {}, board = Object.keys(r).filter(k => r[k].n >= 2).sort((a, b) => r[b].avg - r[a].avg || r[b].n - r[a].n).slice(0, 5);
   const motmTop = Object.keys(r).sort((a, b) => r[b].motm - r[a].motm)[0];
   const boardHtml = ph === 'post' && g.raters >= 3 && board.length ? `<div class="label" style="margin-top:16px">Match ratings so far${motmTop && r[motmTop].motm >= 2 ? ` · man of the match: ${esc(motmTop)}` : ''}</div><div class="gd-board">${board.map((k, i) => { const p = ALL_PLAYERS.find(x => x.name === k); return `<div class="r">${p ? photo(p, 'avatar') : ''}<span class="nm">${esc(k)}${k === motmTop && r[k].motm >= 2 ? ' ★' : ''}</span><i>${r[k].n} votes</i><span class="rt${i === 0 ? ' hi' : ''}">${r[k].avg.toFixed(1)}</span></div>`; }).join('')}</div>`
@@ -1830,7 +1887,8 @@ function renderGameday() {
     <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span></div>
     <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
     ${gate}
-    <div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' ? 'played' : 'in tonight'}</span><span class="sp"></span>${checkBtn}</div>
+    ${lineup || `<div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' ? 'played' : 'in tonight'}</span></div>`}
+    ${checkBtn ? `<div class="gd-squad"><span class="n">${sc ? `${sc.black === sc.white ? 'Draw' : (sc.black > sc.white ? 'Black' : 'White') + ' win'} ${sc.black}–${sc.white}` : 'Full time'}</span><span class="sp"></span>${checkBtn}</div>` : ''}
     ${ph !== 'post' ? `<div class="gd-story">${storylines(squad, g)}</div>` : boardHtml}`;
 }
 function copyGate(btn) { const code = btn.querySelector('b').textContent, small = btn.querySelector('small'); const done = () => { small.textContent = 'Copied'; setTimeout(() => small.textContent = 'Tap to copy', 1500); }; if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(done); else done(); }
@@ -1845,7 +1903,10 @@ function openMatch() {
   const g = RATINGS && RATINGS.game; if (!g || !VOTER || !VOTER.ok) return;
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   const prev = (VOTER.game && VOTER.game.mine) || { ratings: {}, motm: '' };
-  MATCH = { ratings: Object.assign({}, prev.ratings), motm: prev.motm, list: gameSquad(g).filter(p => p !== me) };
+  const T = g.teams || { black: [], white: [] }, mySide = me && (T.black || []).includes(me.name) ? 'black' : me && (T.white || []).includes(me.name) ? 'white' : '';
+  const side = p => (T.black || []).includes(p.name) ? 'black' : (T.white || []).includes(p.name) ? 'white' : '';
+  const order = p => side(p) === mySide ? 0 : side(p) ? 1 : 2;
+  MATCH = { ratings: Object.assign({}, prev.ratings), motm: prev.motm, side, mySide, list: gameSquad(g).filter(p => p !== me).sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name)) };
   Object.keys(MATCH.ratings).forEach(n => { const p = ALL_PLAYERS.find(x => x.name === n); if (p && !MATCH.list.includes(p)) MATCH.list.push(p); });
   paintMatch(); document.getElementById('match-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
 }
@@ -1855,7 +1916,7 @@ function paintMatch() {
   document.getElementById('m-body').innerHTML = `<div class="label">Tonight's game · anonymous</div>
     <div class="b-title" style="margin-top:8px">Rate tonight</div>
     <div class="b-copy">Out of 10 for how they played tonight, not in general. Tap the star for your man of the match. Nobody sees who gave what.</div>
-    ${MATCH.list.map(p => { const v = MATCH.ratings[p.name]; return `<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="Man of the match">★</button>
+    ${MATCH.list.map((p, i) => { const v = MATCH.ratings[p.name], sd = MATCH.side(p), prevSd = i ? MATCH.side(MATCH.list[i - 1]) : null; return `${sd && sd !== prevSd ? `<div class="label" style="margin-top:16px">${sd === MATCH.mySide ? 'Your team' : 'Opposition'} · ${sd === 'black' ? 'Black' : 'White'}</div>` : ''}<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="Man of the match">★</button>
       <div class="mr-seg">${[4,5,6,7,8,9,10].map(x => `<button class="${v === x ? 'on' : ''}" onclick="setMr('${esc(p.name)}', ${x})">${x}</button>`).join('')}</div></div>`; }).join('') || '<div class="empty" style="margin-top:14px">Nobody has checked in yet. Add who played below.</div>'}
     <select class="mr-add" onchange="addMr(this.value)"><option value="">+ Add someone who played tonight</option>${others.map(p => `<option>${esc(p.name)}</option>`).join('')}</select>
     <div class="mr-foot"><span class="muted" id="mr-msg" style="font-size:12px">${n} rated${MATCH.motm ? ` · ★ ${esc(MATCH.motm)}` : ''}</span><span style="flex:1"></span><button class="btn" id="mr-save" onclick="saveMatch()" ${n ? '' : 'disabled'}>Save ratings</button></div>`;
@@ -1871,9 +1932,22 @@ async function saveMatch() {
   closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday();
 }
 function closeMatch() { document.getElementById('match-overlay').classList.remove('open'); document.body.style.overflow = ''; }
+function teamsToText(T) {
+  if (!T) return ''; const b = T.black || [], w = T.white || [], n = Math.max(b.length, w.length), rows = ['*BLACK            WHITE*'];
+  for (let i = 0; i < n; i++) rows.push(`${(b[i] || '-').padEnd(18)}${w[i] || '-'}`);
+  return rows.join('\n');
+}
+function teamsPreviewHtml(T) {
+  if (!T || !((T.black || []).length || (T.white || []).length)) return '';
+  const known = n => ALL_PLAYERS.some(p => p.name === n);
+  const side = k => `<div><b>${k === 'black' ? 'Black' : 'White'} · ${(T[k] || []).length}</b>${(T[k] || []).map(n => `<span class="${known(n) ? '' : 'guest'}">${esc(n)}${known(n) ? '' : ' · guest'}</span>`).join('')}</div>`;
+  return side('black') + side('white');
+}
+function previewTeams() { document.getElementById('ga-preview').innerHTML = teamsPreviewHtml(parseTeams(document.getElementById('ga-teams').value)); }
 async function saveGame(clear) {
   const st = document.getElementById('gd-admin-st'); st.textContent = 'Saving…';
-  const body = clear ? { action:'setGame', t: TOKEN, date: '', time: '21:00', gate: '' } : { action:'setGame', t: TOKEN, date: document.getElementById('ga-date').value, time: document.getElementById('ga-time').value, gate: document.getElementById('ga-gate').value };
+  const teams = clear ? null : parseTeams(document.getElementById('ga-teams').value);
+  const body = clear ? { action:'setGame', t: TOKEN, date: '', time: '21:00', gate: '' } : { action:'setGame', t: TOKEN, date: document.getElementById('ga-date').value, time: document.getElementById('ga-time').value, gate: document.getElementById('ga-gate').value, teams, scoreBlack: document.getElementById('ga-sb').value.trim(), scoreWhite: document.getElementById('ga-sw').value.trim() };
   let res; try { res = await api(null, body); } catch (e) { res = { ok:false, error: e.message }; }
   st.textContent = res.ok ? (clear ? 'Cleared' : 'Saved') : (res.error || 'Failed');
   if (res.ok) { VOTER = null; RATINGS_AT = 0; await Promise.all([fetchMe(), fetchResults()]); renderGameday(); }
