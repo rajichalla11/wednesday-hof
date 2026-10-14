@@ -459,6 +459,15 @@
   .named-pick { appearance: none; -webkit-appearance: none; background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 12px center; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 32px 9px 12px; font: inherit; font-size: 14px; min-width: 160px; }
   table.claims.named td, table.claims.named th { text-align: center; padding: 7px 4px; font-variant-numeric: tabular-nums; } table.claims.named td:first-child, table.claims.named th:first-child { text-align: left; padding-left: 8px; }
   table.claims.named tr:has(+ tr.sub) td { border-bottom: 0; padding-bottom: 2px; } table.claims.named tr.sub td { text-align: left; padding: 0 8px 9px; color: var(--fg-2); font-size: 11px; } .nt { display: inline-block; border: 1px solid var(--line); border-radius: 99px; padding: 1px 7px; margin: 0 4px 3px 0; font-size: 10px; letter-spacing: .04em; } table.claims.named tr.sub i { color: var(--fg-2); }
+  .gate-bar { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .gate-bar .gb-txt { flex: 1; min-width: 0; color: var(--fg-2); } .gate-bar .gb-txt b { color: var(--fg); font-weight: 600; }
+  .gate-bar .gb-prog { display: block; height: 3px; background: var(--surface-3); border-radius: 2px; margin-top: 7px; max-width: 260px; overflow: hidden; } .gate-bar .gb-prog i { display: block; height: 100%; background: var(--fg); }
+  .gate-bar .btn { flex: none; padding: 8px 14px; font-size: 13px; }
+  .panel.gated > :not(.sh):not(.gate-screen) { display: none !important; } .panel:not(.gated) > .gate-screen { display: none; }
+  .gate-screen { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 36px 20px; text-align: center; }
+  .gate-screen .gs-n { font-size: 40px; font-weight: 700; font-stretch: 75%; line-height: 1; } .gate-screen .gs-n small { font-size: 18px; color: var(--fg-3); font-weight: 500; }
+  .gate-screen p { color: var(--fg-2); font-size: 14px; max-width: 40ch; margin: 12px auto 18px; } .gate-screen .gb-prog { display: block; height: 3px; background: var(--surface-3); border-radius: 2px; max-width: 220px; margin: 14px auto 0; overflow: hidden; } .gate-screen .gb-prog i { display: block; height: 100%; background: var(--fg); }
+  @media (max-width: 480px) { .gate-bar { font-size: 12px; gap: 10px; } .gate-bar .btn { padding: 8px 12px; font-size: 12px; } }
   table.claims { width: 100%; border-collapse: collapse; font-size: 12px; } table.claims th { text-align: left; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); } table.claims td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; } table.claims td small { color: var(--fg-3); } table.claims tr.novote td { color: var(--fg-2); }
   .seen { display: flex; flex-wrap: wrap; gap: 6px; } .seen span { font-size: 12px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); } .seen span b { color: var(--fg); font-weight: 600; } .seen span.never { opacity: .5; }
   @media (max-width: 900px) { .seed-sub { grid-template-columns: repeat(3, 1fr); } .seed-sub .ss-l { grid-column: 1 / -1; } .seed-sub .ss-v { text-align: left; } .seed-sub .ss-v .k { display: inline; margin-right: 4px; font-size: 9px; letter-spacing: .06em; } .seed-sub > div:empty { display: none; } .seed-head { display: none; } .seed-row { grid-template-columns: 1fr 1fr 1fr; } .seed-row .n { grid-column: 1 / -1; } .seed-seg { position: relative; } .seed-seg::before { content: attr(data-k); position: absolute; top: -14px; left: 0; font-size: 9px; color: var(--fg-3); letter-spacing: .08em; } .seed-row { row-gap: 20px; padding-top: 10px; } .seed-row .st { grid-column: 1 / -1; text-align: left; } }
@@ -601,6 +610,7 @@
       <button class="tab" data-tab="balances">Balance<small id="tab-n-balances"></small></button>
     </div>
   </nav>
+  <div class="gate-bar" id="gate-bar" hidden></div>
 
   <section class="gd" id="gameday" hidden></section>
 
@@ -626,19 +636,19 @@
   </section>
 
   <section class="panel" id="panel-wall">
-    <div class="sh"><h2>Century Wall</h2><span>The night each member reached 100</span></div>
+    <div class="sh"><h2>Century Wall</h2><span>The night each member reached 100</span></div><div class="gate-screen"></div>
     <div class="grid" id="wall"></div>
     <div class="chips" id="wall-next"></div>
     <p class="foot-note" id="wall-note"></p>
   </section>
 
   <section class="panel" id="panel-records">
-    <div class="sh"><h2>Records</h2><span>Computed from the sheet · ties shown as ties</span></div>
+    <div class="sh"><h2>Records</h2><span>Computed from the sheet · ties shown as ties</span></div><div class="gate-screen"></div>
     <div class="grid" id="records"></div>
   </section>
 
   <section class="panel" id="panel-timeline">
-    <div class="sh"><h2>Season</h2><span id="tl-sub"></span></div>
+    <div class="sh"><h2>Season</h2><span id="tl-sub"></span></div><div class="gate-screen"></div>
     <div class="stats four" id="tl-summary"></div>
     <div class="tl-wrap" id="tl-wrap" style="margin-top:14px"><div class="tl-track" id="tl-track"></div></div>
     <div class="tl-axis"><span id="tl-first"></span><span>Tap a night to see who played · dot marks a century</span><span id="tl-last"></span></div>
@@ -1068,6 +1078,7 @@ function renderPlayers() {
     }
   }
   grid.innerHTML = html || `<div class="empty" style="grid-column:1/-1">Nobody in this position.</div>`;
+  paintGate();
   grid.querySelectorAll('.card').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
 }
 
@@ -1189,9 +1200,9 @@ function openProfile(p) {
         ${heat}
         <div class="heat-legend"><span><i style="background:var(--fg-2)"></i>Played</span><span><i style="background:var(--surface-2)"></i>Missed</span><span><i style="background:var(--fg)"></i>Current streak</span><span><i style="outline:1px solid var(--gold);outline-offset:1px"></i>100th</span></div>
         <div class="yrs">${p.years.map(y=>`<div class="yr"><span class="y">${y.y}</span><i style="--w:${y.eligible ? y.got/maxEligible*100 : 0}%"></i><span class="v">${y.got} / ${y.eligible}</span></div>`).join('')}</div>
-        ${selfLocked(p) ? `<div class="label" style="margin-top:22px">Ratings</div><div class="muted" style="font-size:13px;margin-top:6px">Yours unlocks once you have rated ${selfNeed()} teammates · ${selfRated()} done.</div>` : r && r.hidden ? `<div class="label" style="margin-top:22px">Ratings</div><div class="muted" style="font-size:13px;margin-top:6px">To be determined. Not published yet.</div>` : ''}
-        ${r && r.stats && !selfLocked(p) ? `<div class="label" style="margin-top:22px">Ratings · ${r.n ? r.n + ' vote' + (r.n===1?'':'s') : 'starting point, no votes yet'}</div><div class="c-stats" style="margin:8px 0 0">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num">${r.stats[k]}</b></div>`).join('')}</div>` : ''}
-        ${r && r.traits && Object.keys(r.traits).length ? `<div class="c-traits" style="padding:10px 0 0">${Object.keys(r.traits).sort((a,b)=>r.traits[b]-r.traits[a]).slice(0,5).map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)} · ${r.traits[t]}</span>`).join('')}</div>` : ''}
+        ${gateLocked() ? `<div class="label" style="margin-top:22px">Ratings</div><div class="muted" style="font-size:13px;margin-top:6px">${TOKEN ? `Ratings unlock once you have rated ${gateNeed()} teammates · ${Math.min(selfRated(), gateNeed())} done.` : 'Find your card and rate teammates to see ratings.'}</div>` : r && r.hidden ? `<div class="label" style="margin-top:22px">Ratings</div><div class="muted" style="font-size:13px;margin-top:6px">To be determined. Not published yet.</div>` : ''}
+        ${r && r.stats && !gateLocked() ? `<div class="label" style="margin-top:22px">Ratings · ${r.n ? r.n + ' vote' + (r.n===1?'':'s') : 'starting point, no votes yet'}</div><div class="c-stats" style="margin:8px 0 0">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num">${r.stats[k]}</b></div>`).join('')}</div>` : ''}
+        ${r && r.traits && Object.keys(r.traits).length && !gateLocked() ? `<div class="c-traits" style="padding:10px 0 0">${Object.keys(r.traits).sort((a,b)=>r.traits[b]-r.traits[a]).slice(0,5).map(t=>`<span title="${esc(TRAITS[t]||'')}">${esc(t)} · ${r.traits[t]}</span>`).join('')}</div>` : ''}
         <div class="d-foot">
           <div><span>Seasons</span><b>${seasons}${first&&first.date ? ` <span class="dim" style="font-weight:400">since ${first.date.getFullYear()}</span>` : ''}</b></div>
           <div><span>Longest absence</span><b>${p.longestGap ? p.longestGap+' sessions' : '—'}</b></div>
@@ -1244,16 +1255,37 @@ function selfQueue() { if (!VOTER || !VOTER.ok || VOTER.pending) return []; cons
 function selfNeed() { return Math.min(SELF_NEED, selfQueue().length); }
 function selfRated() { return VOTER && VOTER.mine ? Object.keys(VOTER.mine).length : 0; }
 function selfLocked(p) { return !!(VOTER && VOTER.ok && !VOTER.pending && !VOTER.isAdmin && p.name.toLowerCase() === VOTER.name.toLowerCase() && selfRated() < selfNeed()); }
+/* Everyone's ratings, Records, Season, the Century Wall and the match results open once the viewer has rated 10 teammates
+   (or everyone they can, if fewer). Balances, the gate code, the lineup and rating tonight's game stay open to all. */
+function gateLocked() {
+  if (!VOTE_API || (VOTER && VOTER.isAdmin)) return false;
+  if (!TOKEN || !VOTER || !VOTER.ok || VOTER.pending) return true;
+  return selfRated() < selfNeed();
+}
+function gateNeed() { return VOTER && VOTER.ok && !VOTER.pending ? selfNeed() : SELF_NEED; }
+function gateLine() { return !TOKEN ? 'Find your card to see ratings' : `Rate ${gateNeed()} teammates to see ratings`; }
+function gateAction() { return !TOKEN ? `<button class="btn" onclick="openClaim()">Find your card</button>` : VOTER && VOTER.pending ? '' : `<button class="btn" onclick="openBallot()">Rate teammates</button>`; }
+function paintGate() {
+  const locked = gateLocked(), need = gateNeed(), done = Math.min(selfRated(), need), pct = need ? done / need * 100 : 0;
+  const bar = document.getElementById('gate-bar');
+  if (bar) { bar.hidden = !locked; if (locked) bar.innerHTML = `<div class="gb-txt">${!TOKEN ? `<b>Find your card</b> and rate ${SELF_NEED} teammates to unlock ratings, records and the season.` : VOTER && VOTER.pending ? 'Your claim is waiting for Raji.' : `<b>${done} of ${need} rated.</b> Rate ${need - done} more to unlock ratings, records and the season.`}${TOKEN ? `<span class="gb-prog"><i style="width:${pct}%"></i></span>` : ''}</div>${gateAction()}`; }
+  ['wall', 'records', 'timeline'].forEach(id => {
+    const panel = document.getElementById('panel-' + id); if (!panel) return;
+    panel.classList.toggle('gated', locked);
+    const sc = panel.querySelector('.gate-screen'); if (!sc) return;
+    sc.innerHTML = locked ? `<div class="label">Locked</div><div class="gs-n num" style="margin-top:10px">${TOKEN ? `${done}<small> / ${need}</small>` : '0'}</div>${TOKEN ? `<span class="gb-prog"><i style="width:${pct}%"></i></span>` : ''}<p>${!TOKEN ? `Find your card and rate ${SELF_NEED} teammates to open ${id === 'timeline' ? 'the season' : id === 'wall' ? 'the Century Wall' : 'the records'}.` : `Rate ${need - done} more teammate${need - done === 1 ? '' : 's'} to open ${id === 'timeline' ? 'the season' : id === 'wall' ? 'the Century Wall' : 'the records'}. Everyone's ratings unlock at the same time.`}</p>${gateAction()}` : '';
+  });
+}
 function cardHtml(p, stats, opts = {}) {
   const rated = !!stats, tier = tierOf(p), foil = isRecordHolder(p);
-  const locked = !opts.meta && selfLocked(p), hidden = locked || (!rated && !!(RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].hidden));
+  const locked = !opts.meta && gateLocked(), hidden = locked || (!rated && !!(RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].hidden));
   const badges = badgesFor(p).sort((a,b)=>(b.rare?1:0)-(a.rare?1:0)).filter(b => !/^Century member$|^Double century$/.test(b.t)).slice(0,3);
   const top = rated && STAT_KEYS.every(k => typeof stats[k] === 'number') ? STAT_KEYS.reduce((b,k)=>stats[k]>stats[b]?k:b, STAT_KEYS[0]) : null;
   let foot = opts.meta || '';
   if (!foot) { if (rated) { let trend = ''; if (opts.prev) { const d = avgOf(stats)-avgOf(opts.prev); if (d) trend = `<span class="${d>0?'up':'down'}">${d>0?'▲':'▼'} ${Math.abs(d)}</span>`; } foot = `<span>${opts.n ? `${opts.n} vote${opts.n===1?'':'s'}` : 'Starting point'}</span>${trend || `<span>${TIER_NAME[tier]}</span>`}`; }
     else foot = `<span>${opts.n != null ? `${opts.n} of ${RATINGS ? RATINGS.minVotes : 3} votes` : 'preview'}</span><span>${TIER_NAME[tier]}</span>`; }
   let traits = opts.traits || [];
-  if (!opts.traits && RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].traits) {
+  if (!opts.traits && !locked && RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].traits) {
     const t = RATINGS.players[p.name].traits; traits = Object.keys(t).filter(k => t[k] >= 2).sort((a,b) => t[b]-t[a]).slice(0, 2);
   }
   return `<div class="card ${tier}${foil?' foil':''}${rated?'':' unrated'}" data-pi="${ALL_PLAYERS.indexOf(p)}">
@@ -1262,8 +1294,8 @@ function cardHtml(p, stats, opts = {}) {
     <div class="c-name"><b>${esc(p.name)}</b><span>${esc([posName(p), p.foot ? p.foot+' foot' : ''].filter(Boolean).join(' · ') || ' ')}</span></div>
     ${badges.length ? `<div class="c-badges">${badges.map(b=>`<span class="medal ${b.m||''}" title="${esc(b.d||b.t)}" data-tip="${esc(b.d||b.t)}" data-tip-h="${esc(b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>` : ''}
     ${traits.length ? `<div class="c-traits">${traits.map(t=>`<span title="${esc(TRAITS[t]||'')}" data-tip="${esc(TRAITS[t]||'')}" data-tip-h="${esc(t)}">${esc(t)}</span>`).join('')}</div>` : ''}
-    ${hidden ? `<div class="c-stats tbd"><span class="label">Rating</span><b>${locked ? `Rate ${selfNeed()} teammates to see yours` : 'To be determined'}</b></div>` : `<div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>`}
-    <div class="c-foot">${hidden ? `<span>${locked ? `${selfRated()} of ${selfNeed()} rated` : 'Not published yet'}</span><span>${TIER_NAME[tier]}</span>` : foot}</div></div>`;
+    ${hidden ? `<div class="c-stats tbd"><span class="label">Rating</span><b>${locked ? gateLine() : 'To be determined'}</b></div>` : `<div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>`}
+    <div class="c-foot">${hidden ? `<span>${locked ? (TOKEN ? `${Math.min(selfRated(), gateNeed())} of ${gateNeed()} rated` : 'Locked') : 'Not published yet'}</span><span>${TIER_NAME[tier]}</span>` : foot}</div></div>`;
 }
 /* The two Apps Script calls are slow (1–3 s each), so they start the moment the page opens, run alongside the sheet fetch, and are shared by whoever needs them. */
 let ME_PROMISE = null, RESULTS_PROMISE = null, RATINGS_AT = 0, YOU_WAITING = false;
@@ -1552,7 +1584,7 @@ function confirmRating() {
   const { queue, idx, values } = BALLOT, p = queue[idx], btn = document.getElementById('b-confirm');
   btn.disabled = true; btn.textContent = 'Saved';
   const comment = document.getElementById('b-comment').value.trim();
-  VOTER.mine[p.name] = { stats: Object.assign({}, values), comment, traits: BALLOT.traits.slice() };
+  VOTER.mine[p.name] = { stats: Object.assign({}, values), comment, traits: BALLOT.traits.slice() }; paintGate();
   pushSave(p.name, { action:'rate', t: TOKEN, target: p.name, stats: Object.assign({}, values), comment, traits: BALLOT.traits.slice() });
   document.getElementById('b-saved').classList.add('show');
   setTimeout(() => { const next = queue.findIndex((q,j) => j>idx && !VOTER.mine[q.name]); slideTo(next<0 ? queue.length : next, 1); }, 120);
@@ -1568,7 +1600,7 @@ function renderBallotDone() {
   </div></div>`;
 }
 function closeBallot(e) { if (e.target === document.getElementById('ballot-overlay')) closeBallotDirect(); }
-function closeBallotDirect() { document.getElementById('ballot-overlay').classList.remove('open'); document.body.style.overflow = ''; if (BALLOT) { BALLOT = null; renderCards().then(renderYou); } }
+function closeBallotDirect() { document.getElementById('ballot-overlay').classList.remove('open'); document.body.style.overflow = ''; if (BALLOT) { BALLOT = null; renderCards().then(renderYou); renderGameday(); } }
 
 /* ── You ── */
 async function ensureVoter() {
@@ -1616,7 +1648,7 @@ async function renderYou() {
   body.innerHTML = `
     <div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
     <div class="you-grid">
-      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${selfLocked(me) ? `Your rating unlocks once you have rated ${selfNeed()} teammates. ${selfRated()} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
+      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates. ${Math.min(selfRated(), gateNeed())} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
       <div>
         <div class="stats four">
           <div class="stat"><b class="num">${me.count}</b><div class="label">Appearances</div></div>
@@ -1939,7 +1971,8 @@ function renderGameday() {
   const lineup = T ? `<div class="gd-teams">${col('black')}<div class="gd-vs">${sc ? '–' : 'vs'}</div>${col('white')}</div>` : '';
   const r = g.ratings || {}, board = Object.keys(r).filter(k => r[k].n >= 2).sort((a, b) => r[b].avg - r[a].avg || r[b].n - r[a].n).slice(0, 5);
   const motmTop = Object.keys(r).sort((a, b) => r[b].motm - r[a].motm)[0];
-  const boardHtml = ph === 'post' && g.raters >= 3 && board.length ? `<div class="label" style="margin-top:16px">Match ratings so far${motmTop && r[motmTop].motm >= 2 ? ` · man of the match: ${esc(motmTop)}` : ''}</div><div class="gd-board">${board.map((k, i) => { const p = ALL_PLAYERS.find(x => x.name === k); return `<div class="r">${p ? photo(p, 'avatar') : ''}<span class="nm">${esc(k)}${k === motmTop && r[k].motm >= 2 ? ' ★' : ''}</span><i>${r[k].n} votes</i><span class="rt${i === 0 ? ' hi' : ''}">${r[k].avg.toFixed(1)}</span></div>`; }).join('')}</div>`
+  const boardHtml = ph === 'post' && gateLocked() ? `<div class="gd-sub" style="margin-top:12px">${TOKEN ? `Tonight's ratings and man of the match show once you've rated ${gateNeed()} teammates · ${Math.min(selfRated(), gateNeed())} done.` : 'Find your card to see tonight’s ratings.'}</div>`
+    : ph === 'post' && g.raters >= 3 && board.length ? `<div class="label" style="margin-top:16px">Match ratings so far${motmTop && r[motmTop].motm >= 2 ? ` · man of the match: ${esc(motmTop)}` : ''}</div><div class="gd-board">${board.map((k, i) => { const p = ALL_PLAYERS.find(x => x.name === k); return `<div class="r">${p ? photo(p, 'avatar') : ''}<span class="nm">${esc(k)}${k === motmTop && r[k].motm >= 2 ? ' ★' : ''}</span><i>${r[k].n} votes</i><span class="rt${i === 0 ? ' hi' : ''}">${r[k].avg.toFixed(1)}</span></div>`; }).join('')}</div>`
     : ph === 'post' ? `<div class="gd-sub" style="margin-top:12px">Ratings show once three players have rated.</div>` : '';
   el.dataset.phase = ph; el.hidden = false;
   el.innerHTML = `<svg class="gd-pitch" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice"><rect x="6" y="6" width="388" height="148" rx="4"/><line x1="200" y1="6" x2="200" y2="154"/><circle cx="200" cy="80" r="26"/><rect x="6" y="44" width="40" height="72"/><rect x="354" y="44" width="40" height="72"/><rect x="6" y="62" width="14" height="36"/><rect x="380" y="62" width="14" height="36"/></svg>
