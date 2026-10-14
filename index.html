@@ -1436,7 +1436,7 @@ function renderBallotIntro() {
   document.getElementById('b-body').innerHTML = ballotTop(`Ratings · ${esc(VOTER.window)}`) + `<div class="bt-body"><div class="bt-inner narrow">
     <div class="label">${VOTER.open ? 'Window open' : 'Window closed'}</div>
     <div class="b-title" style="margin-top:8px">${esc(me.name)}</div>
-    <div class="b-copy">${VOTER.voteAll ? `You can rate <b>all ${queue.length} teammates</b>.` : `You have shared the pitch with <b>${queue.length} teammates</b> at least ${VOTER.minShared || 3} times, so those are the ones you can rate.`} Each comes up with a suggested level for six things. Tap a level, pick up to three traits, add a word if you like. Only they will read the word.<br><br><b>Raji can see who gave what.</b> Other players only ever see the totals on the cards. You can come back and change anything while the window is open.${Object.values(VOTER.mine || {}).some(m => m.anon) ? ' Ratings you gave before 14 Oct were anonymous and stay that way unless you change one.' : ''}</div>
+    <div class="b-copy">${VOTER.voteAll ? `You can rate <b>all ${queue.length} teammates</b>.` : `You have shared the pitch with <b>${queue.length} teammates</b> at least ${VOTER.minShared || 3} times, so those are the ones you can rate.`} Each comes up with a suggested level for six things. Tap a level, pick up to three traits, add a word if you like.<br><br>You can come back and change anything while the window is open.</div>
     <div class="b-actions">
       ${VOTER.open ? `<button class="btn" onclick="gotoBallot(${next<0?0:next})">${done ? `Continue · ${done} of ${queue.length} done` : 'Start'}</button>` : `<span class="error">The window is closed. Ratings are frozen until the next one opens.</span>`}
       ${done ? `<button class="btn ghost" onclick="renderBallotDone()">Review my ratings</button>` : ''}
@@ -1512,7 +1512,7 @@ function renderBallotCard(dir) {
         ${levelRowsHtml('b', values, seed)}
         <div class="label" style="margin-top:16px" id="b-traits-l">Traits · <span>${BALLOT.traits.length}</span> of ${MAX_TRAITS} chosen</div>
         <div id="b-traits" class="compact">${traitGridHtml('b', BALLOT.traits)}</div>
-        <textarea class="b-comment" id="b-comment" maxlength="280" placeholder="A word for ${esc(p.name.split(' ')[0])}? Optional · only they and Raji read it.">${esc(BALLOT.comment || '')}</textarea>
+        <textarea class="b-comment" id="b-comment" maxlength="280" placeholder="A word for ${esc(p.name.split(' ')[0])}? Optional.">${esc(BALLOT.comment || '')}</textarea>
         <div class="b-nav">${idx>0 ? `<button class="btn ghost" onclick="slideTo(${idx-1}, -1)">Back</button>` : ''}<button class="btn ghost" onclick="slideTo(${idx+1}, 1)">Skip</button><span class="sp"></span><span class="saved" id="b-saved">Saved</span><button class="btn" id="b-confirm" onclick="confirmRating()">Looks right</button></div>
       </div>
     </div></div></div>`;
@@ -1974,7 +1974,7 @@ function paintMatch() {
   const others = ALL_PLAYERS.filter(p => p !== me && !MATCH.list.includes(p)).sort((a, b) => a.name.localeCompare(b.name));
   document.getElementById('m-body').innerHTML = `<div class="label">Tonight's game</div>
     <div class="b-title" style="margin-top:8px">Rate tonight</div>
-    <div class="b-copy">Out of 10 for how they played tonight, not in general. Tap the star for your man of the match. Raji can see who gave what; other players only see the totals.</div>
+    <div class="b-copy">Out of 10 for how they played tonight, not in general. Tap the star for your man of the match.</div>
     ${MATCH.list.map((p, i) => { const v = MATCH.ratings[p.name], sd = MATCH.side(p), prevSd = i ? MATCH.side(MATCH.list[i - 1]) : null; return `${sd && sd !== prevSd ? `<div class="label" style="margin-top:16px">${sd === MATCH.mySide ? 'Your team' : 'Opposition'} · ${sd === 'black' ? 'Black' : 'White'}</div>` : ''}<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="Man of the match">★</button>
       <div class="mr-seg">${[4,5,6,7,8,9,10].map(x => `<button class="${v === x ? 'on' : ''}" onclick="setMr('${esc(p.name)}', ${x})">${x}</button>`).join('')}</div></div>`; }).join('') || '<div class="empty" style="margin-top:14px">Nobody has checked in yet. Add who played below.</div>'}
     <select class="mr-add" onchange="addMr(this.value)"><option value="">+ Add someone who played tonight</option>${others.map(p => `<option>${esc(p.name)}</option>`).join('')}</select>
