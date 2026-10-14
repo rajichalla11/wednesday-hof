@@ -120,3 +120,15 @@ Set it on your You tab under **Game day**: date, kick-off (Nairobi time) and gat
 ## Lineups and scores (backend Version 18, 14 Oct 2026)
 
 Sign-up stays on WhatsApp. In the Game day panel, paste the BLACK / WHITE message exactly as posted (asterisks, dots and spacing are fine); the preview shows each side, and names it can't match to a player are marked as guests. After the game, fill in Black goals and White goals and Save again. Each game is kept in the **Games** tab (date, black, white, goals), and players' profiles show their won / drawn / lost record from games with a score. The I'm in button is gone; tonight's squad is the two lineups plus anyone already on the attendance sheet's column for the day.
+
+## Keeping ballots anonymous (Version 20)
+
+The admin's claims table used to show exactly how many teammates each player had rated and when they last voted. Watching that number tick up while a new ballot appeared would have matched the ballot to the player. Now:
+
+- The Voters tab keeps only a rough band (1–4, 5–9, 10+) and no last-vote time. It's refreshed when the player next opens the site, not at the moment they vote.
+- Ballot rows (Votes, MatchVotes) and Checkins store the day only, never the time, so they can't be lined up against the Visits tab.
+- New ballot rows go in at a random position, so row order says nothing about who voted when.
+- `anonymise()` (run once from the editor after deploying) cleans the data written before this: bands instead of counts, last-vote times cleared, times stripped, and existing ballot rows shuffled. It's safe to run again.
+
+The ballot id is still a one-way hash of the player's private link. Nobody, including the sheet owner, can work back from a ballot to a name.
+

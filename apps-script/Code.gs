@@ -39,7 +39,7 @@ function setup() {
   const v = sheet_('Voters');  if (v.getLastRow() === 0) v.appendRow(['voter_id', 'name', 'created', 'claimed', 'status']);
   if (v.getLastColumn() < 4) v.getRange(1, 4).setValue('claimed');
   if (v.getLastColumn() < 5) v.getRange(1, 5).setValue('status');   // pending | approved (blank on an old claimed row = approved)
-  if (v.getLastColumn() < 7) v.getRange(1, 6, 1, 2).setValues([['rated', 'last_vote']]);   // how many teammates this voter has rated (count only; which ballot is theirs stays unknown)
+  if (v.getLastColumn() < 6) v.getRange(1, 6).setValue('rated (rough)');   // 1–4 / 5–9 / 10+ teammates rated (never exact; which ballot is theirs stays unknown)
   settings_();   // creates the Settings tab with a group code if missing
   const b = sheet_('Votes');   if (b.getLastRow() === 0) b.appendRow(['window', 'ballot_id', 'target', 'w'].concat(STATS, ['comment', 'updated', 'traits']));
   if (b.getLastColumn() < 4 + STATS.length + 3) b.getRange(1, 4 + STATS.length + 3).setValue('traits');
@@ -102,6 +102,43 @@ function closeWindow() {
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
 function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games'].forEach(bust_); cache_().remove('players'); }
+
+/** One-off: strips what could link a ballot to a voter from data written before Version 20. Voters keep only a rough
+ *  "rated" band (no last-vote time), ballot and check-in times become the day only, and ballot rows are shuffled so
+ *  their order says nothing about who voted when. Safe to run again. */
+function anonymise() {
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const v = sheet_('Voters'), vd = v.getDataRange().getValues();
+    if (vd.length > 1 && vd[0].length >= 6) {
+      v.getRange(1, 6, 1, 2).setValues([['rated (rough)', '']]);
+      v.getRange(2, 6, vd.length - 1, 2).setValues(vd.slice(1).map(function (r) { const x = r[5]; return ["'" + (typeof x === 'number' ? band_(x) : String(x || '')), '']; }));
+    }
+    shuffleTab_('Votes', 4 + STATS.length + 1);     // updated column (0-based)
+    shuffleTab_('MatchVotes', 5);
+    const c = sheet_('Checkins'), cd = c.getDataRange().getValues();
+    if (cd.length > 1 && cd[0].length >= 4) c.getRange(2, 4, cd.length - 1, 1).setValues(cd.slice(1).map(function (r) { return [dayOf_(r[3])]; }));
+  } finally { lock.releaseLock(); }
+  clearCaches();
+}
+function shuffleTab_(name, tsCol) {
+  const sh = sheet_(name), data = sh.getDataRange().getValues();
+  if (data.length < 3) return;
+  const rows = shuffle_(data.slice(1).map(function (r) { if (tsCol < r.length) r[tsCol] = dayOf_(r[tsCol]); r[0] = r[0] instanceof Date ? r[0] : "'" + r[0]; return r; }));
+  sh.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+}
+/** Rough count shown to the admin instead of the exact number of teammates a voter has rated. */
+function band_(n) { n = Number(n) || 0; return n <= 0 ? '' : n < 5 ? '1–4' : n < 10 ? '5–9' : '10+'; }
+/** The day only, as text (no time of day), for anything written next to a ballot or a name. */
+function dayOf_(d) { if (!d) return ''; const x = d instanceof Date ? d : new Date(d); return isNaN(x.getTime()) ? String(d).slice(0, 10) : "'" + Utilities.formatDate(x, TZ, 'yyyy-MM-dd'); }
+function today_() { return dayOf_(new Date()); }
+/** Inserts a row at a random position below the header, so row order can't be matched against site opens. */
+function insertRandom_(sh, row) {
+  const last = sh.getLastRow();
+  if (last < 2) { sh.appendRow(row); return; }
+  const at = 2 + Math.floor(Math.random() * last);   // 2 … last+1
+  if (at > last) sh.appendRow(row); else { sh.insertRowBefore(at); sh.getRange(at, 1, 1, row.length).setValues([row]); }
+}
 
 /* ───────── web app ───────── */
 
@@ -182,10 +219,10 @@ function rate_(body) {
     const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
     let rowIdx = -1;
     for (let i = 1; i < data.length; i++) if (data[i][0] === win && data[i][1] === b && data[i][2] === tp.name) { rowIdx = i + 1; break; }
-    const row = [win, b, tp.name, w].concat(stats, [comment, new Date(), traits.join(',')]);
-    if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+    const row = [win, b, tp.name, w].concat(stats, [comment, today_(), traits.join(',')]);   // the day only: an exact time could be matched against who opened the site
+    if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]); else insertRandom_(sh, row);
   } finally { lock.releaseLock(); }
-  bust_('Votes'); voterStats_(body.t);
+  bust_('Votes');   // the voter's rough count is refreshed on their next open (me_), not at the moment they vote
   return { ok: true };
 }
 
@@ -195,7 +232,7 @@ function unrate_(body) {
   const win = props_().getProperty('window'), b = id2_(body.t), target = String(body.target || '');
   const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
   for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === win && data[i][1] === b && data[i][2] === target) sh.deleteRow(i + 1);
-  bust_('Votes'); voterStats_(body.t);
+  bust_('Votes');
   return { ok: true };
 }
 
@@ -305,7 +342,7 @@ function admin_(token) {
   const win = props_().getProperty('window');
   const selfRatings = tab_('SelfRatings').filter(function (r) { return r[0] === win; }).map(function (r) { const o = rowToRating_(r, 2); o.name = String(r[1]); return o; });
   const pending = tab_('Voters').filter(function (r) { return String(r[4]) === 'pending'; }).map(function (r) { return { name: String(r[1]), when: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'd MMM, HH:mm') : '' }; });
-  const claims = tab_('Voters').filter(function (r) { return r[3]; }).map(function (r) { return { name: String(r[1]), claimed: String(r[3]), status: String(r[4] || 'approved'), rated: Number(r[5] || 0), lastVote: r[6] ? String(r[6]) : '', anyone: voteAll_(String(r[1])) }; });
+  const claims = tab_('Voters').filter(function (r) { return r[3]; }).map(function (r) { return { name: String(r[1]), claimed: String(r[3]), status: String(r[4] || 'approved'), rated: typeof r[5] === 'number' ? band_(r[5]) : String(r[5] || ''), anyone: voteAll_(String(r[1])) }; });
   const agg = aggregate_(tab_('Votes').filter(function (r) { return r[0] === win; }), seeds_());   // unstripped, so the admin sees what votes are doing (including hidden players)
   return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg };
 }
@@ -476,8 +513,8 @@ function squad_(date) {
 function setCheckin_(date, who, status) {
   const sh = sheet_('Checkins'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'name', 'status', 'updated']);
   const data = sh.getDataRange().getValues();
-  for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date && String(data[i][1]).toLowerCase() === who.toLowerCase()) { sh.getRange(i + 1, 3, 1, 2).setValues([[status, new Date()]]); return; }
-  sh.appendRow(["'" + date, who, status, new Date()]);
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date && String(data[i][1]).toLowerCase() === who.toLowerCase()) { sh.getRange(i + 1, 3, 1, 2).setValues([[status, today_()]]); return; }
+  sh.appendRow(["'" + date, who, status, today_()]);
 }
 function checkin_(body) {
   const name = voterName_(body.t);
@@ -502,14 +539,14 @@ function matchRate_(body) {
   Object.keys(ratings).forEach(function (k) {
     const who = names[k.toLowerCase()], v = Math.round(Number(ratings[k]) * 2) / 2;
     if (!who || who.toLowerCase() === name.toLowerCase() || isNaN(v) || v < 1 || v > 10) return;
-    rows.push([g.date, b, who, v, who.toLowerCase() === motm ? 1 : 0, new Date()]);
+    rows.push([g.date, b, who, v, who.toLowerCase() === motm ? 1 : 0, today_()]);
   });
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const sh = sheet_('MatchVotes'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'ballot_id', 'target', 'rating', 'motm', 'updated']);
     const data = sh.getDataRange().getValues();
     for (let i = data.length - 1; i >= 1; i--) if (String(data[i][0]).slice(0, 10) === g.date && data[i][1] === b) sh.deleteRow(i + 1);   // a resubmission replaces the old one
-    rows.forEach(function (r) { sh.appendRow(["'" + r[0]].concat(r.slice(1))); });
+    rows.forEach(function (r) { insertRandom_(sh, ["'" + r[0]].concat(r.slice(1))); });
     const sq = squad_(g.date);
     if (!sq[name.toLowerCase()]) setCheckin_(g.date, name, 'in');                 // rating tonight means you played tonight
     rows.forEach(function (r) { if (!sq[r[2].toLowerCase()]) setCheckin_(g.date, r[2], 'in'); });
@@ -599,15 +636,15 @@ function voterRow_(token) {
   if (!hit) return null;
   return { name: String(hit[1]), status: String(hit[4] || '') === 'pending' ? 'pending' : 'approved' };
 }
-/** Writes how many teammates this token's ballot has rated this window onto the voter's own row (count only). Only touches the sheet when the number changed. */
+/** Writes a rough band (1–4, 5–9, 10+) of how many teammates this token's ballot has rated onto the voter's own row; never the exact number or a time, so a ballot can't be matched to a voter by watching counts change. */
 function voterStats_(token) {
   if (!token) return;
   const win = props_().getProperty('window'), b = id2_(String(token)), id = id1_(String(token));
   const n = tab_('Votes').filter(function (r) { return r[0] === win && r[1] === b; }).length;
   const row = tab_('Voters').filter(function (r) { return r[0] === id; })[0];
-  if (!row || Number(row[5] || 0) === n) return;
+  if (!row || String(row[5] || '') === band_(n)) return;
   const sh = sheet_('Voters'), data = sh.getDataRange().getValues();
-  for (let i = 1; i < data.length; i++) if (data[i][0] === id) { sh.getRange(i + 1, 6, 1, 2).setValues([[n, new Date()]]); break; }
+  for (let i = 1; i < data.length; i++) if (data[i][0] === id) { sh.getRange(i + 1, 6, 1, 2).setValues([["'" + band_(n), '']]); break; }
   bust_('Voters');
 }
 /** Approved voter name for a token, or null. Everything except me_ goes through this, so a pending claim can't act. */
