@@ -325,7 +325,7 @@
   .gd-pitch * { fill: none; stroke: var(--fg); stroke-width: 1.4; }
   .gd::after { content: ''; position: absolute; top: -50%; bottom: -50%; width: 30%; left: -40%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.05), transparent); transform: skewX(-18deg); animation: gdsweep 6s ease-in-out infinite; pointer-events: none; }
   @keyframes gdsweep { 0%, 55% { left: -40%; } 100% { left: 130%; } }
-  .gd > * { position: relative; }
+  .gd > *:not(.gd-pitch) { position: relative; }
   .gd-top { display: flex; align-items: center; gap: 8px; }
   .gd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 0 rgba(255,255,255,.6); animation: gdpulse 1.8s infinite; }
   .gd[data-phase="post"] .gd-dot { animation: none; opacity: .5; }
@@ -1793,11 +1793,15 @@ function gameSquad(g) {
   if (s) s.players.forEach(p => names.add(p.name.toLowerCase()));
   return ALL_PLAYERS.filter(p => names.has(p.name.toLowerCase()));
 }
-function storylines(squad) {
+function storylines(squad, g) {
+  // If the sheet already has tonight's column, its numbers include tonight; otherwise tonight would be the next one.
+  const si = SESSIONS.findIndex(x => x.date && new Intl.DateTimeFormat('en-CA', { timeZone: NBO }).format(x.date) === g.date);
+  const tonight = p => si >= 0 && p.attendance[si] === 1;
   const pool = squad.length ? squad : ALL_PLAYERS.filter(p => p.gamesThisYear > 0), out = [];
-  pool.forEach(p => { const nx = p.count + 1; if (nx % 50 === 0 || nx === 25) out.push([nx >= 100 ? 3 : 2, `<b>${esc(p.name.split(' ')[0])}</b> · game ${nx} tonight`]); });
-  pool.filter(p => p.currentStreak >= 6).sort((a, b) => b.currentStreak - a.currentStreak).slice(0, 2).forEach(p => out.push([1, `<b>${esc(p.name.split(' ')[0])}</b> · ${p.currentStreak} in a row on the line`]));
-  const debut = squad.filter(p => p.count <= 1); if (debut.length) out.push([1, `<b>${esc(debut.map(p => p.name.split(' ')[0]).join(', '))}</b> · first game`]);
+  pool.forEach(p => { const nx = tonight(p) ? p.count : p.count + 1; if (nx % 50 === 0 || nx === 25) out.push([nx >= 100 ? 3 : 2, `<b>${esc(p.name)}</b> · game ${nx} tonight`]); });
+  pool.map(p => [p, tonight(p) ? p.currentStreak : p.currentStreak + 1]).filter(x => x[1] >= 6).sort((a, b) => b[1] - a[1]).slice(0, 2)
+    .forEach(([p, n]) => out.push([1, `<b>${esc(p.name)}</b> · ${n} in a row tonight`]));
+  const debut = squad.filter(p => tonight(p) ? p.count === 1 : p.count === 0); if (debut.length) out.push([2, `<b>${esc(debut.map(p => p.name).join(', '))}</b> · first game`]);
   return out.sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => `<span>${x[1]}</span>`).join('');
 }
 function renderGameday() {
@@ -1827,7 +1831,7 @@ function renderGameday() {
     <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
     ${gate}
     <div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' ? 'played' : 'in tonight'}</span><span class="sp"></span>${checkBtn}</div>
-    ${ph !== 'post' ? `<div class="gd-story">${storylines(squad)}</div>` : boardHtml}`;
+    ${ph !== 'post' ? `<div class="gd-story">${storylines(squad, g)}</div>` : boardHtml}`;
 }
 function copyGate(btn) { const code = btn.querySelector('b').textContent, small = btn.querySelector('small'); const done = () => { small.textContent = 'Copied'; setTimeout(() => small.textContent = 'Tap to copy', 1500); }; if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(done); else done(); }
 async function toggleIn(isIn) {
