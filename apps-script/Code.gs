@@ -150,7 +150,7 @@ function me_(token) {
   const seeds = seeds_(), hide = hiddenNames_();
   if (!isAdmin_(name)) hide.forEach(function (h) { Object.keys(seeds).forEach(function (n) { if (n.toLowerCase() === h) delete seeds[n]; }); });   // a hidden player's starting point is not sent to voters
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name) };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name) };
 }
 
 function rate_(body) {
@@ -163,8 +163,8 @@ function rate_(body) {
   const me = byName[name.toLowerCase()], tp = byName[target.toLowerCase()];
   if (!tp) return { ok: false, error: 'Unknown player.' };
   if (tp === me) return { ok: false, error: 'You can’t rate yourself.' };
-  const shared = shared_(me, tp);
-  if (shared < MIN_SHARED) return { ok: false, error: 'You haven’t played enough sessions with ' + tp.name + '.' };
+  const shared = shared_(me, tp), anyone = voteAll_(name);
+  if (shared < MIN_SHARED && !anyone) return { ok: false, error: 'You haven’t played enough sessions with ' + tp.name + '.' };
   const stats = STATS.map(function (k) { const v = Math.round(Number((body.stats || {})[k])); if (isNaN(v)) throw new Error('Missing ' + k); return Math.max(RMIN, Math.min(RMAX, v)); });
   const comment = String(body.comment || '').replace(/\s+/g, ' ').trim().slice(0, 280);
   const traits = cleanTraits_(body.traits);
@@ -402,6 +402,12 @@ function hiddenNames_() {
   const s = settings_();
   const raw = Object.prototype.hasOwnProperty.call(s, 'hide_stats') ? s.hide_stats : (s.admin_name || 'Raji');
   return String(raw || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+}
+/** Players allowed to rate anyone, whatever nights they shared: Settings → vote_all, comma-separated. If the row is missing it defaults to Nirav, whose games mostly predate the tracked sessions. */
+function voteAll_(name) {
+  const s = settings_();
+  const raw = Object.prototype.hasOwnProperty.call(s, 'vote_all') ? s.vote_all : 'Nirav';
+  return String(raw || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean).indexOf(String(name || '').toLowerCase()) >= 0;
 }
 function isAdmin_(name) { return String(name || '').toLowerCase() === String(settings_().admin_name || 'Raji').toLowerCase(); }
 function cleanTraits_(arr) { const seen = {}; return (Array.isArray(arr) ? arr : []).map(function (t) { return String(t).toUpperCase(); }).filter(function (t) { if (TRAITS.indexOf(t) < 0 || seen[t]) return false; seen[t] = 1; return true; }).slice(0, MAX_TRAITS); }

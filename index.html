@@ -192,7 +192,11 @@
   .deck .peek1 .card, .deck .peek2 .card { height: 100%; }
   .deck .peek1 { z-index: 2; transform: translateY(-15px) scale(.95); opacity: .5; filter: saturate(.6); }
   .deck .peek2 { z-index: 1; transform: translateY(-30px) scale(.9); opacity: .25; filter: saturate(.4); }
-  .deck-grid .b-nav { position: sticky; bottom: 0; margin-top: 12px; padding: 12px 0 14px; background: linear-gradient(180deg, transparent, var(--bg) 30%); }
+  .deck-grid .b-nav { position: sticky; bottom: 0; margin-top: 12px; padding: 10px 0 14px; background: var(--bg); border-top: 1px solid var(--line); }
+  .deck-grid .b-nav .btn.ghost { max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lv-row.done { border-color: var(--line-2); }
+  .lv-row.flash { animation: rowflash 1.2s ease; }
+  @keyframes rowflash { 0%, 60% { border-color: var(--fg); box-shadow: 0 0 0 2px rgba(255,255,255,.25); } 100% { box-shadow: none; } }
   .deck .cur.enter { animation: deck-in .36s var(--ease); }
   .deck .cur.enter-r { animation: deck-in-r .36s var(--ease); }
   .deck .cur.leave-l { animation: deck-out-l .3s var(--ease) forwards; }
@@ -1123,7 +1127,8 @@ const sharedCount = (a,b) => { let s=0; for (let i=0;i<a.attendance.length;i++) 
 const avgOf = stats => Math.round(STAT_KEYS.reduce((a,k)=>a+stats[k],0)/STAT_KEYS.length);
 /* A player's own rating stays hidden on their device until they have rated 10 teammates (or everyone they can, if fewer). */
 const SELF_NEED = 10;
-function selfQueue() { if (!VOTER || !VOTER.ok || VOTER.pending) return []; const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()); return me ? ALL_PLAYERS.filter(p => p !== me && sharedCount(me, p) >= (VOTER.minShared || 3)) : []; }
+const canRate = (me, p, v = VOTER) => p !== me && (!!(v && v.voteAll) || sharedCount(me, p) >= ((v && v.minShared) || 3));
+function selfQueue() { if (!VOTER || !VOTER.ok || VOTER.pending) return []; const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()); return me ? ALL_PLAYERS.filter(p => canRate(me, p)) : []; }
 function selfNeed() { return Math.min(SELF_NEED, selfQueue().length); }
 function selfRated() { return VOTER && VOTER.mine ? Object.keys(VOTER.mine).length : 0; }
 function selfLocked(p) { return !!(VOTER && VOTER.ok && !VOTER.pending && !VOTER.isAdmin && p.name.toLowerCase() === VOTER.name.toLowerCase() && selfRated() < selfNeed()); }
@@ -1285,7 +1290,7 @@ async function openBallot() {
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   if (!me) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="error">You are not on the attendance sheet yet.</div></div></div>`; return; }
   if (VOTER.pending) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="label">Waiting for Raji</div><div class="b-title" style="margin-top:8px">Claim sent.</div><div class="b-copy">The ballot opens once Raji approves your claim.</div><div class="b-actions"><button class="btn" onclick="closeBallotDirect()">Back</button></div></div></div>`; return; }
-  const queue = ALL_PLAYERS.filter(p => p !== me && sharedCount(me,p) >= (VOTER.minShared || 3)).sort((a,b) => sharedCount(me,b)-sharedCount(me,a) || b.count-a.count);
+  const queue = ALL_PLAYERS.filter(p => canRate(me, p)).sort((a,b) => sharedCount(me,b)-sharedCount(me,a) || b.count-a.count);
   BALLOT = { me, queue, idx: 0 };
   renderBallotIntro();
 }
@@ -1306,7 +1311,7 @@ function renderBallotIntro() {
   document.getElementById('b-body').innerHTML = ballotTop(`Ratings · ${esc(VOTER.window)}`) + `<div class="bt-body"><div class="bt-inner narrow">
     <div class="label">${VOTER.open ? 'Window open' : 'Window closed'}</div>
     <div class="b-title" style="margin-top:8px">${esc(me.name)}</div>
-    <div class="b-copy">You have shared the pitch with <b>${queue.length} teammates</b> at least ${VOTER.minShared || 3} times, so those are the ones you can rate. Each comes up with a suggested level for six things. Tap a level, pick up to three traits, add a word if you like. Only they will read the word.<br><br><b>Ratings are anonymous.</b> Nobody, including the admin, can see who gave what. You can come back and change anything while the window is open.</div>
+    <div class="b-copy">${VOTER.voteAll ? `You can rate <b>all ${queue.length} teammates</b>.` : `You have shared the pitch with <b>${queue.length} teammates</b> at least ${VOTER.minShared || 3} times, so those are the ones you can rate.`} Each comes up with a suggested level for six things. Tap a level, pick up to three traits, add a word if you like. Only they will read the word.<br><br><b>Ratings are anonymous.</b> Nobody, including the admin, can see who gave what. You can come back and change anything while the window is open.</div>
     <div class="b-actions">
       ${VOTER.open ? `<button class="btn" onclick="gotoBallot(${next<0?0:next})">${done ? `Continue · ${done} of ${queue.length} done` : 'Start'}</button>` : `<span class="error">The window is closed. Ratings are frozen until the next one opens.</span>`}
       ${done ? `<button class="btn ghost" onclick="renderBallotDone()">Review my ratings</button>` : ''}
@@ -1346,7 +1351,19 @@ function setLevel(ns, k, i) {
   if (ns === 'b') { paintCardPreview(); paintConfirmState(); } else paintSelfPreview();
 }
 const ballotComplete = () => STAT_KEYS.every(k => BALLOT.values[k] != null);
-function paintConfirmState() { const btn = document.getElementById('b-confirm'); if (!btn) return; const left = STAT_KEYS.filter(k => BALLOT.values[k] == null).length; btn.disabled = left > 0; btn.textContent = left ? `${left} to pick` : (VOTER.mine[BALLOT.queue[BALLOT.idx].name] ? 'Update' : 'Looks right'); }
+function paintConfirmState() {
+  const btn = document.getElementById('b-confirm'); if (!btn) return;
+  const left = STAT_KEYS.filter(k => BALLOT.values[k] == null);
+  btn.disabled = false; btn.classList.toggle('ghost', left.length > 0);
+  btn.textContent = left.length ? `Pick ${left.map(k => STAT_NAMES[k]).join(', ')}` : (VOTER.mine[BALLOT.queue[BALLOT.idx].name] ? 'Update' : 'Looks right');
+  STAT_KEYS.forEach(k => { const row = document.getElementById(`b-seg-${k}`)?.closest('.lv-row'); if (row) row.classList.toggle('done', BALLOT.values[k] != null); });
+}
+function showMissing() {
+  const k = STAT_KEYS.find(k => BALLOT.values[k] == null); if (!k) return;
+  const row = document.getElementById(`b-seg-${k}`).closest('.lv-row');
+  row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash');
+}
 function toggleTrait(ns, t) {
   const st = stateFor(ns); const i = st.traits.indexOf(t);
   if (i >= 0) st.traits.splice(i,1); else if (st.traits.length < MAX_TRAITS) st.traits.push(t);
@@ -1370,10 +1387,10 @@ function renderBallotCard(dir) {
         <div class="label" style="margin-top:16px" id="b-traits-l">Traits · <span>${BALLOT.traits.length}</span> of ${MAX_TRAITS} chosen</div>
         <div id="b-traits" class="compact">${traitGridHtml('b', BALLOT.traits)}</div>
         <textarea class="b-comment" id="b-comment" maxlength="280" placeholder="A word for ${esc(p.name.split(' ')[0])}? Optional, private to them.">${esc(BALLOT.comment || '')}</textarea>
-        <div class="b-nav">${idx>0 ? `<button class="btn ghost" onclick="slideTo(${idx-1}, -1)">Back</button>` : ''}<button class="btn ghost" onclick="slideTo(${idx+1}, 1)">Skip</button><span class="sp"></span><span class="saved" id="b-saved">Saved</span><button class="btn" id="b-confirm" onclick="confirmRating()" ${STAT_KEYS.every(k => values[k] != null) ? '' : 'disabled'}>${STAT_KEYS.every(k => values[k] != null) ? (VOTER.mine[p.name] ? 'Update' : 'Looks right') : `${STAT_KEYS.filter(k => values[k] == null).length} to pick`}</button></div>
+        <div class="b-nav">${idx>0 ? `<button class="btn ghost" onclick="slideTo(${idx-1}, -1)">Back</button>` : ''}<button class="btn ghost" onclick="slideTo(${idx+1}, 1)">Skip</button><span class="sp"></span><span class="saved" id="b-saved">Saved</span><button class="btn" id="b-confirm" onclick="confirmRating()">Looks right</button></div>
       </div>
     </div></div></div>`;
-  paintCardPreview(); document.getElementById('bt-body').scrollTop = 0;
+  paintCardPreview(); paintConfirmState(); document.getElementById('bt-body').scrollTop = 0;
   const deck = document.getElementById('deck'); let x0 = null, y0 = null;
   deck.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   deck.addEventListener('touchend', e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx)) return; if (dx < 0) slideTo(BALLOT.idx+1, 1); else if (BALLOT.idx > 0) slideTo(BALLOT.idx-1, -1); }, { passive: true });
@@ -1405,7 +1422,7 @@ async function pushSave(name, payload, attempt = 0) {
 function retrySaves() { for (const [name, payload] of Object.entries(SAVES.failed)) { VOTER.mine[name] = { stats: payload.stats, comment: payload.comment, traits: payload.traits }; pushSave(name, payload); } }
 addEventListener('beforeunload', e => { if (Object.keys(SAVES.pending).length) { e.preventDefault(); e.returnValue = ''; } });
 function confirmRating() {
-  if (!ballotComplete()) { paintConfirmState(); return; }
+  if (!ballotComplete()) { paintConfirmState(); showMissing(); return; }
   const { queue, idx, values } = BALLOT, p = queue[idx], btn = document.getElementById('b-confirm');
   btn.disabled = true; btn.textContent = 'Saved';
   const comment = document.getElementById('b-comment').value.trim();
@@ -1464,7 +1481,7 @@ async function renderYou() {
     return;
   }
   const r = RATINGS && RATINGS.ok ? (RATINGS.players[me.name] || { n:0 }) : { n:0 };
-  const queue = ALL_PLAYERS.filter(p => p !== me && sharedCount(me,p) >= (v.minShared || 3));
+  const queue = ALL_PLAYERS.filter(p => canRate(me, p, v));
   const done = queue.filter(p => v.mine[p.name]).length;
   const known = me.balance !== null && !isNaN(me.balance);
   const balStatus = !known ? 'Not recorded' : me.balance < 0 ? 'Owing to the pot' : me.balance > 0 ? 'In credit' : 'Settled';
