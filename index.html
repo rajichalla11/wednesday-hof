@@ -1172,6 +1172,7 @@ function fetchMe() {
     const before = norm(VOTER);
     ME_PROMISE = api({ action:'me', t: TOKEN }).catch(e => ({ ok:false, error: e.message })).then(v => {
       ME_PROMISE = null; VOTER = v;
+      if (!v.ok && /recognised/i.test(v.error || '') && TOKEN) { setTimeout(deadLink, 0); return v; }   // the claim was reset: forget it and let them pick their card again
       if (v.ok && v.name) { try { localStorage.setItem('w910_name', v.name); } catch (_) {} writeCache('w910_me', v); } else if (!/^Failed to fetch|NetworkError|Load failed/.test(v.error || '')) writeCache('w910_me', null);
       if (before && before !== norm(v) && BOOTED && TOKEN && !YOU_WAITING) { renderYou(); renderBalances(); }
       if (BOOTED && ALL_PLAYERS.length) renderPlayers();   // the viewer's own card may lock or unlock
@@ -1210,6 +1211,17 @@ async function renderCards() {
 
 /* ── claim your link ── */
 const myLink = () => `${location.origin}${location.pathname}#vote/${TOKEN}`;
+/* A link the backend no longer knows (the admin freed the name, or the player tapped Not me on another device):
+   forget it on this device and open the card picker with a short note, instead of leaving every page showing an error. */
+let DEAD_LINK_NOTE = '';
+function deadLink() {
+  const name = (() => { try { return localStorage.getItem('w910_name') || ''; } catch (_) { return ''; } })();
+  try { ['w910_token', 'w910_name', 'w910_me'].forEach(k => localStorage.removeItem(k)); sessionStorage.removeItem('w910_claim_later'); } catch (_) {}
+  TOKEN = ''; VOTER = null; SELF = null;
+  DEAD_LINK_NOTE = `${name ? `Your card${name ? ` (${name})` : ''}` : 'Your card'} was reset, so this phone has forgotten it. Pick it again below.`;
+  closeBallotDirect(); renderPlayers(); renderBalances(); renderYou(); showTab('hall', false);
+  openClaim();
+}
 let CLAIM_PICK = '';
 function openClaim() {
   const names = [...ALL_PLAYERS].sort((a,b)=>a.name.localeCompare(b.name));
@@ -1219,6 +1231,7 @@ function openClaim() {
   document.getElementById('c-body').innerHTML = `
     <div class="label">This is you</div>
     <div class="b-title" style="margin-top:8px">Find your card</div>
+    ${DEAD_LINK_NOTE ? `<div class="error" style="margin-top:12px;font-size:13px">${esc(DEAD_LINK_NOTE)}</div>` : ''}
     <div class="b-copy">Tap your name and this device remembers you: your balance, the ballot and your photo. Picked the wrong one? There is a Not me button on your page.</div>
     <input class="pick-search" id="pick-q" placeholder="Search names" autocomplete="off" oninput="filterPick(this.value)">
     <div class="pick-grid" id="pick-grid">${names.map(p => { const t = taken.has(p.name.toLowerCase()); return `<button type="button" class="pick${t?' taken':''}" data-name="${esc(p.name)}" onclick="pickName(this)">${photo(p,'pick-ph')}<b>${esc(p.name)}</b><span>${t ? 'Taken' : `${p.count} game${p.count===1?'':'s'}`}</span></button>`; }).join('')}</div>
@@ -1241,7 +1254,7 @@ async function submitClaim() {
   btn.disabled = true; btn.textContent = 'Sending…'; msg.textContent = ''; msg.classList.remove('show');
   let res; try { res = await api(null, { action:'claim', name, code }); } catch (err) { res = { ok:false, error: err.message }; }
   if (!res.ok) { btn.disabled = false; btn.textContent = `That's me · ${name.split(' ')[0]}`; msg.textContent = res.error || 'Could not claim.'; msg.style.color = 'var(--neg)'; msg.classList.add('show'); return; }
-  TOKEN = res.token; try { localStorage.setItem('w910_token', TOKEN); localStorage.setItem('w910_name', res.name); } catch (_) {}
+  TOKEN = res.token; DEAD_LINK_NOTE = ''; try { localStorage.setItem('w910_token', TOKEN); localStorage.setItem('w910_name', res.name); } catch (_) {}
   VOTER = null;
   document.getElementById('c-body').innerHTML = `
     <div class="label">This is you</div>
