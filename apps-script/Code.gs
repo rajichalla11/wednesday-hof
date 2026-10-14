@@ -183,7 +183,7 @@ function me_(token) {
   const b = id2_(token), b3 = id3_(token);
   tab_('Votes').forEach(function (r) {
     if (r[0] !== win) return;
-    if (r[1] === b || r[1] === b3) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[4 + i]); }); mine[r[2]] = { stats: st, comment: r[4 + STATS.length] || '', traits: String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean), locked: r[1] === b }; }   // locked: made anonymously before names were kept, so it stays as it is
+    if (r[1] === b || r[1] === b3) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[4 + i]); }); mine[r[2]] = { stats: st, comment: r[4 + STATS.length] || '', traits: String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean), anon: r[1] === b }; }   // anon: made before names were kept; changing it saves it with the voter's name
     if (r[2] === name && r[4 + STATS.length]) feedback.push(String(r[4 + STATS.length]));
   });
   voterStats_(token);   // keeps the admin's "rated" count current
@@ -213,7 +213,6 @@ function rate_(body) {
   const traits = cleanTraits_(body.traits);
   const w = shared >= 20 ? 1 : shared >= 8 ? 0.8 : 0.6;   // familiarity, bucketed so it can't identify the voter
   const win = props_().getProperty('window'), b = id3_(body.t), old = id2_(body.t);
-  if (tab_('Votes').some(function (r) { return r[0] === win && r[1] === old && r[2] === tp.name; })) return { ok: false, error: 'You rated ' + tp.name + ' anonymously before names were kept. That rating stays as it is.' };
 
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
@@ -221,6 +220,7 @@ function rate_(body) {
     if (data[0].length < 4 + STATS.length + 4 || data[0][4 + STATS.length + 3] !== 'voter') sh.getRange(1, 4 + STATS.length + 4).setValue('voter');
     let rowIdx = -1;
     for (let i = 1; i < data.length; i++) if (data[i][0] === win && data[i][1] === b && data[i][2] === tp.name) { rowIdx = i + 1; break; }
+    if (rowIdx < 0) for (let i = 1; i < data.length; i++) if (data[i][0] === win && data[i][1] === old && data[i][2] === tp.name) { rowIdx = i + 1; break; }   // an earlier anonymous rating of the same player is replaced by the named one (the site warns the voter first)
     const row = [win, b, tp.name, w].concat(stats, [comment, today_(), traits.join(','), name]);   // name: admin only, never in public results   // the day only: an exact time could be matched against who opened the site
     if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]); else insertRandom_(sh, row);
   } finally { lock.releaseLock(); }
@@ -231,9 +231,9 @@ function rate_(body) {
 function unrate_(body) {
   const name = voterName_(body.t);
   if (!name) return { ok: false, error: 'This link isn’t recognised.' };
-  const win = props_().getProperty('window'), b = id3_(body.t), target = String(body.target || '');   // only named votes can be withdrawn; earlier anonymous ones stay
+  const win = props_().getProperty('window'), b = id3_(body.t), old = id2_(body.t), target = String(body.target || '');
   const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
-  for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === win && data[i][1] === b && data[i][2] === target) sh.deleteRow(i + 1);
+  for (let i = data.length - 1; i >= 1; i--) if (data[i][0] === win && (data[i][1] === b || data[i][1] === old) && data[i][2] === target) sh.deleteRow(i + 1);
   bust_('Votes');
   return { ok: true };
 }
