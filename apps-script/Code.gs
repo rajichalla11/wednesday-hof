@@ -29,6 +29,8 @@ const SESSION_START_COL = 8;
 // Starting points by position (PAC SHO PAS DRI DEF PHY) — overwrite in the Seeds tab
 const SEED_BY_POS = { attack:[72,74,64,70,52,64], midfield:[68,64,74,70,64,66], defense:[66,54,64,58,74,72], other:[65,65,65,65,65,65] };
 function posClass_(pos) { const p = String(pos || '').toLowerCase(); return p.indexOf('attack') >= 0 ? 'attack' : (p.indexOf('defen') >= 0) ? 'defense' : p.indexOf('mid') >= 0 ? 'midfield' : 'other'; }
+/* Sheet rows that are the same person: alias (lower case) → the name used everywhere. Keep in step with ALIASES in index.html. */
+const ALIASES_ = { 'rj': 'Rahul', 'sahil m.': 'Sahil M' };
 const SKIP = ['', 'player', 'games played', 'amount paid', 'balance', 'owing from previous sessions', '+1s', 'krish p', 'images', 'postion', 'position', 'preferred foot'];
 
 /* ───────── admin: run these from the editor ───────── */
@@ -632,9 +634,9 @@ function players_() {
   for (let i = SESSION_START_COL; i < rows[hdr].length; i++) { const h = (rows[hdr][i] || '').trim(); if (h && NON.indexOf(h.toLowerCase()) < 0) cols.push(i); }
   const seen = {}, out = [];
   rows.slice(hdr + 1).forEach(function (r) {
-    const name = (r[1] || '').trim(), count = parseInt((r[0] || '').replace(/,/g, ''), 10);
-    if (!name || isNaN(count) || count <= 0) return;
-    const n = name.toLowerCase();
+    const raw = (r[1] || '').trim(), count = parseInt((r[0] || '').replace(/,/g, ''), 10);
+    if (!raw || isNaN(count) || count <= 0) return;
+    const name = ALIASES_[raw.toLowerCase()] || raw, n = name.toLowerCase();   // rows that are the same person fold into one (attendance OR'd, counts added)
     if (SKIP.indexOf(n) >= 0 || /^\d/.test(n) || n.length < 2) return;
     const att = cols.map(function (i) { const v = parseFloat((r[i] || '').replace(/,/g, '')); return (!isNaN(v) && v > 0) ? 1 : 0; });
     if (seen[n]) { const m = seen[n]; m.att = m.att.map(function (v, i) { return v | att[i]; }); m.count += count; return; }   // same name twice = one person

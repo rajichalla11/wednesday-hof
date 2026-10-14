@@ -351,6 +351,39 @@
   .rt { min-width: 38px; text-align: center; font-weight: 700; font-size: 13px; padding: 2px 6px; border-radius: 5px; background: var(--surface-3); border: 1px solid var(--line-2); }
   .rt.hi { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   .sheet.match { max-width: 560px; }
+  /* admin game-day form */
+  .gp { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+  .gp-step { padding: 16px; border-bottom: 1px solid var(--line); }
+  .gp-h { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 12px; flex-wrap: wrap; }
+  .gp-h small { flex-basis: 100%; font-size: 12px; font-weight: 400; color: var(--fg-3); margin-left: 28px; margin-top: -4px; }
+  .gp-n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; background: var(--fg); color: var(--bg); flex-shrink: 0; }
+  .gp-when { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .gp-f { display: grid; gap: 6px; min-width: 0; }
+  .gp-f > span { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); }
+  .gp-f input, .gp-score input { box-sizing: border-box; width: 100%; min-width: 0; height: 42px; padding: 0 12px; background: var(--bg); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; font-size: 16px; color-scheme: dark; -webkit-appearance: none; appearance: none; }
+  .gp-f input:focus, .gp-score input:focus, .gp-ta:focus { outline: none; border-color: var(--fg-3); }
+  .gp-gate input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; text-transform: uppercase; }
+  .gp-ta { box-sizing: border-box; width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; min-height: 150px; }
+  .ga-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; } .ga-preview:empty { display: none; }
+  .gp-col { display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; min-width: 0; }
+  .gp-col b { display: flex; align-items: center; gap: 6px; flex-basis: 100%; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-2); margin-bottom: 2px; }
+  .gp-col span { font-size: 12px; padding: 3px 9px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--bg); white-space: nowrap; }
+  .gp-col span.guest { border-style: dashed; color: var(--fg-3); }
+  .gd-shirt.b { background: #000; border-color: var(--fg-3); } .gd-shirt.w { background: #f4f4f2; border-color: #f4f4f2; }
+  .gp-score { display: grid; grid-template-columns: 1fr 64px auto 64px 1fr; gap: 10px; align-items: center; max-width: 420px; }
+  .gp-score input { text-align: center; font-size: 22px; font-weight: 700; padding: 0; }
+  .gp-side { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-2); }
+  .gp-side:first-child { justify-content: flex-end; }
+  .gp-dash { color: var(--fg-3); font-weight: 700; }
+  .gp-foot { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface-2); }
+  .gp-foot .btn.link { font-size: 12px; padding: 0; } .gp-foot #gd-admin-st { flex: 1; font-size: 12px; text-align: right; }
+  @media (max-width: 600px) {
+    .gp-step { padding: 14px 12px; }
+    .gp-when { grid-template-columns: 1fr 1fr; } .gp-gate { grid-column: 1 / -1; }
+    .ga-preview { gap: 10px; }
+    .gp-score { grid-template-columns: 1fr 56px auto 56px 1fr; gap: 8px; max-width: none; }
+    .gp-foot { flex-wrap: wrap; padding: 12px; } .gp-foot .btn:not(.link) { order: -1; width: 100%; justify-content: center; } .gp-foot #gd-admin-st { text-align: left; }
+  }
   .gd-teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; margin-top: 14px; align-items: start; }
   .gd-vs { align-self: center; font-size: 12px; color: var(--fg-3); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding-top: 4px; }
   .gd-team { display: grid; gap: 5px; min-width: 0; }
@@ -364,11 +397,6 @@
   .gd-pl .avatar { width: 22px; height: 22px; flex-shrink: 0; }
   .gd-team.white .gd-pl { flex-direction: row-reverse; text-align: right; }
   .gd-pl.me { outline: 1px solid var(--fg); font-weight: 600; }
-  .gd-paste { display: grid; gap: 6px; margin-top: 12px; font-size: 11px; color: var(--fg-3); }
-  .gd-paste textarea { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; }
-  .ga-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; font-size: 12px; }
-  .ga-preview div { display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; } .ga-preview b { flex-basis: 100%; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); }
-  .ga-preview span { padding: 2px 8px; border: 1px solid var(--line-2); border-radius: 999px; } .ga-preview span.guest { border-style: dashed; color: var(--fg-3); }
   @media (max-width: 480px) { .gd-teams { gap: 6px; } .gd-pl { font-size: 12px; padding: 4px; gap: 6px; } .gd-pl .avatar { width: 18px; height: 18px; } }
   .mr-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
   .mr-who { display: flex; align-items: center; gap: 10px; min-width: 0; } .mr-who b { font-size: 14px; } .mr-who .avatar { width: 30px; height: 30px; }
@@ -379,10 +407,7 @@
   .mr-seg button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   .mr-add { width: 100%; margin-top: 12px; padding: 11px 12px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; }
   .mr-foot { position: sticky; bottom: -28px; background: var(--bg); padding: 12px 0 4px; margin-top: 10px; display: flex; gap: 10px; align-items: center; }
-  .gd-admin { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 8px; align-items: end; }
-  .gd-admin label { display: grid; gap: 4px; font-size: 11px; color: var(--fg-3); }
-  .gd-admin input { padding: 9px 10px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; font-size: 14px; color-scheme: dark; }
-  @media (max-width: 720px) { .gd { margin-top: 12px; padding: 14px 14px 12px; } .gd-title { font-size: 24px; } .gd-count { font-size: 32px; } .gd-gate b { font-size: 22px; } .gd-admin { grid-template-columns: 1fr 1fr; } .gd-admin .btn { grid-column: 1 / -1; } }
+  @media (max-width: 720px) { .gd { margin-top: 12px; padding: 14px 14px 12px; } .gd-title { font-size: 24px; } .gd-count { font-size: 32px; } .gd-gate b { font-size: 22px; } }
   .tip { position: fixed; z-index: 200; max-width: 240px; padding: 8px 10px; background: var(--fg); color: var(--bg); border-radius: 6px; font-size: 12px; line-height: 1.4; box-shadow: 0 6px 20px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .15s, transform .15s; }
   .tip.on { opacity: 1; transform: none; }
   .tip b { display: block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; opacity: .7; }
@@ -677,7 +702,7 @@ const SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 const SESSION_START_COL = 8;
 /* Rows in the sheet that are the same person: alias (lower case) → the name shown on the site. Counts, attendance and balance are combined. */
-const ALIASES = { 'rj': 'Rahul' };
+const ALIASES = { 'rj': 'Rahul', 'sahil m.': 'Sahil M' };
 /* Founders are whoever played the very first session, plus anyone listed here (lower case) who was there but not marked on the sheet. */
 const FOUNDERS = new Set(['raj']);
 const isFounder = p => p.attendance[0] === 1 || FOUNDERS.has(p.name.toLowerCase());
@@ -1626,12 +1651,21 @@ async function renderYou() {
         </div>
       </div>
     </section>
-    ${v.isAdmin ? `<section><div class="sh"><h2>Game day</h2><span>Only you can set this · the gate code shows only to players with a claimed card</span></div>
-      <div class="gd-admin"><label>Date<input type="date" id="ga-date" value="${esc((v.game && v.game.date) || todayNbo())}"></label><label>Kick-off<input type="time" id="ga-time" value="${esc((v.game && v.game.time) || '21:00')}"></label><label>Gate code<input id="ga-gate" value="${esc((v.game && v.game.gate) || '')}" autocomplete="off" autocapitalize="characters"></label><button class="btn" onclick="saveGame(false)">Save</button></div>
-      <label class="gd-paste"><span>Teams · paste the BLACK / WHITE message from WhatsApp</span><textarea id="ga-teams" rows="7" placeholder="*BLACK        WHITE*&#10;Priyam.       Raj&#10;Aayush.       Sahil M" oninput="previewTeams()">${esc(teamsToText(v.game && v.game.teams))}</textarea></label>
-      <div id="ga-preview" class="ga-preview">${teamsPreviewHtml(v.game && v.game.teams)}</div>
-      <div class="gd-admin" style="margin-top:10px"><label>Black goals<input id="ga-sb" inputmode="numeric" value="${v.game && v.game.score ? v.game.score.black : ''}" placeholder="after the game"></label><label>White goals<input id="ga-sw" inputmode="numeric" value="${v.game && v.game.score ? v.game.score.white : ''}" placeholder="after the game"></label></div>
-      <div style="margin-top:8px;display:flex;gap:12px;align-items:center"><button class="btn link" style="font-size:12px" onclick="saveGame(true)">No game</button><span class="muted" id="gd-admin-st" style="font-size:12px"></span></div></section>
+    ${v.isAdmin ? `<section><div class="sh"><h2>Game day</h2><span>Only you see this panel · the gate code only shows to players with a claimed card</span></div>
+      <div class="gp">
+        <div class="gp-step"><div class="gp-h"><span class="gp-n">1</span>When</div>
+          <div class="gp-when">
+            <label class="gp-f"><span>Date</span><input type="date" id="ga-date" value="${esc((v.game && v.game.date) || todayNbo())}"></label>
+            <label class="gp-f"><span>Kick-off</span><input type="time" id="ga-time" value="${esc((v.game && v.game.time) || '21:00')}"></label>
+            <label class="gp-f gp-gate"><span>Gate code</span><input id="ga-gate" value="${esc((v.game && v.game.gate) || '')}" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. VK526"></label>
+          </div></div>
+        <div class="gp-step"><div class="gp-h"><span class="gp-n">2</span>Lineup<small>Paste the BLACK / WHITE message from WhatsApp as it is</small></div>
+          <textarea id="ga-teams" class="gp-ta" rows="7" spellcheck="false" placeholder="*BLACK        WHITE*&#10;Priyam.       Raj&#10;Aayush.       Sahil M" oninput="previewTeams()">${esc(teamsToText(v.game && v.game.teams))}</textarea>
+          <div id="ga-preview" class="ga-preview">${teamsPreviewHtml(v.game && v.game.teams)}</div></div>
+        <div class="gp-step"><div class="gp-h"><span class="gp-n">3</span>Result<small>After the game · leave empty until then</small></div>
+          <div class="gp-score"><span class="gp-side"><i class="gd-shirt b"></i>Black</span><input id="ga-sb" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.black : ''}" placeholder="–" aria-label="Black goals"><span class="gp-dash">–</span><input id="ga-sw" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.white : ''}" placeholder="–" aria-label="White goals"><span class="gp-side"><i class="gd-shirt w"></i>White</span></div></div>
+        <div class="gp-foot"><button class="btn link" onclick="saveGame(true)">Clear · no game</button><span class="muted" id="gd-admin-st"></span><button class="btn" onclick="saveGame(false)">Save game day</button></div>
+      </div></section>
     <section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Only you can see this · approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Starting points</h2><span>Only you can see this · what voters see as the suggested level · saves as you tap</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
@@ -1940,7 +1974,7 @@ function teamsToText(T) {
 function teamsPreviewHtml(T) {
   if (!T || !((T.black || []).length || (T.white || []).length)) return '';
   const known = n => ALL_PLAYERS.some(p => p.name === n);
-  const side = k => `<div><b>${k === 'black' ? 'Black' : 'White'} · ${(T[k] || []).length}</b>${(T[k] || []).map(n => `<span class="${known(n) ? '' : 'guest'}">${esc(n)}${known(n) ? '' : ' · guest'}</span>`).join('')}</div>`;
+  const side = k => `<div class="gp-col"><b><i class="gd-shirt ${k === 'black' ? 'b' : 'w'}"></i>${k === 'black' ? 'Black' : 'White'} · ${(T[k] || []).length}</b>${(T[k] || []).map(n => `<span class="${known(n) ? '' : 'guest'}">${esc(n)}${known(n) ? '' : ' · guest'}</span>`).join('')}</div>`;
   return side('black') + side('white');
 }
 function previewTeams() { document.getElementById('ga-preview').innerHTML = teamsPreviewHtml(parseTeams(document.getElementById('ga-teams').value)); }
