@@ -1273,7 +1273,7 @@ function paintGate() {
     const panel = document.getElementById('panel-' + id); if (!panel) return;
     panel.classList.toggle('gated', locked);
     const sc = panel.querySelector('.gate-screen'); if (!sc) return;
-    sc.innerHTML = locked ? `<div class="label">Locked</div><div class="gs-n num" style="margin-top:10px">${TOKEN ? `${done}<small> / ${need}</small>` : '0'}</div>${TOKEN ? `<span class="gb-prog"><i style="width:${pct}%"></i></span>` : ''}<p>${!TOKEN ? `Find your card and rate ${SELF_NEED} teammates to open ${id === 'timeline' ? 'the season' : id === 'wall' ? 'the Century Wall' : 'the records'}.` : `Rate ${need - done} more teammate${need - done === 1 ? '' : 's'} to open ${id === 'timeline' ? 'the season' : id === 'wall' ? 'the Century Wall' : 'the records'}. Everyone's ratings unlock at the same time.`}</p>${gateAction()}` : '';
+    sc.innerHTML = locked ? `<div class="label">Locked</div><div class="gs-n num" style="margin-top:10px">${TOKEN ? done : 0}<small> / ${need}</small></div>${TOKEN ? `<span class="gb-prog"><i style="width:${pct}%"></i></span>` : ''}<p>${!TOKEN ? `Find your card and rate ${SELF_NEED} teammates to open ${id === 'timeline' ? 'the season' : id === 'wall' ? 'the Century Wall' : 'the records'}.` : `Rate ${need - done} more teammate${need - done === 1 ? '' : 's'} to open ${id === 'timeline' ? 'the season' : id === 'wall' ? 'the Century Wall' : 'the records'}. Everyone's ratings unlock at the same time.`}</p>${gateAction()}` : '';
   });
 }
 function cardHtml(p, stats, opts = {}) {
