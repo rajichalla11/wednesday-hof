@@ -1600,7 +1600,17 @@ function setSeedValue(pi, k, raw) {
     if (res.ok && RATINGS && RATINGS.ok) { RATINGS = null; renderCards(); }
   }, 900);
 }
+/* The admin panels refresh whenever the page comes back into view (phones keep tabs open for days), at most every 20 s, or on demand. */
+let ADMIN_AT = 0;
+function refreshAdmin(force) {
+  if (!VOTER || !VOTER.isAdmin || !document.getElementById('admin-body')) return;
+  if (!force && Date.now() - ADMIN_AT < 20000) return;
+  const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()); if (me) renderAdmin(me);
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshAdmin(false); });
+addEventListener('pageshow', e => { if (e.persisted) refreshAdmin(true); });
 async function renderAdmin(me) {
+  ADMIN_AT = Date.now();
   const el = document.getElementById('admin-body'); if (!el) return;
   let a; try { a = await api({ action:'admin', t: TOKEN }); } catch (e) { a = { ok:false, error: e.message }; }
   if (!a.ok) { el.innerHTML = `<div class="error">${esc(a.error || 'Could not load')}</div>`; const se = document.getElementById('seed-body'); if (se) se.innerHTML = ''; return; }
@@ -1617,8 +1627,8 @@ async function renderAdmin(me) {
         <div><b class="num">${x.total.devices}</b><div class="label">People, all time</div><small>${x.total.opens} opens · ${x.total.mobile}% on phones</small></div></div>
       ${(() => { const seen = {}; x.names.forEach(n => seen[n.name.toLowerCase()] = n); const claims = (a.claims || []).slice().sort((p, q) => (q.rated - p.rated) || p.name.localeCompare(q.name)); const voted = claims.filter(c => c.rated > 0).length;
         const fmtD = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); };
-        return `<div class="label" style="margin:16px 0 8px">Claimed · ${claims.length} of ${ALL_PLAYERS.length} · ${voted} have voted</div>
-        <table class="claims"><thead><tr><th>Player</th><th>Claimed</th><th>Rated</th><th>Last open</th></tr></thead><tbody>${claims.map(c => { const sn = seen[c.name.toLowerCase()]; const p = ALL_PLAYERS.find(q => q.name.toLowerCase() === c.name.toLowerCase()); return `<tr class="${c.rated ? '' : 'novote'}"><td><b>${esc(c.name)}</b>${c.status === 'pending' ? ' <small>pending</small>' : ''}</td><td>${fmtD(c.claimed)}</td><td>${c.rated ? `<b>${c.rated}</b>${p ? ` <small>of ${ALL_PLAYERS.filter(q => q !== p && sharedCount(p, q) >= 3).length}</small>` : ''}` : '<span class="muted">—</span>'}</td><td>${sn ? `${ago(sn.last)}${sn.opens > 1 ? ` · ${sn.opens}×` : ''}` : '<span class="muted">not yet</span>'}</td></tr>`; }).join('')}</tbody></table>`; })()}`; } }
+        return `<div class="label" style="margin:16px 0 8px;display:flex;justify-content:space-between;gap:8px"><span>Claimed · ${claims.length} of ${ALL_PLAYERS.length} · ${voted} have voted</span><button class="btn link" style="font-size:11px;padding:0" onclick="refreshAdmin(true)">Refresh · ${new Date(ADMIN_AT).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' })}</button></div>
+        <table class="claims"><thead><tr><th>Player</th><th>Claimed</th><th>Rated</th><th>Last open</th></tr></thead><tbody>${claims.map(c => { const sn = seen[c.name.toLowerCase()]; const p = ALL_PLAYERS.find(q => q.name.toLowerCase() === c.name.toLowerCase()); return `<tr class="${c.rated ? '' : 'novote'}"><td><b>${esc(c.name)}</b>${c.status === 'pending' ? ' <small>pending</small>' : ''}</td><td>${fmtD(c.claimed)}</td><td>${c.rated ? `<b>${c.rated}</b>${p ? ` <small>of ${c.anyone ? ALL_PLAYERS.length - 1 : ALL_PLAYERS.filter(q => q !== p && sharedCount(p, q) >= 3).length}</small>` : ''}` : '<span class="muted">—</span>'}</td><td>${sn ? `${ago(sn.last)}${sn.opens > 1 ? ` · ${sn.opens}×` : ''}` : '<span class="muted">not yet</span>'}</td></tr>`; }).join('')}</tbody></table>`; })()}`; } }
   const pe = document.getElementById('pending-body');
   if (pe) { const pend = a.pending || []; document.getElementById('pending-n').textContent = pend.length ? pend.length : '';
     pe.innerHTML = pend.length ? pend.map(c => { const p = ALL_PLAYERS.find(x => x.name.toLowerCase() === c.name.toLowerCase()); return `<div class="pend"><div class="who">${p ? photo(p,'avatar') : ''}<div><b>${esc(c.name)}</b><span>${esc(c.when || '')}${p ? ` · ${p.count} games` : ''}</span></div></div><div class="acts"><button class="btn" onclick="approveClaim('${esc(c.name)}', true, this)">Approve</button><button class="btn ghost" onclick="approveClaim('${esc(c.name)}', false, this)">Not them</button></div></div>`; }).join('') : `<div class="empty">No claims waiting.</div>`; }
@@ -1684,6 +1694,7 @@ function showTab(name, updateHash = true) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-'+name));
   if (name === 'timeline') { const w = document.getElementById('tl-wrap'); if (w) w.scrollLeft = w.scrollWidth; }
+  if (name === 'you' && typeof refreshAdmin === 'function') refreshAdmin(false);
   if (updateHash) history.replaceState(null, '', name === 'hall' || name === 'you' ? location.pathname + location.search : '#'+name);
   const tabs = document.getElementById('tabs'), tab = tabs.querySelector('.tab.active');
   if (tab) tabs.scrollTo({ left: tab.offsetLeft - (tabs.clientWidth - tab.offsetWidth)/2, behavior:'smooth' });

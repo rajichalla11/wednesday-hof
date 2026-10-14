@@ -295,7 +295,7 @@ function admin_(token) {
   const win = props_().getProperty('window');
   const selfRatings = tab_('SelfRatings').filter(function (r) { return r[0] === win; }).map(function (r) { const o = rowToRating_(r, 2); o.name = String(r[1]); return o; });
   const pending = tab_('Voters').filter(function (r) { return String(r[4]) === 'pending'; }).map(function (r) { return { name: String(r[1]), when: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'd MMM, HH:mm') : '' }; });
-  const claims = tab_('Voters').filter(function (r) { return r[3]; }).map(function (r) { return { name: String(r[1]), claimed: String(r[3]), status: String(r[4] || 'approved'), rated: Number(r[5] || 0), lastVote: r[6] ? String(r[6]) : '' }; });
+  const claims = tab_('Voters').filter(function (r) { return r[3]; }).map(function (r) { return { name: String(r[1]), claimed: String(r[3]), status: String(r[4] || 'approved'), rated: Number(r[5] || 0), lastVote: r[6] ? String(r[6]) : '', anyone: voteAll_(String(r[1])) }; });
   return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims };
 }
 
