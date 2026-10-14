@@ -318,6 +318,52 @@
   .trait.on b { color: var(--fg); }
   .trait:disabled { opacity: .4; cursor: default; }
   .c-badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px 0; }
+  /* GAME DAY */
+  .gd { position: relative; overflow: hidden; margin: 18px 0 4px; border: 1px solid var(--line-2); border-radius: 12px; padding: 18px 18px 16px; background: radial-gradient(120% 140% at 100% 0%, #1b1d1c 0%, var(--surface) 55%); }
+  .gd[hidden] { display: none; }
+  .gd-pitch { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: .09; }
+  .gd-pitch * { fill: none; stroke: var(--fg); stroke-width: 1.4; }
+  .gd::after { content: ''; position: absolute; top: -50%; bottom: -50%; width: 30%; left: -40%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.05), transparent); transform: skewX(-18deg); animation: gdsweep 6s ease-in-out infinite; pointer-events: none; }
+  @keyframes gdsweep { 0%, 55% { left: -40%; } 100% { left: 130%; } }
+  .gd > * { position: relative; }
+  .gd-top { display: flex; align-items: center; gap: 8px; }
+  .gd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 0 rgba(255,255,255,.6); animation: gdpulse 1.8s infinite; }
+  .gd[data-phase="post"] .gd-dot { animation: none; opacity: .5; }
+  @keyframes gdpulse { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,.55); } 70% { box-shadow: 0 0 0 9px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+  .gd-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+  .gd-title { font-size: 30px; font-weight: 800; letter-spacing: -.02em; line-height: 1; text-transform: uppercase; }
+  .gd-sub { color: var(--fg-2); font-size: 13px; margin-top: 6px; }
+  .gd-count { font-size: 40px; line-height: 1; font-weight: 700; font-variation-settings: 'wdth' 80; letter-spacing: -.01em; }
+  .gd-count small { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; margin-top: 4px; text-align: right; font-variation-settings: normal; }
+  .gd-gate { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; margin-top: 14px; padding: 12px 14px; border: 1px dashed var(--fg-3); border-radius: 8px; background: rgba(0,0,0,.25); text-align: left; }
+  .gd-gate .label { display: block; } .gd-gate b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 26px; letter-spacing: .18em; display: block; margin-top: 2px; }
+  .gd-gate small { font-size: 11px; color: var(--fg-3); white-space: nowrap; }
+  .gd-gate.locked b { filter: blur(6px); user-select: none; }
+  .gd-squad { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .gd-faces { display: flex; } .gd-faces .avatar { width: 26px; height: 26px; margin-left: -7px; border: 2px solid var(--surface); } .gd-faces .avatar:first-child { margin-left: 0; }
+  .gd-squad .n { font-size: 13px; color: var(--fg-2); } .gd-squad .n b { color: var(--fg); }
+  .gd-squad .sp { flex: 1; }
+  .gd-story { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .gd-story span { font-size: 11px; padding: 4px 9px; border: 1px solid var(--line-2); border-radius: 999px; color: var(--fg-2); background: rgba(0,0,0,.2); } .gd-story b { color: var(--fg); font-weight: 600; }
+  .gd-board { margin-top: 14px; display: grid; gap: 4px; }
+  .gd-board .r { display: flex; align-items: center; gap: 10px; font-size: 13px; } .gd-board .r .avatar { width: 22px; height: 22px; }
+  .gd-board .r .nm { flex: 1; } .gd-board .r i { font-style: normal; font-size: 11px; color: var(--fg-3); }
+  .rt { min-width: 38px; text-align: center; font-weight: 700; font-size: 13px; padding: 2px 6px; border-radius: 5px; background: var(--surface-3); border: 1px solid var(--line-2); }
+  .rt.hi { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .sheet.match { max-width: 560px; }
+  .mr-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .mr-who { display: flex; align-items: center; gap: 10px; min-width: 0; } .mr-who b { font-size: 14px; } .mr-who .avatar { width: 30px; height: 30px; }
+  .mr-star { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-2); font-size: 16px; color: var(--fg-3); }
+  .mr-star.on { background: linear-gradient(135deg, #fff2c2, #dcae3f 55%, #7a5612); color: #1a1408; border-color: #dcae3f; }
+  .mr-seg { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .mr-seg button { height: 38px; border: 1px solid var(--line-2); border-radius: 6px; font-weight: 700; font-size: 14px; color: var(--fg-2); }
+  .mr-seg button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .mr-add { width: 100%; margin-top: 12px; padding: 11px 12px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; }
+  .mr-foot { position: sticky; bottom: -28px; background: var(--bg); padding: 12px 0 4px; margin-top: 10px; display: flex; gap: 10px; align-items: center; }
+  .gd-admin { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 8px; align-items: end; }
+  .gd-admin label { display: grid; gap: 4px; font-size: 11px; color: var(--fg-3); }
+  .gd-admin input { padding: 9px 10px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; font-size: 14px; color-scheme: dark; }
+  @media (max-width: 720px) { .gd { margin-top: 12px; padding: 14px 14px 12px; } .gd-title { font-size: 24px; } .gd-count { font-size: 32px; } .gd-gate b { font-size: 22px; } .gd-admin { grid-template-columns: 1fr 1fr; } .gd-admin .btn { grid-column: 1 / -1; } }
   .tip { position: fixed; z-index: 200; max-width: 240px; padding: 8px 10px; background: var(--fg); color: var(--bg); border-radius: 6px; font-size: 12px; line-height: 1.4; box-shadow: 0 6px 20px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .15s, transform .15s; }
   .tip.on { opacity: 1; transform: none; }
   .tip b { display: block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; opacity: .7; }
@@ -508,6 +554,8 @@
     </div>
   </nav>
 
+  <section class="gd" id="gameday" hidden></section>
+
   <div class="head">
     <h1>Hall of Fame<small id="h1-sub">Loading the sheet…</small></h1>
     <div class="last" id="last-session"></div>
@@ -572,6 +620,12 @@
   <div class="sheet ballot" id="ballot">
     <div class="controls"><button class="ctl" onclick="closeBallotDirect()" title="Close (Esc)">✕</button></div>
     <div id="b-body"></div>
+  </div>
+</div>
+<div class="overlay" id="match-overlay" onclick="if (event.target === this) closeMatch()">
+  <div class="sheet match" id="match">
+    <div class="controls"><button class="ctl" onclick="closeMatch()" title="Close (Esc)">✕</button></div>
+    <div id="m-body"></div>
   </div>
 </div>
 <div class="overlay" id="claim-overlay" onclick="closeClaim(event)">
@@ -907,6 +961,8 @@ function badgesFor(p) {
   if (p.maxStreak>=20) B.push({ i:'⚡', t:'Streak master', d:`Best run of ${p.maxStreak}` });
   if (p.longestGap>=20) B.push({ i:'↻', t:'The comeback', d:`Back after missing ${p.longestGap} in a row` });
   if (p.firstIdx>=0 && SESSIONS[p.firstIdx].year===THIS_YEAR) B.push({ i:'✧', t:`Debut ${THIS_YEAR}`, m:'bronze' });
+  const motm = RATINGS && RATINGS.ok && RATINGS.motm && RATINGS.motm[p.name];
+  if (motm) B.push({ i:'★', t: motm > 1 ? `Man of the match ×${motm}` : 'Man of the match', d:`Voted best on the night by teammates${motm > 1 ? `, ${motm} times` : ''}`, rare:true, m:'gold' });
   for (const r of (RECORD_HOLDERS[p.name]||[])) B.push({ i:'♛', t:r, d:`Holds the record: ${r}`, rare:true, m:'plat' });
   return B;
 }
@@ -932,7 +988,7 @@ function render() {
   document.getElementById('tab-n-hall').textContent = ALL_PLAYERS.length;
   document.getElementById('tab-n-records').textContent = RECORDS.length;
   document.getElementById('tab-n-timeline').textContent = n;
-  renderPlayers(); renderWall(); renderRecords(); renderTimeline(); renderBalances();
+  renderPlayers(); renderWall(); renderRecords(); renderTimeline(); renderBalances(); renderGameday();
   if (!BOOTED) {
     BOOTED = true;
     renderYou();   // shows your card at once from the cached name; the link check and ratings fill in behind it
@@ -1171,7 +1227,7 @@ function fetchMe() {
     const norm = v => JSON.stringify(v && v.ok ? Object.assign({}, v, { feedback: (v.feedback || []).slice().sort() }) : v);   // feedback comes back shuffled; order is not a change
     const before = norm(VOTER);
     ME_PROMISE = api({ action:'me', t: TOKEN }).catch(e => ({ ok:false, error: e.message })).then(v => {
-      ME_PROMISE = null; VOTER = v;
+      ME_PROMISE = null; VOTER = v; setTimeout(renderGameday, 0);
       if (!v.ok && /recognised/i.test(v.error || '') && TOKEN) { setTimeout(deadLink, 0); return v; }   // the claim was reset: forget it and let them pick their card again
       if (v.ok && v.name) { try { localStorage.setItem('w910_name', v.name); } catch (_) {} writeCache('w910_me', v); } else if (!/^Failed to fetch|NetworkError|Load failed/.test(v.error || '')) writeCache('w910_me', null);
       if (before && before !== norm(v) && BOOTED && TOKEN && !YOU_WAITING) { renderYou(); renderBalances(); }
@@ -1186,7 +1242,7 @@ function fetchResults() {
     if (!RATINGS) { const c = readCache('w910_results'); if (c && c.ok) RATINGS = c; }
     const before = JSON.stringify(RATINGS);
     RESULTS_PROMISE = api({ action:'results' }).catch(() => null).then(r => {
-      RESULTS_PROMISE = null; if (r) RATINGS = r; RATINGS_AT = Date.now(); markTakenTiles();
+      RESULTS_PROMISE = null; if (r) RATINGS = r; RATINGS_AT = Date.now(); markTakenTiles(); setTimeout(renderGameday, 0);
       if (r && r.ok) writeCache('w910_results', r);
       if (r && before && before !== JSON.stringify(r) && BOOTED && TOKEN && !YOU_WAITING) renderYou();
       return RATINGS;
@@ -1550,7 +1606,10 @@ async function renderYou() {
         </div>
       </div>
     </section>
-    ${v.isAdmin ? `<section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
+    ${v.isAdmin ? `<section><div class="sh"><h2>Game day</h2><span>Only you can set this · the gate code shows only to players with a claimed card</span></div>
+      <div class="gd-admin"><label>Date<input type="date" id="ga-date" value="${esc((v.game && v.game.date) || todayNbo())}"></label><label>Kick-off<input type="time" id="ga-time" value="${esc((v.game && v.game.time) || '21:00')}"></label><label>Gate code<input id="ga-gate" value="${esc((v.game && v.game.gate) || '')}" autocomplete="off" autocapitalize="characters"></label><button class="btn" onclick="saveGame(false)">Save</button></div>
+      <div style="margin-top:8px;display:flex;gap:12px;align-items:center"><button class="btn link" style="font-size:12px" onclick="saveGame(true)">No game</button><span class="muted" id="gd-admin-st" style="font-size:12px"></span></div></section>
+    <section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Only you can see this · approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Starting points</h2><span>Only you can see this · what voters see as the suggested level · saves as you tap</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
@@ -1715,8 +1774,111 @@ function renderAdminList() { const a = window.__ADMIN, el = document.getElementB
   addEventListener('scroll', hide, { passive: true }); document.querySelectorAll('.sheet').forEach(sh => sh.addEventListener('scroll', hide, { passive: true }));
 })();
 
+/* ── game day ── */
+const NBO = 'Africa/Nairobi';
+const todayNbo = () => new Intl.DateTimeFormat('en-CA', { timeZone: NBO }).format(new Date());
+function gamePhase(g) {
+  if (!g || !g.date) return null;
+  const ko = new Date(`${g.date}T${g.time || '21:00'}:00+03:00`).getTime(), now = Date.now();
+  if (now < ko) return g.date === todayNbo() ? 'pre' : null;
+  if (now < ko + 3600000) return 'live';
+  if (now < ko + 36 * 3600000) return 'post';
+  return null;
+}
+const fmtLeft = ms => { const m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60); return h ? `${h}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`; };
+const fmtKo = (g) => new Date(`${g.date}T${g.time}:00+03:00`).toLocaleTimeString('en-GB', { timeZone: NBO, hour: 'numeric', minute: '2-digit', hour12: true }).replace(':00', '').replace(' ', '');
+function gameSquad(g) {
+  const names = new Set((g.squad || []).map(n => n.toLowerCase()));
+  const s = SESSIONS.find(x => x.date && new Intl.DateTimeFormat('en-CA', { timeZone: NBO }).format(x.date) === g.date);   // once the sheet has tonight's column, those players count too
+  if (s) s.players.forEach(p => names.add(p.name.toLowerCase()));
+  return ALL_PLAYERS.filter(p => names.has(p.name.toLowerCase()));
+}
+function storylines(squad) {
+  const pool = squad.length ? squad : ALL_PLAYERS.filter(p => p.gamesThisYear > 0), out = [];
+  pool.forEach(p => { const nx = p.count + 1; if (nx % 50 === 0 || nx === 25) out.push([nx >= 100 ? 3 : 2, `<b>${esc(p.name.split(' ')[0])}</b> · game ${nx} tonight`]); });
+  pool.filter(p => p.currentStreak >= 6).sort((a, b) => b.currentStreak - a.currentStreak).slice(0, 2).forEach(p => out.push([1, `<b>${esc(p.name.split(' ')[0])}</b> · ${p.currentStreak} in a row on the line`]));
+  const debut = squad.filter(p => p.count <= 1); if (debut.length) out.push([1, `<b>${esc(debut.map(p => p.name.split(' ')[0]).join(', '))}</b> · first game`]);
+  return out.sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => `<span>${x[1]}</span>`).join('');
+}
+function renderGameday() {
+  const el = document.getElementById('gameday'); if (!el) return;
+  const g = (RATINGS && RATINGS.ok && RATINGS.game) || null, ph = gamePhase(g);
+  if (!ph || !ALL_PLAYERS.length) { el.hidden = true; return; }
+  const mine = VOTER && VOTER.ok && !VOTER.pending ? VOTER.game : null, me = VOTER && VOTER.ok ? ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()) : null;
+  const squad = gameSquad(g), inSquad = !!(me && squad.includes(me)) || !!(mine && mine.in);
+  const ko = new Date(`${g.date}T${g.time}:00+03:00`).getTime(), now = Date.now();
+  const dayLbl = new Date(`${g.date}T12:00:00+03:00`).toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short' });
+  const head = ph === 'pre' ? ['Game day', `Kick-off ${fmtKo(g)} · ${dayLbl}`, fmtLeft(ko - now), 'to kick-off']
+    : ph === 'live' ? ['Playing now', `${fmtKo(g)} kick-off · ${dayLbl}`, fmtLeft(ko + 3600000 - now), 'left']
+    : ['Full time', `${g.date === todayNbo() ? 'Tonight' : dayLbl} · rate the game`, String(g.raters || 0), g.raters === 1 ? 'player has rated' : 'players have rated'];
+  const gate = ph === 'post' ? '' : !g.hasGate ? '' : mine && mine.gate
+    ? `<button class="gd-gate" onclick="copyGate(this)"><span><span class="label">Gate code · tonight</span><b>${esc(mine.gate)}</b></span><small>Tap to copy</small></button>`
+    : `<button class="gd-gate locked" onclick="${TOKEN ? '' : 'openClaim()'}"><span><span class="label">Gate code · tonight</span><b>XXXXX</b></span><small>${TOKEN ? 'Loading…' : 'Find your card to see it'}</small></button>`;
+  const faces = squad.slice(0, 9).map(p => photo(p, 'avatar')).join('');
+  const checkBtn = !TOKEN ? '' : ph === 'post' ? (inSquad || mine ? `<button class="btn" onclick="openMatch()">${mine && Object.keys(mine.mine.ratings || {}).length ? 'Edit my match ratings' : 'Rate tonight'}</button>` : '')
+    : `<button class="btn ${inSquad ? 'ghost' : ''}" id="gd-in" onclick="toggleIn(${inSquad ? 'true' : 'false'})">${inSquad ? "I'm in ✓" : "I'm in"}</button>`;
+  const r = g.ratings || {}, board = Object.keys(r).filter(k => r[k].n >= 2).sort((a, b) => r[b].avg - r[a].avg || r[b].n - r[a].n).slice(0, 5);
+  const motmTop = Object.keys(r).sort((a, b) => r[b].motm - r[a].motm)[0];
+  const boardHtml = ph === 'post' && g.raters >= 3 && board.length ? `<div class="label" style="margin-top:16px">Match ratings so far${motmTop && r[motmTop].motm >= 2 ? ` · man of the match: ${esc(motmTop)}` : ''}</div><div class="gd-board">${board.map((k, i) => { const p = ALL_PLAYERS.find(x => x.name === k); return `<div class="r">${p ? photo(p, 'avatar') : ''}<span class="nm">${esc(k)}${k === motmTop && r[k].motm >= 2 ? ' ★' : ''}</span><i>${r[k].n} votes</i><span class="rt${i === 0 ? ' hi' : ''}">${r[k].avg.toFixed(1)}</span></div>`; }).join('')}</div>`
+    : ph === 'post' ? `<div class="gd-sub" style="margin-top:12px">Ratings show once three players have rated.</div>` : '';
+  el.dataset.phase = ph; el.hidden = false;
+  el.innerHTML = `<svg class="gd-pitch" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice"><rect x="6" y="6" width="388" height="148" rx="4"/><line x1="200" y1="6" x2="200" y2="154"/><circle cx="200" cy="80" r="26"/><rect x="6" y="44" width="40" height="72"/><rect x="354" y="44" width="40" height="72"/><rect x="6" y="62" width="14" height="36"/><rect x="380" y="62" width="14" height="36"/></svg>
+    <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span></div>
+    <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
+    ${gate}
+    <div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' ? 'played' : 'in tonight'}</span><span class="sp"></span>${checkBtn}</div>
+    ${ph !== 'post' ? `<div class="gd-story">${storylines(squad)}</div>` : boardHtml}`;
+}
+function copyGate(btn) { const code = btn.querySelector('b').textContent, small = btn.querySelector('small'); const done = () => { small.textContent = 'Copied'; setTimeout(() => small.textContent = 'Tap to copy', 1500); }; if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(done); else done(); }
+async function toggleIn(isIn) {
+  const btn = document.getElementById('gd-in'); if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  let res; try { res = await api(null, { action:'checkin', t: TOKEN, out: isIn }); } catch (e) { res = { ok:false, error: e.message }; }
+  if (res.ok && RATINGS && RATINGS.game) { RATINGS.game.squad = res.squad; if (VOTER && VOTER.game) VOTER.game.in = !isIn; }
+  renderGameday();
+}
+let MATCH = null;
+function openMatch() {
+  const g = RATINGS && RATINGS.game; if (!g || !VOTER || !VOTER.ok) return;
+  const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
+  const prev = (VOTER.game && VOTER.game.mine) || { ratings: {}, motm: '' };
+  MATCH = { ratings: Object.assign({}, prev.ratings), motm: prev.motm, list: gameSquad(g).filter(p => p !== me) };
+  Object.keys(MATCH.ratings).forEach(n => { const p = ALL_PLAYERS.find(x => x.name === n); if (p && !MATCH.list.includes(p)) MATCH.list.push(p); });
+  paintMatch(); document.getElementById('match-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
+}
+function paintMatch() {
+  const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()), n = Object.keys(MATCH.ratings).length;
+  const others = ALL_PLAYERS.filter(p => p !== me && !MATCH.list.includes(p)).sort((a, b) => a.name.localeCompare(b.name));
+  document.getElementById('m-body').innerHTML = `<div class="label">Tonight's game · anonymous</div>
+    <div class="b-title" style="margin-top:8px">Rate tonight</div>
+    <div class="b-copy">Out of 10 for how they played tonight, not in general. Tap the star for your man of the match. Nobody sees who gave what.</div>
+    ${MATCH.list.map(p => { const v = MATCH.ratings[p.name]; return `<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="Man of the match">★</button>
+      <div class="mr-seg">${[4,5,6,7,8,9,10].map(x => `<button class="${v === x ? 'on' : ''}" onclick="setMr('${esc(p.name)}', ${x})">${x}</button>`).join('')}</div></div>`; }).join('') || '<div class="empty" style="margin-top:14px">Nobody has checked in yet. Add who played below.</div>'}
+    <select class="mr-add" onchange="addMr(this.value)"><option value="">+ Add someone who played tonight</option>${others.map(p => `<option>${esc(p.name)}</option>`).join('')}</select>
+    <div class="mr-foot"><span class="muted" id="mr-msg" style="font-size:12px">${n} rated${MATCH.motm ? ` · ★ ${esc(MATCH.motm)}` : ''}</span><span style="flex:1"></span><button class="btn" id="mr-save" onclick="saveMatch()" ${n ? '' : 'disabled'}>Save ratings</button></div>`;
+}
+function setMr(name, v) { MATCH.ratings[name] = MATCH.ratings[name] === v ? undefined : v; if (MATCH.ratings[name] === undefined) delete MATCH.ratings[name]; paintMatch(); }
+function setMotm(name) { MATCH.motm = MATCH.motm === name ? '' : name; paintMatch(); }
+function addMr(name) { const p = ALL_PLAYERS.find(x => x.name === name); if (p && !MATCH.list.includes(p)) MATCH.list.push(p); paintMatch(); }
+async function saveMatch() {
+  const btn = document.getElementById('mr-save'), msg = document.getElementById('mr-msg'); btn.disabled = true; btn.textContent = 'Saving…';
+  let res; try { res = await api(null, { action:'matchRate', t: TOKEN, ratings: MATCH.ratings, motm: MATCH.motm }); } catch (e) { res = { ok:false, error: e.message }; }
+  if (!res.ok) { btn.disabled = false; btn.textContent = 'Try again'; msg.textContent = res.error || 'Could not save'; return; }
+  if (VOTER.game) { VOTER.game.mine = { ratings: Object.assign({}, MATCH.ratings), motm: MATCH.motm }; VOTER.game.in = true; }
+  closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday();
+}
+function closeMatch() { document.getElementById('match-overlay').classList.remove('open'); document.body.style.overflow = ''; }
+async function saveGame(clear) {
+  const st = document.getElementById('gd-admin-st'); st.textContent = 'Saving…';
+  const body = clear ? { action:'setGame', t: TOKEN, date: '', time: '21:00', gate: '' } : { action:'setGame', t: TOKEN, date: document.getElementById('ga-date').value, time: document.getElementById('ga-time').value, gate: document.getElementById('ga-gate').value };
+  let res; try { res = await api(null, body); } catch (e) { res = { ok:false, error: e.message }; }
+  st.textContent = res.ok ? (clear ? 'Cleared' : 'Saved') : (res.error || 'Failed');
+  if (res.ok) { VOTER = null; RATINGS_AT = 0; await Promise.all([fetchMe(), fetchResults()]); renderGameday(); }
+}
+setInterval(() => { if (!document.hidden) renderGameday(); }, 30000);
+
 /* ── keyboard ── */
 document.addEventListener('keydown', e => {
+  if (document.getElementById('match-overlay').classList.contains('open')) { if (e.key==='Escape') closeMatch(); return; }
   if (document.getElementById('claim-overlay').classList.contains('open')) { if (e.key==='Escape') closeClaimDirect(); return; }
   if (BALLOT && document.getElementById('ballot-overlay').classList.contains('open')) {
     if (e.target && e.target.tagName === 'TEXTAREA') return;

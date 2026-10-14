@@ -99,7 +99,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes'].forEach(bust_); cache_().remove('players'); }
 
 /* ───────── web app ───────── */
 
@@ -127,6 +127,9 @@ function doPost(e) {
     if (body.action === 'unclaim') return json_(unclaim_(body));
     if (body.action === 'clearSeed') return json_(clearSeed_(body));
     if (body.action === 'hit') return json_(hit_(body));
+    if (body.action === 'setGame') return json_(setGame_(body));
+    if (body.action === 'checkin') return json_(checkin_(body));
+    if (body.action === 'matchRate') return json_(matchRate_(body));
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) { return json_({ ok: false, error: String(err) }); }
 }
@@ -149,7 +152,8 @@ function me_(token) {
   const self = selfRow ? rowToRating_(selfRow, 2) : null;
   const seeds = seeds_(), hide = hiddenNames_();
   if (!isAdmin_(name)) hide.forEach(function (h) { Object.keys(seeds).forEach(function (n) { if (n.toLowerCase() === h) delete seeds[n]; }); });   // a hidden player's starting point is not sent to voters
-  return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED,
+  const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
+  return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm,
            traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name) };
 }
 
@@ -233,6 +237,7 @@ function results_() {
   const hide = hiddenNames_();
   const strip = function (agg) { Object.keys(agg).forEach(function (n) { delete agg[n].vote; delete agg[n].vw; if (hide.indexOf(n.toLowerCase()) >= 0) agg[n] = { n: agg[n].n, traits: agg[n].traits, hidden: true }; }); return agg; };
   const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(aggregate_(all.filter(function (r) { return r[0] === win; }), seeds)), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
+  out.game = gamePublic_(); out.motm = motmTally_();
   out.ballots = Object.keys(all.filter(function (r) { return r[0] === win; }).reduce(function (m, r) { m[r[1]] = 1; return m; }, {})).length;
   cache_().put('results', JSON.stringify(out), 120);
   return out;
@@ -413,6 +418,102 @@ function voteAll_(name) {
   const raw = Object.prototype.hasOwnProperty.call(s, 'vote_all') ? s.vote_all : 'Nirav';
   return String(raw || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean).indexOf(String(name || '').toLowerCase()) >= 0;
 }
+/* ───────── game day ─────────
+   Settings: game_date (yyyy-mm-dd), game_time (HH:mm, Nairobi), gate_code. The gate code only ever goes to approved
+   voters through me_, never into the public results. Checkins: date, name, in|out, when. MatchVotes: date, ballot_id,
+   target, rating 1–10, motm 0/1, when — anonymous the same way as the season ballot. Match ratings open at kick-off
+   and close 36 hours later. */
+const TZ = 'Africa/Nairobi';
+function gameInfo_() { const s = settings_(); return { date: String(s.game_date || '').trim().slice(0, 10), time: String(s.game_time || '21:00').trim().slice(0, 5) || '21:00', gate: String(s.gate_code || '').trim() }; }
+function kickoff_(g) { return new Date(g.date + 'T' + g.time + ':00+03:00'); }
+function setSetting_(key, value) {
+  const sh = sheet_('Settings'), data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]) === key) { sh.getRange(i + 1, 2).setValue(value); bust_('Settings'); return; }
+  sh.appendRow([key, value]); bust_('Settings');
+}
+function setGame_(body) {
+  const name = voterName_(body.t);
+  if (!name || !isAdmin_(name)) return { ok: false, error: 'Admin only.' };
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? String(body.date) : '';
+  const time = /^\d{1,2}:\d{2}$/.test(String(body.time || '')) ? ('0' + body.time).slice(-5) : '21:00';
+  setSetting_('game_date', date ? "'" + date : '');
+  setSetting_('game_time', "'" + time);
+  setSetting_('gate_code', "'" + String(body.gate || '').trim().slice(0, 24));
+  return { ok: true, game: gameInfo_() };
+}
+function squad_(date) {
+  const out = {};
+  tab_('Checkins').forEach(function (r) { if (String(r[0]).slice(0, 10) !== date) return; const k = String(r[1]).toLowerCase(); if (String(r[2]) === 'out') delete out[k]; else out[k] = String(r[1]); });
+  return out;
+}
+function setCheckin_(date, who, status) {
+  const sh = sheet_('Checkins'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'name', 'status', 'updated']);
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date && String(data[i][1]).toLowerCase() === who.toLowerCase()) { sh.getRange(i + 1, 3, 1, 2).setValues([[status, new Date()]]); return; }
+  sh.appendRow(["'" + date, who, status, new Date()]);
+}
+function checkin_(body) {
+  const name = voterName_(body.t);
+  if (!name) return { ok: false, error: 'This link isn’t recognised.' };
+  const g = gameInfo_(); if (!g.date) return { ok: false, error: 'No game set.' };
+  let who = name;
+  if (body.name) { const p = players_().filter(function (x) { return x.name.toLowerCase() === String(body.name).toLowerCase(); })[0]; if (!p) return { ok: false, error: 'Unknown player.' }; who = p.name; }
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try { setCheckin_(g.date, who, body.out ? 'out' : 'in'); } finally { lock.releaseLock(); }
+  bust_('Checkins');
+  return { ok: true, squad: Object.keys(squad_(g.date)).map(function (k) { return squad_(g.date)[k]; }) };
+}
+function matchRate_(body) {
+  const name = voterName_(body.t);
+  if (!name) return { ok: false, error: 'This link isn’t recognised.' };
+  const g = gameInfo_(); if (!g.date) return { ok: false, error: 'No game set.' };
+  const ko = kickoff_(g).getTime(), now = Date.now();
+  if (now < ko) return { ok: false, error: 'Match ratings open at kick-off.' };
+  if (now > ko + 36 * 3600000) return { ok: false, error: 'Match ratings for this game have closed.' };
+  const names = {}; players_().forEach(function (p) { names[p.name.toLowerCase()] = p.name; });
+  const ratings = body.ratings || {}, motm = String(body.motm || '').toLowerCase(), b = id2_(body.t), rows = [];
+  Object.keys(ratings).forEach(function (k) {
+    const who = names[k.toLowerCase()], v = Math.round(Number(ratings[k]) * 2) / 2;
+    if (!who || who.toLowerCase() === name.toLowerCase() || isNaN(v) || v < 1 || v > 10) return;
+    rows.push([g.date, b, who, v, who.toLowerCase() === motm ? 1 : 0, new Date()]);
+  });
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const sh = sheet_('MatchVotes'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'ballot_id', 'target', 'rating', 'motm', 'updated']);
+    const data = sh.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) if (String(data[i][0]).slice(0, 10) === g.date && data[i][1] === b) sh.deleteRow(i + 1);   // a resubmission replaces the old one
+    rows.forEach(function (r) { sh.appendRow(["'" + r[0]].concat(r.slice(1))); });
+    const sq = squad_(g.date);
+    if (!sq[name.toLowerCase()]) setCheckin_(g.date, name, 'in');                 // rating tonight means you played tonight
+    rows.forEach(function (r) { if (!sq[r[2].toLowerCase()]) setCheckin_(g.date, r[2], 'in'); });
+  } finally { lock.releaseLock(); }
+  bust_('MatchVotes'); bust_('Checkins');
+  return { ok: true, saved: rows.length };
+}
+function myMatch_(date, token) {
+  const b = id2_(String(token)), out = { ratings: {}, motm: '' };
+  tab_('MatchVotes').forEach(function (r) { if (String(r[0]).slice(0, 10) !== date || r[1] !== b) return; out.ratings[String(r[2])] = Number(r[3]); if (Number(r[4])) out.motm = String(r[2]); });
+  return out;
+}
+function gamePublic_() {
+  const g = gameInfo_(); if (!g.date) return null;
+  const sq = squad_(g.date), by = {}, raters = {};
+  tab_('MatchVotes').forEach(function (r) {
+    if (String(r[0]).slice(0, 10) !== g.date) return; raters[r[1]] = 1;
+    const k = String(r[2]); by[k] = by[k] || { sum: 0, n: 0, motm: 0 }; by[k].sum += Number(r[3]); by[k].n++; by[k].motm += Number(r[4]) ? 1 : 0;
+  });
+  const ratings = {}; Object.keys(by).forEach(function (k) { ratings[k] = { avg: Math.round(10 * by[k].sum / by[k].n) / 10, n: by[k].n, motm: by[k].motm }; });
+  return { date: g.date, time: g.time, squad: Object.keys(sq).map(function (k) { return sq[k]; }), ratings: ratings, raters: Object.keys(raters).length, hasGate: !!g.gate };
+}
+/** Man of the match winners across every game: most MOTM votes on the night (at least 2), ties share it. */
+function motmTally_() {
+  const per = {}; if (!ss_().getSheetByName('MatchVotes')) return {};
+  tab_('MatchVotes').forEach(function (r) { if (!Number(r[4])) return; const d = String(r[0]).slice(0, 10), k = String(r[2]); per[d] = per[d] || {}; per[d][k] = (per[d][k] || 0) + 1; });
+  const out = {};
+  Object.keys(per).forEach(function (d) { const top = Math.max.apply(null, Object.keys(per[d]).map(function (k) { return per[d][k]; })); if (top < 2) return; Object.keys(per[d]).forEach(function (k) { if (per[d][k] === top) out[k] = (out[k] || 0) + 1; }); });
+  return out;
+}
+
 function isAdmin_(name) { return String(name || '').toLowerCase() === String(settings_().admin_name || 'Raji').toLowerCase(); }
 function cleanTraits_(arr) { const seen = {}; return (Array.isArray(arr) ? arr : []).map(function (t) { return String(t).toUpperCase(); }).filter(function (t) { if (TRAITS.indexOf(t) < 0 || seen[t]) return false; seen[t] = 1; return true; }).slice(0, MAX_TRAITS); }
 function rowToRating_(r, off) { const st = {}; STATS.forEach(function (k, i) { st[k] = Number(r[off + i]); }); return { stats: st, traits: String(r[off + STATS.length] || '').split(',').filter(Boolean), note: String(r[off + STATS.length + 1] || ''), updated: r[off + STATS.length + 2] ? String(r[off + STATS.length + 2]) : '' }; }
