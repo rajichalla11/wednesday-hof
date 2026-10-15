@@ -2005,9 +2005,9 @@ function renderGameday() {
     <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
     ${gate}
     ${motmHtml}
-    ${lineup || `<div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' || ph === 'final' ? 'played' : today ? 'in tonight' : 'in'}</span></div>`}
+    ${lineup || (squad.length ? `<div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' || ph === 'final' ? 'played' : today ? 'in tonight' : 'in'}</span></div>` : '')}
     ${checkBtn || resultLine ? `<div class="gd-squad">${resultLine}<span class="sp"></span>${checkBtn}</div>` : ''}
-    ${ph === 'pre' || ph === 'live' ? `<div class="gd-story">${storylines(squad, g)}</div>` : boardHtml}
+    ${ph === 'pre' || ph === 'live' ? (squad.length ? `<div class="gd-story">${storylines(squad, g)}</div>` : `<div class="gd-sub" style="margin-top:12px">Lineup to follow.</div>`) : boardHtml}
     ${nextLine}`;
 }
 function copyGate(btn) { const code = btn.querySelector('b').textContent, small = btn.querySelector('small'); const done = () => { small.textContent = 'Copied'; setTimeout(() => small.textContent = 'Tap to copy', 1500); }; if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(done); else done(); }
