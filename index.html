@@ -1854,7 +1854,7 @@ function renderNamed(pick) {
       <tr><td><b>${esc(v.voter)}</b></td>${STAT_KEYS.map(k => `<td>${v.stats[k]}</td>`).join('')}<td><b>${avg(v.stats)}</b></td></tr>
       ${v.traits.length || v.comment ? `<tr class="sub"><td colspan="${STAT_KEYS.length + 2}">${v.traits.map(t => `<span class="nt">${esc(t)}</span>`).join('')}${v.comment ? ` <i>“${esc(v.comment)}”</i>` : ''}</td></tr>` : ''}`).join('')}</tbody></table>`
       : `<div class="empty">${targets.length ? `No named votes for ${esc(NAMED_FOR)} yet.` : 'No named votes yet.'} ${old ? `The ${old} earlier ballot${old === 1 ? '' : 's'} stay anonymous.` : ''}</div>`}
-    ${tonight.length ? `<div class="label" style="margin:18px 0 8px">Match ratings · ${esc(fmtD(lastDate))}</div><table class="claims"><thead><tr><th>Player</th><th>Voter</th><th>Rating</th></tr></thead><tbody>${tonight.map(m => `<tr><td><b>${esc(m.target)}</b></td><td>${esc(m.voter)}</td><td>${m.rating}${m.motm ? ' ★' : ''}</td></tr>`).join('')}</tbody></table>` : ''}`;
+    ${tonight.length ? `<div class="label" style="margin:18px 0 8px">Match ratings · ${esc(dayOf({ date: lastDate }))}</div><table class="claims"><thead><tr><th>Player</th><th>Voter</th><th>Rating</th></tr></thead><tbody>${tonight.map(m => `<tr><td><b>${esc(m.target)}</b></td><td>${esc(m.voter)}</td><td>${m.rating}${m.motm ? ' ★' : ''}</td></tr>`).join('')}</tbody></table>` : ''}`;
 }
 function refreshAdmin(force) {
   if (!VOTER || !VOTER.isAdmin || !document.getElementById('admin-body')) return;
@@ -1869,7 +1869,7 @@ async function renderAdmin(me) {
   let a; try { a = await api({ action:'admin', t: TOKEN }); } catch (e) { a = { ok:false, error: e.message }; }
   if (!a.ok) { el.innerHTML = `<div class="error">${esc(a.error || 'Could not load')}</div>`; const se = document.getElementById('seed-body'); if (se) se.innerHTML = ''; return; }
   window.__ADMIN = a;
-  renderSeedEditor(a); renderNamed(); renderMotmAdmin();
+  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
   const ab = document.getElementById('activity-body');
   if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
     const seenNames = new Set(x.names.map(n => n.name.toLowerCase()));
