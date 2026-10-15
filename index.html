@@ -393,7 +393,7 @@
   .gp-col b { display: flex; align-items: center; gap: 6px; flex-basis: 100%; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-2); margin-bottom: 2px; }
   .gp-wide { grid-column: 1 / -1; }
   .gp-col span { font-size: 12px; padding: 3px 9px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--bg); white-space: nowrap; }
-  .gp-col span.guest { border-style: dashed; color: var(--fg-3); }
+  .gp-col span.guest { border-style: dashed; color: var(--fg-3); } .gp-col span.amb { border-color: var(--gold); color: var(--gold); }
   .gd-shirt.b { background: #000; border-color: var(--fg-3); } .gd-shirt.w { background: #f4f4f2; border-color: #f4f4f2; }
   .gp-score { display: grid; grid-template-columns: 1fr 64px auto 64px 1fr; gap: 10px; align-items: center; max-width: 420px; }
   .gp-score input { text-align: center; font-size: 22px; font-weight: 700; padding: 0; }
@@ -465,6 +465,10 @@
   .seed-sub .ss-t span { font-size: 10px; letter-spacing: .05em; padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); } .seed-sub .ss-t b { color: var(--fg); }
   .act { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
   .act > div { background: var(--surface); padding: 12px 14px; } .act b { font-size: 24px; display: block; line-height: 1; } .act .label { margin-top: 6px; } .act small { display: block; color: var(--fg-3); font-size: 11px; margin-top: 4px; }
+  .mo-list { display: grid; gap: 10px; } .mo-row { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); display: grid; gap: 10px; }
+  .mo-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 14px; } .mo-head .muted { font-size: 12px; } .mo-st { margin-left: auto; }
+  .mo-votes { display: flex; flex-wrap: wrap; gap: 6px; } .mo-votes span { font-size: 12px; padding: 3px 9px; border: 1px solid var(--line-2); border-radius: 999px; } .mo-votes b { color: var(--gold); font-weight: 700; } .mo-votes i { font-style: normal; color: var(--fg-3); }
+  .mo-row .named-pick { width: 100%; } .mo-note { font-size: 12px; color: var(--fg-2); }
   .named-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; } .named-top .muted { font-size: 12px; }
   .named-pick { appearance: none; -webkit-appearance: none; background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 12px center; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 32px 9px 12px; font: inherit; font-size: 14px; min-width: 160px; }
   table.claims.named td, table.claims.named th { text-align: center; padding: 7px 4px; font-variant-numeric: tabular-nums; } table.claims.named td:first-child, table.claims.named th:first-child { text-align: left; padding-left: 8px; }
@@ -1713,6 +1717,7 @@ async function renderYou() {
           <div class="gp-score"><span class="gp-side"><i class="gd-shirt b"></i>Black</span><input id="ga-sb" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.black : ''}" placeholder="–" aria-label="Black goals"><span class="gp-dash">–</span><input id="ga-sw" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.white : ''}" placeholder="–" aria-label="White goals"><span class="gp-side"><i class="gd-shirt w"></i>White</span></div></div>
         <div class="gp-foot"><button class="btn link" onclick="saveGame(true)">Clear · no game</button><span class="muted" id="gd-admin-st"></span><button class="btn" onclick="saveGame(false)">Save game day</button></div>
       </div></section>
+    <section><div class="sh"><h2>Man of the match</h2><span>Only you see this · the vote decides unless you pick someone</span></div><div id="motm-admin"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Who voted what</h2><span>Only you can see this · votes from 14 Oct on · earlier ballots stay anonymous</span></div><div id="named-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Only you can see this · approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
@@ -1809,6 +1814,28 @@ function setSeedValue(pi, k, raw) {
 }
 /* The admin panels refresh whenever the page comes back into view (phones keep tabs open for days), at most every 20 s, or on demand. */
 let ADMIN_AT = 0;
+function renderMotmAdmin() {
+  const a = window.__ADMIN, el = document.getElementById('motm-admin'); if (!a || !el) return;
+  const games = a.motmGames || [];
+  if (!games.length) { el.innerHTML = `<div class="empty">No games played yet.</div>`; return; }
+  el.innerHTML = `<div class="mo-list">${games.map(gm => {
+    const v = gm.votes || {}, ranked = Object.keys(v).filter(k => v[k].stars).sort((x, y) => v[y].stars - v[x].stars || v[y].avg - v[x].avg);
+    const pool = [...new Set([...(gm.players || []), ...Object.keys(v)])].sort((x, y) => x.localeCompare(y));
+    const cur = gm.override && gm.override.length ? gm.override[0] : '', auto = (gm.auto || []).join(', ');
+    const sc = gm.score ? (gm.score.black === gm.score.white ? `Draw ${gm.score.black}–${gm.score.white}` : `${gm.score.black > gm.score.white ? 'Black' : 'White'} won ${Math.max(gm.score.black, gm.score.white)}–${Math.min(gm.score.black, gm.score.white)}`) : 'No score';
+    return `<div class="mo-row" data-date="${gm.date}">
+      <div class="mo-head"><b>${esc(dayOf({ date: gm.date }))}</b><span class="muted">${sc}</span><span class="mo-st muted"></span></div>
+      <div class="mo-votes">${ranked.length ? ranked.map(k => `<span>${esc(k)} <b>★${v[k].stars}</b> <i>${v[k].avg.toFixed(1)}</i></span>`).join('') : '<span class="muted">No stars yet</span>'}</div>
+      <select class="named-pick" onchange="pickMotm('${gm.date}', this)"><option value="">By the vote${auto ? ` · ${esc(auto)}` : ' · nobody yet'}</option>${pool.map(n => `<option ${n === cur ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+      ${cur ? `<div class="mo-note">You picked <b>${esc(cur)}</b>. The vote said ${auto ? esc(auto) : 'nobody'}.</div>` : ''}
+    </div>`; }).join('')}</div>`;
+}
+async function pickMotm(date, sel) {
+  const row = sel.closest('.mo-row'), st = row.querySelector('.mo-st'); sel.disabled = true; st.textContent = 'Saving…';
+  let res; try { res = await api(null, { action: 'setMotm', t: TOKEN, date, names: sel.value ? [sel.value] : [] }); } catch (e) { res = { ok: false, error: e.message }; }
+  sel.disabled = false; st.textContent = res.ok ? 'Saved' : (res.error || 'Failed');
+  if (res.ok) { const gm = (window.__ADMIN.motmGames || []).find(x => x.date === date); if (gm) { gm.override = sel.value ? [sel.value] : null; gm.auto = res.auto || gm.auto; } renderMotmAdmin(); RATINGS_AT = 0; await fetchResults(); renderGameday(); renderPlayers(); }
+}
 let NAMED_FOR = '';
 function renderNamed(pick) {
   const a = window.__ADMIN, el = document.getElementById('named-body'); if (!a || !el) return;
@@ -1842,7 +1869,7 @@ async function renderAdmin(me) {
   let a; try { a = await api({ action:'admin', t: TOKEN }); } catch (e) { a = { ok:false, error: e.message }; }
   if (!a.ok) { el.innerHTML = `<div class="error">${esc(a.error || 'Could not load')}</div>`; const se = document.getElementById('seed-body'); if (se) se.innerHTML = ''; return; }
   window.__ADMIN = a;
-  renderSeedEditor(a); renderNamed();
+  renderSeedEditor(a); renderNamed(); renderMotmAdmin();
   const ab = document.getElementById('activity-body');
   if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
     const seenNames = new Set(x.names.map(n => n.name.toLowerCase()));
@@ -2043,7 +2070,7 @@ function renderGameday() {
   const storySec = (ph === 'pre' || ph === 'live') && squad.length ? (() => { const st = storylines(squad, g); return st ? sec('', '', `<div class="gd-story">${st}</div>`) : ''; })() : '';
   const r = g.ratings || {}, board = Object.keys(r).filter(k => r[k].n >= 2).sort((a, b) => r[b].avg - r[a].avg || r[b].n - r[a].n).slice(0, 5);
   const motm = g.motm || [], isMotm = k => motm.includes(k);
-  const motmSec = isPost && motm.length ? sec('', '', `<div class="gd-motm">${motm.map(k => { const p = ALL_PLAYERS.find(x => x.name === k); return `${p ? photo(p, 'avatar') : ''}<span><span class="label">${ph === 'final' ? 'Man of the match' : 'Man of the match so far'}</span><b>${esc(k)}</b></span>`; }).join('')}<i>★</i></div>`) : '';
+  const motmSec = isPost && motm.length ? sec('', '', `<div class="gd-motm">${motm.map(k => { const p = ALL_PLAYERS.find(x => x.name === k); return `${p ? photo(p, 'avatar') : ''}<span><span class="label">${ph === 'final' || g.motmPicked ? 'Man of the match' : 'Man of the match so far'}</span><b>${esc(k)}</b></span>`; }).join('')}<i>★</i></div>`) : '';
   const nRated = Object.keys((myLast && myLast.ratings) || {}).length;
   const actionSec = checkBtn ? `<div class="gd-sec gd-actions"><span class="n">${nRated ? `You rated ${nRated} player${nRated === 1 ? '' : 's'}. You can change it until 11am.` : `Rate how everyone played${today ? ' tonight' : ''}, and pick your man of the match.`}</span>${checkBtn}</div>` : '';
   const boardSec = !isPost ? ''
@@ -2110,9 +2137,12 @@ function lineupToText(g) {
   if (g.teams && ((g.teams.black || []).length || (g.teams.white || []).length)) return teamsToText(g.teams) + sb;
   return (g.list || []).length ? g.list.map((n, i) => `${i + 1}. ${n}`).join('\n') + sb : '';
 }
+/* Another player with the same first name (Karan / Karan N): flag it so the admin checks the right one was picked. */
+const alsoNamed = n => { const f = n.split(' ')[0].toLowerCase(); return ALL_PLAYERS.filter(p => p.name !== n && p.name.split(' ')[0].toLowerCase() === f).map(p => p.name); };
+const previewChip = n => { const known = ALL_PLAYERS.some(p => p.name === n), also = known ? alsoNamed(n) : []; return `<span class="${known ? (also.length ? 'amb' : '') : 'guest'}" ${also.length ? `title="Also: ${esc(also.join(', '))}"` : ''}>${esc(n)}${!known ? ' · guest' : also.length ? ` · or ${esc(also.join(' / '))}?` : ''}</span>`; };
 function lineupPreviewHtml(L, size) {
   if (!L) return '';
-  const known = n => ALL_PLAYERS.some(p => p.name === n), chip = n => `<span class="${known(n) ? '' : 'guest'}">${esc(n)}${known(n) ? '' : ' · guest'}</span>`;
+  const chip = previewChip;
   const sb = (L.standby || []).length ? `<div class="gp-col gp-wide"><b>Standby · ${L.standby.length}</b>${L.standby.map((n, i) => `<span>${i + 1}. ${esc(n)}</span>`).join('')}</div>` : '';
   if (L.teams || (L.black || []).length || (L.white || []).length) return teamsPreviewHtml(L.teams || L) + sb;
   if (!(L.list || []).length) return sb;
@@ -2127,7 +2157,7 @@ function teamsToText(T) {
 function teamsPreviewHtml(T) {
   if (!T || !((T.black || []).length || (T.white || []).length)) return '';
   const known = n => ALL_PLAYERS.some(p => p.name === n);
-  const side = k => `<div class="gp-col"><b><i class="gd-shirt ${k === 'black' ? 'b' : 'w'}"></i>${k === 'black' ? 'Black' : 'White'} · ${(T[k] || []).length}</b>${(T[k] || []).map(n => `<span class="${known(n) ? '' : 'guest'}">${esc(n)}${known(n) ? '' : ' · guest'}</span>`).join('')}</div>`;
+  const side = k => `<div class="gp-col"><b><i class="gd-shirt ${k === 'black' ? 'b' : 'w'}"></i>${k === 'black' ? 'Black' : 'White'} · ${(T[k] || []).length}</b>${(T[k] || []).map(previewChip).join('')}</div>`;
   return side('black') + side('white');
 }
 /* Clears the form for next week: same weekday a week on, same kick-off, no gate code, lineup or score yet. Last night's game

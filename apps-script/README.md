@@ -155,3 +155,9 @@ From 14 Oct 2026, Raji chose to see who voted what, while other players still on
 - Format (5- to 11-a-side) is Settings `game_size`, defaulting to 6. `game_teams` JSON now holds `{ black, white, list, standby }`. The Games tab gains `list` and `size` columns.
 - The banner shows the list as "In · 16 of 18 · 2 spots left · teams to follow", standby with each player's place in line ("you're 2nd in line"), and "9-a-side" next to the kick-off when it isn't 6. Once the teams are pasted over the list, the banner switches to Black vs White. List players count as playing for match ratings; standby players don't.
 
+## Man of the match override (Version 26)
+
+- The admin You tab has a "Man of the match" panel listing the last six games played, with each night's stars and average match ratings. Its picker defaults to "By the vote"; choosing a player saves an override in column 9 (`motm`) of the Games tab (`setMotm`), and choosing "By the vote" again clears it.
+- `motmFor_` returns the override when one is set, otherwise the vote (`motmAuto_`). The banner, the gold medal and the tally all follow it, and a picked winner shows as "Man of the match" even before voting closes.
+- The lineup preview flags names that another player shares a first name with (Karan / Karan N) in gold, so a wrong match is easy to spot before saving.
+

@@ -169,6 +169,7 @@ function doPost(e) {
     if (body.action === 'setGame') return json_(setGame_(body));
     if (body.action === 'checkin') return json_(checkin_(body));
     if (body.action === 'matchRate') return json_(matchRate_(body));
+    if (body.action === 'setMotm') return json_(setMotm_(body));
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) { return json_({ ok: false, error: String(err) }); }
 }
@@ -351,7 +352,10 @@ function admin_(token) {
   const named = tab_('Votes').filter(function (r) { return r[0] === win && r[4 + STATS.length + 3]; }).map(function (r) { const o = rowToRating_(r, 4); return { voter: String(r[4 + STATS.length + 3]), target: String(r[2]), stats: o.stats, comment: String(r[4 + STATS.length] || ''), traits: String(r[4 + STATS.length + 2] || '').split(',').filter(Boolean) }; });
   const anon = {}; tab_('Votes').forEach(function (r) { if (r[0] === win && !r[4 + STATS.length + 3]) anon[r[2]] = (anon[r[2]] || 0) + 1; });   // earlier anonymous ballots: counts only
   const matchNamed = ss_().getSheetByName('MatchVotes') ? tab_('MatchVotes').filter(function (r) { return r[6]; }).map(function (r) { return { date: String(r[0]).slice(0, 10), voter: String(r[6]), target: String(r[2]), rating: Number(r[3]), motm: !!Number(r[4]) }; }) : [];
-  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed };
+  const now = Date.now(), motmGames = ss_().getSheetByName('Games') ? tab_('Games').map(function (r) { return String(r[0]).slice(0, 10); }).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) && kickoff_({ date: d, time: '00:00' }).getTime() <= now; })
+    .sort().reverse().slice(0, 6).map(function (d) { const r = tab_('Games').filter(function (x) { return String(x[0]).slice(0, 10) === d; })[0], split = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
+      return { date: d, players: split(r[1]).concat(split(r[2]), split(r[6])), score: r[3] === '' || r[4] === '' ? null : { black: Number(r[3]), white: Number(r[4]) }, votes: motmVotes_(d), auto: motmAuto_(d), override: motmOverride_(d) }; }) : [];
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed, motmGames: motmGames };
 }
 
 /** Admin approves (ok: true) or rejects (ok: false, row deleted so the name can be claimed again) a pending claim. */
@@ -515,7 +519,37 @@ function lastGame_() {
 /** The game in Settings, when it's still to be played. */
 function nextGame_() { const g = gameInfo_(); return g.date && kickoff_(g).getTime() > Date.now() ? g : null; }
 /** Man of the match for one night: most stars; a tie goes to the better match rating; still tied, they share it. */
-function motmFor_(date) {
+/** Man of the match for one night: Raji's pick if he set one (Games tab, column 9), otherwise the vote. */
+function motmFor_(date) { return motmOverride_(date) || motmAuto_(date); }
+function motmOverride_(date) {
+  if (!ss_().getSheetByName('Games')) return null;
+  const row = tab_('Games').filter(function (r) { return String(r[0]).slice(0, 10) === date; })[0], v = row ? String(row[8] || '').trim() : '';
+  return v ? v.split(',').map(function (x) { return x.trim(); }).filter(Boolean) : null;
+}
+function motmVotes_(date) {
+  const by = {};
+  tab_('MatchVotes').forEach(function (r) { if (String(r[0]).slice(0, 10) !== date) return; const k = String(r[2]); by[k] = by[k] || { sum: 0, n: 0, stars: 0 }; by[k].sum += Number(r[3]); by[k].n++; by[k].stars += Number(r[4]) ? 1 : 0; });
+  const out = {}; Object.keys(by).forEach(function (k) { out[k] = { stars: by[k].stars, n: by[k].n, avg: Math.round(10 * by[k].sum / by[k].n) / 10 }; });
+  return out;
+}
+/** Admin: set (names) or clear (empty) the man of the match for a game, overriding the vote. */
+function setMotm_(body) {
+  const name = voterName_(body.t);
+  if (!name || !isAdmin_(name)) return { ok: false, error: 'Admin only.' };
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? String(body.date) : '';
+  if (!date) return { ok: false, error: 'Which game?' };
+  const names = cleanTeam_(body.names);
+  const sh = sheet_('Games'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'black', 'white', 'black_goals', 'white_goals', 'time', 'list', 'size', 'motm']);
+  if (sh.getRange(1, 9).getValue() !== 'motm') sh.getRange(1, 9).setValue('motm');
+  const data = sh.getDataRange().getValues(); let at = -1;
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date) { at = i + 1; break; }
+  if (at < 0) { sh.appendRow(["'" + date, '', '', '', '', '', '', '', '']); at = sh.getLastRow(); }
+  sh.getRange(at, 9).setValue(names.join(', '));
+  bust_('Games');
+  return { ok: true, motm: motmFor_(date), auto: motmAuto_(date) };
+}
+/** By the vote: most stars; a tie goes to the better match rating; still tied, they share it. */
+function motmAuto_(date) {
   const by = {};
   tab_('MatchVotes').forEach(function (r) { if (String(r[0]).slice(0, 10) !== date) return; const k = String(r[2]); by[k] = by[k] || { sum: 0, n: 0, stars: 0 }; by[k].sum += Number(r[3]); by[k].n++; by[k].stars += Number(r[4]) ? 1 : 0; });
   const ks = Object.keys(by).filter(function (k) { return by[k].stars > 0; }); if (!ks.length) return [];
@@ -611,13 +645,14 @@ function gamePublic_(g) {
   (g.teams ? g.teams.black.concat(g.teams.white) : []).concat(g.list || []).forEach(function (n) { if (!sq[n.toLowerCase()]) sq[n.toLowerCase()] = n; });
   const closes = closes_(g.date), final = Date.now() >= closes;
   return { date: g.date, time: g.time, squad: Object.keys(sq).map(function (k) { return sq[k]; }), teams: g.teams, score: g.score, ratings: ratings, raters: Object.keys(raters).length, hasGate: !!g.gate,
-           closes: new Date(closes).toISOString(), final: final, motm: motmFor_(g.date), list: g.list || [], standby: g.standby || [], size: g.size || 6 };
+           closes: new Date(closes).toISOString(), final: final, motm: motmFor_(g.date), motmPicked: !!motmOverride_(g.date), list: g.list || [], standby: g.standby || [], size: g.size || 6 };
 }
 /** Man of the match winners across every game: most MOTM votes on the night (at least 2), ties share it. */
 function motmTally_() {
   if (!ss_().getSheetByName('MatchVotes')) return {};
   const dates = {}, out = {}, now = Date.now();
   tab_('MatchVotes').forEach(function (r) { dates[String(r[0]).slice(0, 10)] = 1; });
+  if (ss_().getSheetByName('Games')) tab_('Games').forEach(function (r) { if (String(r[8] || '').trim()) dates[String(r[0]).slice(0, 10)] = 1; });   // a night Raji picked counts even without votes
   Object.keys(dates).forEach(function (d) { if (now < closes_(d)) return; motmFor_(d).forEach(function (k) { out[k] = (out[k] || 0) + 1; }); });   // a night counts once its voting has closed
   return out;
 }
