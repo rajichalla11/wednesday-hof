@@ -346,6 +346,10 @@
   .gd-story { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
   .gd-story span { font-size: 11px; padding: 4px 9px; border: 1px solid var(--line-2); border-radius: 999px; color: var(--fg-2); background: rgba(0,0,0,.2); } .gd-story b { color: var(--fg); font-weight: 600; }
   .gd-board { margin-top: 14px; display: grid; gap: 4px; }
+  .gd-motm { position: relative; display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--gold) 8%, transparent); }
+  .gd-motm .avatar { width: 36px; height: 36px; } .gd-motm > span { display: flex; flex-direction: column; gap: 2px; flex: 1; } .gd-motm b { font-size: 17px; } .gd-motm .label { color: var(--gold); } .gd-motm i { font-style: normal; color: var(--gold); font-size: 22px; }
+  .gd-next { position: relative; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; color: var(--fg-2); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; } .gd-next b { color: var(--fg); }
+  .gd-closes { margin-left: auto; } .gp-next { margin-left: auto; font-size: 12px; padding: 0; }
   .gd-board .r { display: flex; align-items: center; gap: 10px; font-size: 13px; } .gd-board .r .avatar { width: 22px; height: 22px; }
   .gd-board .r .nm { flex: 1; } .gd-board .r i { font-style: normal; font-size: 11px; color: var(--fg-3); }
   .rt { min-width: 38px; text-align: center; font-weight: 700; font-size: 13px; padding: 2px 6px; border-radius: 5px; background: var(--surface-3); border: 1px solid var(--line-2); }
@@ -1689,9 +1693,9 @@ async function renderYou() {
     </section>
     ${v.isAdmin ? `<section><div class="sh"><h2>Game day</h2><span>Only you see this panel · the gate code only shows to players with a claimed card</span></div>
       <div class="gp">
-        <div class="gp-step"><div class="gp-h"><span class="gp-n">1</span>When</div>
+        <div class="gp-step"><div class="gp-h"><span class="gp-n">1</span>When${v.game && v.game.date && koOf(v.game) < Date.now() ? `<button class="btn link gp-next" onclick="nextGameForm()">Set up the next game →</button>` : ''}</div>
           <div class="gp-when">
-            <label class="gp-f"><span>Date</span><input type="date" id="ga-date" value="${esc((v.game && v.game.date) || todayNbo())}"></label>
+            <label class="gp-f"><span>Date</span><input type="date" id="ga-date" value="${esc((v.game && v.game.date) || todayNbo())}" data-loaded="${esc((v.game && v.game.date) || '')}" onchange="if (this.value !== this.dataset.loaded) { document.getElementById('ga-sb').value = ''; document.getElementById('ga-sw').value = ''; }"></label>
             <label class="gp-f"><span>Kick-off</span><input type="time" id="ga-time" value="${esc((v.game && v.game.time) || '21:00')}"></label>
             <label class="gp-f gp-gate"><span>Gate code</span><input id="ga-gate" value="${esc((v.game && v.game.gate) || '')}" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. VK526"></label>
           </div></div>
@@ -1891,15 +1895,27 @@ function renderAdminList() { const a = window.__ADMIN, el = document.getElementB
 /* ── game day ── */
 const NBO = 'Africa/Nairobi';
 const todayNbo = () => new Intl.DateTimeFormat('en-CA', { timeZone: NBO }).format(new Date());
-function gamePhase(g) {
-  if (!g || !g.date) return null;
-  const ko = new Date(`${g.date}T${g.time || '21:00'}:00+03:00`).getTime(), now = Date.now();
-  if (now < ko) return g.date === todayNbo() ? 'pre' : null;
-  if (now < ko + 3600000) return 'live';
-  if (now < ko + 36 * 3600000) return 'post';
-  return null;
+/* Which game the banner is about, and in which phase:
+   live  — the last game, first hour after kick-off
+   post  — the last game until 11am the next morning: rate it, man of the match so far
+   pre   — the next game, as soon as Raji has entered it (and last night's voting has closed)
+   final — last game's result and man of the match, until the next game is entered (up to 6 days) */
+function gameView() {
+  if (!RATINGS || !RATINGS.ok) return null;
+  const L = RATINGS.last || null, N = RATINGS.next || null, now = Date.now();
+  if (L) {
+    const ko = koOf(L), closes = L.closes ? new Date(L.closes).getTime() : ko + 14 * 3600000;
+    if (now < ko + 3600000) return { g: L, ph: 'live' };
+    if (now < closes) return { g: L, ph: 'post', next: N };
+    if (N) return { g: N, ph: 'pre', last: L };
+    if (now < closes + 6 * 86400000) return { g: L, ph: 'final' };
+  }
+  return N ? { g: N, ph: 'pre' } : null;
 }
-const fmtLeft = ms => { const m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60); return h ? `${h}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`; };
+const koOf = g => new Date(`${g.date}T${g.time || '21:00'}:00+03:00`).getTime();
+const fmtLeft = ms => { const m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60); return h >= 48 ? `${Math.round(h / 24)} days` : h ? `${h}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`; };
+const dayOf = g => new Date(`${g.date}T12:00:00+03:00`).toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short' });
+const nightOf = g => g.date === todayNbo() ? 'tonight' : new Date(koOf(g)).getTime() > Date.now() ? 'on ' + dayOf(g) : new Date(`${g.date}T12:00:00+03:00`).getTime() > Date.now() - 2 * 86400000 ? 'last night' : 'on ' + dayOf(g);
 const fmtKo = (g) => new Date(`${g.date}T${g.time}:00+03:00`).toLocaleTimeString('en-GB', { timeZone: NBO, hour: 'numeric', minute: '2-digit', hour12: true }).replace(':00', '').replace(' ', '');
 /* The lineup Raji posts in WhatsApp, e.g.
      *BLACK                WHITE*
@@ -1939,49 +1955,60 @@ function gameSquad(g) {
   return ALL_PLAYERS.filter(p => names.has(p.name.toLowerCase()));
 }
 function storylines(squad, g) {
+  const when = nightOf(g);
   // If the sheet already has tonight's column, its numbers include tonight; otherwise tonight would be the next one.
   const si = SESSIONS.findIndex(x => x.date && new Intl.DateTimeFormat('en-CA', { timeZone: NBO }).format(x.date) === g.date);
   const tonight = p => si >= 0 && p.attendance[si] === 1;
   const pool = squad.length ? squad : ALL_PLAYERS.filter(p => p.gamesThisYear > 0), out = [];
-  pool.forEach(p => { const nx = tonight(p) ? p.count : p.count + 1; if (nx % 50 === 0 || nx === 25) out.push([nx >= 100 ? 3 : 2, `<b>${esc(p.name)}</b> · game ${nx} tonight`]); });
+  pool.forEach(p => { const nx = tonight(p) ? p.count : p.count + 1; if (nx % 50 === 0 || nx === 25) out.push([nx >= 100 ? 3 : 2, `<b>${esc(p.name)}</b> · game ${nx} ${when}`]); });
   pool.map(p => [p, tonight(p) ? p.currentStreak : p.currentStreak + 1]).filter(x => x[1] >= 6).sort((a, b) => b[1] - a[1]).slice(0, 2)
-    .forEach(([p, n]) => out.push([1, `<b>${esc(p.name)}</b> · ${n} in a row tonight`]));
+    .forEach(([p, n]) => out.push([1, `<b>${esc(p.name)}</b> · ${n} in a row ${when}`]));
   const debut = squad.filter(p => tonight(p) ? p.count === 1 : p.count === 0); if (debut.length) out.push([2, `<b>${esc(debut.map(p => p.name).join(', '))}</b> · first game`]);
   return out.sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => `<span>${x[1]}</span>`).join('');
 }
 function renderGameday() {
   const el = document.getElementById('gameday'); if (!el) return;
-  const g = (RATINGS && RATINGS.ok && RATINGS.game) || null, ph = gamePhase(g);
-  if (!ph || !ALL_PLAYERS.length) { el.hidden = true; return; }
-  const mine = VOTER && VOTER.ok && !VOTER.pending ? VOTER.game : null, me = VOTER && VOTER.ok ? ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()) : null;
-  const squad = gameSquad(g), inSquad = !!(me && squad.includes(me)) || !!(mine && mine.in);
-  const ko = new Date(`${g.date}T${g.time}:00+03:00`).getTime(), now = Date.now();
-  const dayLbl = new Date(`${g.date}T12:00:00+03:00`).toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short' });
-  const head = ph === 'pre' ? ['Game day', `Kick-off ${fmtKo(g)} · ${dayLbl}`, fmtLeft(ko - now), 'to kick-off']
+  const view = ALL_PLAYERS.length ? gameView() : null;
+  if (!view) { el.hidden = true; return; }
+  const { g, ph } = view;
+  const voterGame = VOTER && VOTER.ok && !VOTER.pending ? VOTER.game : null, mine = voterGame && voterGame.date === g.date ? voterGame : null, me = VOTER && VOTER.ok ? ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()) : null;
+  const myLast = VOTER && VOTER.ok && VOTER.last && VOTER.last.date === g.date ? VOTER.last.mine : null;
+  const squad = gameSquad(g);
+  const ko = koOf(g), now = Date.now(), dayLbl = dayOf(g), today = g.date === todayNbo();
+  const closes = g.closes ? new Date(g.closes).getTime() : 0;
+  const head = ph === 'pre' ? [today ? 'Game day' : 'Next game', `Kick-off ${fmtKo(g)} · ${dayLbl}`, fmtLeft(ko - now), 'to kick-off']
     : ph === 'live' ? ['Playing now', `${fmtKo(g)} kick-off · ${dayLbl}`, fmtLeft(ko + 3600000 - now), 'left']
-    : ['Full time', `${g.date === todayNbo() ? 'Tonight' : dayLbl} · rate the game`, String(g.raters || 0), g.raters === 1 ? 'player has rated' : 'players have rated'];
-  const gate = ph === 'post' ? '' : !g.hasGate ? '' : mine && mine.gate
-    ? `<button class="gd-gate" onclick="copyGate(this)"><span><span class="label">Gate code · tonight</span><b>${esc(mine.gate)}</b></span><small>Tap to copy</small></button>`
-    : `<button class="gd-gate locked" onclick="${TOKEN ? '' : 'openClaim()'}"><span><span class="label">Gate code · tonight</span><b>XXXXX</b></span><small>${TOKEN ? 'Loading…' : 'Find your card to see it'}</small></button>`;
+    : ph === 'post' ? ['Full time', `${today ? 'Tonight' : dayLbl} · voting closes 11am`, String(g.raters || 0), g.raters === 1 ? 'player has rated' : 'players have rated']
+    : ['Final', `${dayLbl} · voting closed`, String(g.raters || 0), g.raters === 1 ? 'player rated' : 'players rated'];
+  const gate = ph === 'post' || ph === 'final' ? '' : !g.hasGate ? '' : mine && mine.gate
+    ? `<button class="gd-gate" onclick="copyGate(this)"><span><span class="label">Gate code${today ? ' · tonight' : ''}</span><b>${esc(mine.gate)}</b></span><small>Tap to copy</small></button>`
+    : `<button class="gd-gate locked" onclick="${TOKEN ? '' : 'openClaim()'}"><span><span class="label">Gate code${today ? ' · tonight' : ''}</span><b>XXXXX</b></span><small>${TOKEN ? 'Loading…' : 'Find your card to see it'}</small></button>`;
   const faces = squad.slice(0, 9).map(p => photo(p, 'avatar')).join('');
-  const checkBtn = TOKEN && ph === 'post' && mine ? `<button class="btn" onclick="openMatch()">${Object.keys((mine.mine && mine.mine.ratings) || {}).length ? 'Edit my match ratings' : 'Rate tonight'}</button>` : '';
   const T = g.teams && ((g.teams.black || []).length || (g.teams.white || []).length) ? g.teams : null, sc = g.score;
+  const checkBtn = TOKEN && ph === 'post' && VOTER && VOTER.ok && !VOTER.pending ? `<button class="btn" onclick="openMatch()">${Object.keys((myLast && myLast.ratings) || {}).length ? 'Edit my match ratings' : today ? 'Rate tonight' : 'Rate the game'}</button>` : '';
+  const resultLine = (ph === 'post' || ph === 'final') ? `<span class="n">${sc ? `${sc.black === sc.white ? 'Draw' : (sc.black > sc.white ? 'Black' : 'White') + ' win'} ${sc.black}–${sc.white}` : 'Full time'}</span>` : '';
+
   const meName = me ? me.name : '';
   const col = (side) => `<div class="gd-team ${side}"><div class="gd-kit"><span class="gd-shirt"></span>${side === 'black' ? 'Black' : 'White'}${sc ? `<b class="num">${sc[side]}</b>` : ''}</div>${(T[side] || []).map(n => { const p = ALL_PLAYERS.find(x => x.name === n); return `<div class="gd-pl${n === meName ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span>${esc(n)}</span></div>`; }).join('')}</div>`;
   const lineup = T ? `<div class="gd-teams">${col('black')}<div class="gd-vs">${sc ? '–' : 'vs'}</div>${col('white')}</div>` : '';
   const r = g.ratings || {}, board = Object.keys(r).filter(k => r[k].n >= 2).sort((a, b) => r[b].avg - r[a].avg || r[b].n - r[a].n).slice(0, 5);
-  const motmTop = Object.keys(r).sort((a, b) => r[b].motm - r[a].motm)[0];
-  const boardHtml = ph === 'post' && gateLocked() ? `<div class="gd-sub" style="margin-top:12px">${TOKEN ? `Tonight's ratings and man of the match show once you've rated ${gateNeed()} teammates · ${Math.min(selfRated(), gateNeed())} done.` : 'Find your card to see tonight’s ratings.'}</div>`
-    : ph === 'post' && g.raters >= 3 && board.length ? `<div class="label" style="margin-top:16px">Match ratings so far${motmTop && r[motmTop].motm >= 2 ? ` · man of the match: ${esc(motmTop)}` : ''}</div><div class="gd-board">${board.map((k, i) => { const p = ALL_PLAYERS.find(x => x.name === k); return `<div class="r">${p ? photo(p, 'avatar') : ''}<span class="nm">${esc(k)}${k === motmTop && r[k].motm >= 2 ? ' ★' : ''}</span><i>${r[k].n} votes</i><span class="rt${i === 0 ? ' hi' : ''}">${r[k].avg.toFixed(1)}</span></div>`; }).join('')}</div>`
+  const motm = g.motm || [], isMotm = k => motm.includes(k);
+  const motmHtml = (ph === 'post' || ph === 'final') && motm.length ? `<div class="gd-motm">${motm.map(k => { const p = ALL_PLAYERS.find(x => x.name === k); return `${p ? photo(p, 'avatar') : ''}<span><span class="label">${ph === 'final' ? 'Man of the match' : 'Man of the match so far'}</span><b>${esc(k)}</b></span>`; }).join('')}<i>★</i></div>` : '';
+  const boardHtml = (ph === 'post' || ph === 'final') && gateLocked() ? `<div class="gd-sub" style="margin-top:12px">${TOKEN ? `The night's ratings show once you've rated ${gateNeed()} teammates · ${Math.min(selfRated(), gateNeed())} done.` : 'Find your card to see the night’s ratings.'}</div>`
+    : (ph === 'post' || ph === 'final') && g.raters >= 3 && board.length ? `<div class="label" style="margin-top:16px">${ph === 'final' ? 'Match ratings' : 'Match ratings so far'}</div><div class="gd-board">${board.map((k, i) => { const p = ALL_PLAYERS.find(x => x.name === k); return `<div class="r">${p ? photo(p, 'avatar') : ''}<span class="nm">${esc(k)}${isMotm(k) ? ' ★' : ''}</span><i>${r[k].n} votes</i><span class="rt${i === 0 ? ' hi' : ''}">${r[k].avg.toFixed(1)}</span></div>`; }).join('')}</div>`
     : ph === 'post' ? `<div class="gd-sub" style="margin-top:12px">Ratings show once three players have rated.</div>` : '';
+  const nextLine = view.next ? `<div class="gd-next"><span class="label">Next game</span>${esc(dayOf(view.next))} · ${fmtKo(view.next)}</div>`
+    : view.last && view.last.final && (view.last.motm || []).length ? `<div class="gd-next"><span class="label">Last game</span>★ Man of the match: <b>${esc(view.last.motm.join(', '))}</b>${view.last.score ? ` · ${view.last.score.black}–${view.last.score.white}` : ''}</div>` : '';
   el.dataset.phase = ph; el.hidden = false;
   el.innerHTML = `<svg class="gd-pitch" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice"><rect x="6" y="6" width="388" height="148" rx="4"/><line x1="200" y1="6" x2="200" y2="154"/><circle cx="200" cy="80" r="26"/><rect x="6" y="44" width="40" height="72"/><rect x="354" y="44" width="40" height="72"/><rect x="6" y="62" width="14" height="36"/><rect x="380" y="62" width="14" height="36"/></svg>
-    <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span></div>
+    <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : ph === 'final' ? 'Final' : 'Wednesday 9–10'}</span>${ph === 'post' && closes > now ? `<span class="label gd-closes">Closes in ${fmtLeft(closes - now)}</span>` : ''}</div>
     <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
     ${gate}
-    ${lineup || `<div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' ? 'played' : 'in tonight'}</span></div>`}
-    ${checkBtn ? `<div class="gd-squad"><span class="n">${sc ? `${sc.black === sc.white ? 'Draw' : (sc.black > sc.white ? 'Black' : 'White') + ' win'} ${sc.black}–${sc.white}` : 'Full time'}</span><span class="sp"></span>${checkBtn}</div>` : ''}
-    ${ph !== 'post' ? `<div class="gd-story">${storylines(squad, g)}</div>` : boardHtml}`;
+    ${motmHtml}
+    ${lineup || `<div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' || ph === 'final' ? 'played' : today ? 'in tonight' : 'in'}</span></div>`}
+    ${checkBtn || resultLine ? `<div class="gd-squad">${resultLine}<span class="sp"></span>${checkBtn}</div>` : ''}
+    ${ph === 'pre' || ph === 'live' ? `<div class="gd-story">${storylines(squad, g)}</div>` : boardHtml}
+    ${nextLine}`;
 }
 function copyGate(btn) { const code = btn.querySelector('b').textContent, small = btn.querySelector('small'); const done = () => { small.textContent = 'Copied'; setTimeout(() => small.textContent = 'Tap to copy', 1500); }; if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(done); else done(); }
 async function toggleIn(isIn) {
@@ -1992,22 +2019,23 @@ async function toggleIn(isIn) {
 }
 let MATCH = null;
 function openMatch() {
-  const g = RATINGS && RATINGS.game; if (!g || !VOTER || !VOTER.ok) return;
+  const g = RATINGS && RATINGS.last; if (!g || !VOTER || !VOTER.ok) return;
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
-  const prev = (VOTER.game && VOTER.game.mine) || { ratings: {}, motm: '' };
+  const prev = (VOTER.last && VOTER.last.date === g.date && VOTER.last.mine) || { ratings: {}, motm: '' };
   const T = g.teams || { black: [], white: [] }, mySide = me && (T.black || []).includes(me.name) ? 'black' : me && (T.white || []).includes(me.name) ? 'white' : '';
   const side = p => (T.black || []).includes(p.name) ? 'black' : (T.white || []).includes(p.name) ? 'white' : '';
   const order = p => side(p) === mySide ? 0 : side(p) ? 1 : 2;
-  MATCH = { ratings: Object.assign({}, prev.ratings), motm: prev.motm, side, mySide, list: gameSquad(g).filter(p => p !== me).sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name)) };
+  MATCH = { g, ratings: Object.assign({}, prev.ratings), motm: prev.motm, side, mySide, list: gameSquad(g).filter(p => p !== me).sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name)) };
   Object.keys(MATCH.ratings).forEach(n => { const p = ALL_PLAYERS.find(x => x.name === n); if (p && !MATCH.list.includes(p)) MATCH.list.push(p); });
   paintMatch(); document.getElementById('match-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
 }
 function paintMatch() {
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()), n = Object.keys(MATCH.ratings).length;
   const others = ALL_PLAYERS.filter(p => p !== me && !MATCH.list.includes(p)).sort((a, b) => a.name.localeCompare(b.name));
-  document.getElementById('m-body').innerHTML = `<div class="label">Tonight's game</div>
-    <div class="b-title" style="margin-top:8px">Rate tonight</div>
-    <div class="b-copy">Out of 10 for how they played tonight, not in general. Tap the star for your man of the match.</div>
+  const tn = MATCH.g.date === todayNbo();
+  document.getElementById('m-body').innerHTML = `<div class="label">${tn ? 'Tonight' : esc(dayOf(MATCH.g))} · voting closes 11am</div>
+    <div class="b-title" style="margin-top:8px">${tn ? 'Rate tonight' : 'Rate the game'}</div>
+    <div class="b-copy">Out of 10 for how they played ${tn ? 'tonight' : 'that night'}, not in general. Tap the star for your man of the match.</div>
     ${MATCH.list.map((p, i) => { const v = MATCH.ratings[p.name], sd = MATCH.side(p), prevSd = i ? MATCH.side(MATCH.list[i - 1]) : null; return `${sd && sd !== prevSd ? `<div class="label" style="margin-top:16px">${sd === MATCH.mySide ? 'Your team' : 'Opposition'} · ${sd === 'black' ? 'Black' : 'White'}</div>` : ''}<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="Man of the match">★</button>
       <div class="mr-seg">${[4,5,6,7,8,9,10].map(x => `<button class="${v === x ? 'on' : ''}" onclick="setMr('${esc(p.name)}', ${x})">${x}</button>`).join('')}</div></div>`; }).join('') || '<div class="empty" style="margin-top:14px">Nobody has checked in yet. Add who played below.</div>'}
     <select class="mr-add" onchange="addMr(this.value)"><option value="">+ Add someone who played tonight</option>${others.map(p => `<option>${esc(p.name)}</option>`).join('')}</select>
@@ -2020,7 +2048,7 @@ async function saveMatch() {
   const btn = document.getElementById('mr-save'), msg = document.getElementById('mr-msg'); btn.disabled = true; btn.textContent = 'Saving…';
   let res; try { res = await api(null, { action:'matchRate', t: TOKEN, ratings: MATCH.ratings, motm: MATCH.motm }); } catch (e) { res = { ok:false, error: e.message }; }
   if (!res.ok) { btn.disabled = false; btn.textContent = 'Try again'; msg.textContent = res.error || 'Could not save'; return; }
-  if (VOTER.game) { VOTER.game.mine = { ratings: Object.assign({}, MATCH.ratings), motm: MATCH.motm }; VOTER.game.in = true; }
+  VOTER.last = { date: MATCH.g.date, mine: { ratings: Object.assign({}, MATCH.ratings), motm: MATCH.motm } };
   closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday();
 }
 function closeMatch() { document.getElementById('match-overlay').classList.remove('open'); document.body.style.overflow = ''; }
@@ -2034,6 +2062,16 @@ function teamsPreviewHtml(T) {
   const known = n => ALL_PLAYERS.some(p => p.name === n);
   const side = k => `<div class="gp-col"><b><i class="gd-shirt ${k === 'black' ? 'b' : 'w'}"></i>${k === 'black' ? 'Black' : 'White'} · ${(T[k] || []).length}</b>${(T[k] || []).map(n => `<span class="${known(n) ? '' : 'guest'}">${esc(n)}${known(n) ? '' : ' · guest'}</span>`).join('')}</div>`;
   return side('black') + side('white');
+}
+/* Clears the form for next week: same weekday a week on, same kick-off, no gate code, lineup or score yet. Last night's game
+   stays in the Games tab, and its voting stays open until 11am whatever is saved here. */
+function nextGameForm() {
+  const d = document.getElementById('ga-date'), base = d.dataset.loaded || d.value || todayNbo();
+  const nx = new Date(`${base}T12:00:00+03:00`); nx.setUTCDate(nx.getUTCDate() + 7);
+  d.value = new Intl.DateTimeFormat('en-CA', { timeZone: NBO }).format(nx);
+  ['ga-gate', 'ga-teams', 'ga-sb', 'ga-sw'].forEach(id => document.getElementById(id).value = '');
+  previewTeams(); document.getElementById('ga-teams').focus();
+  const st = document.getElementById('gd-admin-st'); if (st) st.textContent = 'Paste the new lineup, then save';
 }
 function previewTeams() { document.getElementById('ga-preview').innerHTML = teamsPreviewHtml(parseTeams(document.getElementById('ga-teams').value)); }
 async function saveGame(clear) {

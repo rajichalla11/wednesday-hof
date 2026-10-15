@@ -141,3 +141,11 @@ From 14 Oct 2026, Raji chose to see who voted what, while other players still on
 - `admin` returns `named` (voter, target, stats, traits, comment), `anon` (per player, how many earlier anonymous ballots there are) and `matchNamed`. The You tab's "Who voted what" panel shows them, one player at a time.
 - Public results never include names. The ballot count on the Players tab counts people who have voted (from the Voters band) rather than ballot ids, since one person can now hold one of each.
 
+## Match voting window and the next game (Version 23)
+
+- Match ratings open at kick-off and close at **11:00 the next morning** (Nairobi). `closes_(date)`.
+- The man of the match is whoever got the most stars; a tie goes to the better average match rating, and if that's tied too, they share it (`motmFor_`). The gold medal counts a night only once its voting has closed.
+- The last game played is read from the Games tab (which now also stores the kick-off `time`), so Raji can enter next week's game straight after the match without cutting short the voting on the last one. `results` returns `last` (the game played, with `closes`, `final` and `motm`) and `next` (the game in Settings, if it hasn't kicked off). `me` returns `last.mine`. `matchRate` always applies to the last game.
+- The banner shows, in order: live (first hour), voting open until 11am (man of the match so far, a "Next game" line if one is set), then the next game as soon as it's entered (with last game's man of the match underneath), or the final result for up to 6 days if no next game is set.
+- Admin: "Set up the next game →" in the Game day form moves the date on a week and clears the gate code, lineup and score. Changing the date also clears the score fields.
+
