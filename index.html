@@ -319,43 +319,51 @@
   .trait:disabled { opacity: .4; cursor: default; }
   .c-badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px 0; }
   /* GAME DAY */
-  .gd { position: relative; overflow: hidden; margin: 18px 0 4px; border: 1px solid var(--line-2); border-radius: 12px; padding: 18px 18px 16px; background: radial-gradient(120% 140% at 100% 0%, #1b1d1c 0%, var(--surface) 55%); }
+  .gd { position: relative; margin: 18px 0 4px; border: 1px solid var(--line-2); border-radius: 14px; background: var(--surface); overflow: hidden; }
   .gd[hidden] { display: none; }
-  .gd-pitch { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: .09; }
-  .gd-pitch * { fill: none; stroke: var(--fg); stroke-width: 1.4; }
-  .gd::after { content: ''; position: absolute; top: -50%; bottom: -50%; width: 30%; left: -40%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.05), transparent); transform: skewX(-18deg); animation: gdsweep 6s ease-in-out infinite; pointer-events: none; }
-  @keyframes gdsweep { 0%, 55% { left: -40%; } 100% { left: 130%; } }
-  .gd > *:not(.gd-pitch) { position: relative; }
-  .gd-top { display: flex; align-items: center; gap: 8px; }
-  .gd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 0 rgba(255,255,255,.6); animation: gdpulse 1.8s infinite; }
-  .gd[data-phase="post"] .gd-dot { animation: none; opacity: .5; }
+  .gd-hero { padding: 18px 18px 16px; background: radial-gradient(120% 160% at 100% 0%, #1d1f1e 0%, transparent 60%); }
+  .gd-top { display: flex; align-items: center; gap: 8px; min-height: 16px; }
+  .gd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fg); flex: none; animation: gdpulse 1.8s infinite; }
+  .gd[data-phase="post"] .gd-dot, .gd[data-phase="final"] .gd-dot { animation: none; opacity: .5; }
   @keyframes gdpulse { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,.55); } 70% { box-shadow: 0 0 0 9px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
-  .gd-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
-  .gd-title { font-size: 30px; font-weight: 800; letter-spacing: -.02em; line-height: 1; text-transform: uppercase; }
-  .gd-sub { color: var(--fg-2); font-size: 13px; margin-top: 6px; }
-  .gd-count { font-size: 40px; line-height: 1; font-weight: 700; font-variation-settings: 'wdth' 80; letter-spacing: -.01em; }
-  .gd-count small { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; margin-top: 4px; text-align: right; font-variation-settings: normal; }
-  .gd-gate { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; margin-top: 14px; padding: 12px 14px; border: 1px dashed var(--fg-3); border-radius: 8px; background: rgba(0,0,0,.25); text-align: left; }
-  .gd-gate .label { display: block; } .gd-gate b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 26px; letter-spacing: .18em; display: block; margin-top: 2px; }
-  .gd-gate small { font-size: 11px; color: var(--fg-3); white-space: nowrap; }
-  .gd-gate.locked b { filter: blur(6px); user-select: none; }
-  .gd-squad { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-  .gd-faces { display: flex; } .gd-faces .avatar { width: 26px; height: 26px; margin-left: -7px; border: 2px solid var(--surface); } .gd-faces .avatar:first-child { margin-left: 0; }
-  .gd-squad .n { font-size: 13px; color: var(--fg-2); } .gd-squad .n b { color: var(--fg); }
-  .gd-squad .sp { flex: 1; }
-  .gd-story { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
-  .gd-story span { font-size: 11px; padding: 4px 9px; border: 1px solid var(--line-2); border-radius: 999px; color: var(--fg-2); background: rgba(0,0,0,.2); } .gd-story b { color: var(--fg); font-weight: 600; }
-  .gd-board { margin-top: 14px; display: grid; gap: 4px; }
-  .gd-list { position: relative; margin-top: 14px; } .gd-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .gd-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border: 1px solid var(--line-2); border-radius: 999px; background: color-mix(in srgb, var(--bg) 70%, transparent); font-size: 12.5px; }
-  .gd-chip .avatar { width: 22px; height: 22px; } .gd-chip.me { border-color: var(--fg); } .gd-chip i { font-style: normal; font-size: 10px; color: var(--fg-3); margin-left: 2px; }
-  .gd-motm { position: relative; display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--gold) 8%, transparent); }
-  .gd-motm .avatar { width: 36px; height: 36px; } .gd-motm > span { display: flex; flex-direction: column; gap: 2px; flex: 1; } .gd-motm b { font-size: 17px; } .gd-motm .label { color: var(--gold); } .gd-motm i { font-style: normal; color: var(--gold); font-size: 22px; }
-  .gd-next { position: relative; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; color: var(--fg-2); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; } .gd-next b { color: var(--fg); }
   .gd-closes { margin-left: auto; }
-  .gd-link { width: 100%; background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; font: inherit; text-align: left; cursor: pointer; color: var(--fg-2); padding-left: 0; padding-right: 0; padding-bottom: 0; } .gd-link .go { margin-left: auto; color: var(--fg); font-weight: 600; font-size: 12px; } .gd-link:hover .go { text-decoration: underline; } .gp-next { margin-left: auto; font-size: 12px; padding: 0; }
-  .gd-board .r { display: flex; align-items: center; gap: 10px; font-size: 13px; } .gd-board .r .avatar { width: 22px; height: 22px; }
-  .gd-board .r .nm { flex: 1; } .gd-board .r i { font-style: normal; font-size: 11px; color: var(--fg-3); }
+  .gd-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: 12px; } .gd-row > div:first-child { min-width: 0; }
+  .gd-title { font-size: 30px; font-weight: 800; letter-spacing: -.02em; line-height: 1; text-transform: uppercase; }
+  .gd-sub { color: var(--fg-2); font-size: 13px; line-height: 1.45; margin-top: 6px; }
+  .gd-count { font-size: 40px; line-height: 1; font-weight: 700; font-variation-settings: 'wdth' 80; letter-spacing: -.01em; text-align: right; white-space: nowrap; flex: none; }
+  .gd-count small { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; margin-top: 5px; font-variation-settings: normal; }
+  .gd-gate { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; margin-top: 16px; padding: 12px 14px; border: 1px dashed var(--fg-3); border-radius: 10px; background: var(--bg); text-align: left; }
+  .gd-gate .label { display: block; } .gd-gate b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 26px; letter-spacing: .18em; display: block; margin-top: 3px; }
+  .gd-gate small { font-size: 11px; color: var(--fg-3); white-space: nowrap; } .gd-gate.locked b { filter: blur(6px); user-select: none; }
+  .gd-sec { padding: 14px 18px; border-top: 1px solid var(--line); }
+  .gd-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; } .gd-h small { margin-left: auto; font-size: 11px; color: var(--fg-3); text-align: right; }
+  .gd-motm { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--gold) 8%, transparent); }
+  .gd-motm .avatar { width: 36px; height: 36px; flex: none; } .gd-motm > span { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; } .gd-motm b { font-size: 17px; } .gd-motm .label { color: var(--gold); } .gd-motm i { font-style: normal; color: var(--gold); font-size: 22px; }
+  .gd-actions { display: flex; align-items: center; gap: 12px; } .gd-actions .n { flex: 1; font-size: 13px; color: var(--fg-2); line-height: 1.4; }
+  .gd-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .gd-score .side { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; } .gd-score .side.w { justify-content: flex-end; }
+  .gd-score .mid { display: flex; align-items: center; gap: 10px; font-size: 28px; font-weight: 700; line-height: 1; font-variation-settings: 'wdth' 80; } .gd-score .mid i { font-style: normal; color: var(--fg-3); font-size: 16px; } .gd-score .mid.vs { font-size: 11px; letter-spacing: .12em; color: var(--fg-3); text-transform: uppercase; }
+  .gd-score .side.won { color: var(--fg); } .gd-score .side.lost { color: var(--fg-3); }
+  .gd-shirt { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--fg-3); flex-shrink: 0; background: #000; } .gd-shirt.w { background: #f4f4f2; border-color: #f4f4f2; }
+  .gd-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .gd-team { display: grid; gap: 4px; align-content: start; min-width: 0; }
+  .gd-pl { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 5px 8px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); min-width: 0; }
+  .gd-pl span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .gd-pl .avatar { width: 22px; height: 22px; flex-shrink: 0; }
+  .gd-pl.me { border-color: var(--fg); font-weight: 600; }
+  .gd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .gd-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); font-size: 12.5px; }
+  .gd-chip .avatar { width: 22px; height: 22px; } .gd-chip.me { border-color: var(--fg); font-weight: 600; } .gd-chip i { font-style: normal; font-size: 10px; color: var(--fg-3); margin-left: 2px; }
+  .gd-faces { display: flex; align-items: center; } .gd-faces .avatar { width: 26px; height: 26px; margin-left: -7px; border: 2px solid var(--surface); } .gd-faces .avatar:first-child { margin-left: 0; } .gd-faces + .n { margin-left: 10px; font-size: 13px; color: var(--fg-2); } .gd-faces + .n b { color: var(--fg); }
+  .gd-story { display: flex; gap: 6px; flex-wrap: wrap; }
+  .gd-story span { font-size: 11.5px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); background: var(--bg); } .gd-story b { color: var(--fg); font-weight: 600; }
+  .gd-board { display: grid; }
+  .gd-board .r { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; } .gd-board .r:last-child { border-bottom: 0; padding-bottom: 0; }
+  .gd-board .r .avatar { width: 22px; height: 22px; } .gd-board .r .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .gd-board .r i { font-style: normal; font-size: 11px; color: var(--fg-3); }
+  .gd-note { font-size: 13px; color: var(--fg-2); line-height: 1.45; }
+  .gd-foot { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 18px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 13px; color: var(--fg-2); text-align: left; flex-wrap: wrap; } .gd-foot b { color: var(--fg); }
+  button.gd-foot { cursor: pointer; } button.gd-foot:hover { background: var(--surface-2); } .gd-foot .go { margin-left: auto; color: var(--fg); font-weight: 600; font-size: 12px; white-space: nowrap; }
+  @media (max-width: 720px) { .gd { margin-top: 12px; } .gd-hero { padding: 14px 14px 14px; } .gd-sec { padding: 12px 14px; } .gd-foot { padding: 12px 14px; } .gd-title { font-size: 24px; } .gd-count { font-size: 30px; } .gd-gate b { font-size: 22px; } .gd-score .mid { font-size: 24px; } }
+  @media (max-width: 480px) { .gd-teams { gap: 6px; } .gd-pl { font-size: 12.5px; padding: 4px 6px; gap: 6px; } .gd-pl .avatar { width: 20px; height: 20px; } }
   .rt { min-width: 38px; text-align: center; font-weight: 700; font-size: 13px; padding: 2px 6px; border-radius: 5px; background: var(--surface-3); border: 1px solid var(--line-2); }
   .rt.hi { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   .sheet.match { max-width: 560px; }
@@ -393,20 +401,6 @@
     .gp-score { grid-template-columns: 1fr 56px auto 56px 1fr; gap: 8px; max-width: none; }
     .gp-foot { flex-wrap: wrap; padding: 12px; } .gp-foot .btn:not(.link) { order: -1; width: 100%; justify-content: center; } .gp-foot #gd-admin-st { text-align: left; }
   }
-  .gd-teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; margin-top: 14px; align-items: start; }
-  .gd-vs { align-self: center; font-size: 12px; color: var(--fg-3); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding-top: 4px; }
-  .gd-team { display: grid; gap: 5px; min-width: 0; }
-  .gd-kit { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 3px; }
-  .gd-kit b { margin-left: auto; font-size: 26px; line-height: 1; letter-spacing: 0; }
-  .gd-team.white .gd-kit { flex-direction: row-reverse; } .gd-team.white .gd-kit b { margin-left: 0; margin-right: auto; }
-  .gd-shirt { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--fg-3); flex-shrink: 0; }
-  .gd-team.black .gd-shirt { background: #000; } .gd-team.white .gd-shirt { background: #f4f4f2; border-color: #f4f4f2; }
-  .gd-pl { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 4px 6px; border-radius: 6px; background: rgba(0,0,0,.22); min-width: 0; }
-  .gd-pl span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .gd-pl .avatar { width: 22px; height: 22px; flex-shrink: 0; }
-  .gd-team.white .gd-pl { flex-direction: row-reverse; text-align: right; }
-  .gd-pl.me { outline: 1px solid var(--fg); font-weight: 600; }
-  @media (max-width: 480px) { .gd-teams { gap: 6px; } .gd-pl { font-size: 12px; padding: 4px; gap: 6px; } .gd-pl .avatar { width: 18px; height: 18px; } }
   .mr-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
   .mr-who { display: flex; align-items: center; gap: 10px; min-width: 0; } .mr-who b { font-size: 14px; } .mr-who .avatar { width: 30px; height: 30px; }
   .mr-star { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-2); font-size: 16px; color: var(--fg-3); }
@@ -416,7 +410,6 @@
   .mr-seg button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   .mr-add { width: 100%; margin-top: 12px; padding: 11px 12px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; }
   .mr-foot { position: sticky; bottom: -28px; background: var(--bg); padding: 12px 0 4px; margin-top: 10px; display: flex; gap: 10px; align-items: center; }
-  @media (max-width: 720px) { .gd { margin-top: 12px; padding: 14px 14px 12px; } .gd-title { font-size: 24px; } .gd-count { font-size: 32px; } .gd-gate b { font-size: 22px; } }
   .tip { position: fixed; z-index: 200; max-width: 240px; padding: 8px 10px; background: var(--fg); color: var(--bg); border-radius: 6px; font-size: 12px; line-height: 1.4; box-shadow: 0 6px 20px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .15s, transform .15s; }
   .tip.on { opacity: 1; transform: none; }
   .tip b { display: block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; opacity: .7; }
@@ -2023,35 +2016,41 @@ function renderGameday() {
   const faces = squad.slice(0, 9).map(p => photo(p, 'avatar')).join('');
   const T = g.teams && ((g.teams.black || []).length || (g.teams.white || []).length) ? g.teams : null, sc = g.score;
   const checkBtn = TOKEN && ph === 'post' && VOTER && VOTER.ok && !VOTER.pending ? `<button class="btn" onclick="openMatch()">${Object.keys((myLast && myLast.ratings) || {}).length ? 'Edit my match ratings' : today ? 'Rate tonight' : 'Rate the game'}</button>` : '';
-  const resultLine = (ph === 'post' || ph === 'final') ? `<span class="n">${sc ? `${sc.black === sc.white ? 'Draw' : (sc.black > sc.white ? 'Black' : 'White') + ' win'} ${sc.black}–${sc.white}` : 'Full time'}</span>` : '';
 
   const meName = me ? me.name : '';
-  const col = (side) => `<div class="gd-team ${side}"><div class="gd-kit"><span class="gd-shirt"></span>${side === 'black' ? 'Black' : 'White'}${sc ? `<b class="num">${sc[side]}</b>` : ''}</div>${(T[side] || []).map(n => { const p = ALL_PLAYERS.find(x => x.name === n); return `<div class="gd-pl${n === meName ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span>${esc(n)}</span></div>`; }).join('')}</div>`;
+  const isPost = ph === 'post' || ph === 'final';
+  const plRow = n => { const p = ALL_PLAYERS.find(x => x.name === n); return `<div class="gd-pl${n === meName ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span>${esc(n)}</span></div>`; };
   const pChip = (n, extra) => { const p = ALL_PLAYERS.find(x => x.name === n); return `<span class="gd-chip${n === meName ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}${esc(n)}${extra || ''}</span>`; };
+  const sec = (label, meta, body) => `<div class="gd-sec">${label ? `<div class="gd-h"><span class="label">${label}</span>${meta ? `<small>${meta}</small>` : ''}</div>` : ''}${body}</div>`;
   const spots = 2 * (g.size || 6), list = g.list || [], sbList = (ph === 'pre' || ph === 'live') ? (g.standby || []) : [];
-  const lineup = T ? `<div class="gd-teams">${col('black')}<div class="gd-vs">${sc ? '–' : 'vs'}</div>${col('white')}</div>`
-    : list.length ? `<div class="gd-list"><div class="label">In · ${list.length} of ${spots}${spots - list.length > 0 && ph === 'pre' ? ` · ${spots - list.length} spot${spots - list.length === 1 ? '' : 's'} left` : ''}${ph === 'pre' ? ' · teams to follow' : ''}</div><div class="gd-chips">${list.map(n => pChip(n)).join('')}</div></div>` : '';
+  const won = side => !sc || sc.black === sc.white ? '' : (sc[side] > sc[side === 'black' ? 'white' : 'black'] ? ' won' : ' lost');
+  const scoreline = `<div class="gd-score"><span class="side${won('black')}"><i class="gd-shirt"></i>Black</span>${sc ? `<span class="mid num">${sc.black}<i>–</i>${sc.white}</span>` : '<span class="mid vs">vs</span>'}<span class="side w${won('white')}">White<i class="gd-shirt w"></i></span></div>`;
+  const left = spots - list.length;
+  const lineupSec = T ? sec('', '', scoreline + `<div class="gd-teams"><div class="gd-team">${(T.black || []).map(plRow).join('')}</div><div class="gd-team">${(T.white || []).map(plRow).join('')}</div></div>`)
+    : list.length ? sec(`In · ${list.length} of ${spots}`, ph === 'pre' ? [left > 0 ? `${left} spot${left === 1 ? '' : 's'} left` : '', 'teams to follow'].filter(Boolean).join(' · ') : '', `<div class="gd-chips">${list.map(n => pChip(n)).join('')}</div>`)
+    : squad.length ? sec('', '', `<div style="display:flex;align-items:center"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${isPost ? 'played' : today ? 'in tonight' : 'in'}</span></div>`)
+    : (ph === 'pre' ? sec('', '', `<div class="gd-note">Lineup to follow.</div>`) : '');
   const sbi = sbList.indexOf(meName);
-  const standbyHtml = sbList.length ? `<div class="gd-list"><div class="label">Standby${sbi >= 0 ? ` · you're ${['1st', '2nd', '3rd'][sbi] || (sbi + 1) + 'th'} in line` : ''}</div><div class="gd-chips">${sbList.map((n, i) => pChip(n, `<i>${i + 1}</i>`)).join('')}</div></div>` : '';
+  const standbySec = sbList.length ? sec('Standby', sbi >= 0 ? `you're ${['1st', '2nd', '3rd'][sbi] || (sbi + 1) + 'th'} in line` : 'in order', `<div class="gd-chips">${sbList.map((n, i) => pChip(n, `<i>${i + 1}</i>`)).join('')}</div>`) : '';
+  const storySec = (ph === 'pre' || ph === 'live') && squad.length ? (() => { const st = storylines(squad, g); return st ? sec('', '', `<div class="gd-story">${st}</div>`) : ''; })() : '';
   const r = g.ratings || {}, board = Object.keys(r).filter(k => r[k].n >= 2).sort((a, b) => r[b].avg - r[a].avg || r[b].n - r[a].n).slice(0, 5);
   const motm = g.motm || [], isMotm = k => motm.includes(k);
-  const motmHtml = (ph === 'post' || ph === 'final') && motm.length ? `<div class="gd-motm">${motm.map(k => { const p = ALL_PLAYERS.find(x => x.name === k); return `${p ? photo(p, 'avatar') : ''}<span><span class="label">${ph === 'final' ? 'Man of the match' : 'Man of the match so far'}</span><b>${esc(k)}</b></span>`; }).join('')}<i>★</i></div>` : '';
-  const boardHtml = (ph === 'post' || ph === 'final') && gateLocked() ? `<div class="gd-sub" style="margin-top:12px">${TOKEN ? `The night's ratings show once you've rated ${gateNeed()} teammates · ${Math.min(selfRated(), gateNeed())} done.` : 'Find your card to see the night’s ratings.'}</div>`
-    : (ph === 'post' || ph === 'final') && g.raters >= 3 && board.length ? `<div class="label" style="margin-top:16px">${ph === 'final' ? 'Match ratings' : 'Match ratings so far'}</div><div class="gd-board">${board.map((k, i) => { const p = ALL_PLAYERS.find(x => x.name === k); return `<div class="r">${p ? photo(p, 'avatar') : ''}<span class="nm">${esc(k)}${isMotm(k) ? ' ★' : ''}</span><i>${r[k].n} votes</i><span class="rt${i === 0 ? ' hi' : ''}">${r[k].avg.toFixed(1)}</span></div>`; }).join('')}</div>`
-    : ph === 'post' ? `<div class="gd-sub" style="margin-top:12px">Ratings show once three players have rated.</div>` : '';
-  const nextLine = view.back ? `<button class="gd-next gd-link" onclick="gdFlip(false)"><span class="label">Next game</span>${esc(dayOf(view.back))} · ${fmtKo(view.back)}<span class="go">Show →</span></button>`
-    : view.next ? `<div class="gd-next"><span class="label">Next game</span>${esc(dayOf(view.next))} · ${fmtKo(view.next)}</div>`
-    : view.last && view.last.final ? `<button class="gd-next gd-link" onclick="gdFlip(true)"><span class="label">Last game</span>${(view.last.motm || []).length ? `★ <b>${esc(view.last.motm.join(', '))}</b>` : esc(dayOf(view.last))}${view.last.score ? ` · ${view.last.score.black}–${view.last.score.white}` : ''}<span class="go">See result →</span></button>` : '';
+  const motmSec = isPost && motm.length ? sec('', '', `<div class="gd-motm">${motm.map(k => { const p = ALL_PLAYERS.find(x => x.name === k); return `${p ? photo(p, 'avatar') : ''}<span><span class="label">${ph === 'final' ? 'Man of the match' : 'Man of the match so far'}</span><b>${esc(k)}</b></span>`; }).join('')}<i>★</i></div>`) : '';
+  const nRated = Object.keys((myLast && myLast.ratings) || {}).length;
+  const actionSec = checkBtn ? `<div class="gd-sec gd-actions"><span class="n">${nRated ? `You rated ${nRated} player${nRated === 1 ? '' : 's'}. You can change it until 11am.` : `Rate how everyone played${today ? ' tonight' : ''}, and pick your man of the match.`}</span>${checkBtn}</div>` : '';
+  const boardSec = !isPost ? ''
+    : gateLocked() ? sec('Match ratings', '', `<div class="gd-note">${TOKEN ? `Shows once you've rated ${gateNeed()} teammates · ${Math.min(selfRated(), gateNeed())} done.` : 'Find your card and rate your teammates to see them.'}</div>`)
+    : g.raters >= 3 && board.length ? sec(ph === 'final' ? 'Match ratings' : 'Match ratings so far', `${g.raters} rated`, `<div class="gd-board">${board.map((k, i) => { const p = ALL_PLAYERS.find(x => x.name === k); return `<div class="r">${p ? photo(p, 'avatar') : '<span></span>'}<span class="nm">${esc(k)}${isMotm(k) ? ' ★' : ''}</span><i>${r[k].n} votes</i><span class="rt${i === 0 ? ' hi' : ''}">${r[k].avg.toFixed(1)}</span></div>`; }).join('')}</div>`)
+    : ph === 'post' ? sec('Match ratings', '', `<div class="gd-note">Show once three players have rated.</div>`) : '';
+  const foot = view.back ? `<button class="gd-foot" onclick="gdFlip(false)"><span class="label">Next game</span>${esc(dayOf(view.back))} · ${fmtKo(view.back)}<span class="go">Show →</span></button>`
+    : view.next ? `<div class="gd-foot"><span class="label">Next game</span>${esc(dayOf(view.next))} · ${fmtKo(view.next)}</div>`
+    : view.last && view.last.final ? `<button class="gd-foot" onclick="gdFlip(true)"><span class="label">Last game</span>${(view.last.motm || []).length ? `★ <b>${esc(view.last.motm.join(', '))}</b>` : esc(dayOf(view.last))}${view.last.score ? ` · ${view.last.score.black}–${view.last.score.white}` : ''}<span class="go">See result →</span></button>` : '';
   el.dataset.phase = ph; el.hidden = false;
-  el.innerHTML = `<svg class="gd-pitch" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice"><rect x="6" y="6" width="388" height="148" rx="4"/><line x1="200" y1="6" x2="200" y2="154"/><circle cx="200" cy="80" r="26"/><rect x="6" y="44" width="40" height="72"/><rect x="354" y="44" width="40" height="72"/><rect x="6" y="62" width="14" height="36"/><rect x="380" y="62" width="14" height="36"/></svg>
-    <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span>${ph === 'post' && closes > now ? `<span class="label gd-closes">Closes in ${fmtLeft(closes - now)}</span>` : ''}</div>
-    <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
-    ${gate}
-    ${motmHtml}
-    ${lineup}${standbyHtml}${lineup ? '' : (squad.length ? `<div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' || ph === 'final' ? 'played' : today ? 'in tonight' : 'in'}</span></div>` : '')}
-    ${checkBtn || resultLine ? `<div class="gd-squad">${resultLine}<span class="sp"></span>${checkBtn}</div>` : ''}
-    ${ph === 'pre' || ph === 'live' ? (squad.length ? `<div class="gd-story">${storylines(squad, g)}</div>` : `<div class="gd-sub" style="margin-top:12px">Lineup to follow.</div>`) : boardHtml}
-    ${nextLine}`;
+  el.innerHTML = `<div class="gd-hero">
+      <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span>${ph === 'post' && closes > now ? `<span class="label gd-closes">Closes in ${fmtLeft(closes - now)}</span>` : ''}</div>
+      <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
+      ${gate}
+    </div>${motmSec}${actionSec}${lineupSec}${standbySec}${storySec}${boardSec}${foot}`;
 }
 function copyGate(btn) { const code = btn.querySelector('b').textContent, small = btn.querySelector('small'); const done = () => { small.textContent = 'Copied'; setTimeout(() => small.textContent = 'Tap to copy', 1500); }; if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(done); else done(); }
 async function toggleIn(isIn) {
