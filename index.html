@@ -349,7 +349,8 @@
   .gd-motm { position: relative; display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--gold) 8%, transparent); }
   .gd-motm .avatar { width: 36px; height: 36px; } .gd-motm > span { display: flex; flex-direction: column; gap: 2px; flex: 1; } .gd-motm b { font-size: 17px; } .gd-motm .label { color: var(--gold); } .gd-motm i { font-style: normal; color: var(--gold); font-size: 22px; }
   .gd-next { position: relative; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; color: var(--fg-2); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; } .gd-next b { color: var(--fg); }
-  .gd-closes { margin-left: auto; } .gp-next { margin-left: auto; font-size: 12px; padding: 0; }
+  .gd-closes { margin-left: auto; }
+  .gd-link { width: 100%; background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; font: inherit; text-align: left; cursor: pointer; color: var(--fg-2); padding-left: 0; padding-right: 0; padding-bottom: 0; } .gd-link .go { margin-left: auto; color: var(--fg); font-weight: 600; font-size: 12px; } .gd-link:hover .go { text-decoration: underline; } .gp-next { margin-left: auto; font-size: 12px; padding: 0; }
   .gd-board .r { display: flex; align-items: center; gap: 10px; font-size: 13px; } .gd-board .r .avatar { width: 22px; height: 22px; }
   .gd-board .r .nm { flex: 1; } .gd-board .r i { font-style: normal; font-size: 11px; color: var(--fg-3); }
   .rt { min-width: 38px; text-align: center; font-weight: 700; font-size: 13px; padding: 2px 6px; border-radius: 5px; background: var(--surface-3); border: 1px solid var(--line-2); }
@@ -1966,10 +1967,13 @@ function storylines(squad, g) {
   const debut = squad.filter(p => tonight(p) ? p.count === 1 : p.count === 0); if (debut.length) out.push([2, `<b>${esc(debut.map(p => p.name).join(', '))}</b> · first game`]);
   return out.sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => `<span>${x[1]}</span>`).join('');
 }
+let GD_SHOW_LAST = false;
+function gdFlip(showLast) { GD_SHOW_LAST = showLast; renderGameday(); const el = document.getElementById('gameday'); if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: 'start' }); }
 function renderGameday() {
   const el = document.getElementById('gameday'); if (!el) return;
-  const view = ALL_PLAYERS.length ? gameView() : null;
+  let view = ALL_PLAYERS.length ? gameView() : null;
   if (!view) { el.hidden = true; return; }
+  if (GD_SHOW_LAST && view.ph === 'pre' && view.last) view = { g: view.last, ph: 'final', back: view.g };   // tapped "Last game" on the next-game banner
   const { g, ph } = view;
   const voterGame = VOTER && VOTER.ok && !VOTER.pending ? VOTER.game : null, mine = voterGame && voterGame.date === g.date ? voterGame : null, me = VOTER && VOTER.ok ? ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()) : null;
   const myLast = VOTER && VOTER.ok && VOTER.last && VOTER.last.date === g.date ? VOTER.last.mine : null;
@@ -1997,8 +2001,9 @@ function renderGameday() {
   const boardHtml = (ph === 'post' || ph === 'final') && gateLocked() ? `<div class="gd-sub" style="margin-top:12px">${TOKEN ? `The night's ratings show once you've rated ${gateNeed()} teammates · ${Math.min(selfRated(), gateNeed())} done.` : 'Find your card to see the night’s ratings.'}</div>`
     : (ph === 'post' || ph === 'final') && g.raters >= 3 && board.length ? `<div class="label" style="margin-top:16px">${ph === 'final' ? 'Match ratings' : 'Match ratings so far'}</div><div class="gd-board">${board.map((k, i) => { const p = ALL_PLAYERS.find(x => x.name === k); return `<div class="r">${p ? photo(p, 'avatar') : ''}<span class="nm">${esc(k)}${isMotm(k) ? ' ★' : ''}</span><i>${r[k].n} votes</i><span class="rt${i === 0 ? ' hi' : ''}">${r[k].avg.toFixed(1)}</span></div>`; }).join('')}</div>`
     : ph === 'post' ? `<div class="gd-sub" style="margin-top:12px">Ratings show once three players have rated.</div>` : '';
-  const nextLine = view.next ? `<div class="gd-next"><span class="label">Next game</span>${esc(dayOf(view.next))} · ${fmtKo(view.next)}</div>`
-    : view.last && view.last.final && (view.last.motm || []).length ? `<div class="gd-next"><span class="label">Last game</span>★ Man of the match: <b>${esc(view.last.motm.join(', '))}</b>${view.last.score ? ` · ${view.last.score.black}–${view.last.score.white}` : ''}</div>` : '';
+  const nextLine = view.back ? `<button class="gd-next gd-link" onclick="gdFlip(false)"><span class="label">Next game</span>${esc(dayOf(view.back))} · ${fmtKo(view.back)}<span class="go">Back →</span></button>`
+    : view.next ? `<div class="gd-next"><span class="label">Next game</span>${esc(dayOf(view.next))} · ${fmtKo(view.next)}</div>`
+    : view.last && view.last.final ? `<button class="gd-next gd-link" onclick="gdFlip(true)"><span class="label">Last game</span>${(view.last.motm || []).length ? `★ <b>${esc(view.last.motm.join(', '))}</b>` : esc(dayOf(view.last))}${view.last.score ? ` · ${view.last.score.black}–${view.last.score.white}` : ''}<span class="go">See result →</span></button>` : '';
   el.dataset.phase = ph; el.hidden = false;
   el.innerHTML = `<svg class="gd-pitch" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice"><rect x="6" y="6" width="388" height="148" rx="4"/><line x1="200" y1="6" x2="200" y2="154"/><circle cx="200" cy="80" r="26"/><rect x="6" y="44" width="40" height="72"/><rect x="354" y="44" width="40" height="72"/><rect x="6" y="62" width="14" height="36"/><rect x="380" y="62" width="14" height="36"/></svg>
     <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span>${ph === 'post' && closes > now ? `<span class="label gd-closes">Closes in ${fmtLeft(closes - now)}</span>` : ''}</div>
