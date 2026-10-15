@@ -646,6 +646,7 @@ function tab_(name) {
   return rows;
 }
 function bust_(name) {
+  SpreadsheetApp.flush();   // Sheets batches writes until the script ends; without this, a request landing in between could re-cache the old rows for 5 minutes
   const c = cache_(), meta = c.get('rows|' + name);
   if (meta) { const keys = ['rows|' + name]; for (let i = 0; i < Number(meta); i++) keys.push('rows|' + name + '|' + i); c.removeAll(keys); }
   c.remove('results');
