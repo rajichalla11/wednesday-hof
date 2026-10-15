@@ -1979,7 +1979,7 @@ function renderGameday() {
   const head = ph === 'pre' ? [today ? 'Game day' : 'Next game', `Kick-off ${fmtKo(g)} · ${dayLbl}`, fmtLeft(ko - now), 'to kick-off']
     : ph === 'live' ? ['Playing now', `${fmtKo(g)} kick-off · ${dayLbl}`, fmtLeft(ko + 3600000 - now), 'left']
     : ph === 'post' ? ['Full time', `${today ? 'Tonight' : dayLbl} · voting closes 11am`, String(g.raters || 0), g.raters === 1 ? 'player has rated' : 'players have rated']
-    : ['Final', `${dayLbl} · voting closed`, String(g.raters || 0), g.raters === 1 ? 'player rated' : 'players rated'];
+    : ['Full time', `${dayLbl} · voting closed`, String(g.raters || 0), g.raters === 1 ? 'player rated' : 'players rated'];
   const gate = ph === 'post' || ph === 'final' ? '' : !g.hasGate ? '' : mine && mine.gate
     ? `<button class="gd-gate" onclick="copyGate(this)"><span><span class="label">Gate code${today ? ' · tonight' : ''}</span><b>${esc(mine.gate)}</b></span><small>Tap to copy</small></button>`
     : `<button class="gd-gate locked" onclick="${TOKEN ? '' : 'openClaim()'}"><span><span class="label">Gate code${today ? ' · tonight' : ''}</span><b>XXXXX</b></span><small>${TOKEN ? 'Loading…' : 'Find your card to see it'}</small></button>`;
@@ -2001,7 +2001,7 @@ function renderGameday() {
     : view.last && view.last.final && (view.last.motm || []).length ? `<div class="gd-next"><span class="label">Last game</span>★ Man of the match: <b>${esc(view.last.motm.join(', '))}</b>${view.last.score ? ` · ${view.last.score.black}–${view.last.score.white}` : ''}</div>` : '';
   el.dataset.phase = ph; el.hidden = false;
   el.innerHTML = `<svg class="gd-pitch" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice"><rect x="6" y="6" width="388" height="148" rx="4"/><line x1="200" y1="6" x2="200" y2="154"/><circle cx="200" cy="80" r="26"/><rect x="6" y="44" width="40" height="72"/><rect x="354" y="44" width="40" height="72"/><rect x="6" y="62" width="14" height="36"/><rect x="380" y="62" width="14" height="36"/></svg>
-    <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : ph === 'final' ? 'Final' : 'Wednesday 9–10'}</span>${ph === 'post' && closes > now ? `<span class="label gd-closes">Closes in ${fmtLeft(closes - now)}</span>` : ''}</div>
+    <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span>${ph === 'post' && closes > now ? `<span class="label gd-closes">Closes in ${fmtLeft(closes - now)}</span>` : ''}</div>
     <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
     ${gate}
     ${motmHtml}
