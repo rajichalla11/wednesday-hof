@@ -346,6 +346,9 @@
   .gd-story { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
   .gd-story span { font-size: 11px; padding: 4px 9px; border: 1px solid var(--line-2); border-radius: 999px; color: var(--fg-2); background: rgba(0,0,0,.2); } .gd-story b { color: var(--fg); font-weight: 600; }
   .gd-board { margin-top: 14px; display: grid; gap: 4px; }
+  .gd-list { position: relative; margin-top: 14px; } .gd-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .gd-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border: 1px solid var(--line-2); border-radius: 999px; background: color-mix(in srgb, var(--bg) 70%, transparent); font-size: 12.5px; }
+  .gd-chip .avatar { width: 22px; height: 22px; } .gd-chip.me { border-color: var(--fg); } .gd-chip i { font-style: normal; font-size: 10px; color: var(--fg-3); margin-left: 2px; }
   .gd-motm { position: relative; display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--gold) 8%, transparent); }
   .gd-motm .avatar { width: 36px; height: 36px; } .gd-motm > span { display: flex; flex-direction: column; gap: 2px; flex: 1; } .gd-motm b { font-size: 17px; } .gd-motm .label { color: var(--gold); } .gd-motm i { font-style: normal; color: var(--gold); font-size: 22px; }
   .gd-next { position: relative; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; color: var(--fg-2); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; } .gd-next b { color: var(--fg); }
@@ -362,7 +365,7 @@
   .gp-h { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 12px; flex-wrap: wrap; }
   .gp-h small { flex-basis: 100%; font-size: 12px; font-weight: 400; color: var(--fg-3); margin-left: 28px; margin-top: -4px; }
   .gp-n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; background: var(--fg); color: var(--bg); flex-shrink: 0; }
-  .gp-when { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .gp-when { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
   .gp-f { display: grid; gap: 6px; min-width: 0; }
   .gp-f > span { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); }
   .gp-f input, .gp-score input { box-sizing: border-box; width: 100%; min-width: 0; height: 42px; padding: 0 12px; background: var(--bg); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: inherit; font-size: 16px; color-scheme: dark; -webkit-appearance: none; appearance: none; }
@@ -372,6 +375,7 @@
   .ga-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; } .ga-preview:empty { display: none; }
   .gp-col { display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; min-width: 0; }
   .gp-col b { display: flex; align-items: center; gap: 6px; flex-basis: 100%; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-2); margin-bottom: 2px; }
+  .gp-wide { grid-column: 1 / -1; }
   .gp-col span { font-size: 12px; padding: 3px 9px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--bg); white-space: nowrap; }
   .gp-col span.guest { border-style: dashed; color: var(--fg-3); }
   .gd-shirt.b { background: #000; border-color: var(--fg-3); } .gd-shirt.w { background: #f4f4f2; border-color: #f4f4f2; }
@@ -384,7 +388,7 @@
   .gp-foot .btn.link { font-size: 12px; padding: 0; } .gp-foot #gd-admin-st { flex: 1; font-size: 12px; text-align: right; }
   @media (max-width: 600px) {
     .gp-step { padding: 14px 12px; }
-    .gp-when { grid-template-columns: 1fr 1fr; } .gp-gate { grid-column: 1 / -1; }
+    .gp-when { grid-template-columns: 1fr 1fr; }
     .ga-preview { gap: 10px; }
     .gp-score { grid-template-columns: 1fr 56px auto 56px 1fr; gap: 8px; max-width: none; }
     .gp-foot { flex-wrap: wrap; padding: 12px; } .gp-foot .btn:not(.link) { order: -1; width: 100%; justify-content: center; } .gp-foot #gd-admin-st { text-align: left; }
@@ -1698,11 +1702,12 @@ async function renderYou() {
           <div class="gp-when">
             <label class="gp-f"><span>Date</span><input type="date" id="ga-date" value="${esc((v.game && v.game.date) || todayNbo())}" data-loaded="${esc((v.game && v.game.date) || '')}" onchange="if (this.value !== this.dataset.loaded) { document.getElementById('ga-sb').value = ''; document.getElementById('ga-sw').value = ''; }"></label>
             <label class="gp-f"><span>Kick-off</span><input type="time" id="ga-time" value="${esc((v.game && v.game.time) || '21:00')}"></label>
+            <label class="gp-f"><span>Format</span><select id="ga-size" onchange="previewTeams()">${[5,6,7,8,9,10,11].map(n => `<option value="${n}" ${n === ((v.game && v.game.size) || 6) ? 'selected' : ''}>${n}-a-side</option>`).join('')}</select></label>
             <label class="gp-f gp-gate"><span>Gate code</span><input id="ga-gate" value="${esc((v.game && v.game.gate) || '')}" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. VK526"></label>
           </div></div>
-        <div class="gp-step"><div class="gp-h"><span class="gp-n">2</span>Lineup<small>Paste the BLACK / WHITE message from WhatsApp as it is</small></div>
-          <textarea id="ga-teams" class="gp-ta" rows="7" spellcheck="false" placeholder="*BLACK        WHITE*&#10;Priyam.       Raj&#10;Aayush.       Sahil M" oninput="previewTeams()">${esc(teamsToText(v.game && v.game.teams))}</textarea>
-          <div id="ga-preview" class="ga-preview">${teamsPreviewHtml(v.game && v.game.teams)}</div></div>
+        <div class="gp-step"><div class="gp-h"><span class="gp-n">2</span>Lineup<small>Paste from WhatsApp as it is: the list of who's in, or the BLACK / WHITE teams once they're made. Names under "Standby" are standby.</small></div>
+          <textarea id="ga-teams" class="gp-ta" rows="8" spellcheck="false" placeholder="1. Raji&#10;2. Rahul&#10;…&#10;Standby&#10;1. Krish&#10;&#10;or&#10;&#10;*BLACK        WHITE*&#10;Priyam.       Raj" oninput="previewTeams()">${esc(lineupToText(v.game))}</textarea>
+          <div id="ga-preview" class="ga-preview">${lineupPreviewHtml(v.game, (v.game && v.game.size) || 6)}</div></div>
         <div class="gp-step"><div class="gp-h"><span class="gp-n">3</span>Result<small>After the game · leave empty until then</small></div>
           <div class="gp-score"><span class="gp-side"><i class="gd-shirt b"></i>Black</span><input id="ga-sb" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.black : ''}" placeholder="–" aria-label="Black goals"><span class="gp-dash">–</span><input id="ga-sw" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.white : ''}" placeholder="–" aria-label="White goals"><span class="gp-side"><i class="gd-shirt w"></i>White</span></div></div>
         <div class="gp-foot"><button class="btn link" onclick="saveGame(true)">Clear · no game</button><span class="muted" id="gd-admin-st"></span><button class="btn" onclick="saveGame(false)">Save game day</button></div>
@@ -1931,6 +1936,33 @@ function resolvePlayer(raw) {
   c = ALL_PLAYERS.filter(p => p.name.toLowerCase().startsWith(n)); if (c.length === 1) return c[0].name;
   return raw;
 }
+/* What Raji pastes for a game: either the BLACK / WHITE teams, or before teams are made, just the list of who's in
+     Monday 9 aside
+     1. Raji
+     2. Rahul
+     Standby
+     1. Krish
+   Anything under a "Standby" (or Reserves / Waiting) line is standby. In a plain list, names beyond the spots for the
+   format (18 for 9-a-side) also go to standby, in the order they were posted. */
+const STANDBY_RE = /^[^a-z]*(stand\s*-?\s*by|reserves?|waiting(\s*list)?|bench)\b/i;
+function cleanName(l) {
+  const x = l.replace(/^\s*(\d+\s*[.):-]|[-•*·–]+)\s*/, '').replace(/[^\p{L}\p{M}\s.'’-]/gu, ' ').replace(/\s+/g, ' ').replace(/\.+$/, '').trim();
+  if (!x || /\d/.test(l.replace(/^\s*\d+\s*[.):-]/, '')) || /:\s*$/.test(l) || x.split(' ').length > 4) return '';
+  if (/^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b|a-?side|\baside\b|\bin for\b|\bnames?\b|\blineup\b|\bteams?\b|\bnext week\b|\btonight\b|\bgame\b/i.test(x)) return '';
+  return x;
+}
+function parseLineup(text, size) {
+  const all = String(text || '').split(/\r?\n/).map(l => l.replace(/[*_~]/g, '').replace(/\u00a0/g, ' ').trim()).filter(Boolean);
+  const cut = all.findIndex(l => STANDBY_RE.test(l));
+  const main = cut < 0 ? all : all.slice(0, cut), extra = cut < 0 ? [] : all.slice(cut + 1);
+  const uniq = arr => arr.filter((n, i) => n && arr.findIndex(m => m.toLowerCase() === n.toLowerCase()) === i);
+  const standby = uniq(extra.map(cleanName).filter(Boolean).map(resolvePlayer));
+  if (main.some(l => /black/i.test(l) && /white/i.test(l))) { const t = parseTeams(main.join('\n')); return { black: t.black, white: t.white, list: [], standby }; }
+  let list = uniq(main.map(cleanName).filter(Boolean).map(resolvePlayer));
+  const spots = 2 * (size || 6);
+  if (list.length > spots) { standby.unshift(...list.slice(spots)); list = list.slice(0, spots); }
+  return { black: [], white: [], list, standby: uniq(standby).filter(n => !list.includes(n)) };
+}
 function parseTeams(text) {
   const lines = String(text || '').split(/\r?\n/).map(l => l.replace(/[*_~]/g, '').replace(/\u00a0/g, ' ').trim()).filter(Boolean);
   let order = ['black', 'white'], start = 0;
@@ -1980,7 +2012,8 @@ function renderGameday() {
   const squad = gameSquad(g);
   const ko = koOf(g), now = Date.now(), dayLbl = dayOf(g), today = g.date === todayNbo();
   const closes = g.closes ? new Date(g.closes).getTime() : 0;
-  const head = ph === 'pre' ? [today ? 'Game day' : 'Next game', `Kick-off ${fmtKo(g)} · ${dayLbl}`, fmtLeft(ko - now), 'to kick-off']
+  const fmtTag = g.size && g.size !== 6 ? ` · ${g.size}-a-side` : '';
+  const head = ph === 'pre' ? [today ? 'Game day' : 'Next game', `Kick-off ${fmtKo(g)} · ${dayLbl}${fmtTag}`, fmtLeft(ko - now), 'to kick-off']
     : ph === 'live' ? ['Playing now', `${fmtKo(g)} kick-off · ${dayLbl}`, fmtLeft(ko + 3600000 - now), 'left']
     : ph === 'post' ? ['Full time', `${today ? 'Tonight' : dayLbl} · voting closes 11am`, String(g.raters || 0), g.raters === 1 ? 'player has rated' : 'players have rated']
     : ['Full time', `${dayLbl} · voting closed`, String(g.raters || 0), g.raters === 1 ? 'player rated' : 'players rated'];
@@ -1994,7 +2027,12 @@ function renderGameday() {
 
   const meName = me ? me.name : '';
   const col = (side) => `<div class="gd-team ${side}"><div class="gd-kit"><span class="gd-shirt"></span>${side === 'black' ? 'Black' : 'White'}${sc ? `<b class="num">${sc[side]}</b>` : ''}</div>${(T[side] || []).map(n => { const p = ALL_PLAYERS.find(x => x.name === n); return `<div class="gd-pl${n === meName ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span>${esc(n)}</span></div>`; }).join('')}</div>`;
-  const lineup = T ? `<div class="gd-teams">${col('black')}<div class="gd-vs">${sc ? '–' : 'vs'}</div>${col('white')}</div>` : '';
+  const pChip = (n, extra) => { const p = ALL_PLAYERS.find(x => x.name === n); return `<span class="gd-chip${n === meName ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}${esc(n)}${extra || ''}</span>`; };
+  const spots = 2 * (g.size || 6), list = g.list || [], sbList = (ph === 'pre' || ph === 'live') ? (g.standby || []) : [];
+  const lineup = T ? `<div class="gd-teams">${col('black')}<div class="gd-vs">${sc ? '–' : 'vs'}</div>${col('white')}</div>`
+    : list.length ? `<div class="gd-list"><div class="label">In · ${list.length} of ${spots}${spots - list.length > 0 && ph === 'pre' ? ` · ${spots - list.length} spot${spots - list.length === 1 ? '' : 's'} left` : ''}${ph === 'pre' ? ' · teams to follow' : ''}</div><div class="gd-chips">${list.map(n => pChip(n)).join('')}</div></div>` : '';
+  const sbi = sbList.indexOf(meName);
+  const standbyHtml = sbList.length ? `<div class="gd-list"><div class="label">Standby${sbi >= 0 ? ` · you're ${['1st', '2nd', '3rd'][sbi] || (sbi + 1) + 'th'} in line` : ''}</div><div class="gd-chips">${sbList.map((n, i) => pChip(n, `<i>${i + 1}</i>`)).join('')}</div></div>` : '';
   const r = g.ratings || {}, board = Object.keys(r).filter(k => r[k].n >= 2).sort((a, b) => r[b].avg - r[a].avg || r[b].n - r[a].n).slice(0, 5);
   const motm = g.motm || [], isMotm = k => motm.includes(k);
   const motmHtml = (ph === 'post' || ph === 'final') && motm.length ? `<div class="gd-motm">${motm.map(k => { const p = ALL_PLAYERS.find(x => x.name === k); return `${p ? photo(p, 'avatar') : ''}<span><span class="label">${ph === 'final' ? 'Man of the match' : 'Man of the match so far'}</span><b>${esc(k)}</b></span>`; }).join('')}<i>★</i></div>` : '';
@@ -2010,7 +2048,7 @@ function renderGameday() {
     <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
     ${gate}
     ${motmHtml}
-    ${lineup || (squad.length ? `<div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' || ph === 'final' ? 'played' : today ? 'in tonight' : 'in'}</span></div>` : '')}
+    ${lineup}${standbyHtml}${lineup ? '' : (squad.length ? `<div class="gd-squad"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${ph === 'post' || ph === 'final' ? 'played' : today ? 'in tonight' : 'in'}</span></div>` : '')}
     ${checkBtn || resultLine ? `<div class="gd-squad">${resultLine}<span class="sp"></span>${checkBtn}</div>` : ''}
     ${ph === 'pre' || ph === 'live' ? (squad.length ? `<div class="gd-story">${storylines(squad, g)}</div>` : `<div class="gd-sub" style="margin-top:12px">Lineup to follow.</div>`) : boardHtml}
     ${nextLine}`;
@@ -2057,6 +2095,21 @@ async function saveMatch() {
   closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday();
 }
 function closeMatch() { document.getElementById('match-overlay').classList.remove('open'); document.body.style.overflow = ''; }
+function lineupToText(g) {
+  if (!g) return '';
+  const sb = (g.standby || []).length ? `\n\nStandby\n${g.standby.map((n, i) => `${i + 1}. ${n}`).join('\n')}` : '';
+  if (g.teams && ((g.teams.black || []).length || (g.teams.white || []).length)) return teamsToText(g.teams) + sb;
+  return (g.list || []).length ? g.list.map((n, i) => `${i + 1}. ${n}`).join('\n') + sb : '';
+}
+function lineupPreviewHtml(L, size) {
+  if (!L) return '';
+  const known = n => ALL_PLAYERS.some(p => p.name === n), chip = n => `<span class="${known(n) ? '' : 'guest'}">${esc(n)}${known(n) ? '' : ' · guest'}</span>`;
+  const sb = (L.standby || []).length ? `<div class="gp-col gp-wide"><b>Standby · ${L.standby.length}</b>${L.standby.map((n, i) => `<span>${i + 1}. ${esc(n)}</span>`).join('')}</div>` : '';
+  if (L.teams || (L.black || []).length || (L.white || []).length) return teamsPreviewHtml(L.teams || L) + sb;
+  if (!(L.list || []).length) return sb;
+  const spots = 2 * size, left = spots - L.list.length;
+  return `<div class="gp-col gp-wide"><b>In · ${L.list.length} of ${spots}${left > 0 ? ` · ${left} spot${left === 1 ? '' : 's'} left` : ''}</b>${L.list.map(chip).join('')}</div>` + sb;
+}
 function teamsToText(T) {
   if (!T) return ''; const b = T.black || [], w = T.white || [], n = Math.max(b.length, w.length), rows = ['*BLACK            WHITE*'];
   for (let i = 0; i < n; i++) rows.push(`${(b[i] || '-').padEnd(18)}${w[i] || '-'}`);
@@ -2074,15 +2127,16 @@ function nextGameForm() {
   const d = document.getElementById('ga-date'), base = d.dataset.loaded || d.value || todayNbo();
   const nx = new Date(`${base}T12:00:00+03:00`); nx.setUTCDate(nx.getUTCDate() + 7);
   d.value = new Intl.DateTimeFormat('en-CA', { timeZone: NBO }).format(nx);
-  ['ga-gate', 'ga-teams', 'ga-sb', 'ga-sw'].forEach(id => document.getElementById(id).value = '');
+  ['ga-gate', 'ga-teams', 'ga-sb', 'ga-sw'].forEach(id => document.getElementById(id).value = ''); document.getElementById('ga-size').value = '6';
   previewTeams(); document.getElementById('ga-teams').focus();
   const st = document.getElementById('gd-admin-st'); if (st) st.textContent = 'Paste the new lineup, then save';
 }
-function previewTeams() { document.getElementById('ga-preview').innerHTML = teamsPreviewHtml(parseTeams(document.getElementById('ga-teams').value)); }
+function previewTeams() { const size = Number(document.getElementById('ga-size').value) || 6; document.getElementById('ga-preview').innerHTML = lineupPreviewHtml(parseLineup(document.getElementById('ga-teams').value, size), size); }
 async function saveGame(clear) {
   const st = document.getElementById('gd-admin-st'); st.textContent = 'Saving…';
-  const teams = clear ? null : parseTeams(document.getElementById('ga-teams').value);
-  const body = clear ? { action:'setGame', t: TOKEN, date: '', time: '21:00', gate: '' } : { action:'setGame', t: TOKEN, date: document.getElementById('ga-date').value, time: document.getElementById('ga-time').value, gate: document.getElementById('ga-gate').value, teams, scoreBlack: document.getElementById('ga-sb').value.trim(), scoreWhite: document.getElementById('ga-sw').value.trim() };
+  const size = Number(document.getElementById('ga-size').value) || 6, L = clear ? null : parseLineup(document.getElementById('ga-teams').value, size);
+  const body = clear ? { action:'setGame', t: TOKEN, date: '', time: '21:00', gate: '' } : { action:'setGame', t: TOKEN, date: document.getElementById('ga-date').value, time: document.getElementById('ga-time').value, gate: document.getElementById('ga-gate').value, size,
+    teams: { black: L.black, white: L.white }, list: L.list, standby: L.standby, scoreBlack: document.getElementById('ga-sb').value.trim(), scoreWhite: document.getElementById('ga-sw').value.trim() };
   let res; try { res = await api(null, body); } catch (e) { res = { ok:false, error: e.message }; }
   st.textContent = res.ok ? (clear ? 'Cleared' : 'Saved') : (res.error || 'Failed');
   if (res.ok) { VOTER = null; RATINGS_AT = 0; await Promise.all([fetchMe(), fetchResults()]); renderGameday(); }

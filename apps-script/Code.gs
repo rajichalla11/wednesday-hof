@@ -191,7 +191,7 @@ function me_(token) {
   const self = selfRow ? rowToRating_(selfRow, 2) : null;
   const seeds = seeds_(), hide = hiddenNames_();
   if (!isAdmin_(name)) hide.forEach(function (h) { Object.keys(seeds).forEach(function (n) { if (n.toLowerCase() === h) delete seeds[n]; }); });   // a hidden player's starting point is not sent to voters
-  const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
+  const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
            traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name) };
@@ -471,21 +471,24 @@ function voteAll_(name) {
    man of the match is settled. Settings always hold the game being set up; the last game played is read back from the
    Games tab, so entering next week's game doesn't cut short the voting on last night's. */
 const TZ = 'Africa/Nairobi';
+/** game_teams holds { black, white, list, standby }: teams once they're made, or just the list of who's in (plus standby) before that. */
 function gameInfo_() {
-  const s = settings_(); let teams = null, score = null;
-  try { teams = s.game_teams ? JSON.parse(s.game_teams) : null; } catch (_) {}
+  const s = settings_(); let raw = null, score = null;
+  try { raw = s.game_teams ? JSON.parse(s.game_teams) : null; } catch (_) {}
   const m = String(s.game_score || '').match(/^(\d+)-(\d+)$/); if (m) score = { black: Number(m[1]), white: Number(m[2]) };
-  return { date: String(s.game_date || '').trim().slice(0, 10), time: String(s.game_time || '21:00').trim().slice(0, 5) || '21:00', gate: String(s.gate_code || '').trim(), teams: teams, score: score };
+  const teams = raw && ((raw.black || []).length || (raw.white || []).length) ? { black: raw.black || [], white: raw.white || [] } : null;
+  return { date: String(s.game_date || '').trim().slice(0, 10), time: String(s.game_time || '21:00').trim().slice(0, 5) || '21:00', gate: String(s.gate_code || '').trim(), teams: teams, score: score,
+           list: (raw && raw.list) || [], standby: (raw && raw.standby) || [], size: Number(s.game_size) || 6 };
 }
-const cleanTeam_ = function (a) { return (Array.isArray(a) ? a : []).map(function (x) { return String(x).replace(/\s+/g, ' ').trim().slice(0, 40); }).filter(Boolean).slice(0, 15); };
+const cleanTeam_ = function (a) { return (Array.isArray(a) ? a : []).map(function (x) { return String(x).replace(/\s+/g, ' ').trim().slice(0, 40); }).filter(Boolean).slice(0, 30); };
 /** One row per game in the Games tab: date, black names, white names, black goals, white goals. Rewritten whenever the admin saves that game. */
-function saveGameRow_(date, teams, score, time) {
+function saveGameRow_(date, teams, score, time, list, size) {
   if (!date || !teams) return;
-  const sh = sheet_('Games'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'black', 'white', 'black_goals', 'white_goals', 'time']);
-  if (sh.getRange(1, 6).getValue() !== 'time') sh.getRange(1, 6).setValue('time');
-  const row = ["'" + date, teams.black.join(', '), teams.white.join(', '), score ? score.black : '', score ? score.white : '', "'" + (time || '21:00')];
+  const sh = sheet_('Games'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'black', 'white', 'black_goals', 'white_goals', 'time', 'list', 'size']);
+  if (sh.getRange(1, 8).getValue() !== 'size') sh.getRange(1, 6, 1, 3).setValues([['time', 'list', 'size']]);
+  const row = ["'" + date, teams.black.join(', '), teams.white.join(', '), score ? score.black : '', score ? score.white : '', "'" + (time || '21:00'), (list || []).join(', '), size || 6];
   const data = sh.getDataRange().getValues();
-  for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date) { sh.getRange(i + 1, 1, 1, 6).setValues([row]); bust_('Games'); return; }
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date) { sh.getRange(i + 1, 1, 1, 8).setValues([row]); bust_('Games'); return; }
   sh.appendRow(row); bust_('Games');
 }
 function gamesPublic_() {
@@ -503,7 +506,8 @@ function lastGame_() {
   if (ss_().getSheetByName('Games')) tab_('Games').forEach(function (r) {
     const d = String(r[0]).slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d === cur.date) return;
     const split = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
-    const g = { date: d, time: String(r[5] || '21:00').slice(0, 5) || '21:00', gate: '', teams: { black: split(r[1]), white: split(r[2]) }, score: r[3] === '' || r[4] === '' ? null : { black: Number(r[3]), white: Number(r[4]) } };
+    const b = split(r[1]), w = split(r[2]);
+    const g = { date: d, time: String(r[5] || '21:00').slice(0, 5) || '21:00', gate: '', teams: b.length || w.length ? { black: b, white: w } : null, score: r[3] === '' || r[4] === '' ? null : { black: Number(r[3]), white: Number(r[4]) }, list: split(r[6]), standby: [], size: Number(r[7]) || 6 };
     if (kickoff_(g).getTime() <= now) out.push(g);
   });
   return out.sort(function (a, b) { return kickoff_(b).getTime() - kickoff_(a).getTime(); })[0] || null;
@@ -532,11 +536,14 @@ function setGame_(body) {
   setSetting_('game_date', date ? "'" + date : '');
   setSetting_('game_time', "'" + time);
   setSetting_('gate_code', "'" + String(body.gate || '').trim().slice(0, 24));
-  const teams = body.teams ? { black: cleanTeam_(body.teams.black), white: cleanTeam_(body.teams.white) } : null;
-  setSetting_('game_teams', teams && (teams.black.length || teams.white.length) ? JSON.stringify(teams) : '');
+  const teams = body.teams ? { black: cleanTeam_(body.teams.black), white: cleanTeam_(body.teams.white) } : { black: [], white: [] };
+  const list = cleanTeam_(body.list), standby = cleanTeam_(body.standby), size = Math.max(4, Math.min(11, parseInt(body.size, 10) || 6));
+  const any = teams.black.length || teams.white.length || list.length || standby.length;
+  setSetting_('game_teams', any ? JSON.stringify({ black: teams.black, white: teams.white, list: list, standby: standby }) : '');
+  setSetting_('game_size', size);
   const b = parseInt(body.scoreBlack, 10), w = parseInt(body.scoreWhite, 10), score = !isNaN(b) && !isNaN(w) ? { black: b, white: w } : null;
   setSetting_('game_score', score ? "'" + b + '-' + w : '');
-  if (date && teams && (teams.black.length || teams.white.length)) saveGameRow_(date, teams, score, time);
+  if (date && (teams.black.length || teams.white.length || list.length)) saveGameRow_(date, teams, score, time, list, size);
   return { ok: true, game: gameInfo_() };
 }
 function squad_(date) {
@@ -601,10 +608,10 @@ function gamePublic_(g) {
     const k = String(r[2]); by[k] = by[k] || { sum: 0, n: 0, motm: 0 }; by[k].sum += Number(r[3]); by[k].n++; by[k].motm += Number(r[4]) ? 1 : 0;
   });
   const ratings = {}; Object.keys(by).forEach(function (k) { ratings[k] = { avg: Math.round(10 * by[k].sum / by[k].n) / 10, n: by[k].n, motm: by[k].motm }; });
-  if (g.teams) g.teams.black.concat(g.teams.white).forEach(function (n) { if (!sq[n.toLowerCase()]) sq[n.toLowerCase()] = n; });
+  (g.teams ? g.teams.black.concat(g.teams.white) : []).concat(g.list || []).forEach(function (n) { if (!sq[n.toLowerCase()]) sq[n.toLowerCase()] = n; });
   const closes = closes_(g.date), final = Date.now() >= closes;
   return { date: g.date, time: g.time, squad: Object.keys(sq).map(function (k) { return sq[k]; }), teams: g.teams, score: g.score, ratings: ratings, raters: Object.keys(raters).length, hasGate: !!g.gate,
-           closes: new Date(closes).toISOString(), final: final, motm: motmFor_(g.date) };
+           closes: new Date(closes).toISOString(), final: final, motm: motmFor_(g.date), list: g.list || [], standby: g.standby || [], size: g.size || 6 };
 }
 /** Man of the match winners across every game: most MOTM votes on the night (at least 2), ties share it. */
 function motmTally_() {

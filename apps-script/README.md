@@ -149,3 +149,9 @@ From 14 Oct 2026, Raji chose to see who voted what, while other players still on
 - The banner shows, in order: live (first hour), voting open until 11am (man of the match so far, a "Next game" line if one is set), then the next game as soon as it's entered (with last game's man of the match underneath), or the final result for up to 6 days if no next game is set.
 - Admin: "Set up the next game →" in the Game day form moves the date on a week and clears the gate code, lineup and score. Changing the date also clears the score fields.
 
+## Lists, standby and format (Version 24)
+
+- The Game day lineup box takes either the BLACK / WHITE teams or, before teams are made, the plain list of who's in, as posted in WhatsApp (numbers, ticks and headings like "Monday 9 aside" are ignored). Names under a "Standby" / "Reserves" / "Waiting" line are standby. In a plain list, names beyond the spots for the format go to standby in posted order.
+- Format (5- to 11-a-side) is Settings `game_size`, defaulting to 6. `game_teams` JSON now holds `{ black, white, list, standby }`. The Games tab gains `list` and `size` columns.
+- The banner shows the list as "In · 16 of 18 · 2 spots left · teams to follow", standby with each player's place in line ("you're 2nd in line"), and "9-a-side" next to the kick-off when it isn't 6. Once the teams are pasted over the list, the banner switches to Black vs White. List players count as playing for match ratings; standby players don't.
+
