@@ -359,6 +359,13 @@
   .gd-board { display: grid; }
   .gd-board .r { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; } .gd-board .r:last-child { border-bottom: 0; padding-bottom: 0; }
   .gd-board .r .avatar { width: 22px; height: 22px; } .gd-board .r .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .gd-board .r i { font-style: normal; font-size: 11px; color: var(--fg-3); }
+  .gd-last { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent); border-radius: 12px; background: linear-gradient(100deg, color-mix(in srgb, var(--gold) 16%, transparent), color-mix(in srgb, var(--gold) 4%, transparent)); font: inherit; color: var(--fg); text-align: left; cursor: pointer; transition: border-color .15s, background .15s; }
+  .gd-last:hover { border-color: var(--gold); background: linear-gradient(100deg, color-mix(in srgb, var(--gold) 24%, transparent), color-mix(in srgb, var(--gold) 6%, transparent)); }
+  .gd-last .avatar { width: 40px; height: 40px; flex: none; box-shadow: 0 0 0 2px var(--gold); }
+  .gd-last-star { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); font-size: 20px; }
+  .gd-last-txt { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; } .gd-last-txt .label { color: var(--gold); } .gd-last-txt b { font-size: 17px; line-height: 1.15; } .gd-last-txt small { font-size: 12px; color: var(--fg-2); }
+  .gd-last-go { flex: none; padding: 8px 12px; border-radius: 999px; background: var(--gold); color: #1a1408; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  @media (max-width: 400px) { .gd-last { flex-wrap: wrap; } .gd-last-go { width: 100%; text-align: center; } }
   .gd-note { font-size: 13px; color: var(--fg-2); line-height: 1.45; }
   .gd-foot { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 18px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 13px; color: var(--fg-2); text-align: left; flex-wrap: wrap; } .gd-foot b { color: var(--fg); }
   button.gd-foot { cursor: pointer; } button.gd-foot:hover { background: var(--surface-2); } .gd-foot .go { margin-left: auto; color: var(--fg); font-weight: 600; font-size: 12px; white-space: nowrap; }
@@ -2044,7 +2051,9 @@ function renderGameday() {
     : ph === 'post' ? sec('Match ratings', '', `<div class="gd-note">Show once three players have rated.</div>`) : '';
   const foot = view.back ? `<button class="gd-foot" onclick="gdFlip(false)"><span class="label">Next game</span>${esc(dayOf(view.back))} · ${fmtKo(view.back)}<span class="go">Show →</span></button>`
     : view.next ? `<div class="gd-foot"><span class="label">Next game</span>${esc(dayOf(view.next))} · ${fmtKo(view.next)}</div>`
-    : view.last && view.last.final ? `<button class="gd-foot" onclick="gdFlip(true)"><span class="label">Last game</span>${(view.last.motm || []).length ? `★ <b>${esc(view.last.motm.join(', '))}</b>` : esc(dayOf(view.last))}${view.last.score ? ` · ${view.last.score.black}–${view.last.score.white}` : ''}<span class="go">See result →</span></button>` : '';
+    : view.last && view.last.final ? (() => { const L = view.last, m = L.motm || [], mp = m.length ? ALL_PLAYERS.find(x => x.name === m[0]) : null, s2 = L.score;
+        const res = s2 ? (s2.black === s2.white ? `Draw ${s2.black}–${s2.white}` : `${s2.black > s2.white ? 'Black' : 'White'} won ${Math.max(s2.black, s2.white)}–${Math.min(s2.black, s2.white)}`) : '';
+        return `<div class="gd-sec"><button class="gd-last" onclick="gdFlip(true)">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span class="gd-last-txt"><span class="label">Last game · ${esc(dayOf(L))}</span><b>${m.length ? `★ ${esc(m.join(', '))}` : 'Full time'}</b><small>${m.length ? 'Man of the match' : ''}${m.length && res ? ' · ' : ''}${res}</small></span><span class="gd-last-go">See result →</span></button></div>`; })() : '';
   el.dataset.phase = ph; el.hidden = false;
   el.innerHTML = `<div class="gd-hero">
       <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span>${ph === 'post' && closes > now ? `<span class="label gd-closes">Closes in ${fmtLeft(closes - now)}</span>` : ''}</div>
