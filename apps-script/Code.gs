@@ -161,6 +161,7 @@ function doPost(e) {
     if (body.action === 'self') return json_(self_(body));
     if (body.action === 'setSeed') return json_(setSeed_(body));
     if (body.action === 'setFlag') return json_(setFlag_(body));
+    if (body.action === 'ackNamed') return json_(ackNamed_(body));
     if (body.action === 'unrate') return json_(unrate_(body));
     if (body.action === 'photo') return json_(photo_(body));
     if (body.action === 'approve') return json_(approve_(body));
@@ -195,7 +196,8 @@ function me_(token) {
   if (!isAdmin_(name)) hide.forEach(function (h) { Object.keys(seeds).forEach(function (n) { if (n.toLowerCase() === h) delete seeds[n]; }); });   // a hidden player's starting point is not sent to voters
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
-  return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
+  const anonOld = Object.keys(mine).filter(function (k) { return mine[k].anon; }).length;   // ratings still on the old anonymous ballot; the site asks before naming them
+  return { ok: true, name: name, window: win, open: open, anonOld: anonOld, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
            traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name) };
 }
 
@@ -466,6 +468,20 @@ function hiddenNames_() {
 }
 /** Players whose card shows their starting point exactly, whatever the votes say: Settings → fixed_stats, comma-separated (none by default). Their traits still come from votes. */
 function fixedNames_() { return String(settings_().fixed_stats || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean); }
+/** The voter has read the notice that Raji can see who gave what: their earlier anonymous ratings move to their named ballot. */
+function ackNamed_(body) {
+  const name = voterName_(body.t);
+  if (!name) return { ok: false, error: 'This link isn’t recognised.' };
+  const win = props_().getProperty('window'), old = id2_(body.t), b3 = id3_(body.t), col = 4 + STATS.length + 4;
+  const lock = LockService.getScriptLock(); lock.waitLock(10000); let n = 0;
+  try {
+    const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
+    if (data[0].length < col || data[0][col - 1] !== 'voter') sh.getRange(1, col).setValue('voter');
+    for (let i = 1; i < data.length; i++) if (data[i][0] === win && data[i][1] === old) { sh.getRange(i + 1, 2).setValue(b3); sh.getRange(i + 1, col).setValue(name); n++; }
+  } finally { lock.releaseLock(); }
+  bust_('Votes');
+  return { ok: true, named: n };
+}
 /** Admin: set one of the display settings from the site (hide_stats, fixed_stats). */
 function setFlag_(body) {
   const name = voterName_(body.t);

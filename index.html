@@ -503,6 +503,8 @@
   .gate-bar { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
   .gate-bar .gb-txt { flex: 1; min-width: 0; color: var(--fg-2); } .gate-bar .gb-txt b { color: var(--fg); font-weight: 600; }
   .gate-bar .gb-prog { display: block; height: 3px; background: var(--surface-3); border-radius: 2px; margin-top: 7px; max-width: 260px; overflow: hidden; } .gate-bar .gb-prog i { display: block; height: 100%; background: var(--fg); }
+  .gate-bar[hidden] { display: none; }
+  .notice-bar { border-bottom-color: color-mix(in srgb, var(--gold) 40%, var(--line)); } .notice-bar .gb-txt b { color: var(--gold); }
   .gate-bar .btn { flex: none; padding: 8px 14px; font-size: 13px; }
   .panel.gated > :not(.sh):not(.gate-screen) { display: none !important; } .panel:not(.gated) > .gate-screen { display: none; }
   .gate-screen { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 36px 20px; text-align: center; }
@@ -652,6 +654,7 @@
     </div>
   </nav>
   <div class="gate-bar" id="gate-bar" hidden></div>
+  <div class="gate-bar notice-bar" id="notice-bar" hidden></div>
 
   <section class="gd" id="gameday" hidden></section>
 
@@ -1312,7 +1315,23 @@ function gateLocked() {
 function gateNeed() { return VOTER && VOTER.ok && !VOTER.pending ? selfNeed() : SELF_NEED; }
 function gateLine() { return !TOKEN ? 'Find your card to see ratings' : `Rate ${gateNeed()} teammates to see ratings`; }
 function gateAction() { return !TOKEN ? `<button class="btn" onclick="openClaim()">Find your card</button>` : VOTER && VOTER.pending ? '' : `<button class="btn" onclick="openBallot()">Rate teammates</button>`; }
+/* Players who still have ratings from before 14 Oct (when ballots were anonymous) are told once that Raji now sees names;
+   tapping Got it moves those ratings to their named ballot. */
+function paintNotice() {
+  const el = document.getElementById('notice-bar'); if (!el) return;
+  const n = VOTER && VOTER.ok && !VOTER.isAdmin ? (VOTER.anonOld || 0) : 0;
+  el.hidden = !n; if (!n) return;
+  el.innerHTML = `<div class="gb-txt"><b>Heads up:</b> Raji can now see who gave which ratings, including the ${n} you gave before 14 Oct.</div><button class="btn" id="notice-ok" onclick="ackNamed()">Got it</button>`;
+}
+async function ackNamed() {
+  const b = document.getElementById('notice-ok'); if (b) { b.disabled = true; b.textContent = '…'; }
+  let res; try { res = await api(null, { action: 'ackNamed', t: TOKEN }); } catch (e) { res = { ok: false }; }
+  if (res.ok && VOTER) { VOTER.anonOld = 0; Object.values(VOTER.mine || {}).forEach(m => { m.anon = false; }); writeCache('w910_me', VOTER); }
+  else if (b) { b.disabled = false; b.textContent = 'Try again'; return; }
+  paintNotice();
+}
 function paintGate() {
+  paintNotice();
   const locked = gateLocked(), need = gateNeed(), done = Math.min(selfRated(), need), pct = need ? done / need * 100 : 0;
   const bar = document.getElementById('gate-bar');
   if (bar) { bar.hidden = !locked; if (locked) bar.innerHTML = `<div class="gb-txt">${!TOKEN ? `<b>Find your card</b> and rate ${SELF_NEED} teammates to unlock ratings, records and the season.` : VOTER && VOTER.pending ? 'Your claim is waiting for Raji.' : `<b>${done} of ${need} rated.</b> Rate ${need - done} more to unlock ratings, records and the season.`}${TOKEN ? `<span class="gb-prog"><i style="width:${pct}%"></i></span>` : ''}</div>${gateAction()}`; }
