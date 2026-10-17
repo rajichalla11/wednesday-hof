@@ -367,6 +367,33 @@
   .gd-last-go { flex: none; padding: 8px 12px; border-radius: 999px; background: var(--gold); color: #1a1408; font-size: 12px; font-weight: 700; white-space: nowrap; }
   @media (max-width: 360px) { .gd-last { flex-wrap: wrap; } .gd-last-go { width: 100%; text-align: center; } }
   @media (max-width: 480px) { .gd-last { padding: 10px 12px; gap: 10px; } .gd-last-go { padding: 7px 10px; font-size: 11.5px; } .gd-last-txt b { font-size: 16px; } }
+  .gd-tm { display: flex; align-items: center; gap: 12px; } .gd-tm .n { flex: 1; font-size: 13px; color: var(--fg-2); line-height: 1.4; }
+  .sheet.tm { max-width: 520px; padding: 18px 18px 14px; }
+  .tm-title { font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-height: 1; text-transform: uppercase; padding-right: 44px; } .tm-sub { color: var(--fg-2); font-size: 12.5px; margin-top: 6px; }
+  .tm-count { display: flex; justify-content: space-between; align-items: center; margin: 12px auto 8px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .tm-count > span { display: flex; align-items: center; gap: 7px; } .tm-count b { font-size: 18px; letter-spacing: 0; font-variation-settings: 'wdth' 80; } .tm-count .even { font-size: 10px; color: var(--fg-3); letter-spacing: .1em; }
+  .tm-count .gd-shirt.w { background: #f4f4f2; border-color: #f4f4f2; }
+  .tm-pitch { --r: 1.4; position: relative; margin: 0 auto; height: min(calc(100dvh - 240px), calc((100vw - 36px) * var(--r)), calc(484px * var(--r))); aspect-ratio: 1 / var(--r); max-width: 100%; border-radius: 10px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+    background: repeating-linear-gradient(180deg, #1d3a29 0 8.333%, #21422f 8.333% 16.667%); box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
+  .tm-pitch[data-size="9"], .tm-pitch[data-size="10"], .tm-pitch[data-size="11"] { --r: 1.58; }
+  .tm-ln { position: absolute; border: 2px solid rgba(255,255,255,.42); pointer-events: none; }
+  .tm-half { left: 0; right: 0; top: 50%; height: 0; border-width: 2px 0 0; }
+  .tm-circle { left: 50%; top: 50%; width: 26%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); }
+  .tm-spot { left: 50%; top: 50%; width: 6px; height: 6px; border: 0; background: rgba(255,255,255,.5); border-radius: 50%; transform: translate(-50%, -50%); }
+  .tm-box { left: 24%; right: 24%; height: 13%; } .tm-box.t { top: -2px; border-top: 0; } .tm-box.b { bottom: -2px; border-bottom: 0; }
+  .tm-goal { left: 40%; right: 40%; height: 3.5%; } .tm-goal.t { top: -2px; border-top: 0; } .tm-goal.b { bottom: -2px; border-bottom: 0; }
+  .tm-side { position: absolute; left: 10px; font-size: 9.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.55); pointer-events: none; } .tm-side.t { top: 8px; } .tm-side.b { bottom: 8px; }
+  .tm-pod { position: absolute; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 3px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: grab; touch-action: none;
+    transition: background-color .18s, color .18s, border-color .18s, box-shadow .18s; box-shadow: 0 2px 8px rgba(0,0,0,.35); z-index: 1; max-width: 48%; }
+  .tm-pod span { overflow: hidden; text-overflow: ellipsis; } .tm-pod .avatar { width: 22px; height: 22px; }
+  .tm-pod.b { background: #0b0b0c; color: #f4f4f2; border: 1.5px solid rgba(255,255,255,.4); }
+  .tm-pod.w { background: #f4f4f2; color: #111; border: 1.5px solid #f4f4f2; } .tm-pod.w .ph .fb { color: #f4f4f2; }
+  .tm-pod.me { box-shadow: 0 0 0 2px var(--gold), 0 2px 8px rgba(0,0,0,.35); }
+  .tm-pod.drag { z-index: 9; cursor: grabbing; box-shadow: 0 10px 22px rgba(0,0,0,.55); transform: translate(-50%, -50%) scale(1.1); transition: background-color .18s, color .18s, border-color .18s; }
+  .tm-pitch[data-size="9"] .tm-pod, .tm-pitch[data-size="10"] .tm-pod, .tm-pitch[data-size="11"] .tm-pod { font-size: 11px; padding: 2px 8px 2px 2px; } .tm-pitch[data-size="9"] .tm-pod .avatar, .tm-pitch[data-size="10"] .tm-pod .avatar, .tm-pitch[data-size="11"] .tm-pod .avatar { width: 20px; height: 20px; }
+  .tm-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; } .tm-foot .sp { flex: 1; } .tm-foot .btn { padding: 8px 12px; font-size: 12.5px; }
+  .tm-credit { text-align: center; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); margin-top: 8px; }
+  @media (max-width: 720px) { .sheet.tm { padding: 14px 16px 12px; } }
   .gd-note { font-size: 13px; color: var(--fg-2); line-height: 1.45; }
   .gd-foot { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 18px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 13px; color: var(--fg-2); text-align: left; flex-wrap: wrap; } .gd-foot b { color: var(--fg); }
   button.gd-foot { cursor: pointer; } button.gd-foot:hover { background: var(--surface-2); } .gd-foot .go { margin-left: auto; color: var(--fg); font-weight: 600; font-size: 12px; white-space: nowrap; }
@@ -698,6 +725,12 @@
   <div class="sheet match" id="match">
     <div class="controls"><button class="ctl" onclick="closeMatch()" title="Close (Esc)">✕</button></div>
     <div id="m-body"></div>
+  </div>
+</div>
+<div class="overlay" id="tm-overlay" onclick="if (event.target === this) closeTeamMaker()">
+  <div class="sheet tm" id="tm">
+    <div class="controls"><button class="ctl" onclick="closeTeamMaker()" title="Close (Esc)">✕</button></div>
+    <div id="tm-body"></div>
   </div>
 </div>
 <div class="overlay" id="claim-overlay" onclick="closeClaim(event)">
@@ -2066,6 +2099,7 @@ function renderGameday() {
     : list.length ? sec(`In · ${list.length} of ${spots}`, ph === 'pre' ? [left > 0 ? `${left} spot${left === 1 ? '' : 's'} left` : '', 'teams to follow'].filter(Boolean).join(' · ') : '', `<div class="gd-chips">${list.map(n => pChip(n)).join('')}</div>`)
     : squad.length ? sec('', '', `<div style="display:flex;align-items:center"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${isPost ? 'played' : today ? 'in tonight' : 'in'}</span></div>`)
     : (ph === 'pre' ? sec('', '', `<div class="gd-note">Lineup to follow.</div>`) : '');
+  const tmSec = ph === 'pre' && (T || list.length) ? `<div class="gd-sec gd-tm"><span class="n">${T ? 'Think you could pick better teams?' : 'Pick your own teams for fun.'} Drag players between the halves, then screenshot it for the group.</span><button class="btn" onclick="openTeamMaker()">Team maker</button></div>` : '';
   const sbi = sbList.indexOf(meName);
   const standbySec = sbList.length ? sec('Standby', sbi >= 0 ? `you're ${['1st', '2nd', '3rd'][sbi] || (sbi + 1) + 'th'} in line` : 'in order', `<div class="gd-chips">${sbList.map((n, i) => pChip(n, `<i>${i + 1}</i>`)).join('')}</div>`) : '';
   const storySec = (ph === 'pre' || ph === 'live') && squad.length ? (() => { const st = storylines(squad, g); return st ? sec('', '', `<div class="gd-story">${st}</div>`) : ''; })() : '';
@@ -2088,7 +2122,65 @@ function renderGameday() {
       <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span>${ph === 'post' && closes > now ? `<span class="label gd-closes">Closes in ${fmtLeft(closes - now)}</span>` : ''}</div>
       <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
       ${gate}
-    </div>${foot.includes('gd-last') ? foot : ''}${motmSec}${actionSec}${lineupSec}${standbySec}${storySec}${boardSec}${foot.includes('gd-last') ? '' : foot}`;
+    </div>${foot.includes('gd-last') ? foot : ''}${motmSec}${actionSec}${lineupSec}${standbySec}${tmSec}${storySec}${boardSec}${foot.includes('gd-last') ? '' : foot}`;
+}
+/* ── Team maker: drag the next game's players between two halves of a pitch. Only on this device (localStorage per game). ── */
+let TM = null;
+const tmShort = n => { const w = n.split(' '); return w.length > 1 ? `${w[0]} ${w[1][0]}` : n; };
+function tmPlace(arr, top) {
+  const out = {}, rows = arr.length ? [1] : []; let left = arr.length - 1; while (left > 0) { const k = Math.min(3, left); rows.push(k); left -= k; }
+  let i = 0; rows.forEach((k, r) => { const y = rows.length === 1 ? 20 : 8 + r * (34 / (rows.length - 1)); for (let j = 0; j < k; j++) out[arr[i++]] = { x: Math.round((j + 1) / (k + 1) * 1000) / 10, y: top ? y : 100 - y }; });
+  return out;
+}
+function tmLayout(mode) {
+  const { names, T } = TM; let b, w;
+  if (mode === 'shuffle') { const sh = names.slice().sort(() => Math.random() - .5); b = sh.filter((_, i) => i % 2 === 0); w = sh.filter((_, i) => i % 2); }
+  else if (T) { b = (T.black || []).filter(n => names.includes(n)); w = names.filter(n => !b.includes(n)); }
+  else { b = names.filter((_, i) => i % 2 === 0); w = names.filter((_, i) => i % 2); }
+  return Object.assign(tmPlace(b, true), tmPlace(w, false));
+}
+function openTeamMaker() {
+  const g = RATINGS && RATINGS.next; if (!g) return;
+  const T = g.teams && ((g.teams.black || []).length || (g.teams.white || []).length) ? g.teams : null;
+  const names = T ? [...(T.black || []), ...(T.white || [])] : (g.list || []).slice(); if (!names.length) return;
+  TM = { g, T, names, key: 'w910_tm_' + g.date };
+  let saved = null; try { saved = JSON.parse(localStorage.getItem(TM.key)); } catch (_) {}
+  TM.pos = saved && names.every(n => saved[n]) ? saved : tmLayout();
+  paintTeamMaker(); document.getElementById('tm-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
+}
+function closeTeamMaker() { document.getElementById('tm-overlay').classList.remove('open'); document.body.style.overflow = ''; }
+function tmSave() { try { localStorage.setItem(TM.key, JSON.stringify(TM.pos)); } catch (_) {} }
+function tmCounts() {
+  const b = TM.names.filter(n => TM.pos[n].y < 50).length, w = TM.names.length - b, el = document.getElementById('tm-count'); if (!el) return;
+  el.innerHTML = `<span><i class="gd-shirt"></i>Black <b class="num">${b}</b></span><span class="even">${b === w ? 'Even sides' : `${Math.abs(b - w)} short`}</span><span><b class="num">${w}</b> White<i class="gd-shirt w"></i></span>`;
+}
+function tmReset(mode) { TM.pos = tmLayout(mode); tmSave(); paintTeamMaker(); }
+function tmSwap() { TM.names.forEach(n => { TM.pos[n] = { x: TM.pos[n].x, y: 100 - TM.pos[n].y }; }); tmSave(); paintTeamMaker(); }
+function paintTeamMaker() {
+  const { g, names } = TM, size = g.size || 6, me = VOTER && VOTER.ok ? VOTER.name : '';
+  document.getElementById('tm-body').innerHTML = `<div class="tm-title">My teams</div>
+    <div class="tm-sub">${esc(dayOf(g))} · ${fmtKo(g)} · ${size}-a-side · ${names.length} players</div>
+    <div class="tm-count" id="tm-count"></div>
+    <div class="tm-pitch" id="tm-pitch" data-size="${size}">
+      <i class="tm-ln tm-half"></i><i class="tm-ln tm-circle"></i><i class="tm-ln tm-spot"></i><i class="tm-ln tm-box t"></i><i class="tm-ln tm-box b"></i><i class="tm-ln tm-goal t"></i><i class="tm-ln tm-goal b"></i>
+      <span class="tm-side t">Black</span><span class="tm-side b">White</span>
+      ${names.map(n => { const p = ALL_PLAYERS.find(x => x.name === n), q = TM.pos[n]; return `<div class="tm-pod ${q.y < 50 ? 'b' : 'w'}${n === me ? ' me' : ''}" data-n="${esc(n)}" style="left:${q.x}%;top:${q.y}%">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span>${esc(tmShort(n))}</span></div>`; }).join('')}
+    </div>
+    <div class="tm-credit">Wednesday 9–10 · wednesday910.vercel.app</div>
+    <div class="tm-foot"><button class="btn ghost" onclick="tmReset('shuffle')">Shuffle</button><button class="btn ghost" onclick="tmSwap()">Swap sides</button><span class="sp"></span><button class="btn link" onclick="tmReset()">Reset</button><button class="btn" onclick="closeTeamMaker()">Done</button></div>`;
+  tmCounts();
+  const pitch = document.getElementById('tm-pitch');
+  pitch.querySelectorAll('.tm-pod').forEach(pod => {
+    pod.addEventListener('pointerdown', e => {
+      e.preventDefault(); pod.setPointerCapture(e.pointerId); pod.classList.add('drag');
+      const n = pod.dataset.n, r = pitch.getBoundingClientRect();
+      const move = ev => { const x = Math.max(6, Math.min(94, (ev.clientX - r.left) / r.width * 100)), y = Math.max(3, Math.min(97, (ev.clientY - r.top) / r.height * 100));
+        TM.pos[n] = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }; pod.style.left = x + '%'; pod.style.top = y + '%';
+        const side = y < 50 ? 'b' : 'w'; if (!pod.classList.contains(side)) { pod.classList.remove('b', 'w'); pod.classList.add(side); tmCounts(); } };
+      const up = () => { pod.classList.remove('drag'); pod.removeEventListener('pointermove', move); pod.removeEventListener('pointerup', up); pod.removeEventListener('pointercancel', up); tmSave(); tmCounts(); };
+      pod.addEventListener('pointermove', move); pod.addEventListener('pointerup', up); pod.addEventListener('pointercancel', up);
+    });
+  });
 }
 function copyGate(btn) { const code = btn.querySelector('b').textContent, small = btn.querySelector('small'); const done = () => { small.textContent = 'Copied'; setTimeout(() => small.textContent = 'Tap to copy', 1500); }; if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(done); else done(); }
 async function toggleIn(isIn) {
@@ -2186,6 +2278,7 @@ setInterval(() => { if (!document.hidden) renderGameday(); }, 30000);
 /* ── keyboard ── */
 document.addEventListener('keydown', e => {
   if (document.getElementById('match-overlay').classList.contains('open')) { if (e.key==='Escape') closeMatch(); return; }
+  if (document.getElementById('tm-overlay').classList.contains('open')) { if (e.key==='Escape') closeTeamMaker(); return; }
   if (document.getElementById('claim-overlay').classList.contains('open')) { if (e.key==='Escape') closeClaimDirect(); return; }
   if (BALLOT && document.getElementById('ballot-overlay').classList.contains('open')) {
     if (e.target && e.target.tagName === 'TEXTAREA') return;
