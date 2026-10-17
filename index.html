@@ -1204,13 +1204,13 @@ async function renderBalances() {
   if (!VOTER.ok) { el.innerHTML = `<div class="error">${esc(VOTER.error || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   if (!me) { el.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; return; }
-  if (VOTER.pending) { el.innerHTML = `<div class="empty">Your balance shows here once Raji approves your claim.</div>`; return; }
+  if (VOTER.pending) { el.innerHTML = `<div class="empty">Your balance shows here once your claim is approved.</div>`; return; }
   const known = me.balance !== null && !isNaN(me.balance), last = me.lastIdx>=0 ? SESSIONS[me.lastIdx] : null;
   const status = !known ? 'Not recorded on the sheet' : me.balance < 0 ? 'Owing to the pot' : me.balance > 0 ? 'In credit' : 'Settled';
   el.innerHTML = `<div class="box" style="cursor:default;max-width:420px">
       <div class="label">${esc(me.name)} · only you can see this</div>
       <div class="big num">${known ? kes(me.balance) : '—'}<small>${esc(status)}</small></div>
-      <div class="muted" style="font-size:12px">${last ? 'Last played ' + esc(fmtSession(last,false)) + ' · ' : ''}Ask Raji if something looks wrong.</div>
+      <div class="muted" style="font-size:12px">${last ? 'Last played ' + esc(fmtSession(last,false)) + ' · ' : ''}Something look wrong? Say so in the group.</div>
     </div>
     <p class="foot-note">Anyone who has your link can open this, so keep it to yourself.</p>`;
 }
@@ -1321,7 +1321,7 @@ function paintNotice() {
   const el = document.getElementById('notice-bar'); if (!el) return;
   const n = VOTER && VOTER.ok && !VOTER.isAdmin ? (VOTER.anonOld || 0) : 0;
   el.hidden = !n; if (!n) return;
-  el.innerHTML = `<div class="gb-txt"><b>Heads up:</b> Raji can now see who gave which ratings, including the ${n} you gave before 14 Oct.</div><button class="btn" id="notice-ok" onclick="ackNamed()">Got it</button>`;
+  el.innerHTML = `<div class="gb-txt"><b>Heads up:</b> who gave which ratings is no longer anonymous, including the ${n} you gave before 14 Oct.</div><button class="btn" id="notice-ok" onclick="ackNamed()">Got it</button>`;
 }
 async function ackNamed() {
   const b = document.getElementById('notice-ok'); if (b) { b.disabled = true; b.textContent = '…'; }
@@ -1334,7 +1334,7 @@ function paintGate() {
   paintNotice();
   const locked = gateLocked(), need = gateNeed(), done = Math.min(selfRated(), need), pct = need ? done / need * 100 : 0;
   const bar = document.getElementById('gate-bar');
-  if (bar) { bar.hidden = !locked; if (locked) bar.innerHTML = `<div class="gb-txt">${!TOKEN ? `<b>Find your card</b> and rate ${SELF_NEED} teammates to unlock ratings, records and the season.` : VOTER && VOTER.pending ? 'Your claim is waiting for Raji.' : `<b>${done} of ${need} rated.</b> Rate ${need - done} more to unlock ratings, records and the season.`}${TOKEN ? `<span class="gb-prog"><i style="width:${pct}%"></i></span>` : ''}</div>${gateAction()}`; }
+  if (bar) { bar.hidden = !locked; if (locked) bar.innerHTML = `<div class="gb-txt">${!TOKEN ? `<b>Find your card</b> and rate ${SELF_NEED} teammates to unlock ratings, records and the season.` : VOTER && VOTER.pending ? 'Your claim is waiting for approval.' : `<b>${done} of ${need} rated.</b> Rate ${need - done} more to unlock ratings, records and the season.`}${TOKEN ? `<span class="gb-prog"><i style="width:${pct}%"></i></span>` : ''}</div>${gateAction()}`; }
   ['wall', 'records', 'timeline'].forEach(id => {
     const panel = document.getElementById('panel-' + id); if (!panel) return;
     panel.classList.toggle('gated', locked);
@@ -1407,7 +1407,7 @@ async function renderCards() {
   if (!(RATINGS && Date.now() - RATINGS_AT < 5000)) await fetchResults();   // a repaint within 5 s (cached sheet, then live sheet) reuses the same answer
   const ok = RATINGS && RATINGS.ok;
   const rated = ok ? ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats).length : 0;
-  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from Raji's call and move with votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? (VOTER && VOTER.pending ? `<p class="muted" style="font-size:12px;margin-bottom:18px">Your claim is waiting for Raji. The ballot opens once he approves it.</p>` : `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>`) : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Find your card</button>`) : ''}`;
+  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from a set starting point and move with votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? (VOTER && VOTER.pending ? `<p class="muted" style="font-size:12px;margin-bottom:18px">Your claim is waiting for approval. The ballot opens once it's approved.</p>` : `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>`) : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Find your card</button>`) : ''}`;
   legend.innerHTML = `<span style="flex-basis:100%">${STAT_KEYS.map(k=>`<b style="color:var(--fg-2)">${k}</b> ${STAT_GUIDE[k].toLowerCase().replace(/ · /g, ', ')}`).join(' &nbsp;·&nbsp; ')}</span><span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Medals · gold for founders and iron men, platinum for record holders</span>`;
   renderPlayers();
 }
@@ -1445,7 +1445,7 @@ function openClaim() {
 function filterPick(q) { q = q.trim().toLowerCase(); document.querySelectorAll('#pick-grid .pick').forEach(el => el.classList.toggle('hide', !!q && !el.dataset.name.toLowerCase().includes(q))); }
 function pickName(el) {
   const msg = document.getElementById('claim-msg'), btn = document.getElementById('claim-btn');
-  if (el.classList.contains('taken')) { msg.textContent = `${el.dataset.name} is already claimed. If that is you, ask Raji to free it.`; msg.style.color = 'var(--neg)'; msg.classList.add('show'); return; }
+  if (el.classList.contains('taken')) { msg.textContent = `${el.dataset.name} is already claimed. If that's you, ask in the group for it to be freed.`; msg.style.color = 'var(--neg)'; msg.classList.add('show'); return; }
   document.querySelectorAll('#pick-grid .pick').forEach(x => x.classList.toggle('on', x === el));
   CLAIM_PICK = el.dataset.name; btn.disabled = false; btn.textContent = `That's me · ${CLAIM_PICK.split(' ')[0]}`;
   msg.classList.remove('show');
@@ -1461,8 +1461,8 @@ async function submitClaim() {
   VOTER = null;
   document.getElementById('c-body').innerHTML = `
     <div class="label">This is you</div>
-    <div class="b-title" style="margin-top:8px">${res.pending ? `Sent to Raji, ${esc(res.name.split(' ')[0])}.` : `You're set, ${esc(res.name.split(' ')[0])}.`}</div>
-    <div class="b-copy">${res.pending ? 'Your page unlocks once Raji approves the claim. This device already remembers you, so just come back.' : 'This device now remembers you. Your page has your balance, the ballot and a spot for your photo.'}</div>
+    <div class="b-title" style="margin-top:8px">${res.pending ? `Sent, ${esc(res.name.split(' ')[0])}.` : `You're set, ${esc(res.name.split(' ')[0])}.`}</div>
+    <div class="b-copy">${res.pending ? 'Your page unlocks once the claim is approved. This device already remembers you, so just come back.' : 'This device now remembers you. Your page has your balance, the ballot and a spot for your photo.'}</div>
     <div class="b-actions"><button class="btn" onclick="closeClaimDirect(); showTab('you')">Go to my page</button><button class="btn link" data-label="Oops, not me" onclick="releaseClaim(this)">Oops, not me</button></div>`;
   renderCards(); renderBalances(); renderYou();
 }
@@ -1512,7 +1512,7 @@ async function openBallot() {
   if (!VOTER.ok) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="b-title">That link did not work</div><div class="error" style="margin-top:14px">${esc(VOTER.error || 'Unknown error')}</div><div class="b-actions"><button class="btn ghost" onclick="forgetToken()">Forget this link on this device</button></div></div></div>`; return; }
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   if (!me) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="error">You are not on the attendance sheet yet.</div></div></div>`; return; }
-  if (VOTER.pending) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="label">Waiting for Raji</div><div class="b-title" style="margin-top:8px">Claim sent.</div><div class="b-copy">The ballot opens once Raji approves your claim.</div><div class="b-actions"><button class="btn" onclick="closeBallotDirect()">Back</button></div></div></div>`; return; }
+  if (VOTER.pending) { body.innerHTML = `<div class="bt-body"><div class="bt-inner narrow"><div class="label">Waiting for approval</div><div class="b-title" style="margin-top:8px">Claim sent.</div><div class="b-copy">The ballot opens once your claim is approved.</div><div class="b-actions"><button class="btn" onclick="closeBallotDirect()">Back</button></div></div></div>`; return; }
   const queue = ALL_PLAYERS.filter(p => canRate(me, p)).sort((a,b) => sharedCount(me,b)-sharedCount(me,a) || b.count-a.count);
   BALLOT = { me, queue, idx: 0 };
   renderBallotIntro();
@@ -1699,8 +1699,8 @@ async function renderYou() {
   if (v.pending) {
     body.innerHTML = `<div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card</span></div>
       <div class="you-grid"><div>${cardHtml(me, (RATINGS && RATINGS.ok && RATINGS.players[me.name] && RATINGS.players[me.name].stats) || null)}</div>
-      <div><div class="label">Waiting for Raji</div><div class="b-title" style="margin-top:8px">Claim sent.</div>
-      <div class="b-copy">Raji approves each claim so nobody can pick someone else's name. Once he does, this page unlocks: your balance, the ballot and your photo. Nothing to do until then, just come back.</div>
+      <div><div class="label">Waiting for approval</div><div class="b-title" style="margin-top:8px">Claim sent.</div>
+      <div class="b-copy">Each claim is approved so nobody can pick someone else's name. Once yours is, this page unlocks: your balance, the ballot and your photo. Nothing to do until then, just come back.</div>
       <div class="b-actions"><button class="btn ghost" onclick="VOTER = null; renderYou()">Check again</button><button class="btn link" data-label="Not ${esc(me.name.split(' ')[0])}? Not me" onclick="releaseClaim(this)">Not ${esc(me.name.split(' ')[0])}? Not me</button></div></div></div>`;
     return;
   }
@@ -1740,15 +1740,15 @@ async function renderYou() {
       </div>
     </div>
     <section>
-      <div class="sh"><h2>Rate yourself</h2><span>Only Raji sees this. It helps set a fair starting point.</span></div>
+      <div class="sh"><h2>Rate yourself</h2><span>Private. It helps set a fair starting point.</span></div>
       <div class="you-grid">
         <div id="self-card"></div>
         <div>
-          <p class="muted" style="font-size:12px;margin-bottom:10px">Exact numbers, 40 to 99, like a FIFA card. Be honest: Raji compares this with how teammates rate you.</p>
+          <p class="muted" style="font-size:12px;margin-bottom:10px">Exact numbers, 40 to 99, like a FIFA card. Be honest: it's compared with how teammates rate you.</p>
           ${exactRowsHtml(SELF.values)}
           <div class="label" style="margin-top:16px" id="s-traits-l">Your traits · <span>${SELF.traits.length}</span> of ${MAX_TRAITS} chosen</div>
           <div id="s-traits">${traitGridHtml('s', SELF.traits)}</div>
-          <textarea class="b-comment" id="s-note" maxlength="280" placeholder="Anything Raji should know? Optional.">${esc(SELF.note)}</textarea>
+          <textarea class="b-comment" id="s-note" maxlength="280" placeholder="Anything to add? Optional.">${esc(SELF.note)}</textarea>
           <div class="b-nav"><span class="sp"></span><span class="saved" id="s-saved">${v.self && v.self.updated ? 'Submitted' : ''}</span><button class="btn" id="s-submit" onclick="submitSelf()">${v.self ? 'Update' : 'Submit'}</button></div>
         </div>
       </div>
@@ -1763,7 +1763,7 @@ async function renderYou() {
             <label class="gp-f gp-gate"><span>Gate code</span><input id="ga-gate" value="${esc((v.game && v.game.gate) || '')}" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. VK526"></label>
           </div></div>
         <div class="gp-step"><div class="gp-h"><span class="gp-n">2</span>Lineup<small>Paste from WhatsApp as it is: the list of who's in, or the BLACK / WHITE teams once they're made. Names under "Standby" are standby.</small></div>
-          <textarea id="ga-teams" class="gp-ta" rows="8" spellcheck="false" placeholder="1. Raji&#10;2. Rahul&#10;…&#10;Standby&#10;1. Krish&#10;&#10;or&#10;&#10;*BLACK        WHITE*&#10;Priyam.       Raj" oninput="previewTeams()">${esc(lineupToText(v.game))}</textarea>
+          <textarea id="ga-teams" class="gp-ta" rows="8" spellcheck="false" placeholder="1. Priyam&#10;2. Rahul&#10;…&#10;Standby&#10;1. Krish&#10;&#10;or&#10;&#10;*BLACK        WHITE*&#10;Priyam.       Raj" oninput="previewTeams()">${esc(lineupToText(v.game))}</textarea>
           <div id="ga-preview" class="ga-preview">${lineupPreviewHtml(v.game, (v.game && v.game.size) || 6)}</div></div>
         <div class="gp-step"><div class="gp-h"><span class="gp-n">3</span>Result<small>After the game · leave empty until then</small></div>
           <div class="gp-score"><span class="gp-side"><i class="gd-shirt b"></i>Black</span><input id="ga-sb" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.black : ''}" placeholder="–" aria-label="Black goals"><span class="gp-dash">–</span><input id="ga-sw" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.white : ''}" placeholder="–" aria-label="White goals"><span class="gp-side"><i class="gd-shirt w"></i>White</span></div></div>

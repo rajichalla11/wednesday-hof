@@ -260,7 +260,7 @@ function claim_(body) {
     const voters = sheet_('Voters'), data = voters.getDataRange().getValues();
     for (let i = data.length - 1; i >= 1; i--) {
       if (String(data[i][1]).toLowerCase() !== p.name.toLowerCase()) continue;
-      if (data[i][3]) return { ok: false, error: 'This name has already been claimed. If that was not you, ask Raji to reset it.' };
+      if (data[i][3]) return { ok: false, error: 'This name has already been claimed. If that was not you, ask in the group for it to be reset.' };
       voters.deleteRow(i + 1);
     }
     const token = newToken_();
