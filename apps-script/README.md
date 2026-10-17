@@ -161,3 +161,9 @@ From 14 Oct 2026, Raji chose to see who voted what, while other players still on
 - `motmFor_` returns the override when one is set, otherwise the vote (`motmAuto_`). The banner, the gold medal and the tally all follow it, and a picked winner shows as "Man of the match" even before voting closes.
 - The lineup preview flags names that another player shares a first name with (Karan / Karan N) in gold, so a wrong match is easy to spot before saving.
 
+## Fixed cards (Version 27)
+
+- Settings → `fixed_stats` (comma-separated names, none by default): those players' cards show their starting point exactly, and votes don't move the six stats. Their traits still come from teammates' votes. Results mark them `fixed: true`.
+- POST `setFlag` (admin) sets `hide_stats` or `fixed_stats` from the site.
+- 17 Oct 2026: Raji's card was unhidden (`hide_stats` empty) and fixed to 81 · 82 · 92 · 94 · 68 · 82, his own numbers.
+

@@ -1662,7 +1662,7 @@ async function renderYou() {
   body.innerHTML = `
     <div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
     <div class="you-grid">
-      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates. ${Math.min(selfRated(), gateNeed())} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
+      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates. ${Math.min(selfRated(), gateNeed())} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.fixed ? `Your own numbers, fixed: teammates' ${r.n} vote${r.n===1?'':'s'} set your traits, not your stats.` : r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
       <div>
         <div class="stats four">
           <div class="stat"><b class="num">${me.count}</b><div class="label">Appearances</div></div>
@@ -1770,6 +1770,7 @@ function renderSeedEditor(a) {
    starting point is edited, using the same blend as the backend. */
 function predictCard(name, seed, a) {
   const g = a.agg && a.agg[name], W = (RATINGS && RATINGS.priorWeight) || 3, out = {};
+  if (g && g.fixed) { STAT_KEYS.forEach(k => out[k] = Number(seed[k])); return out; }   // fixed card: shows the starting point as entered
   STAT_KEYS.forEach(k => {
     const has = g && g.vote && g.vw && g.vw[k] > 0;
     if (seed) out[k] = has ? Math.max(40, Math.min(99, Math.round((g.vote[k] * g.vw[k] + W * seed[k]) / (g.vw[k] + W)))) : seed[k];

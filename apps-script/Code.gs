@@ -160,6 +160,7 @@ function doPost(e) {
     if (body.action === 'claim') return json_(claim_(body));
     if (body.action === 'self') return json_(self_(body));
     if (body.action === 'setSeed') return json_(setSeed_(body));
+    if (body.action === 'setFlag') return json_(setFlag_(body));
     if (body.action === 'unrate') return json_(unrate_(body));
     if (body.action === 'photo') return json_(photo_(body));
     if (body.action === 'approve') return json_(approve_(body));
@@ -288,7 +289,7 @@ function results_() {
 }
 
 function aggregate_(rows, seeds) {
-  seeds = seeds || {};
+  seeds = seeds || {}; const fixed = fixedNames_();
   // voter calibration: how generous is each ballot compared with everyone?
   const perBallot = {}; let gSum = 0, gN = 0;
   rows.forEach(function (r) { const b = r[1]; perBallot[b] = perBallot[b] || { s: 0, n: 0 }; STATS.forEach(function (_, i) { const v = Number(r[4 + i]); perBallot[b].s += v; perBallot[b].n++; gSum += v; gN++; }); });
@@ -316,6 +317,7 @@ function aggregate_(rows, seeds) {
         entry.stats[k] = Math.max(RMIN, Math.min(RMAX, Math.round(sum / ws)));
       });
       if (!base && n < MIN_VOTES) delete entry.stats;   // too few votes to show on a card yet
+      if (base && fixed.indexOf(String(t).toLowerCase()) >= 0) { entry.stats = Object.assign({}, base); entry.fixed = true; }   // the admin's numbers, exactly; votes don't move them
     }
     res[t] = entry;
   });
@@ -461,6 +463,16 @@ function hiddenNames_() {
   const s = settings_();
   const raw = Object.prototype.hasOwnProperty.call(s, 'hide_stats') ? s.hide_stats : (s.admin_name || 'Raji');
   return String(raw || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+}
+/** Players whose card shows their starting point exactly, whatever the votes say: Settings → fixed_stats, comma-separated (none by default). Their traits still come from votes. */
+function fixedNames_() { return String(settings_().fixed_stats || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean); }
+/** Admin: set one of the display settings from the site (hide_stats, fixed_stats). */
+function setFlag_(body) {
+  const name = voterName_(body.t);
+  if (!name || !isAdmin_(name)) return { ok: false, error: 'Admin only.' };
+  const key = String(body.key || ''); if (['hide_stats', 'fixed_stats'].indexOf(key) < 0) return { ok: false, error: 'Unknown setting.' };
+  setSetting_(key, "'" + String(body.value || '').slice(0, 300));
+  return { ok: true, value: settings_()[key] };
 }
 /** Players allowed to rate anyone, whatever nights they shared: Settings → vote_all, comma-separated. If the row is missing it defaults to Nirav, whose games mostly predate the tracked sessions. */
 function voteAll_(name) {
