@@ -668,7 +668,9 @@
   }
 
   /* ── HOME: me strip, visitor box, quick links ── */
-  #panel-home { padding-top: 14px; }
+  .wrap > .panel { margin-top: 16px; } #panel-home { padding-top: 0; } #panel-home > .gd { margin-top: 0; }
+  .gd.gd-compact .gd-only { padding: 0; border: 0; }
+  #panel-history > .head { padding-top: 6px; }
   .me { margin: 14px 0 6px; border: 1px solid var(--line-2); border-radius: 16px; background: linear-gradient(180deg, var(--surface-2), var(--surface)); padding: 16px; display: grid; gap: 14px; }
   .me-top { display: flex; align-items: center; gap: 12px; } .me-av { width: 46px !important; height: 46px !important; flex: none; }
   .me-id { flex: 1; min-width: 0; } .me-id b { display: block; font-size: 18px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .me-id span { font-size: 12px; color: var(--fg-2); }
