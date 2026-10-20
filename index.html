@@ -1474,11 +1474,20 @@ function fetchMe() {
   }
   return ME_PROMISE;
 }
+/* First load on the Vercel address reads a copy cached at the edge (about 0.2 s instead of 5–30 s from Apps Script), then a
+   direct call refreshes it in the background. Every later call (after a vote, a save) goes straight to Apps Script. */
+let EDGE_TRIED = false;
+function edgeResults() {
+  if (EDGE_TRIED || !/\.vercel\.app$/.test(location.hostname)) return null;
+  EDGE_TRIED = true;
+  return fetch('/api/results').then(r => r.ok ? r.json() : null).then(r => r && r.ok ? r : null).catch(() => null);
+}
 function fetchResults() {
   if (!RESULTS_PROMISE) {
     if (!RATINGS) { const c = readCache('w910_results'); if (c && c.ok) RATINGS = c; }
-    const before = JSON.stringify(RATINGS);
-    RESULTS_PROMISE = api({ action:'results' }).catch(() => null).then(r => {
+    const before = JSON.stringify(RATINGS), edge = edgeResults();
+    const src = edge ? edge.then(r => { if (r) setTimeout(() => { RATINGS_AT = 0; const was = JSON.stringify(RATINGS); fetchResults().then(() => { if (JSON.stringify(RATINGS) !== was && BOOTED) { renderPlayers(); renderGameday(); } }); }, 50); return r || api({ action:'results' }); }) : api({ action:'results' });
+    RESULTS_PROMISE = src.catch(() => null).then(r => {
       RESULTS_PROMISE = null; if (r) RATINGS = r; RATINGS_AT = Date.now(); markTakenTiles(); setTimeout(renderGameday, 0);
       if (r && r.ok) writeCache('w910_results', r);
       if (r && before && before !== JSON.stringify(r) && BOOTED && TOKEN && !YOU_WAITING) renderYou();
@@ -2060,6 +2069,7 @@ async function renderAdmin(me) {
         <div><b class="num">${x.today.devices}</b><div class="label">People today</div><small>${x.today.opens} opens</small></div>
         <div><b class="num">${x.week.devices}</b><div class="label">People, 7 days</div><small>${x.week.opens} opens</small></div>
         <div><b class="num">${x.total.devices}</b><div class="label">People, all time</div><small>${x.total.opens} opens · ${x.total.mobile}% on phones</small></div></div>
+      ${(x.tabs || []).length ? `<div class="label" style="margin:14px 0 6px">Tabs opened · people, last 7 days</div><div class="mo-votes">${x.tabs.map(t => `<span>${esc({ hall: 'Players', matches: 'Matches', history: 'History', records: 'Records', wall: 'Century Wall', timeline: 'Season', admin: 'Admin', home: 'Home' }[t.tab] || t.tab)} <b style="color:var(--fg)">${t.people}</b></span>`).join('')}</div>` : ''}
       ${(() => { const seen = {}; x.names.forEach(n => seen[n.name.toLowerCase()] = n); const BAND = ['', '1–4', '5–9', '10+'], band = r => typeof r === 'number' ? (r <= 0 ? '' : r < 5 ? '1–4' : r < 10 ? '5–9' : '10+') : String(r || ''); const claims = (a.claims || []).map(c => ({ ...c, rated: band(c.rated) })).sort((p, q) => (BAND.indexOf(q.rated) - BAND.indexOf(p.rated)) || p.name.localeCompare(q.name)); const voted = claims.filter(c => c.rated).length;
         const fmtD = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); };
         return `<div class="label" style="margin:16px 0 8px;display:flex;justify-content:space-between;gap:8px"><span>Claimed · ${claims.length} of ${ALL_PLAYERS.length} · ${voted} have voted</span><button class="btn link" style="font-size:11px;padding:0" onclick="refreshAdmin(true)">Refresh · ${new Date(ADMIN_AT).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' })}</button></div>

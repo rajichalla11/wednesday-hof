@@ -162,6 +162,7 @@ function doPost(e) {
     if (body.action === 'setSeed') return json_(setSeed_(body));
     if (body.action === 'setFlag') return json_(setFlag_(body));
     if (body.action === 'freeClaim') return json_(freeClaim_(body));
+    if (body.action === 'tap') return json_(tap_(body));
     if (body.action === 'unrate') return json_(unrate_(body));
     if (body.action === 'photo') return json_(photo_(body));
     if (body.action === 'approve') return json_(approve_(body));
@@ -411,7 +412,17 @@ function activity_() {
   const byName = {};
   rows.forEach(function (r) { const n = String(r[2] || ''); if (!n) return; const ts = new Date(r[0]).getTime(); byName[n] = byName[n] || { name: n, opens: 0, last: 0 }; byName[n].opens++; if (ts > byName[n].last) byName[n].last = ts; });
   const names = Object.keys(byName).map(function (n) { return { name: n, opens: byName[n].opens, last: new Date(byName[n].last).toISOString() }; }).sort(function (a, b) { return b.last < a.last ? -1 : 1; });
-  return { today: sum(now - day), week: sum(now - 7 * day), total: sum(0), names: names };
+  const tabs = {}; if (ss_().getSheetByName('Taps')) tab_('Taps').forEach(function (r) { if (new Date(r[0]).getTime() < now - 7 * day) return; const k = String(r[2] || ''); tabs[k] = tabs[k] || {}; tabs[k][r[1]] = 1; });
+  return { today: sum(now - day), week: sum(now - 7 * day), total: sum(0), names: names, tabs: Object.keys(tabs).map(function (k) { return { tab: k, people: Object.keys(tabs[k]).length }; }).sort(function (a, b) { return b.people - a.people; }) };
+}
+/** Which tabs people open: one row per device per tab per visit (no names). */
+function tap_(body) {
+  const dev = String(body.d || '').replace(/[^\w-]/g, '').slice(0, 40), tab = String(body.p || '').replace(/[^\w-]/g, '').slice(0, 20);
+  if (!dev || !tab) return { ok: false };
+  const key = 'tap|' + dev + '|' + tab; if (cache_().get(key)) return { ok: true, dup: true }; cache_().put(key, '1', 600);
+  const sh = sheet_('Taps'); if (sh.getLastRow() === 0) sh.appendRow(['ts', 'device', 'tab']);
+  sh.appendRow([new Date(), dev, tab]);
+  return { ok: true };
 }
 
 function setSeed_(body) {
