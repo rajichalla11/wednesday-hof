@@ -405,6 +405,22 @@
   .mt-none { font-size: 12.5px; color: var(--fg-3); }
   .mt-more summary { cursor: pointer; font-size: 12px; font-weight: 600; color: var(--fg-2); list-style: none; } .mt-more summary::-webkit-details-marker { display: none; } .mt-more summary::after { content: ' ↓'; } .mt-more[open] summary::after { content: ' ↑'; }
   .mt .gd-team .gd-chip { width: fit-content; }
+  /* Players tools */
+  .pl-tools { display: flex; gap: 8px; margin: 18px 0 10px; } .pl-search { flex: 1; position: relative; }
+  .pl-search svg { position: absolute; left: 12px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); fill: none; stroke: var(--fg-3); stroke-width: 1.8; stroke-linecap: round; }
+  .pl-search input { width: 100%; height: 42px; padding: 0 12px 0 36px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--surface); color: var(--fg); font: inherit; font-size: 16px; -webkit-appearance: none; }
+  .pl-search input:focus { outline: none; border-color: var(--fg-3); }
+  .pl-view { flex: none; } .pl-filter { overflow-x: auto; scrollbar-width: none; margin-bottom: 6px; max-width: 100%; } .pl-filter::-webkit-scrollbar { display: none; } .pl-filter button { white-space: nowrap; }
+  .cards.as-list { display: grid; grid-template-columns: 1fr; gap: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); margin-top: 8px; }
+  .pl-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--line); background: none; font: inherit; color: var(--fg); text-align: left; cursor: pointer; } .pl-row:last-child { border-bottom: 0; } .pl-row:hover { background: var(--surface-2); }
+  .pl-row .avatar { width: 34px; height: 34px; } .pl-n { flex: 1; min-width: 0; } .pl-n b { display: block; font-size: 14px; } .pl-n small { font-size: 11.5px; color: var(--fg-3); }
+  .pl-c { font-size: 17px; font-weight: 700; text-align: right; line-height: 1; } .pl-c small { display: block; font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; margin-top: 2px; }
+  .pl-row.me { box-shadow: inset 3px 0 0 var(--fg); } .pl-lock { opacity: .4; }
+  .gd-sum { display: grid; gap: 12px; } .gd-sum-row { display: flex; align-items: center; gap: 10px; } .gd-sum-row .n { font-size: 13px; color: var(--fg-2); }
+  .gd-st-row { display: flex; } .gd-st { font-size: 12px; font-weight: 700; letter-spacing: .02em; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); }
+  .gd-st.in { background: var(--fg); color: var(--bg); border-color: var(--fg); } .gd-st.sb { border-color: var(--gold); color: var(--gold); } .gd-st.out { color: var(--fg-3); }
+  .gd-btns { display: flex; gap: 8px; } .gd-btns:empty { display: none; } .gd-more { flex: 1; justify-content: center; } .gd-sum:has(.gd-btns:empty):not(:has(.gd-st-row)):not(:has(.gd-sum-row)) { display: none; }
+  .gd.gd-compact { border: 0; background: none; } .gd-only { padding: 0; border: 0; }
   .gd-note { font-size: 13px; color: var(--fg-2); line-height: 1.45; }
   .gd-foot { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 18px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 13px; color: var(--fg-2); text-align: left; flex-wrap: wrap; } .gd-foot b { color: var(--fg); }
   button.gd-foot { cursor: pointer; } button.gd-foot:hover { background: var(--surface-2); } .gd-foot .go { margin-left: auto; color: var(--fg); font-weight: 600; font-size: 12px; white-space: nowrap; }
@@ -517,7 +533,9 @@
   .gate-bar[hidden] { display: none; }
   .notice-bar { border-bottom-color: color-mix(in srgb, var(--gold) 40%, var(--line)); } .notice-bar .gb-txt b { color: var(--gold); }
   .gate-bar .btn { flex: none; padding: 8px 14px; font-size: 13px; }
-  .panel.gated > :not(.sh):not(.gate-screen) { display: none !important; } .panel:not(.gated) > .gate-screen { display: none; }
+  .hsec.gated > :not(.sh):not(.gate-screen) { display: none !important; } .hsec:not(.gated) > .gate-screen { display: none; }
+  .hsec { display: none; } .hsec.on { display: block; animation: panelIn .3s var(--ease); }
+  .hist-seg { margin: 26px 0 4px; } .hist-seg button { flex: 1; }
   .gate-screen { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 36px 20px; text-align: center; }
   .gate-screen .gs-n { font-size: 40px; font-weight: 700; font-stretch: 75%; line-height: 1; } .gate-screen .gs-n small { font-size: 18px; color: var(--fg-3); font-weight: 500; }
   .gate-screen p { color: var(--fg-2); font-size: 14px; max-width: 40ch; margin: 12px auto 18px; } .gate-screen .gb-prog { display: block; height: 3px; background: var(--surface-3); border-radius: 2px; max-width: 220px; margin: 14px auto 0; overflow: hidden; } .gate-screen .gb-prog i { display: block; height: 100%; background: var(--fg); }
@@ -648,6 +666,41 @@
     .deck .c-badges .medal:nth-child(n+3) { display: inline-flex; }
     .stats.four { grid-template-columns: 1fr 1fr; }
   }
+
+  /* ── HOME: me strip, visitor box, quick links ── */
+  #panel-home { padding-top: 14px; }
+  .me { margin: 14px 0 6px; border: 1px solid var(--line-2); border-radius: 16px; background: linear-gradient(180deg, var(--surface-2), var(--surface)); padding: 16px; display: grid; gap: 14px; }
+  .me-top { display: flex; align-items: center; gap: 12px; } .me-av { width: 46px !important; height: 46px !important; flex: none; }
+  .me-id { flex: 1; min-width: 0; } .me-id b { display: block; font-size: 18px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .me-id span { font-size: 12px; color: var(--fg-2); }
+  .me-bal { text-align: right; } .me-bal b { display: block; font-size: 22px; font-weight: 700; font-variation-settings: 'wdth' 80; line-height: 1.05; } .me-bal span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; }
+  .me-bal.neg b { color: var(--neg); }
+  .me-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); padding-top: 12px; }
+  .me-stats span { display: flex; flex-direction: column; gap: 2px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; } .me-stats b { font-size: 20px; color: var(--fg); letter-spacing: 0; font-weight: 700; font-variation-settings: 'wdth' 80; }
+  .me-go { width: 100%; justify-content: center; position: relative; overflow: hidden; min-height: 44px; }
+  .me-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(0,0,0,.18); } .me-prog i { display: block; height: 100%; background: currentColor; opacity: .45; }
+  .me-cta { gap: 8px; } .me-cta-t { font-size: 24px; font-weight: 800; letter-spacing: -.02em; } .me-cta p { color: var(--fg-2); font-size: 13.5px; line-height: 1.5; margin: 0 0 6px; } .me-cta small { color: var(--fg-3); font-size: 12px; text-align: center; }
+  .ql-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0 8px; }
+  .ql { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); text-align: left; font: inherit; color: var(--fg); cursor: pointer; } .ql b { font-size: 14px; } .ql span { font-size: 11.5px; color: var(--fg-3); } .ql:hover { border-color: var(--line-2); }
+  .self-wrap { margin-top: 18px; } .self-wrap > summary { list-style: none; cursor: pointer; } .self-wrap > summary::-webkit-details-marker { display: none; }
+  .self-wrap > summary h2::after { content: ' ↓'; color: var(--fg-3); font-weight: 400; } .self-wrap[open] > summary h2::after { content: ' ↑'; }
+  body[data-tab="home"] #gate-bar, body[data-tab="home"] #notice-bar { display: none; }
+
+  /* ── GLASS FRAME: frosted top bar everywhere; on phones the tabs float at the bottom as a frosted bar ── */
+  nav.top { background: rgba(14,14,15,.72); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); }
+  .tab svg { display: none; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  @media (max-width: 720px) {
+    nav.top { flex-direction: row; align-items: center; padding: 12px 0 10px; }
+    .tabs { position: fixed; z-index: 60; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); margin: 0; padding: 6px; gap: 2px; justify-content: space-between;
+      border-radius: 24px; background: rgba(30,30,33,.55); -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%);
+      border: 1px solid rgba(255,255,255,.12); box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08); overflow: visible; }
+    .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px 6px; min-height: 0; font-size: 10.5px; font-weight: 600; border-radius: 18px; color: var(--fg-2); }
+    .tab svg { display: block; }
+    .tab.active { color: var(--fg); background: rgba(255,255,255,.12); }
+    .tab small { display: none; }
+    .wrap { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+    .ql-row { gap: 6px; } .ql { padding: 10px; }
+    .me { padding: 14px; } .me-bal b { font-size: 20px; }
+  }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 </style>
 </head>
@@ -656,20 +709,22 @@
   <nav class="top">
     <div class="wordmark">Wednesday 9–10<span>Hall of Fame</span></div>
     <div class="tabs" id="tabs">
-      <button class="tab" data-tab="you" id="tab-you" hidden>You</button>
-      <button class="tab active" data-tab="hall">Players<small id="tab-n-hall"></small></button>
-      <button class="tab" data-tab="wall"><span class="long">Century Wall</span><span class="short">Wall</span><small id="tab-n-wall"></small></button>
-      <button class="tab" data-tab="records">Records<small id="tab-n-records"></small></button>
-      <button class="tab" data-tab="timeline">Season<small id="tab-n-timeline"></small></button>
-      <button class="tab" data-tab="matches">Matches<small id="tab-n-matches"></small></button>
-      <button class="tab" data-tab="balances">Balance<small id="tab-n-balances"></small></button>
+      <button class="tab active" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3.5 10.5 12 4l8.5 6.5V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg><span>Home</span></button>
+      <button class="tab" data-tab="hall"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="10" height="14" rx="2"/><path d="M10 4h8.5a2 2 0 0 1 2 2v11"/></svg><span>Players</span><small id="tab-n-hall"></small></button>
+      <button class="tab" data-tab="matches"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5l3.6 2.6-1.4 4.2H9.8L8.4 10.1z"/></svg><span>Matches</span><small id="tab-n-matches"></small></button>
+      <button class="tab" data-tab="history"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5.5a2.5 2.5 0 0 0 2.6 3.6M16 6h2.5a2.5 2.5 0 0 1-2.6 3.6M12 13v4M8.5 20h7M9.5 17h5"/></svg><span>History</span></button>
+      <button class="tab" data-tab="admin" id="tab-admin" hidden><svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>Admin</span></button>
     </div>
   </nav>
   <div class="gate-bar" id="gate-bar" hidden></div>
   <div class="gate-bar notice-bar" id="notice-bar" hidden></div>
 
-  <section class="gd" id="gameday" hidden></section>
+  <section class="panel active" id="panel-home">
+    <section class="gd" id="gameday" hidden></section>
+    <div id="you-body"></div>
+  </section>
 
+  <section class="panel" id="panel-history">
   <div class="head">
     <h1>Hall of Fame<small id="h1-sub">Loading the sheet…</small></h1>
     <div class="last" id="last-session"></div>
@@ -680,34 +735,40 @@
     <div class="stat"><b class="num" id="s-players">—</b><div class="label">Players</div></div>
   </div>
 
-  <section class="panel" id="panel-you"><div id="you-body"></div></section>
-
-  <section class="panel active" id="panel-hall">
-    <div class="sh"><h2>Players</h2><div class="seg" id="posfilter">
-      <button class="on" data-filter="">All</button><button data-filter="attack">Attack</button><button data-filter="midfield">Midfield</button><button data-filter="defense">Defense</button><button data-filter="other">Unassigned</button>
-    </div></div>
-    <div id="cards-intro"></div>
-    <div class="cards" id="cards-grid"><div class="loading">Loading…</div></div>
-    <div class="legend" id="cards-legend"></div>
-  </section>
-
-  <section class="panel" id="panel-wall">
+  <div class="seg hist-seg" id="hist-seg"><button data-sub="records" class="on">Records</button><button data-sub="wall">Century Wall</button><button data-sub="timeline">Season</button></div>
+  <section class="hsec" id="panel-wall">
     <div class="sh"><h2>Century Wall</h2><span>The night each member reached 100</span></div><div class="gate-screen"></div>
     <div class="grid" id="wall"></div>
     <div class="chips" id="wall-next"></div>
     <p class="foot-note" id="wall-note"></p>
   </section>
 
-  <section class="panel" id="panel-records">
+  <section class="hsec" id="panel-records">
     <div class="sh"><h2>Records</h2><span>Computed from the sheet · ties shown as ties</span></div><div class="gate-screen"></div>
     <div class="grid" id="records"></div>
   </section>
 
-  <section class="panel" id="panel-timeline">
+  <section class="hsec" id="panel-timeline">
     <div class="sh"><h2>Season</h2><span id="tl-sub"></span></div><div class="gate-screen"></div>
     <div class="stats four" id="tl-summary"></div>
     <div class="tl-wrap" id="tl-wrap" style="margin-top:14px"><div class="tl-track" id="tl-track"></div></div>
     <div class="tl-axis"><span id="tl-first"></span><span>Tap a night to see who played · dot marks a century</span><span id="tl-last"></span></div>
+  </section>
+
+  </section>
+
+  <section class="panel" id="panel-hall">
+  
+    <div class="pl-tools">
+      <div class="pl-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input id="pl-q" type="search" placeholder="Search players" autocomplete="off" autocapitalize="words" oninput="PLAYER_Q = this.value.trim().toLowerCase(); renderPlayers()"></div>
+      <div class="seg pl-view" id="pl-view"><button class="on" data-view="cards" aria-label="Cards">Cards</button><button data-view="list" aria-label="List">List</button></div>
+    </div>
+    <div class="seg pl-filter" id="posfilter">
+      <button class="on" data-filter="">All</button><button data-filter="last">Last game</button><button data-filter="attack">Attack</button><button data-filter="midfield">Midfield</button><button data-filter="defense">Defense</button><button data-filter="other">Other</button>
+    </div>
+    <div id="cards-intro"></div>
+    <div class="cards" id="cards-grid"><div class="loading">Loading…</div></div>
+    <div class="legend" id="cards-legend"></div>
   </section>
 
   <section class="panel" id="panel-matches">
@@ -715,10 +776,7 @@
     <div class="mt-list" id="matches"><div class="loading">Loading…</div></div>
   </section>
 
-  <section class="panel" id="panel-balances">
-    <div class="sh"><h2>Balance</h2><span>Personal · shown only to you</span></div>
-    <div id="bal-list"></div>
-  </section>
+  <section class="panel" id="panel-admin"><div id="admin-wrap"></div></section>
 
   <footer><span>Wednesday 9–10 · Nairobi</span><span id="last-updated"></span></footer>
 </div>
@@ -801,7 +859,8 @@ const MAX_TRAITS = 3;
 let SELF = null;
 
 let ALL_PLAYERS = [], SESSIONS = [], YEARS = [], RECORDS = [], RECORD_HOLDERS = {};
-let ACTIVE_FILTER = '', CURRENT_PLAYER = null, CURRENT_SESSION = null;
+let ACTIVE_FILTER = '', CURRENT_PLAYER = null, CURRENT_SESSION = null, PLAYER_Q = '', PLAYER_VIEW = 'cards';
+try { PLAYER_VIEW = localStorage.getItem('w910_plview') === 'list' ? 'list' : 'cards'; } catch (_) {}
 let RATINGS = null, VOTER = null, PENDING_VOTE = false, BALLOT = null, TOKEN = '', BOOTED = false;
 const THIS_YEAR = new Date().getFullYear();
 try { TOKEN = localStorage.getItem('w910_token') || ''; } catch (_) {}
@@ -1111,25 +1170,34 @@ function render() {
   ls.innerHTML = `<div class="label">Last session</div><b>${esc(fmtSession(last))}</b><span>${last.turnout} played${debuts.length ? ` · ${esc(debuts.slice(0,3).join(', '))} debuted` : ''}</span>`;
   ls.onclick = () => openSession(n-1);
   document.getElementById('tab-n-hall').textContent = ALL_PLAYERS.length;
-  document.getElementById('tab-n-records').textContent = RECORDS.length;
-  document.getElementById('tab-n-timeline').textContent = n;
+
   renderPlayers(); renderWall(); renderRecords(); renderTimeline(); renderBalances(); renderGameday();
   if (!BOOTED) {
     BOOTED = true;
     renderYou();   // shows your card at once from the cached name; the link check and ratings fill in behind it
-    if (PENDING_VOTE && TOKEN) { PENDING_VOTE = false; showTab('you', false); }
-    else if (TOKEN && !location.hash) showTab('you', false);
-    let later = false; try { later = !!sessionStorage.getItem('w910_claim_later'); } catch (_) {}
-    if (!TOKEN && !later && UNLOCKED && VOTE_API) openClaim();
+    if (PENDING_VOTE && TOKEN) { PENDING_VOTE = false; showTab('home', false); }   // no picker on arrival: Home has a Find your card box instead
   } else if (TOKEN) renderYou();
   renderCards();
   document.getElementById('last-updated').textContent = 'Live from the sheet · ' + new Date().toLocaleString('en-GB', { dateStyle:'medium', timeStyle:'short' });
 }
+document.querySelectorAll('#pl-view button').forEach(b => b.onclick = () => { PLAYER_VIEW = b.dataset.view; try { localStorage.setItem('w910_plview', PLAYER_VIEW); } catch (_) {} renderPlayers(); });
 document.querySelectorAll('#posfilter button').forEach(b => b.onclick = () => { ACTIVE_FILTER = b.dataset.filter; document.querySelectorAll('#posfilter button').forEach(x=>x.classList.toggle('on', x===b)); renderPlayers(); });
 
 function renderPlayers() {
   const grid = document.getElementById('cards-grid');
-  const base = ACTIVE_FILTER ? ALL_PLAYERS.filter(p=>posClass(p.position)===ACTIVE_FILTER) : ALL_PLAYERS;
+  const L = RATINGS && RATINGS.ok && RATINGS.last, lastSet = new Set(L ? [...((L.teams && L.teams.black) || []), ...((L.teams && L.teams.white) || []), ...(L.list || []), ...(L.squad || [])].map(n => n.toLowerCase()) : []);
+  const base = ALL_PLAYERS.filter(p => (!ACTIVE_FILTER || (ACTIVE_FILTER === 'last' ? lastSet.has(p.name.toLowerCase()) : posClass(p.position) === ACTIVE_FILTER)) && (!PLAYER_Q || p.name.toLowerCase().includes(PLAYER_Q)));
+  document.querySelectorAll('#pl-view button').forEach(b => b.classList.toggle('on', b.dataset.view === PLAYER_VIEW));
+  grid.classList.toggle('as-list', PLAYER_VIEW === 'list');
+  if (PLAYER_VIEW === 'list') {
+    const locked = gateLocked(), me = VOTER && VOTER.ok ? VOTER.name : '';
+    const rows = base.slice().sort((a, b) => b.count - a.count).map(p => { const r = RATINGS && RATINGS.ok && RATINGS.players[p.name], st = r && r.stats && !locked && !r.hidden ? avgOf(r.stats) : null;
+      return `<button class="pl-row${p.name === me ? ' me' : ''}" data-pi="${ALL_PLAYERS.indexOf(p)}">${photo(p, 'avatar')}<span class="pl-n"><b>${esc(p.name)}</b><small>${esc([posName(p), p.gamesThisYear ? `${p.gamesThisYear} in ${THIS_YEAR}` : `not seen in ${THIS_YEAR}`].filter(Boolean).join(' · '))}</small></span><span class="pl-c num">${p.count}<small>games</small></span>${st != null ? `<span class="rt">${st}</span>` : '<span class="rt pl-lock">–</span>'}</button>`; }).join('');
+    grid.innerHTML = rows || `<div class="empty">No player matches “${esc(PLAYER_Q)}”.</div>`;
+    paintGate();
+    grid.querySelectorAll('.pl-row').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
+    return;
+  }
   const groups = [['icon','Icon · 100+'],['gold','Gold · 50+'],['silver','Silver · 20+'],['bronze','Bronze']];
   let html = '';
   for (const [tier, title] of groups) {
@@ -1144,7 +1212,7 @@ function renderPlayers() {
       html += cardHtml(p, r.stats || null, { n: RATINGS && RATINGS.ok ? r.n : null, prev });
     }
   }
-  grid.innerHTML = html || `<div class="empty" style="grid-column:1/-1">Nobody in this position.</div>`;
+  grid.innerHTML = html || `<div class="empty" style="grid-column:1/-1">${PLAYER_Q ? `No player matches “${esc(PLAYER_Q)}”.` : 'Nobody here.'}</div>`;
   paintGate();
   grid.querySelectorAll('.card').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
 }
@@ -1154,7 +1222,7 @@ const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XI
 function renderWall() {
   const wall = document.getElementById('wall'), nextEl = document.getElementById('wall-next'), note = document.getElementById('wall-note');
   const inducted = ALL_PLAYERS.filter(p=>p.count>=100 && p.centuryIdx>=0).sort((a,b)=>a.centuryIdx-b.centuryIdx || b.count-a.count);
-  document.getElementById('tab-n-wall').textContent = inducted.length;
+
   wall.innerHTML = inducted.length ? inducted.map((p,k) => { const s = SESSIONS[p.centuryIdx], others = s.players.filter(x=>x!==p), shown = others.slice(0,5).map(x=>x.name.split(' ')[0]), more = others.length-shown.length;
     return `<div class="box" data-i="${p.centuryIdx}"><span class="roman">${ROMAN[k]||k+1}</span><div class="holder" style="margin-top:0">${photo(p,'avatar')}<div><b>${esc(p.name)}</b><span>100th appearance</span></div></div>
       <div class="date">${esc(fmtSession(s,false))}${s.date ? ` <span class="dim" style="font-weight:400">· ${DAY_FULL[s.date.getDay()]}</span>` : ''}</div>
@@ -1214,8 +1282,7 @@ function renderTimeline() {
 /* ── balances ── */
 const kes = n => `KES ${Math.abs(Math.round(n)).toLocaleString()}`;
 async function renderBalances() {
-  const el = document.getElementById('bal-list');
-  document.getElementById('tab-n-balances').textContent = '';
+  const el = document.getElementById('bal-list'); if (!el) return;   // the balance now lives on Home, in the me strip
   if (!TOKEN) { el.innerHTML = `<div class="empty">Balances are personal. Claim your card to see yours.<div style="margin-top:12px"><button class="btn" onclick="openClaim()">Find your card</button></div></div>`; return; }
   if (!VOTER) { el.innerHTML = `<div class="loading">Checking your link…</div>`; await fetchMe(); }
   if (!VOTER.ok) { el.innerHTML = `<div class="error">${esc(VOTER.error || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
@@ -1439,7 +1506,7 @@ function deadLink() {
   try { ['w910_token', 'w910_name', 'w910_me'].forEach(k => localStorage.removeItem(k)); sessionStorage.removeItem('w910_claim_later'); } catch (_) {}
   TOKEN = ''; VOTER = null; SELF = null;
   DEAD_LINK_NOTE = `${name ? `Your card${name ? ` (${name})` : ''}` : 'Your card'} was reset, so this phone has forgotten it. Pick it again below.`;
-  closeBallotDirect(); renderPlayers(); renderBalances(); renderYou(); showTab('hall', false);
+  closeBallotDirect(); renderPlayers(); renderBalances(); renderYou(); showTab('home', false);
   openClaim();
 }
 let CLAIM_PICK = '';
@@ -1480,7 +1547,7 @@ async function submitClaim() {
     <div class="label">This is you</div>
     <div class="b-title" style="margin-top:8px">${res.pending ? `Sent, ${esc(res.name.split(' ')[0])}.` : `You're set, ${esc(res.name.split(' ')[0])}.`}</div>
     <div class="b-copy">${res.pending ? 'Your page unlocks once the claim is approved. This device already remembers you, so just come back.' : 'This device now remembers you. Your page has your balance, the ballot and a spot for your photo.'}</div>
-    <div class="b-actions"><button class="btn" onclick="closeClaimDirect(); showTab('you')">Go to my page</button><button class="btn link" data-label="Oops, not me" onclick="releaseClaim(this)">Oops, not me</button></div>`;
+    <div class="b-actions"><button class="btn" onclick="closeClaimDirect(); showTab('home')">Go to my page</button><button class="btn link" data-label="Oops, not me" onclick="releaseClaim(this)">Oops, not me</button></div>`;
   renderCards(); renderBalances(); renderYou();
 }
 async function approveClaim(name, ok, btn) {
@@ -1540,10 +1607,10 @@ async function releaseClaim(btn) {
   try { await api(null, { action:'unclaim', t: TOKEN }); } catch (_) {}
   try { localStorage.removeItem('w910_token'); localStorage.removeItem('w910_name'); localStorage.removeItem('w910_me'); sessionStorage.removeItem('w910_claim_later'); } catch (_) {}
   TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); closeClaimDirect();
-  await renderCards(); renderBalances(); renderYou(); showTab('hall');
+  await renderCards(); renderBalances(); renderYou(); showTab('home');
   openClaim();
 }
-function forgetToken() { try { localStorage.removeItem('w910_token'); localStorage.removeItem('w910_name'); localStorage.removeItem('w910_me'); } catch (_) {} TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); renderCards(); renderBalances(); renderYou(); showTab('hall'); }
+function forgetToken() { try { localStorage.removeItem('w910_token'); localStorage.removeItem('w910_name'); localStorage.removeItem('w910_me'); } catch (_) {} TOKEN = ''; VOTER = null; SELF = null; closeBallotDirect(); renderCards(); renderBalances(); renderYou(); showTab('home'); }
 const doneCount = () => BALLOT.queue.filter(p => VOTER.mine[p.name]).length;
 function ballotTop(label) { const done = doneCount(), n = BALLOT.queue.length; return `<div class="bt-top"><span class="label">${label}</span><div class="b-progress"><i style="width:${n ? done/n*100 : 0}%"></i></div><span class="label">${done} of ${n} rated</span></div>`; }
 function renderBallotIntro() {
@@ -1692,9 +1759,8 @@ async function ensureVoter() {
   return VOTER;
 }
 async function renderYou() {
-  const tab = document.getElementById('tab-you'), body = document.getElementById('you-body');
-  tab.hidden = !TOKEN;
-  if (!TOKEN) { body.innerHTML = ''; return; }
+  const body = document.getElementById('you-body');
+  if (!TOKEN) { body.innerHTML = visitorHomeHtml(); const at = document.getElementById('tab-admin'); if (at) at.hidden = true; return; }
   if (!VOTER || !RATINGS) {
     let cachedName = ''; try { cachedName = localStorage.getItem('w910_name') || ''; } catch (_) {}
     const cp = cachedName && ALL_PLAYERS.find(p => p.name.toLowerCase() === cachedName.toLowerCase());
@@ -1728,18 +1794,13 @@ async function renderYou() {
   const balStatus = !known ? 'Not recorded' : me.balance < 0 ? 'Owing to the pot' : me.balance > 0 ? 'In credit' : 'Settled';
   const ms = milestoneFor(me);
   SELF = { values: Object.assign({}, v.self ? v.self.stats : (v.seeds && v.seeds[me.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{})), traits: v.self ? v.self.traits.slice() : [], note: v.self ? v.self.note : '' };
-  body.innerHTML = `
-    <div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
+  const at = document.getElementById('tab-admin'); if (at) at.hidden = !v.isAdmin;
+  body.innerHTML = meStripHtml(me, v, { known, balStatus, ms, done, queue }) + `
+    <div class="sh"><h2>Your card</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
     <div class="you-grid">
       <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates. ${Math.min(selfRated(), gateNeed())} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.fixed ? `Your own numbers, fixed: teammates' ${r.n} vote${r.n===1?'':'s'} set your traits, not your stats.` : r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
       <div>
-        <div class="stats four">
-          <div class="stat"><b class="num">${me.count}</b><div class="label">Appearances</div></div>
-          <div class="stat"><b class="num">${me.gamesThisYear}</b><div class="label">In ${THIS_YEAR}</div></div>
-          <div class="stat"><b class="num">${me.currentStreak || '—'}</b><div class="label">Current streak</div></div>
-          <div class="stat"><b class="num">${known ? kes(me.balance) : '—'}</b><div class="label">${esc(balStatus)}</div></div>
-        </div>
-        <div class="mile" style="margin-top:18px"><div class="l"><span>${me.count<100 ? 'To the century' : `Next milestone ${ms.next}`}</span><span>${ms.toGo} to go · ${esc(fmtEta(ms.eta))}</span></div><i style="--w:${ms.pct}%"></i></div>
+        <div class="mile"><div class="l"><span>${me.count<100 ? 'To the century' : `Next milestone ${ms.next}`}</span><span>${ms.toGo} to go · ${esc(fmtEta(ms.eta))}</span></div><i style="--w:${ms.pct}%"></i></div>
         <div class="b-actions" style="margin-top:18px">
           ${v.open ? `<button class="btn" onclick="openBallot()">${done ? `Rate teammates · ${done} of ${queue.length} done` : 'Rate your teammates'}</button>` : `<span class="muted" style="font-size:12px">Rating window ${esc(v.window)} is closed.</span>`}
           <button class="btn ghost" onclick="openProfile(ALL_PLAYERS[${ALL_PLAYERS.indexOf(me)}])">Full record</button>
@@ -1756,8 +1817,8 @@ async function renderYou() {
         ${v.feedback && v.feedback.length ? `<div class="label" style="margin-top:22px">What teammates said · ${v.feedback.length}</div><div class="b-copy" style="margin-top:6px">${v.feedback.map(c=>`“${esc(c)}”`).join('<br>')}</div>` : ''}
       </div>
     </div>
-    <section>
-      <div class="sh"><h2>Rate yourself</h2><span>Private. It helps set a fair starting point.</span></div>
+    <details class="self-wrap" ${v.self ? '' : 'open'}>
+      <summary class="sh"><h2>Rate yourself</h2><span>${v.self ? 'Submitted · tap to change' : 'Private. It helps set a fair starting point.'}</span></summary>
       <div class="you-grid">
         <div id="self-card"></div>
         <div>
@@ -1769,7 +1830,8 @@ async function renderYou() {
           <div class="b-nav"><span class="sp"></span><span class="saved" id="s-saved">${v.self && v.self.updated ? 'Submitted' : ''}</span><button class="btn" id="s-submit" onclick="submitSelf()">${v.self ? 'Update' : 'Submit'}</button></div>
         </div>
       </div>
-    </section>
+    </details>
+    ${quickLinksHtml()}
     ${v.isAdmin ? `<section><div class="sh"><h2>Game day</h2><span>Only you see this panel · the gate code only shows to players with a claimed card</span></div>
       <div class="gp">
         <div class="gp-step"><div class="gp-h"><span class="gp-n">1</span>When${v.game && v.game.date && koOf(v.game) < Date.now() ? `<button class="btn link gp-next" onclick="nextGameForm()">Set up the next game →</button>` : ''}</div>
@@ -1792,8 +1854,43 @@ async function renderYou() {
     <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Only you can see this · approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Starting points</h2><span>Only you can see this · what voters see as the suggested level · saves as you tap</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
+  const aw = document.getElementById('admin-wrap');   // the admin's panels live on their own tab so Home stays short
+  if (aw) { aw.innerHTML = v.isAdmin ? '<div class="sh" style="margin-top:8px"><h2>Admin</h2><span>Only you see this tab</span></div>' : ''; if (v.isAdmin) [...body.querySelectorAll(':scope > section')].forEach(sec => aw.appendChild(sec)); }
   paintSelfPreview();
   if (v.isAdmin) renderAdmin(me);
+}
+/* Home for someone without a card yet: what the site does for them, one button. */
+function visitorHomeHtml() {
+  const n = ALL_PLAYERS.length, taken = new Set(((RATINGS && RATINGS.ok && RATINGS.claimed) || []).map(x => x.toLowerCase()));
+  const free = ALL_PLAYERS.filter(p => !taken.has(p.name.toLowerCase())).length;
+  return `<div class="me me-cta">
+      <div class="label">Play on Wednesdays?</div>
+      <b class="me-cta-t">Find your card</b>
+      <p>Tap your name once and this phone remembers you: your balance, your player card, rating your teammates and the night's man of the match.</p>
+      <button class="btn me-go" onclick="openClaim()">Find your card</button>
+      ${n ? `<small>${free} of ${n} cards still to claim</small>` : ''}
+    </div>${quickLinksHtml()}`;
+}
+function quickLinksHtml() {
+  const games = ((RATINGS && RATINGS.ok && RATINGS.games) || []).filter(g => koOf(g) <= Date.now()).length;
+  const tile = (tab, t, sub) => `<button class="ql" onclick="showTab('${tab}')"><b>${t}</b><span>${sub}</span></button>`;
+  return `<div class="ql-row">${tile('hall', 'Players', `${ALL_PLAYERS.length} cards`)}${tile('matches', 'Matches', games ? `${games} played` : 'Scores')}${tile('records', 'Records', `${(typeof RECORDS !== 'undefined' && RECORDS.length) || ''} records`.trim())}</div>`;
+}
+/* The top of Home for a claimed player: who you are, your balance, and the one thing worth doing next. */
+function meStripHtml(me, v, o) {
+  const neg = o.known && me.balance < 0, lastG = RATINGS && RATINGS.ok && RATINGS.last, now = Date.now();
+  const rateGameOpen = lastG && lastG.closes && now < new Date(lastG.closes).getTime() && now > koOf(lastG) + 3600000 && !Object.keys((v.last && v.last.date === lastG.date && v.last.mine && v.last.mine.ratings) || {}).length;
+  const need = gateNeed(), rated = Math.min(selfRated(), need);
+  const next = rateGameOpen ? `<button class="btn me-go" onclick="openMatch()">Rate ${lastG.date === todayNbo() ? 'tonight' : 'the game'} · closes 11am</button>`
+    : gateLocked() ? `<button class="btn me-go" onclick="openBallot()">Rate ${need - rated} more teammate${need - rated === 1 ? '' : 's'} to unlock ratings<span class="me-prog"><i style="width:${need ? rated / need * 100 : 0}%"></i></span></button>`
+    : v.open && o.done < o.queue.length ? `<button class="btn ghost me-go" onclick="openBallot()">Rate teammates · ${o.done} of ${o.queue.length} done</button>`
+    : !photoSrc(me) ? `<button class="btn ghost me-go" onclick="document.getElementById('photo-file') && document.getElementById('photo-file').click()">Add your photo</button>` : '';
+  return `<div class="me">
+      <div class="me-top">${photo(me, 'avatar me-av')}<div class="me-id"><b>${esc(me.name)}</b><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]}</span></div>
+        <div class="me-bal${neg ? ' neg' : ''}"><b class="num">${o.known ? kes(me.balance) : '—'}</b><span>${esc(o.balStatus)}</span></div></div>
+      <div class="me-stats"><span><b class="num">${me.count}</b>games</span><span><b class="num">${me.currentStreak || 0}</b>in a row</span><span><b class="num">${me.gamesThisYear}</b>in ${THIS_YEAR}</span><span><b class="num">${o.ms.toGo}</b>to ${me.count < 100 ? '100' : o.ms.next}</span></div>
+      ${next}
+    </div>`;
 }
 function exactRowsHtml(values) {
   return `<div class="st-rows">${STAT_KEYS.map(k => `
@@ -2105,7 +2202,13 @@ function storylines(squad, g) {
   const debut = squad.filter(p => tonight(p) ? p.count === 1 : p.count === 0); if (debut.length) out.push([2, `<b>${esc(debut.map(p => p.name).join(', '))}</b> · first game`]);
   return out.sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => `<span>${x[1]}</span>`).join('');
 }
-let GD_SHOW_LAST = false;
+let GD_SHOW_LAST = false, GD_OPEN = false;
+function gdToggle() { GD_OPEN = !GD_OPEN; renderGameday(); }
+function lastCardHtml(L, onclick, label) {
+  const m = L.motm || [], mp = m.length ? ALL_PLAYERS.find(x => x.name === m[0]) : null, s2 = L.score;
+  const res = s2 ? (s2.black === s2.white ? `Draw ${s2.black}–${s2.white}` : `${s2.black > s2.white ? 'Black' : 'White'} won ${Math.max(s2.black, s2.white)}–${Math.min(s2.black, s2.white)}`) : '';
+  return `<button class="gd-last" onclick="${onclick}">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span class="gd-last-txt"><span class="label">${label || 'Last game'}${label ? '' : ` · ${esc(dayOf(L))}`}</span><b>${m.length ? `★ ${esc(m.join(', '))}` : 'Full time'}</b><small>${m.length ? 'Man of the match' : esc(dayOf(L))}${res ? ` · ${res}` : ''}</small></span><span class="gd-last-go">See result →</span></button>`;
+}
 function gdFlip(showLast) { GD_SHOW_LAST = showLast; renderGameday(); const el = document.getElementById('gameday'); if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: 'start' }); }
 function renderGameday() {
   try { renderMatches(); } catch (e) { console.error(e); }
@@ -2160,15 +2263,28 @@ function renderGameday() {
     : ph === 'post' ? sec('Match ratings', '', `<div class="gd-note">Show once three players have rated.</div>`) : '';
   const foot = view.back ? `<button class="gd-foot" onclick="gdFlip(false)"><span class="label">Next game</span>${esc(dayOf(view.back))} · ${fmtKo(view.back)}<span class="go">Show →</span></button>`
     : view.next ? `<div class="gd-foot"><span class="label">Next game</span>${esc(dayOf(view.next))} · ${fmtKo(view.next)}</div>`
-    : view.last && view.last.final ? (() => { const L = view.last, m = L.motm || [], mp = m.length ? ALL_PLAYERS.find(x => x.name === m[0]) : null, s2 = L.score;
-        const res = s2 ? (s2.black === s2.white ? `Draw ${s2.black}–${s2.white}` : `${s2.black > s2.white ? 'Black' : 'White'} won ${Math.max(s2.black, s2.white)}–${Math.min(s2.black, s2.white)}`) : '';
-        return `<div class="gd-sec"><button class="gd-last" onclick="gdFlip(true)">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span class="gd-last-txt"><span class="label">Last game</span><b>${m.length ? `★ ${esc(m.join(', '))}` : 'Full time'}</b><small>${m.length ? 'Man of the match' : esc(dayOf(L))}${res ? ` · ${res}` : ''}</small></span><span class="gd-last-go">See result →</span></button></div>`; })() : '';
+    : view.last && view.last.final ? `<div class="gd-sec">${lastCardHtml(view.last, 'gdFlip(true)')}</div>` : '';
   el.dataset.phase = ph; el.hidden = false;
+  // Where the viewer stands for this game, in one pill
+  const myBlack = T && (T.black || []).includes(meName), myWhite = T && (T.white || []).includes(meName), myList = list.includes(meName), mySb = sbList.indexOf(meName);
+  const status = !meName || isPost ? '' : myBlack ? `<span class="gd-st in">You're on Black</span>` : myWhite ? `<span class="gd-st in">You're on White</span>` : myList ? `<span class="gd-st in">You're in</span>`
+    : mySb >= 0 ? `<span class="gd-st sb">Standby · ${['1st', '2nd', '3rd'][mySb] || (mySb + 1) + 'th'} in line</span>` : (T || list.length) ? `<span class="gd-st out">Not on the list</span>` : '';
+  const countTxt = T ? `${(T.black || []).length} v ${(T.white || []).length}` : list.length ? `${list.length} of ${spots} in${(g.standby || []).length ? ` · ${g.standby.length} standby` : ''}` : 'Lineup to follow';
+  const faceRow = (T ? [...(T.black || []), ...(T.white || [])] : list).slice(0, 7).map(n => { const p = ALL_PLAYERS.find(x => x.name === n); return p ? photo(p, 'avatar') : ''; }).join('');
+  const hasMore = !!(T || list.length || squad.length);
+  const toggle = hasMore ? `<button class="btn ghost gd-more" onclick="gdToggle()">${GD_OPEN ? 'Hide' : isPost ? 'Lineup & ratings' : 'Lineup'} ${GD_OPEN ? '↑' : '↓'}</button>` : '';
+  const scoreOnly = isPost && sc && !GD_OPEN ? `<div class="gd-sec">${scoreline}</div>` : '';
+  const pre = ph === 'pre' || ph === 'live';
+  const summarySec = pre ? `<div class="gd-sec gd-sum">${status ? `<div class="gd-st-row">${status}</div>` : ''}<div class="gd-sum-row"><div class="gd-faces">${faceRow}</div><span class="n">${esc(countTxt)}</span></div><div class="gd-btns">${toggle}${tmSec ? `<button class="btn ghost gd-more" onclick="openTeamMaker()">Team maker</button>` : ''}</div></div>`
+    : `<div class="gd-sec gd-sum"><div class="gd-btns">${toggle}</div></div>`;
+  el.dataset.phase = ph; el.classList.toggle('open', GD_OPEN);
+  if (ph === 'final' && !view.back && !GD_OPEN) { el.classList.add('gd-compact'); el.innerHTML = `<div class="gd-sec gd-only">${lastCardHtml(g, 'gdToggle()')}</div>`; return; }
+  el.classList.remove('gd-compact');
   el.innerHTML = `<div class="gd-hero">
       <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span>${ph === 'post' && closes > now ? `<span class="label gd-closes">Closes in ${fmtLeft(closes - now)}</span>` : ''}</div>
       <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
       ${gate}
-    </div>${foot.includes('gd-last') ? foot : ''}${motmSec}${actionSec}${lineupSec}${standbySec}${tmSec}${storySec}${boardSec}${foot.includes('gd-last') ? '' : foot}`;
+    </div>${foot.includes('gd-last') ? foot : ''}${motmSec}${scoreOnly}${actionSec}${GD_OPEN ? lineupSec + standbySec + storySec + boardSec : ''}${summarySec}${foot.includes('gd-last') ? '' : foot}`;
 }
 /* ── Team maker: drag the next game's players between two halves of a pitch. Only on this device (localStorage per game). ── */
 let TM = null;
@@ -2362,25 +2478,44 @@ document.addEventListener('keydown', e => {
 });
 
 /* ── tabs ── */
-const TABS = ['you','hall','wall','records','timeline','matches','balances'];
-function showTab(name, updateHash = true) {
-  if (name === 'cards') name = 'hall';
-  if (name === 'you' && !TOKEN) name = 'hall';
-  if (!TABS.includes(name)) name = 'hall';
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-'+name));
-  if (name === 'timeline') { const w = document.getElementById('tl-wrap'); if (w) w.scrollLeft = w.scrollWidth; }
-  if (name === 'you' && typeof refreshAdmin === 'function') refreshAdmin(false);
-  if (updateHash) history.replaceState(null, '', name === 'hall' || name === 'you' ? location.pathname + location.search : '#'+name);
-  const tabs = document.getElementById('tabs'), tab = tabs.querySelector('.tab.active');
-  if (tab) tabs.scrollTo({ left: tab.offsetLeft - (tabs.clientWidth - tab.offsetWidth)/2, behavior:'smooth' });
-  const anchor = document.getElementById('stats').getBoundingClientRect().bottom + window.scrollY;
-  if (updateHash && window.scrollY > anchor) window.scrollTo({ top: anchor - 70, behavior:'instant' });
+const TABS = ['home','hall','matches','history','admin'];
+/* Four tabs (plus Admin for the admin). Old links still work: #you and #balances open Home; #records, #wall and #timeline
+   open History on that section. Every tab starts at the top: the game strip lives on Home, the Hall header on History. */
+const TAB_ALIAS = { you: 'home', balances: 'home', cards: 'hall', records: 'history', wall: 'history', timeline: 'history' };
+let HIST_SUB = 'records';
+function showHistory(sub) {
+  HIST_SUB = ['records', 'wall', 'timeline'].includes(sub) ? sub : 'records';
+  document.querySelectorAll('#hist-seg button').forEach(b => b.classList.toggle('on', b.dataset.sub === HIST_SUB));
+  document.querySelectorAll('.hsec').forEach(h => h.classList.toggle('on', h.id === 'panel-' + HIST_SUB));
+  if (HIST_SUB === 'timeline') { const w = document.getElementById('tl-wrap'); if (w) w.scrollLeft = w.scrollWidth; }
 }
+function showTab(name, updateHash = true) {
+  const raw = name;
+  if (['records', 'wall', 'timeline'].includes(raw)) showHistory(raw);
+  name = TAB_ALIAS[name] || name;
+  if (name === 'admin' && !(VOTER && VOTER.isAdmin)) name = 'home';
+  if (!TABS.includes(name)) name = 'home';
+  const changed = document.body.dataset.tab !== name;
+  document.body.dataset.tab = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+  if (name === 'history' && !document.querySelector('.hsec.on')) showHistory(HIST_SUB);
+  if (name === 'admin' && typeof refreshAdmin === 'function') refreshAdmin(false);
+  if (updateHash) history.replaceState(null, '', name === 'home' ? location.pathname + location.search : '#' + (name === 'history' ? HIST_SUB : name));
+  if (updateHash && changed) window.scrollTo({ top: 0, behavior: 'instant' });
+  try { if (updateHash && changed) tapHit(name); } catch (_) {}
+}
+document.querySelectorAll('#hist-seg button').forEach(b => b.onclick = () => { showHistory(b.dataset.sub); history.replaceState(null, '', '#' + HIST_SUB); try { tapHit(HIST_SUB); } catch (_) {} });
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
-window.addEventListener('hashchange', () => { if (captureToken()) { if (ALL_PLAYERS.length) { PENDING_VOTE = false; VOTER = null; renderBalances(); renderYou().then(() => showTab('you', false)); } return; } showTab(location.hash.slice(1) || (TOKEN ? 'you' : 'hall'), false); });
-showTab(location.hash.slice(1) || 'hall', false);
+window.addEventListener('hashchange', () => { if (captureToken()) { if (ALL_PLAYERS.length) { PENDING_VOTE = false; VOTER = null; renderYou().then(() => showTab('home', false)); } return; } showTab(location.hash.slice(1) || 'home', false); });
+showTab(location.hash.slice(1) || 'home', false);
 if (VOTE_API) { fetchResults(); if (TOKEN) fetchMe(); }
+/* Which tabs get used: one ping per tab per visit (device id only), so the admin can see what people open. */
+function tapHit(tab) {
+  if (!VOTE_API) return;
+  try { const k = 'w910_tap_' + tab; if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); const dev = localStorage.getItem('w910_dev'); if (!dev) return;
+    fetch(VOTE_API, { method: 'POST', body: JSON.stringify({ action: 'tap', d: dev, p: tab }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, keepalive: true }).catch(() => {}); } catch (_) {}
+}
 /* Anonymous open counter for the admin: one ping per browser session with a random device id (never the token) and the claimed name if there is one. */
 (function sendHit() {
   try {
