@@ -94,30 +94,6 @@
   .card.icon { --tier: var(--icon); } .card.gold { --tier: var(--gold); } .card.silver { --tier: var(--silver); } .card.bronze { --tier: var(--bronze); }
   .card.foil { border-color: color-mix(in srgb, var(--tier) 40%, var(--line)); }
   .card.foil::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(135deg, transparent 35%, rgba(255,255,255,.045) 50%, transparent 65%); }
-  /* Cards glow in their tier: bronze, silver, gold, and Icon in pearl white with a faint rainbow sheen */
-  .card { --tier-a: 24%; --tier-b: 8%;
-    background:
-      radial-gradient(120% 70% at 85% -10%, color-mix(in srgb, var(--tier) 34%, transparent), transparent 60%),
-      linear-gradient(165deg, color-mix(in srgb, var(--tier) var(--tier-a), #151517) 0%, color-mix(in srgb, var(--tier) var(--tier-b), #121214) 48%, #0f0f11 100%);
-    border: 1px solid color-mix(in srgb, var(--tier) 52%, transparent);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--tier) 55%, transparent), 0 14px 34px -16px color-mix(in srgb, var(--tier) 55%, transparent), 0 0 0 1px rgba(0,0,0,.35); }
-  .card::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
-    background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--tier) 22%, transparent) 46%, rgba(255,255,255,.10) 50%, color-mix(in srgb, var(--tier) 18%, transparent) 54%, transparent 70%);
-    background-size: 250% 100%; background-position: 120% 0; transition: background-position .9s var(--ease); mix-blend-mode: screen; }
-  .card:hover::after { background-position: -20% 0; }
-  .card:hover { border-color: color-mix(in srgb, var(--tier) 80%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--tier) 70%, transparent), 0 18px 40px -14px color-mix(in srgb, var(--tier) 70%, transparent), 0 0 0 1px rgba(0,0,0,.35); }
-  .card.bronze { --tier-a: 30%; --tier-b: 10%; } .card.silver { --tier-a: 22%; --tier-b: 7%; } .card.gold { --tier-a: 30%; --tier-b: 10%; }
-  .card.icon { --tier: #f2efe6; --tier-a: 20%; --tier-b: 6%; }
-  .card.icon::before { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; opacity: .55; mix-blend-mode: soft-light;
-    background: conic-gradient(from 200deg at 80% 0%, #ffd6e7, #d6f0ff, #e6ffd9, #fff3c4, #ffd6e7); }
-  .card .c-name span, .card .c-head .label { color: color-mix(in srgb, var(--tier) 55%, var(--fg-2)); }
-  .card .c-stats, .card .c-stat, .card .c-stats.tbd { border-color: color-mix(in srgb, var(--tier) 22%, var(--line)); }
-  .card .c-stat .label { color: color-mix(in srgb, var(--tier) 45%, var(--fg-3)); }
-  .card .c-foot { color: color-mix(in srgb, var(--tier) 45%, var(--fg-3)); }
-  .card .c-photo { box-shadow: 0 0 0 1px color-mix(in srgb, var(--tier) 35%, transparent); }
-  .card .pill { background: color-mix(in srgb, var(--tier) 14%, transparent); border-color: color-mix(in srgb, var(--tier) 55%, transparent); }
-  .card .c-num { text-shadow: 0 0 18px color-mix(in srgb, var(--tier) 35%, transparent); }
-  .deck .card:hover, .you-grid .card:hover { border-color: color-mix(in srgb, var(--tier) 52%, transparent); }
   .c-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 16px 0; }
   .c-num { font-size: 44px; line-height: .95; color: var(--tier); }
   .c-head .label { margin-top: 6px; letter-spacing: .06em; }
@@ -741,6 +717,54 @@
     .wrap { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
     .ql-row { gap: 6px; } .ql { padding: 10px; }
     .me-box { padding: 14px; } .me-bal b { font-size: 20px; }
+  }
+
+  /* ── ULTIMATE TEAM CARDS: shield shape, solid metallic face per tier, dark ink ── */
+  .card.fut { --edge: #7a5d1e; --ink: #2b2108; --ink2: rgba(43,33,8,.62); --face: linear-gradient(162deg, #fff3c2 0%, #f3d57f 17%, #d8ab48 42%, #f6dc8e 66%, #b98728 100%);
+    --cut: polygon(0 4.2%, 7% 0, 93% 0, 100% 4.2%, 100% 94%, 50% 100%, 0 94%);
+    position: relative; background: var(--edge); border: 0 !important; border-radius: 0; clip-path: var(--cut); -webkit-clip-path: var(--cut); box-shadow: none !important;
+    color: var(--ink); padding: 0 0 22px; transition: transform .2s var(--ease), filter .2s; overflow: hidden; }
+  .card.fut:hover { transform: translateY(-3px) scale(1.01); filter: brightness(1.06); }
+  .card.fut .fut-face { position: absolute; inset: 3px; clip-path: var(--cut); -webkit-clip-path: var(--cut); background:
+      radial-gradient(90% 55% at 70% 8%, rgba(255,255,255,.55), transparent 60%),
+      repeating-linear-gradient(128deg, rgba(255,255,255,.10) 0 2px, transparent 2px 10px),
+      var(--face); pointer-events: none; }
+  .card.fut::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 3; background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.45) 49%, transparent 63%); background-size: 260% 100%; background-position: 130% 0; transition: background-position 1s var(--ease); mix-blend-mode: overlay; }
+  .card.fut:hover::after { background-position: -30% 0; }
+  .card.fut::before { display: none; }
+  .card.fut > *:not(.fut-face) { position: relative; z-index: 2; }
+  .card.fut.silver { --edge: #5f666f; --ink: #1c2026; --ink2: rgba(28,32,38,.6); --face: linear-gradient(162deg, #ffffff 0%, #e4e8ec 20%, #b9c0c8 46%, #eef1f4 68%, #98a0aa 100%); }
+  .card.fut.bronze { --edge: #5e341a; --ink: #2a1409; --ink2: rgba(42,20,9,.6); --face: linear-gradient(162deg, #f8d8bd 0%, #dfa77e 20%, #b06f45 46%, #dca27a 68%, #8a5130 100%); }
+  .card.fut.icon { --edge: #a7894a; --ink: #1d1810; --ink2: rgba(29,24,16,.58); --face: linear-gradient(162deg, #ffffff 0%, #fbf6ea 26%, #efe4cb 52%, #fffaf0 72%, #e3d2a8 100%); }
+  .card.fut.icon .fut-face { background: radial-gradient(90% 55% at 70% 8%, rgba(255,255,255,.8), transparent 60%), conic-gradient(from 210deg at 85% 0%, rgba(255,214,231,.35), rgba(214,240,255,.35), rgba(230,255,217,.3), rgba(255,243,196,.4), rgba(255,214,231,.35)), repeating-linear-gradient(128deg, rgba(196,160,80,.10) 0 2px, transparent 2px 10px), var(--face); }
+  .card.fut.icon .fut-ovr, .card.fut.icon .fut-tier, .card.fut.icon .fut-st.top b { color: #8a6a1f; }
+  .fut-top { display: grid; grid-template-columns: 30% 1fr; align-items: start; padding: 20px 10px 0 14px; min-height: 0; }
+  .fut-l { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 6px; }
+  .fut-ovr { font-size: 40px; font-weight: 800; line-height: .9; letter-spacing: -.03em; font-variation-settings: 'wdth' 78; }
+  .fut-pos { font-size: 13px; font-weight: 800; letter-spacing: .06em; margin-top: 3px; }
+  .fut-rule { display: block; width: 70%; height: 1px; background: var(--ink2); opacity: .5; margin: 7px 0 6px; }
+  .fut-gp { display: flex; flex-direction: column; align-items: center; line-height: 1; } .fut-gp b { font-size: 16px; font-weight: 800; } .fut-gp span { font-size: 8.5px; font-weight: 800; letter-spacing: .14em; color: var(--ink2); margin-top: 2px; }
+  .fut-tier { margin-top: 7px; font-size: 7.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); }
+  .fut-ph-wrap { position: relative; margin-right: -2px; }
+  .card.fut .fut-ph { width: 100%; aspect-ratio: 1 / 1.05; border-radius: 6px; background: rgba(0,0,0,.18); -webkit-mask-image: linear-gradient(#000 72%, transparent); mask-image: linear-gradient(#000 72%, transparent); }
+  .card.fut .fut-ph img { width: 100%; height: 100%; object-fit: cover; }
+  .card.fut .fut-ph .fb { color: var(--ink2); font-weight: 800; font-size: 34px; background: transparent; }
+  .fut-name { text-align: center; font-size: 18px; font-weight: 800; letter-spacing: -.01em; text-transform: uppercase; margin: 2px 12px 0; padding-bottom: 6px; border-bottom: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fut-badges { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; padding: 7px 10px 0; }
+  .fut-badges .medal { font-size: 8.5px; letter-spacing: .05em; padding: 2px 7px 2px 2px; gap: 4px; } .fut-badges .medal i { width: 15px; height: 15px; font-size: 8.5px; }
+  .fut-stats { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0 10px; padding: 8px 16px 0; }
+  .fut-vr { background: color-mix(in srgb, var(--ink) 25%, transparent); }
+  .fut-col { display: grid; gap: 3px; }
+  .fut-st { display: flex; align-items: baseline; justify-content: center; gap: 6px; } .fut-st b { font-size: 17px; font-weight: 800; min-width: 22px; text-align: right; font-variation-settings: 'wdth' 82; } .fut-st span { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--ink2); min-width: 26px; }
+  .fut-st.top b { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+  .fut-lock { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 12px 12px 2px; text-align: center; } .fut-lock b { font-size: 12.5px; font-weight: 800; } .fut-lock span { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); }
+  .fut-traits { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; padding: 8px 10px 0; } .fut-traits span { font-size: 8.5px; font-weight: 800; letter-spacing: .08em; padding: 2px 6px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent); color: var(--ink); }
+  .fut-foot { display: flex; justify-content: center; gap: 8px; padding: 7px 14px 0; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); } .fut-foot:empty { display: none; } .fut-foot .up { color: #1e6b33; } .fut-foot .down { color: #8a2420; }
+  .card.fut.unrated .fut-st b { color: var(--ink2); }
+  @media (max-width: 480px) {
+    .fut-top { padding: 16px 6px 0 10px; } .fut-ovr { font-size: 31px; } .fut-pos { font-size: 11px; } .fut-gp b { font-size: 13px; }
+    .fut-name { font-size: 14px; margin: 2px 8px 0; } .fut-stats { padding: 7px 10px 0; gap: 0 6px; } .fut-st { gap: 4px; } .fut-st b { font-size: 14px; min-width: 18px; } .fut-st span { font-size: 9.5px; min-width: 22px; }
+    .card.fut { padding-bottom: 18px; } .fut-badges .medal { font-size: 7.5px; } .fut-badges .medal i { width: 13px; height: 13px; }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 </style>
@@ -1485,14 +1509,29 @@ function cardHtml(p, stats, opts = {}) {
   if (!opts.traits && !locked && RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].traits) {
     const t = RATINGS.players[p.name].traits; traits = Object.keys(t).filter(k => t[k] >= 2).sort((a,b) => t[b]-t[a]).slice(0, 2);
   }
-  return `<div class="card ${tier}${foil?' foil':''}${rated?'':' unrated'}" data-pi="${ALL_PLAYERS.indexOf(p)}">
-    <div class="c-head"><div><div class="c-num num">${p.count}</div><div class="label">Appearances</div></div><div class="c-tier"><span class="pill">${TIER_NAME[tier]}</span></div></div>
-    <div class="c-photo-wrap">${photo(p,'c-photo')}</div>
-    <div class="c-name"><b>${esc(p.name)}</b><span>${esc([posName(p), p.foot ? p.foot+' foot' : ''].filter(Boolean).join(' · ') || ' ')}</span></div>
-    ${badges.length ? `<div class="c-badges">${badges.map(b=>`<span class="medal ${b.m||''}" title="${esc(b.d||b.t)}" data-tip="${esc(b.d||b.t)}" data-tip-h="${esc(b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>` : ''}
-    ${traits.length ? `<div class="c-traits">${traits.map(t=>`<span title="${esc(TRAITS[t]||'')}" data-tip="${esc(TRAITS[t]||'')}" data-tip-h="${esc(t)}">${esc(t)}</span>`).join('')}</div>` : ''}
-    ${hidden ? `<div class="c-stats tbd"><span class="label">Rating</span><b>${locked ? gateLine() : 'To be determined'}</b></div>` : `<div class="c-stats">${STAT_KEYS.map(k=>`<div class="c-stat" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><span class="label">${k}</span><b class="num${rated && k===top ? ' top' : ''}">${rated ? stats[k] : '–'}</b></div>`).join('')}</div>`}
-    <div class="c-foot">${hidden ? `<span>${locked ? (TOKEN ? `${Math.min(selfRated(), gateNeed())} of ${gateNeed()} rated` : 'Locked') : 'Not published yet'}</span><span>${TIER_NAME[tier]}</span>` : foot}</div></div>`;
+  // Ultimate Team layout: overall + position + games on the left, photo beside it, name band, six stats in two columns
+  const nums = rated && STAT_KEYS.every(k => typeof stats[k] === 'number'), ovr = !hidden && nums ? avgOf(stats) : null;
+  const pos3 = ({ attack: 'ATT', midfield: 'MID', defense: 'DEF' })[posClass(p.position)] || '';
+  const shortName = (() => { const w = p.name.split(' '); return w.length > 1 && p.name.length > 12 ? `${w[0]} ${w[1][0]}.` : p.name; })();
+  const col = (keys) => keys.map(k => `<div class="fut-st${rated && k === top ? ' top' : ''}" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><b class="num">${rated ? stats[k] : '–'}</b><span>${k}</span></div>`).join('');
+  return `<div class="card fut ${tier}${foil?' foil':''}${rated?'':' unrated'}" data-pi="${ALL_PLAYERS.indexOf(p)}">
+    <div class="fut-face"></div>
+    <div class="fut-top">
+      <div class="fut-l">
+        <div class="fut-ovr num">${ovr != null ? ovr : p.count}</div>
+        <div class="fut-pos">${ovr != null ? (pos3 || 'OVR') : 'GAMES'}</div>
+        <i class="fut-rule"></i>
+        ${ovr != null ? `<div class="fut-gp"><b class="num">${p.count}</b><span>GP</span></div>` : (pos3 ? `<div class="fut-gp"><span>${pos3}</span></div>` : '')}
+        <div class="fut-tier">${TIER_NAME[tier]}</div>
+      </div>
+      <div class="fut-ph-wrap">${photo(p, 'fut-ph')}</div>
+    </div>
+    <div class="fut-name">${esc(shortName)}</div>
+    ${badges.length ? `<div class="fut-badges">${badges.slice(0, 2).map(b=>`<span class="medal ${b.m||''}" title="${esc(b.d||b.t)}" data-tip="${esc(b.d||b.t)}" data-tip-h="${esc(b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>` : ''}
+    ${hidden ? `<div class="fut-lock"><b>${locked ? gateLine() : 'To be determined'}</b><span>${locked ? (TOKEN ? `${Math.min(selfRated(), gateNeed())} of ${gateNeed()} rated` : 'Locked') : 'Not published yet'}</span></div>`
+      : `<div class="fut-stats"><div class="fut-col">${col(['PAC', 'SHO', 'PAS'])}</div><i class="fut-vr"></i><div class="fut-col">${col(['DRI', 'DEF', 'PHY'])}</div></div>`}
+    ${traits.length ? `<div class="fut-traits">${traits.map(t=>`<span title="${esc(TRAITS[t]||'')}" data-tip="${esc(TRAITS[t]||'')}" data-tip-h="${esc(t)}">${esc(t)}</span>`).join('')}</div>` : ''}
+    <div class="fut-foot">${hidden ? '' : foot}</div></div>`;
 }
 /* The two Apps Script calls are slow (1–3 s each), so they start the moment the page opens, run alongside the sheet fetch, and are shared by whoever needs them. */
 let ME_PROMISE = null, RESULTS_PROMISE = null, RATINGS_AT = 0, YOU_WAITING = false;
