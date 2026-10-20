@@ -161,7 +161,7 @@ function doPost(e) {
     if (body.action === 'self') return json_(self_(body));
     if (body.action === 'setSeed') return json_(setSeed_(body));
     if (body.action === 'setFlag') return json_(setFlag_(body));
-    if (body.action === 'ackNamed') return json_(ackNamed_(body));
+    if (body.action === 'freeClaim') return json_(freeClaim_(body));
     if (body.action === 'unrate') return json_(unrate_(body));
     if (body.action === 'photo') return json_(photo_(body));
     if (body.action === 'approve') return json_(approve_(body));
@@ -196,8 +196,7 @@ function me_(token) {
   if (!isAdmin_(name)) hide.forEach(function (h) { Object.keys(seeds).forEach(function (n) { if (n.toLowerCase() === h) delete seeds[n]; }); });   // a hidden player's starting point is not sent to voters
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
-  const anonOld = Object.keys(mine).filter(function (k) { return mine[k].anon; }).length;   // ratings still on the old anonymous ballot; the site asks before naming them
-  return { ok: true, name: name, window: win, open: open, anonOld: anonOld, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
+  return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
            traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name) };
 }
 
@@ -468,19 +467,16 @@ function hiddenNames_() {
 }
 /** Players whose card shows their starting point exactly, whatever the votes say: Settings → fixed_stats, comma-separated (none by default). Their traits still come from votes. */
 function fixedNames_() { return String(settings_().fixed_stats || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean); }
-/** The voter has read the notice that Raji can see who gave what: their earlier anonymous ratings move to their named ballot. */
-function ackNamed_(body) {
+/** Admin: free a claimed name so the right player can claim it again (deletes their Voters row; their ballot stays and still counts). */
+function freeClaim_(body) {
   const name = voterName_(body.t);
-  if (!name) return { ok: false, error: 'This link isn’t recognised.' };
-  const win = props_().getProperty('window'), old = id2_(body.t), b3 = id3_(body.t), col = 4 + STATS.length + 4;
-  const lock = LockService.getScriptLock(); lock.waitLock(10000); let n = 0;
-  try {
-    const sh = sheet_('Votes'), data = sh.getDataRange().getValues();
-    if (data[0].length < col || data[0][col - 1] !== 'voter') sh.getRange(1, col).setValue('voter');
-    for (let i = 1; i < data.length; i++) if (data[i][0] === win && data[i][1] === old) { sh.getRange(i + 1, 2).setValue(b3); sh.getRange(i + 1, col).setValue(name); n++; }
-  } finally { lock.releaseLock(); }
-  bust_('Votes');
-  return { ok: true, named: n };
+  if (!name || !isAdmin_(name)) return { ok: false, error: 'Admin only.' };
+  const target = String(body.name || '').trim().toLowerCase(); if (!target) return { ok: false, error: 'Which name?' };
+  if (target === name.toLowerCase()) return { ok: false, error: 'That is your own card.' };
+  const sh = sheet_('Voters'), data = sh.getDataRange().getValues(); let n = 0;
+  for (let i = data.length - 1; i >= 1; i--) if (String(data[i][1]).trim().toLowerCase() === target) { sh.deleteRow(i + 1); n++; }
+  bust_('Voters');
+  return n ? { ok: true, freed: n } : { ok: false, error: 'Nobody has claimed that name.' };
 }
 /** Admin: set one of the display settings from the site (hide_stats, fixed_stats). */
 function setFlag_(body) {
@@ -523,10 +519,16 @@ function saveGameRow_(date, teams, score, time, list, size) {
   for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date) { sh.getRange(i + 1, 1, 1, 8).setValues([row]); bust_('Games'); return; }
   sh.appendRow(row); bust_('Games');
 }
+/** Every game in the Games tab: teams or list, score, format, and the man of the match once voting has closed (or Raji picked one). */
 function gamesPublic_() {
   if (!ss_().getSheetByName('Games')) return [];
+  const now = Date.now(), raters = {};
+  if (ss_().getSheetByName('MatchVotes')) tab_('MatchVotes').forEach(function (r) { const d = String(r[0]).slice(0, 10); (raters[d] = raters[d] || {})[r[1]] = 1; });
   return tab_('Games').map(function (r) { const split = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
-    return { date: String(r[0]).slice(0, 10), black: split(r[1]), white: split(r[2]), b: r[3] === '' ? null : Number(r[3]), w: r[4] === '' ? null : Number(r[4]) }; });
+    const d = String(r[0]).slice(0, 10), settled = now >= closes_(d) || !!motmOverride_(d);
+    return { date: d, black: split(r[1]), white: split(r[2]), b: r[3] === '' ? null : Number(r[3]), w: r[4] === '' ? null : Number(r[4]),
+             time: String(r[5] || '21:00').slice(0, 5) || '21:00', list: split(r[6]), size: Number(r[7]) || 6, motm: settled ? motmFor_(d) : [], raters: Object.keys(raters[d] || {}).length }; })
+    .filter(function (g) { return /^\d{4}-\d{2}-\d{2}$/.test(g.date); });
 }
 function kickoff_(g) { return new Date(g.date + 'T' + (g.time || '21:00') + ':00+03:00'); }
 /** Match voting closes at 11:00 Nairobi time the morning after the game. */

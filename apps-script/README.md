@@ -167,7 +167,10 @@ From 14 Oct 2026, Raji chose to see who voted what, while other players still on
 - POST `setFlag` (admin) sets `hide_stats` or `fixed_stats` from the site.
 - 17 Oct 2026: Raji's card was unhidden (`hide_stats` empty) and fixed to 81 · 82 · 92 · 94 · 68 · 82, his own numbers.
 
-## Naming the earlier ballots (Version 28)
+## Matches, freeing claims (Version 28)
 
-The pre-14 Oct ballots were filed under a code made from each player's private link, and the links aren't stored, so the sheet can't match them to names. When such a player opens the site, `me` reports `anonOld` (how many ratings they still have on the old ballot), and the site shows a notice under the menu: "Heads up: Raji can now see who gave which ratings, including the N you gave before 14 Oct." Tapping Got it calls `ackNamed`, which moves those rows to the player's named ballot (`id3_`) and writes their name in the voter column, so they appear in the admin's Who voted what panel.
+- `results.games` now carries each game's time, format, list (for games with no teams), number of raters, and man of the match once voting has closed or the admin picked one. The site's **Matches** tab lists every played game, newest first: score row (Black/White, winner bright), man of the match, and the teams or who played.
+- The game-day banner shows the score row for games entered as a plain list (no teams) too.
+- POST `freeClaim` (admin, `{ name }`) deletes that player's Voters row so the right person can claim the card again; their earlier ballot stays and still counts. The admin claims table has a two-tap **Free** button per row.
+- The earlier-ballot naming flow (ackNamed) was not shipped; the pre-14 Oct ballots stay anonymous.
 

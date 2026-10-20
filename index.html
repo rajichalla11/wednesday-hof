@@ -394,6 +394,17 @@
   .tm-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; } .tm-foot .sp { flex: 1; } .tm-foot .btn { padding: 8px 12px; font-size: 12.5px; }
   .tm-credit { text-align: center; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); margin-top: 8px; }
   @media (max-width: 720px) { .sheet.tm { padding: 14px 16px 12px; } }
+  .free-btn { font-size: 11px; padding: 0; color: var(--fg-3); } .free-btn[data-armed="1"] { color: var(--neg); }
+  .mt-list { display: grid; gap: 12px; }
+  .mt { border: 1px solid var(--line-2); border-radius: 14px; background: var(--surface); padding: 14px 16px; display: grid; gap: 12px; }
+  .mt-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; } .mt-top b { display: block; font-size: 16px; } .mt-top span { font-size: 12px; color: var(--fg-2); }
+  .mt-res { font-size: 10.5px !important; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--fg) !important; border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 9px; white-space: nowrap; }
+  .mt .gd-score { margin: 0; }
+  .mt-motm { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--gold) 8%, transparent); }
+  .mt-motm .avatar { width: 34px; height: 34px; flex: none; box-shadow: 0 0 0 2px var(--gold); } .mt-motm > span { display: flex; flex-direction: column; gap: 2px; flex: 1; } .mt-motm .label { color: var(--gold); } .mt-motm b { font-size: 16px; } .mt-motm i { font-style: normal; color: var(--gold); font-size: 20px; }
+  .mt-none { font-size: 12.5px; color: var(--fg-3); }
+  .mt-more summary { cursor: pointer; font-size: 12px; font-weight: 600; color: var(--fg-2); list-style: none; } .mt-more summary::-webkit-details-marker { display: none; } .mt-more summary::after { content: ' ↓'; } .mt-more[open] summary::after { content: ' ↑'; }
+  .mt .gd-team .gd-chip { width: fit-content; }
   .gd-note { font-size: 13px; color: var(--fg-2); line-height: 1.45; }
   .gd-foot { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 18px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 13px; color: var(--fg-2); text-align: left; flex-wrap: wrap; } .gd-foot b { color: var(--fg); }
   button.gd-foot { cursor: pointer; } button.gd-foot:hover { background: var(--surface-2); } .gd-foot .go { margin-left: auto; color: var(--fg); font-weight: 600; font-size: 12px; white-space: nowrap; }
@@ -650,6 +661,7 @@
       <button class="tab" data-tab="wall"><span class="long">Century Wall</span><span class="short">Wall</span><small id="tab-n-wall"></small></button>
       <button class="tab" data-tab="records">Records<small id="tab-n-records"></small></button>
       <button class="tab" data-tab="timeline">Season<small id="tab-n-timeline"></small></button>
+      <button class="tab" data-tab="matches">Matches<small id="tab-n-matches"></small></button>
       <button class="tab" data-tab="balances">Balance<small id="tab-n-balances"></small></button>
     </div>
   </nav>
@@ -696,6 +708,11 @@
     <div class="stats four" id="tl-summary"></div>
     <div class="tl-wrap" id="tl-wrap" style="margin-top:14px"><div class="tl-track" id="tl-track"></div></div>
     <div class="tl-axis"><span id="tl-first"></span><span>Tap a night to see who played · dot marks a century</span><span id="tl-last"></span></div>
+  </section>
+
+  <section class="panel" id="panel-matches">
+    <div class="sh"><h2>Matches</h2><span>Every game since lineups went on the site · scores and man of the match</span></div>
+    <div class="mt-list" id="matches"><div class="loading">Loading…</div></div>
   </section>
 
   <section class="panel" id="panel-balances">
@@ -1889,6 +1906,14 @@ async function pickMotm(date, sel) {
   sel.disabled = false; st.textContent = res.ok ? 'Saved' : (res.error || 'Failed');
   if (res.ok) { const gm = (window.__ADMIN.motmGames || []).find(x => x.date === date); if (gm) { gm.override = sel.value ? [sel.value] : null; gm.auto = res.auto || gm.auto; } renderMotmAdmin(); RATINGS_AT = 0; await fetchResults(); renderGameday(); renderPlayers(); }
 }
+/* Admin: release a claimed card so the right person can claim it. Two taps, like Not me. */
+async function freeClaim(btn) {
+  if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.textContent = 'Tap again'; setTimeout(() => { if (btn.isConnected) { btn.dataset.armed = ''; btn.textContent = 'Free'; } }, 4000); return; }
+  btn.disabled = true; btn.textContent = '…';
+  let res; try { res = await api(null, { action: 'freeClaim', t: TOKEN, name: btn.dataset.name }); } catch (e) { res = { ok: false, error: e.message }; }
+  if (!res.ok) { btn.disabled = false; btn.dataset.armed = ''; btn.textContent = res.error || 'Failed'; return; }
+  btn.closest('tr').remove(); RATINGS_AT = 0; fetchResults(); refreshAdmin(true);
+}
 let NAMED_FOR = '';
 function renderNamed(pick) {
   const a = window.__ADMIN, el = document.getElementById('named-body'); if (!a || !el) return;
@@ -1935,7 +1960,7 @@ async function renderAdmin(me) {
       ${(() => { const seen = {}; x.names.forEach(n => seen[n.name.toLowerCase()] = n); const BAND = ['', '1–4', '5–9', '10+'], band = r => typeof r === 'number' ? (r <= 0 ? '' : r < 5 ? '1–4' : r < 10 ? '5–9' : '10+') : String(r || ''); const claims = (a.claims || []).map(c => ({ ...c, rated: band(c.rated) })).sort((p, q) => (BAND.indexOf(q.rated) - BAND.indexOf(p.rated)) || p.name.localeCompare(q.name)); const voted = claims.filter(c => c.rated).length;
         const fmtD = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); };
         return `<div class="label" style="margin:16px 0 8px;display:flex;justify-content:space-between;gap:8px"><span>Claimed · ${claims.length} of ${ALL_PLAYERS.length} · ${voted} have voted</span><button class="btn link" style="font-size:11px;padding:0" onclick="refreshAdmin(true)">Refresh · ${new Date(ADMIN_AT).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' })}</button></div>
-        <p class="muted" style="font-size:12px;margin:0 0 8px">Rated counts are rough (1–4, 5–9, 10+) and update when a player next opens the site, so the earlier anonymous ballots can't be matched to anyone.</p><table class="claims"><thead><tr><th>Player</th><th>Claimed</th><th>Rated</th><th>Last open</th></tr></thead><tbody>${claims.map(c => { const sn = seen[c.name.toLowerCase()]; return `<tr class="${c.rated ? '' : 'novote'}"><td><b>${esc(c.name)}</b>${c.status === 'pending' ? ' <small>pending</small>' : ''}</td><td>${fmtD(c.claimed)}</td><td>${c.rated ? `<b>${c.rated}</b>` : '<span class="muted">—</span>'}</td><td>${sn ? `${ago(sn.last)}${sn.opens > 1 ? ` · ${sn.opens}×` : ''}` : '<span class="muted">not yet</span>'}</td></tr>`; }).join('')}</tbody></table>`; })()}`; } }
+        <p class="muted" style="font-size:12px;margin:0 0 8px">Rated counts are rough (1–4, 5–9, 10+) and update when a player next opens the site, so the earlier anonymous ballots can't be matched to anyone.</p><table class="claims"><thead><tr><th>Player</th><th>Claimed</th><th>Rated</th><th>Last open</th><th></th></tr></thead><tbody>${claims.map(c => { const sn = seen[c.name.toLowerCase()]; return `<tr class="${c.rated ? '' : 'novote'}"><td><b>${esc(c.name)}</b>${c.status === 'pending' ? ' <small>pending</small>' : ''}</td><td>${fmtD(c.claimed)}</td><td>${c.rated ? `<b>${c.rated}</b>` : '<span class="muted">—</span>'}</td><td>${sn ? `${ago(sn.last)}${sn.opens > 1 ? ` · ${sn.opens}×` : ''}` : '<span class="muted">not yet</span>'}</td><td>${VOTER && c.name.toLowerCase() === VOTER.name.toLowerCase() ? '' : `<button class="btn link free-btn" data-name="${esc(c.name)}" onclick="freeClaim(this)">Free</button>`}</td></tr>`; }).join('')}</tbody></table>`; })()}`; } }
   const pe = document.getElementById('pending-body');
   if (pe) { const pend = a.pending || []; document.getElementById('pending-n').textContent = pend.length ? pend.length : '';
     pe.innerHTML = pend.length ? pend.map(c => { const p = ALL_PLAYERS.find(x => x.name.toLowerCase() === c.name.toLowerCase()); return `<div class="pend"><div class="who">${p ? photo(p,'avatar') : ''}<div><b>${esc(c.name)}</b><span>${esc(c.when || '')}${p ? ` · ${p.count} games` : ''}</span></div></div><div class="acts"><button class="btn" onclick="approveClaim('${esc(c.name)}', true, this)">Approve</button><button class="btn ghost" onclick="approveClaim('${esc(c.name)}', false, this)">Not them</button></div></div>`; }).join('') : `<div class="empty">No claims waiting.</div>`; }
@@ -2083,6 +2108,7 @@ function storylines(squad, g) {
 let GD_SHOW_LAST = false;
 function gdFlip(showLast) { GD_SHOW_LAST = showLast; renderGameday(); const el = document.getElementById('gameday'); if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: 'start' }); }
 function renderGameday() {
+  try { renderMatches(); } catch (e) { console.error(e); }
   const el = document.getElementById('gameday'); if (!el) return;
   let view = ALL_PLAYERS.length ? gameView() : null;
   if (!view) { el.hidden = true; return; }
@@ -2115,8 +2141,9 @@ function renderGameday() {
   const scoreline = `<div class="gd-score"><span class="side${won('black')}"><i class="gd-shirt"></i>Black</span>${sc ? `<span class="mid num">${sc.black}<i>–</i>${sc.white}</span>` : '<span class="mid vs">vs</span>'}<span class="side w${won('white')}">White<i class="gd-shirt w"></i></span></div>`;
   const left = spots - list.length;
   const lineupSec = T ? sec('', '', scoreline + `<div class="gd-teams"><div class="gd-team">${(T.black || []).map(plRow).join('')}</div><div class="gd-team">${(T.white || []).map(plRow).join('')}</div></div>`)
+    : list.length && isPost ? sec('', '', (sc ? scoreline : '') + `<div class="label" style="margin:${sc ? 12 : 0}px 0 8px">Played · ${list.length}</div><div class="gd-chips">${list.map(n => pChip(n)).join('')}</div>`)
     : list.length ? sec(`In · ${list.length} of ${spots}`, ph === 'pre' ? [left > 0 ? `${left} spot${left === 1 ? '' : 's'} left` : '', 'teams to follow'].filter(Boolean).join(' · ') : '', `<div class="gd-chips">${list.map(n => pChip(n)).join('')}</div>`)
-    : squad.length ? sec('', '', `<div style="display:flex;align-items:center"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${isPost ? 'played' : today ? 'in tonight' : 'in'}</span></div>`)
+    : squad.length ? sec('', '', (isPost && sc ? scoreline : '') + `<div style="display:flex;align-items:center"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${isPost ? 'played' : today ? 'in tonight' : 'in'}</span></div>`)
     : (ph === 'pre' ? sec('', '', `<div class="gd-note">Lineup to follow.</div>`) : '');
   const tmSec = ph === 'pre' && (T || list.length) ? `<div class="gd-sec gd-tm"><span class="n">${T ? 'Think you could pick better teams?' : 'Pick your own teams for fun.'} Drag players between the halves, then screenshot it for the group.</span><button class="btn" onclick="openTeamMaker()">Team maker</button></div>` : '';
   const sbi = sbList.indexOf(meName);
@@ -2200,6 +2227,31 @@ function paintTeamMaker() {
       pod.addEventListener('pointermove', move); pod.addEventListener('pointerup', up); pod.addEventListener('pointercancel', up);
     });
   });
+}
+/* ── Matches: every game in the Games tab, newest first ── */
+function renderMatches() {
+  const el = document.getElementById('matches'); if (!el) return;
+  if (!RATINGS || !RATINGS.ok) { el.innerHTML = `<div class="loading">Loading…</div>`; return; }
+  const now = Date.now(), games = (RATINGS.games || []).filter(g => koOf(g) <= now).sort((a, b) => b.date.localeCompare(a.date));
+  const n = document.getElementById('tab-n-matches'); if (n) n.textContent = games.length || '';
+  if (!games.length) { el.innerHTML = `<div class="empty">No games yet.</div>`; return; }
+  const me = VOTER && VOTER.ok ? VOTER.name : '';
+  const pill = nm => { const p = ALL_PLAYERS.find(x => x.name === nm); return `<span class="gd-chip${nm === me ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}${esc(nm)}</span>`; };
+  el.innerHTML = games.map(g => {
+    const hasTeams = (g.black || []).length || (g.white || []).length, played = hasTeams ? g.black.length + g.white.length : (g.list || []).length;
+    const sc = g.b != null && g.w != null ? { black: g.b, white: g.w } : null, won = side => !sc || sc.black === sc.white ? '' : (sc[side] > sc[side === 'black' ? 'white' : 'black'] ? ' won' : ' lost');
+    const res = sc ? (sc.black === sc.white ? 'Draw' : `${sc.black > sc.white ? 'Black' : 'White'} won`) : 'No score';
+    const mp = (g.motm || []).length ? ALL_PLAYERS.find(x => x.name === g.motm[0]) : null;
+    const pending = !(g.motm || []).length && Date.now() < koOf(g) + 14 * 3600000 + 86400000;
+    return `<article class="mt">
+      <div class="mt-top"><div><b>${esc(dayOf(g))}</b><span>${fmtKo(g)} · ${g.size || 6}-a-side${played ? ` · ${played} played` : ''}</span></div><span class="mt-res">${res}</span></div>
+      <div class="gd-score"><span class="side${won('black')}"><i class="gd-shirt"></i>Black</span>${sc ? `<span class="mid num">${sc.black}<i>–</i>${sc.white}</span>` : '<span class="mid vs">–</span>'}<span class="side w${won('white')}">White<i class="gd-shirt w"></i></span></div>
+      ${(g.motm || []).length ? `<div class="mt-motm">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span><span class="label">Man of the match</span><b>${esc(g.motm.join(', '))}</b></span><i>★</i></div>`
+        : `<div class="mt-none">${pending ? 'Man of the match is decided at 11am the morning after.' : 'No man of the match.'}</div>`}
+      ${played ? `<details class="mt-more"><summary>${hasTeams ? 'Teams' : 'Who played'}</summary>${hasTeams
+        ? `<div class="gd-teams" style="margin-top:10px"><div class="gd-team"><div class="label" style="margin-bottom:4px">Black</div>${g.black.map(pill).join('')}</div><div class="gd-team"><div class="label" style="margin-bottom:4px">White</div>${g.white.map(pill).join('')}</div></div>`
+        : `<div class="gd-chips" style="margin-top:10px">${g.list.map(pill).join('')}</div>`}</details>` : ''}
+    </article>`; }).join('');
 }
 function copyGate(btn) { const code = btn.querySelector('b').textContent, small = btn.querySelector('small'); const done = () => { small.textContent = 'Copied'; setTimeout(() => small.textContent = 'Tap to copy', 1500); }; if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(done); else done(); }
 async function toggleIn(isIn) {
@@ -2310,7 +2362,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ── tabs ── */
-const TABS = ['you','hall','wall','records','timeline','balances'];
+const TABS = ['you','hall','wall','records','timeline','matches','balances'];
 function showTab(name, updateHash = true) {
   if (name === 'cards') name = 'hall';
   if (name === 'you' && !TOKEN) name = 'hall';
