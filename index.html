@@ -1509,8 +1509,7 @@ function cardHtml(p, stats, opts = {}) {
   if (!opts.traits && !locked && RATINGS && RATINGS.ok && RATINGS.players[p.name] && RATINGS.players[p.name].traits) {
     const t = RATINGS.players[p.name].traits; traits = Object.keys(t).filter(k => t[k] >= 2).sort((a,b) => t[b]-t[a]).slice(0, 2);
   }
-  // Ultimate Team layout: overall + position + games on the left, photo beside it, name band, six stats in two columns
-  const nums = rated && STAT_KEYS.every(k => typeof stats[k] === 'number'), ovr = !hidden && nums ? avgOf(stats) : null;
+  // Ultimate Team layout: appearances (the card's number) + position on the left, photo beside it, name band, six stats in two columns
   const pos3 = ({ attack: 'ATT', midfield: 'MID', defense: 'DEF' })[posClass(p.position)] || '';
   const shortName = (() => { const w = p.name.split(' '); return w.length > 1 && p.name.length > 12 ? `${w[0]} ${w[1][0]}.` : p.name; })();
   const col = (keys) => keys.map(k => `<div class="fut-st${rated && k === top ? ' top' : ''}" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><b class="num">${rated ? stats[k] : '–'}</b><span>${k}</span></div>`).join('');
@@ -1518,10 +1517,9 @@ function cardHtml(p, stats, opts = {}) {
     <div class="fut-face"></div>
     <div class="fut-top">
       <div class="fut-l">
-        <div class="fut-ovr num">${ovr != null ? ovr : p.count}</div>
-        <div class="fut-pos">${ovr != null ? (pos3 || 'OVR') : 'GP'}</div>
-        <i class="fut-rule"></i>
-        ${ovr != null ? `<div class="fut-gp"><b class="num">${p.count}</b><span>GP</span></div>` : (pos3 ? `<div class="fut-gp"><span>${pos3}</span></div>` : '')}
+        <div class="fut-ovr num">${p.count}</div>
+        <div class="fut-pos">GP</div>
+        ${pos3 ? `<i class="fut-rule"></i><div class="fut-gp"><b>${pos3}</b></div>` : ''}
         <div class="fut-tier">${TIER_NAME[tier]}</div>
       </div>
       <div class="fut-ph-wrap">${photo(p, 'fut-ph')}</div>
