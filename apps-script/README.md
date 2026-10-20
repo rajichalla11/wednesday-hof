@@ -174,3 +174,8 @@ From 14 Oct 2026, Raji chose to see who voted what, while other players still on
 - POST `freeClaim` (admin, `{ name }`) deletes that player's Voters row so the right person can claim the card again; their earlier ballot stays and still counts. The admin claims table has a two-tap **Free** button per row.
 - The earlier-ballot naming flow (ackNamed) was not shipped; the pre-14 Oct ballots stay anonymous.
 
+## Form guide, sturdier calls (Version 30)
+
+- `results.games[].ratings` holds each player's average match rating for that night (players with 2+ votes). The site builds a form guide from it: the last 5 games as chips in the player's strip on Home (rating, W/D/L for their side, ★ for man of the match), and the last 8 as a table on their profile. Numbers follow the rate-10-teammates lock.
+- The site's API helper retries when Google answers with an HTML error page instead of JSON (it happens when several calls land at once), and the admin panels show a Try again button instead of hanging on Loading….
+

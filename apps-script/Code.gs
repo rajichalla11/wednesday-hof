@@ -533,12 +533,14 @@ function saveGameRow_(date, teams, score, time, list, size) {
 /** Every game in the Games tab: teams or list, score, format, and the man of the match once voting has closed (or Raji picked one). */
 function gamesPublic_() {
   if (!ss_().getSheetByName('Games')) return [];
-  const now = Date.now(), raters = {};
-  if (ss_().getSheetByName('MatchVotes')) tab_('MatchVotes').forEach(function (r) { const d = String(r[0]).slice(0, 10); (raters[d] = raters[d] || {})[r[1]] = 1; });
+  const now = Date.now(), raters = {}, sums = {};
+  if (ss_().getSheetByName('MatchVotes')) tab_('MatchVotes').forEach(function (r) { const d = String(r[0]).slice(0, 10), k = String(r[2]); (raters[d] = raters[d] || {})[r[1]] = 1;
+    const g = (sums[d] = sums[d] || {}); g[k] = g[k] || { s: 0, n: 0 }; g[k].s += Number(r[3]); g[k].n++; });
+  const avgs = function (d) { const out = {}, g = sums[d] || {}; Object.keys(g).forEach(function (k) { if (g[k].n >= 2) out[k] = { avg: Math.round(10 * g[k].s / g[k].n) / 10, n: g[k].n }; }); return out; };   // the form guide: each player's average from that night (2+ votes)
   return tab_('Games').map(function (r) { const split = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
     const d = String(r[0]).slice(0, 10), settled = now >= closes_(d) || !!motmOverride_(d);
     return { date: d, black: split(r[1]), white: split(r[2]), b: r[3] === '' ? null : Number(r[3]), w: r[4] === '' ? null : Number(r[4]),
-             time: String(r[5] || '21:00').slice(0, 5) || '21:00', list: split(r[6]), size: Number(r[7]) || 6, motm: settled ? motmFor_(d) : [], raters: Object.keys(raters[d] || {}).length }; })
+             time: String(r[5] || '21:00').slice(0, 5) || '21:00', list: split(r[6]), size: Number(r[7]) || 6, motm: settled ? motmFor_(d) : [], raters: Object.keys(raters[d] || {}).length, ratings: avgs(d) }; })
     .filter(function (g) { return /^\d{4}-\d{2}-\d{2}$/.test(g.date); });
 }
 function kickoff_(g) { return new Date(g.date + 'T' + (g.time || '21:00') + ':00+03:00'); }
