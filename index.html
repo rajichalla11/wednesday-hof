@@ -1256,8 +1256,8 @@ function renderPlayers() {
   grid.classList.toggle('as-list', PLAYER_VIEW === 'list');
   if (PLAYER_VIEW === 'list') {
     const locked = gateLocked(), me = VOTER && VOTER.ok ? VOTER.name : '';
-    const rows = base.slice().sort((a, b) => b.count - a.count).map(p => { const r = RATINGS && RATINGS.ok && RATINGS.players[p.name], st = r && r.stats && !locked && !r.hidden ? avgOf(r.stats) : null;
-      return `<button class="pl-row${p.name === me ? ' me' : ''}" data-pi="${ALL_PLAYERS.indexOf(p)}">${photo(p, 'avatar')}<span class="pl-n"><b>${esc(p.name)}</b><small>${esc([posName(p), p.gamesThisYear ? `${p.gamesThisYear} in ${THIS_YEAR}` : `not seen in ${THIS_YEAR}`].filter(Boolean).join(' · '))}</small></span><span class="pl-c num">${p.count}<small>games</small></span>${st != null ? `<span class="rt">${st}</span>` : '<span class="rt pl-lock">–</span>'}</button>`; }).join('');
+    const rows = base.slice().sort((a, b) => b.count - a.count).map(p => { const st = null;
+      return `<button class="pl-row${p.name === me ? ' me' : ''}" data-pi="${ALL_PLAYERS.indexOf(p)}">${photo(p, 'avatar')}<span class="pl-n"><b>${esc(p.name)}</b><small>${esc([posName(p), p.gamesThisYear ? `${p.gamesThisYear} in ${THIS_YEAR}` : `not seen in ${THIS_YEAR}`].filter(Boolean).join(' · '))}</small></span><span class="pl-c num">${p.count}<small>games</small></span></button>`; }).join('');
     grid.innerHTML = rows || `<div class="empty">No player matches “${esc(PLAYER_Q)}”.</div>`;
     paintGate();
     grid.querySelectorAll('.pl-row').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
@@ -1801,7 +1801,7 @@ function paintCardPreview() {
   const shown = {}; STAT_KEYS.forEach(k => shown[k] = values[k] != null ? values[k] : '–');
   const picked = STAT_KEYS.filter(k => values[k] != null);
   const avg = picked.length ? Math.round(picked.reduce((a,k) => a + values[k], 0) / picked.length) : '–';
-  document.getElementById('b-card').innerHTML = cardHtml(p, shown, { meta:`<span>Your rating</span><span>${picked.length === STAT_KEYS.length ? avg + ' avg' : `${picked.length} of ${STAT_KEYS.length} picked`}</span>`, traits: BALLOT.traits });
+  document.getElementById('b-card').innerHTML = cardHtml(p, shown, { meta:`<span>Your rating</span><span>${picked.length === STAT_KEYS.length ? 'All six picked' : `${picked.length} of ${STAT_KEYS.length} picked`}</span>`, traits: BALLOT.traits });
 }
 /* Ratings save in the background: the deck moves on at once, the request follows, failures retry three times and are shown on the summary screen. */
 const SAVES = { pending: {}, failed: {}, busy: 0 };
@@ -2032,7 +2032,7 @@ function setExact(k, raw, typing) {
 function paintSelfPreview() {
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   const el = document.getElementById('self-card'); if (!el || !me) return;
-  el.innerHTML = cardHtml(me, SELF.values, { meta:`<span>How you see yourself</span><span>${avgOf(SELF.values)} avg</span>`, traits: SELF.traits });
+  el.innerHTML = cardHtml(me, SELF.values, { meta:`<span>How you see yourself</span><span></span>`, traits: SELF.traits });
 }
 async function submitSelf() {
   const btn = document.getElementById('s-submit'), msg = document.getElementById('s-saved');
