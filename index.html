@@ -2147,8 +2147,11 @@ const fmtKo = (g) => new Date(`${g.date}T${g.time}:00+03:00`).toLocaleTimeString
      Priyam.                 Raj
    Columns are split on runs of 2+ spaces or a tab; trailing dots and asterisks are dropped; names are matched to players
    (exact, then "Mihir" → "Mihir N" when unique, then first name when unique). Unmatched names stay as typed, as guests. */
+/* Raji's standing call: a bare "Yash" is Yash Sharma and a bare "Karan" is Karan N, unless he names the other one. */
+const LINEUP_PREFER = { yash: 'Yash Sharma', karan: 'Karan N' };
 function resolvePlayer(raw) {
   const n = raw.toLowerCase();
+  if (LINEUP_PREFER[n] && ALL_PLAYERS.some(p => p.name === LINEUP_PREFER[n])) return LINEUP_PREFER[n];
   let hit = ALL_PLAYERS.find(p => p.name.toLowerCase() === n); if (hit) return hit.name;
   let c = ALL_PLAYERS.filter(p => p.name.toLowerCase().startsWith(n + ' ') || p.name.toLowerCase().replace(/\.$/, '') === n); if (c.length === 1) return c[0].name;
   c = ALL_PLAYERS.filter(p => p.name.split(' ')[0].toLowerCase() === n); if (c.length === 1) return c[0].name;
