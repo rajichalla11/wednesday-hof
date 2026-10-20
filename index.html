@@ -94,6 +94,30 @@
   .card.icon { --tier: var(--icon); } .card.gold { --tier: var(--gold); } .card.silver { --tier: var(--silver); } .card.bronze { --tier: var(--bronze); }
   .card.foil { border-color: color-mix(in srgb, var(--tier) 40%, var(--line)); }
   .card.foil::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(135deg, transparent 35%, rgba(255,255,255,.045) 50%, transparent 65%); }
+  /* Cards glow in their tier: bronze, silver, gold, and Icon in pearl white with a faint rainbow sheen */
+  .card { --tier-a: 24%; --tier-b: 8%;
+    background:
+      radial-gradient(120% 70% at 85% -10%, color-mix(in srgb, var(--tier) 34%, transparent), transparent 60%),
+      linear-gradient(165deg, color-mix(in srgb, var(--tier) var(--tier-a), #151517) 0%, color-mix(in srgb, var(--tier) var(--tier-b), #121214) 48%, #0f0f11 100%);
+    border: 1px solid color-mix(in srgb, var(--tier) 52%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--tier) 55%, transparent), 0 14px 34px -16px color-mix(in srgb, var(--tier) 55%, transparent), 0 0 0 1px rgba(0,0,0,.35); }
+  .card::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+    background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--tier) 22%, transparent) 46%, rgba(255,255,255,.10) 50%, color-mix(in srgb, var(--tier) 18%, transparent) 54%, transparent 70%);
+    background-size: 250% 100%; background-position: 120% 0; transition: background-position .9s var(--ease); mix-blend-mode: screen; }
+  .card:hover::after { background-position: -20% 0; }
+  .card:hover { border-color: color-mix(in srgb, var(--tier) 80%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--tier) 70%, transparent), 0 18px 40px -14px color-mix(in srgb, var(--tier) 70%, transparent), 0 0 0 1px rgba(0,0,0,.35); }
+  .card.bronze { --tier-a: 30%; --tier-b: 10%; } .card.silver { --tier-a: 22%; --tier-b: 7%; } .card.gold { --tier-a: 30%; --tier-b: 10%; }
+  .card.icon { --tier: #f2efe6; --tier-a: 20%; --tier-b: 6%; }
+  .card.icon::before { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; opacity: .55; mix-blend-mode: soft-light;
+    background: conic-gradient(from 200deg at 80% 0%, #ffd6e7, #d6f0ff, #e6ffd9, #fff3c4, #ffd6e7); }
+  .card .c-name span, .card .c-head .label { color: color-mix(in srgb, var(--tier) 55%, var(--fg-2)); }
+  .card .c-stats, .card .c-stat, .card .c-stats.tbd { border-color: color-mix(in srgb, var(--tier) 22%, var(--line)); }
+  .card .c-stat .label { color: color-mix(in srgb, var(--tier) 45%, var(--fg-3)); }
+  .card .c-foot { color: color-mix(in srgb, var(--tier) 45%, var(--fg-3)); }
+  .card .c-photo { box-shadow: 0 0 0 1px color-mix(in srgb, var(--tier) 35%, transparent); }
+  .card .pill { background: color-mix(in srgb, var(--tier) 14%, transparent); border-color: color-mix(in srgb, var(--tier) 55%, transparent); }
+  .card .c-num { text-shadow: 0 0 18px color-mix(in srgb, var(--tier) 35%, transparent); }
+  .deck .card:hover, .you-grid .card:hover { border-color: color-mix(in srgb, var(--tier) 52%, transparent); }
   .c-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 16px 0; }
   .c-num { font-size: 44px; line-height: .95; color: var(--tier); }
   .c-head .label { margin-top: 6px; letter-spacing: .06em; }
