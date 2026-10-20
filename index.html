@@ -535,7 +535,8 @@
   .gate-bar .btn { flex: none; padding: 8px 14px; font-size: 13px; }
   .hsec.gated > :not(.sh):not(.gate-screen) { display: none !important; } .hsec:not(.gated) > .gate-screen { display: none; }
   .hsec { display: none; } .hsec.on { display: block; animation: panelIn .3s var(--ease); }
-  .hist-seg { margin: 26px 0 4px; } .hist-seg button { flex: 1; }
+  .hist-seg { display: flex; width: 100%; margin: 22px 0 0; } .hist-seg button { flex: 1; white-space: nowrap; justify-content: center; }
+  .hsec { margin-top: 0 !important; padding-top: 0 !important; } .hsec > .sh { margin-top: 18px !important; padding-top: 0 !important; }
   .gate-screen { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 36px 20px; text-align: center; }
   .gate-screen .gs-n { font-size: 40px; font-weight: 700; font-stretch: 75%; line-height: 1; } .gate-screen .gs-n small { font-size: 18px; color: var(--fg-3); font-weight: 500; }
   .gate-screen p { color: var(--fg-2); font-size: 14px; max-width: 40ch; margin: 12px auto 18px; } .gate-screen .gb-prog { display: block; height: 3px; background: var(--surface-3); border-radius: 2px; max-width: 220px; margin: 14px auto 0; overflow: hidden; } .gate-screen .gb-prog i { display: block; height: 100%; background: var(--fg); }
@@ -740,7 +741,7 @@
     <div class="stat"><b class="num" id="s-players">—</b><div class="label">Players</div></div>
   </div>
 
-  <div class="seg hist-seg" id="hist-seg"><button data-sub="records" class="on">Records</button><button data-sub="wall">Century Wall</button><button data-sub="timeline">Season</button></div>
+  <div class="seg hist-seg" id="hist-seg"><button data-sub="records" class="on">Records</button><button data-sub="wall"><span class="long">Century Wall</span><span class="short">Wall</span></button><button data-sub="timeline">Season</button></div>
   <section class="hsec" id="panel-wall">
     <div class="sh"><h2>Century Wall</h2><span>The night each member reached 100</span></div><div class="gate-screen"></div>
     <div class="grid" id="wall"></div>
