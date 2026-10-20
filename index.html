@@ -672,7 +672,7 @@
   .wrap > .panel { margin-top: 16px; } #panel-home { padding-top: 0; } #panel-home > .gd { margin-top: 0; }
   .gd.gd-compact .gd-only { padding: 0; border: 0; }
   #panel-history > .head { padding-top: 6px; }
-  .me { margin: 14px 0 6px; border: 1px solid var(--line-2); border-radius: 16px; background: linear-gradient(180deg, var(--surface-2), var(--surface)); padding: 16px; display: grid; gap: 14px; }
+  .me-box { margin: 14px 0 6px; border: 1px solid var(--line-2); border-radius: 16px; background: linear-gradient(180deg, var(--surface-2), var(--surface)); padding: 16px; display: grid; gap: 14px; }
   .me-top { display: flex; align-items: center; gap: 12px; } .me-av { width: 46px !important; height: 46px !important; flex: none; }
   .me-id { flex: 1; min-width: 0; } .me-id b { display: block; font-size: 18px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .me-id span { font-size: 12px; color: var(--fg-2); }
   .me-bal { text-align: right; } .me-bal b { display: block; font-size: 22px; font-weight: 700; font-variation-settings: 'wdth' 80; line-height: 1.05; } .me-bal span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; }
@@ -705,7 +705,7 @@
     .tab small { display: none; }
     .wrap { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
     .ql-row { gap: 6px; } .ql { padding: 10px; }
-    .me { padding: 14px; } .me-bal b { font-size: 20px; }
+    .me-box { padding: 14px; } .me-bal b { font-size: 20px; }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 </style>
@@ -1869,7 +1869,7 @@ async function renderYou() {
 function visitorHomeHtml() {
   const n = ALL_PLAYERS.length, taken = new Set(((RATINGS && RATINGS.ok && RATINGS.claimed) || []).map(x => x.toLowerCase()));
   const free = ALL_PLAYERS.filter(p => !taken.has(p.name.toLowerCase())).length;
-  return `<div class="me me-cta">
+  return `<div class="me-box me-cta">
       <div class="label">Play on Wednesdays?</div>
       <b class="me-cta-t">Find your card</b>
       <p>Tap your name once and this phone remembers you: your balance, your player card, rating your teammates and the night's man of the match.</p>
@@ -1891,7 +1891,7 @@ function meStripHtml(me, v, o) {
     : gateLocked() ? `<button class="btn me-go" onclick="openBallot()">Rate ${need - rated} more teammate${need - rated === 1 ? '' : 's'} to unlock ratings<span class="me-prog"><i style="width:${need ? rated / need * 100 : 0}%"></i></span></button>`
     : v.open && o.done < o.queue.length ? `<button class="btn ghost me-go" onclick="openBallot()">Rate teammates · ${o.done} of ${o.queue.length} done</button>`
     : !photoSrc(me) ? `<button class="btn ghost me-go" onclick="document.getElementById('photo-file') && document.getElementById('photo-file').click()">Add your photo</button>` : '';
-  return `<div class="me">
+  return `<div class="me-box">
       <div class="me-top">${photo(me, 'avatar me-av')}<div class="me-id"><b>${esc(me.name)}</b><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]}</span></div>
         <div class="me-bal${neg ? ' neg' : ''}"><b class="num">${o.known ? kes(me.balance) : '—'}</b><span>${esc(o.balStatus)}</span></div></div>
       <div class="me-stats"><span><b class="num">${me.count}</b>games</span><span><b class="num">${me.currentStreak || 0}</b>in a row</span><span><b class="num">${me.gamesThisYear}</b>in ${THIS_YEAR}</span><span><b class="num">${o.ms.toGo}</b>to ${me.count < 100 ? '100' : o.ms.next}</span></div>
