@@ -686,7 +686,10 @@
   body[data-tab="home"] #gate-bar, body[data-tab="home"] #notice-bar { display: none; }
 
   /* ── GLASS FRAME: frosted top bar everywhere; on phones the tabs float at the bottom as a frosted bar ── */
-  nav.top { background: rgba(14,14,15,.72); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); }
+  /* the blur sits on a pseudo-element: a backdrop-filter on nav itself would trap the fixed bottom tab bar inside it */
+  nav.top { background: transparent !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; isolation: isolate; }
+  nav.top::before { content: ''; position: absolute; top: 0; bottom: 0; left: calc(50% - 50vw); right: calc(50% - 50vw); z-index: -1; background: rgba(14,14,15,.74); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); border-bottom: 1px solid var(--line); }
+  .tab[hidden] { display: none !important; }
   .tab svg { display: none; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
   @media (max-width: 720px) {
     nav.top { flex-direction: row; align-items: center; padding: 12px 0 10px; }
@@ -2207,7 +2210,7 @@ function gdToggle() { GD_OPEN = !GD_OPEN; renderGameday(); }
 function lastCardHtml(L, onclick, label) {
   const m = L.motm || [], mp = m.length ? ALL_PLAYERS.find(x => x.name === m[0]) : null, s2 = L.score;
   const res = s2 ? (s2.black === s2.white ? `Draw ${s2.black}–${s2.white}` : `${s2.black > s2.white ? 'Black' : 'White'} won ${Math.max(s2.black, s2.white)}–${Math.min(s2.black, s2.white)}`) : '';
-  return `<button class="gd-last" onclick="${onclick}">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span class="gd-last-txt"><span class="label">${label || 'Last game'}${label ? '' : ` · ${esc(dayOf(L))}`}</span><b>${m.length ? `★ ${esc(m.join(', '))}` : 'Full time'}</b><small>${m.length ? 'Man of the match' : esc(dayOf(L))}${res ? ` · ${res}` : ''}</small></span><span class="gd-last-go">See result →</span></button>`;
+  return `<button class="gd-last" onclick="${onclick}">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span class="gd-last-txt"><span class="label">${label || (m.length ? 'Man of the match' : 'Last game')}</span><b>${m.length ? `★ ${esc(m.join(', '))}` : 'Full time'}</b><small>${esc(dayOf(L))}${res ? ` · ${res}` : ''}</small></span><span class="gd-last-go">See result →</span></button>`;
 }
 function gdFlip(showLast) { GD_SHOW_LAST = showLast; renderGameday(); const el = document.getElementById('gameday'); if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: 'start' }); }
 function renderGameday() {
