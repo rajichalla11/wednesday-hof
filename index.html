@@ -173,7 +173,26 @@
   .overlay.open { opacity: 1; pointer-events: all; }
   .sheet { position: relative; width: 100%; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--bg); border: 1px solid var(--line-2); border-radius: 12px; padding: 28px; transform: translateY(12px); opacity: 0; transition: transform .3s var(--ease), opacity .25s; scrollbar-width: thin; }
   .overlay.open .sheet { transform: none; opacity: 1; }
-  .sheet.dossier { max-width: 960px; }
+  .sheet.dossier { max-width: 960px; background: transparent; border: 0; padding: 0; overflow: visible; max-height: none; }
+  #profile-overlay { overflow-y: auto; align-items: flex-start; padding-top: 48px; }
+  .sheet.dossier .controls { position: sticky; top: 0; z-index: 5; display: flex; justify-content: flex-end; gap: 6px; margin: -40px 0 8px; pointer-events: none; } .sheet.dossier .controls .ctl { pointer-events: auto; }
+  /* ── CARD FLIP: the front is the player's card, the back is their record ── */
+  #p-body { perspective: 1600px; }
+  .flip-inner { position: relative; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.2,.8,.2,1); }
+  #p-body.go .flip-inner { transform: rotateY(180deg); }
+  .flip-front { position: absolute; left: 50%; top: 0; width: 300px; transform: translateX(-50%); backface-visibility: hidden; -webkit-backface-visibility: hidden; cursor: pointer; z-index: 2; }
+  .flip-front .card { cursor: pointer; } .flip-front .card:hover { transform: none; }
+  .flip-back { transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden; min-height: 460px; }
+  #p-body:not(.go) .flip-back { pointer-events: none; } #p-body.go .flip-front { pointer-events: none; }
+  .fut-back { --edge: #7a5d1e; border: 2px solid var(--edge); border-radius: 14px; padding: 28px; background:
+      radial-gradient(90% 40% at 50% -10%, color-mix(in srgb, var(--edge) 45%, transparent), transparent 70%), var(--bg);
+    box-shadow: 0 30px 60px -30px color-mix(in srgb, var(--edge) 70%, transparent), inset 0 1px 0 color-mix(in srgb, var(--edge) 60%, transparent); }
+  .fut-back.silver { --edge: #8d949c; } .fut-back.bronze { --edge: #8a5130; } .fut-back.icon { --edge: #c8ad6a; } .fut-back.gold { --edge: #c9a042; }
+  .fut-back .d-name { color: var(--fg); }
+  @media (max-width: 720px) {
+    #profile-overlay { padding: 0; } .sheet.dossier { padding: 54px 12px 40px; border: 0; } .sheet.dossier .controls { position: fixed; top: 10px; right: 10px; margin: 0; }
+    .flip-front { width: 250px; top: 20px; } .fut-back { padding: 18px 14px 28px; }
+  }
   .sheet.session { max-width: 680px; }
   #ballot-overlay { padding: 0; }
   .sheet.ballot { max-width: none; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 0; overflow: hidden; }
@@ -1377,7 +1396,9 @@ function openProfile(p) {
     return `<i class="${cls}" title="${esc(fmtSession(s))} · ${i<p.firstIdx?'before debut':on?'Played':'Missed'}${i===p.centuryIdx?' · 100th appearance':''}"></i>`; }).join('')}</div></div>`).join('');
   const seasons = p.years.filter(y=>y.got>0).length;
   const r = RATINGS && RATINGS.players[p.name];
-  document.getElementById('p-body').innerHTML = `
+  const rr = RATINGS && RATINGS.ok ? (RATINGS.players[p.name] || { n: 0 }) : { n: 0 };
+  const el = document.getElementById('p-body'); el.classList.remove('go');
+  el.innerHTML = `<div class="flip-inner"><div class="flip-front">${cardHtml(p, rr.stats || null, { n: RATINGS && RATINGS.ok ? rr.n : null })}</div><div class="flip-back fut-back ${tierOf(p)}">
     <div class="d-grid">
       <div>
         <div class="label">#${p.rank} all-time${posName(p) ? ' · '+esc(posName(p)) : ''}${p.foot ? ' · '+esc(p.foot)+' foot' : ''}</div>
@@ -1408,15 +1429,19 @@ function openProfile(p) {
           <div><span>Longest absence</span><b>${p.longestGap ? p.longestGap+' sessions' : '—'}</b></div>
           <div><span>Card</span><b>${TIER_NAME[tierOf(p)]}${isRecordHolder(p) ? ' · Record holder' : ''}</b></div>
         </div>
-        <div class="hint">← → next player · esc to close</div>
+        <div class="hint">← → next player · esc to close · tap the card to flip it back</div>
       </div>
-    </div>`;
+    </div></div></div>`;
   document.getElementById('profile').scrollTop = 0;
-  document.getElementById('profile-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
+  const ov = document.getElementById('profile-overlay'), wasOpen = ov.classList.contains('open');
+  ov.classList.add('open'); document.body.style.overflow = 'hidden';
+  el.querySelector('.flip-front').onclick = e => { e.stopPropagation(); el.classList.toggle('go'); };
+  el.querySelector('.flip-back').onclick = e => { if (e.target.closest('a, button, [data-tip]')) return; el.classList.remove('go'); };   // tap the back to see the front again
+  setTimeout(() => el.classList.add('go'), wasOpen ? 60 : 320);   // show the front for a beat, then flip to the record
 }
 function stepProfile(dir) { const list = visibleList(); const i = list.indexOf(CURRENT_PLAYER); if (i < 0 || !list.length) return; openProfile(list[(i+dir+list.length)%list.length]); }
 function closeProfile(e) { if (e.target === document.getElementById('profile-overlay')) closeProfileDirect(); }
-function closeProfileDirect() { document.getElementById('profile-overlay').classList.remove('open'); document.body.style.overflow = ''; CURRENT_PLAYER = null; }
+function closeProfileDirect() { const b = document.getElementById('p-body'); b.classList.remove('go'); document.getElementById('profile-overlay').classList.remove('open'); document.body.style.overflow = ''; CURRENT_PLAYER = null; }
 
 /* ── session ── */
 function openSession(i) {
