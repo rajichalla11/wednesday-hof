@@ -2009,7 +2009,7 @@ async function renderYou() {
     <section><div class="sh"><h2>Starting points</h2><span>Only you can see this · what voters see as the suggested level · saves as you tap</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   const aw = document.getElementById('admin-wrap');   // the admin's panels live on their own tab so Home stays short
-  if (aw) { aw.innerHTML = v.isAdmin ? '<div class="sh" style="margin-top:8px"><h2>Admin</h2><span>Only you see this tab</span></div>' : ''; if (v.isAdmin) [...body.querySelectorAll(':scope > section')].forEach(sec => aw.appendChild(sec)); }
+  if (aw) { aw.innerHTML = v.isAdmin ? '<div class="sh" style="margin-top:8px"><h2>Admin</h2><span>Only you see this tab</span></div>' : ''; if (v.isAdmin) { [...body.querySelectorAll(':scope > section')].forEach(sec => aw.appendChild(sec)); try { renderGamesAdmin(); } catch (_) {} } }
   paintSelfPreview();
   if (v.isAdmin) renderAdmin(me);
 }
@@ -2440,6 +2440,7 @@ function lastCardHtml(L, onclick, label) {
 function gdFlip(showLast) { GD_SHOW_LAST = showLast; renderGameday(); const el = document.getElementById('gameday'); if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: 'start' }); }
 function renderGameday() {
   try { renderMatches(); } catch (e) { console.error(e); }
+  try { if (VOTER && VOTER.isAdmin && !document.querySelector('#games-admin .ga[open]')) renderGamesAdmin(); } catch (e) { console.error(e); }
   try { renderFixtures(); } catch (e) { console.error(e); }
   const el = document.getElementById('gameday'); if (!el) return;
   let view = ALL_PLAYERS.length ? gameView() : null;
