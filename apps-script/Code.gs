@@ -101,7 +101,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes'].forEach(bust_); cache_().remove('players'); }
 
 /** One-off: strips what could link a ballot to a voter from data written before Version 20. Voters keep only a rough
  *  "rated" band (no last-vote time), ballot and check-in times become the day only, and ballot rows are shuffled so
@@ -165,6 +165,7 @@ function doPost(e) {
     if (body.action === 'tap') return json_(tap_(body));
     if (body.action === 'signup') return json_(signup_(body));
     if (body.action === 'withdraw') return json_(withdraw_(body));
+    if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
     if (body.action === 'removeFixture') return json_(removeFixture_(body));
     if (body.action === 'moveStandby') return json_(moveStandby_(body));
@@ -291,7 +292,7 @@ function results_() {
   const strip = function (agg) { Object.keys(agg).forEach(function (n) { delete agg[n].vote; delete agg[n].vw; if (hide.indexOf(n.toLowerCase()) >= 0) agg[n] = { n: agg[n].n, traits: agg[n].traits, hidden: true }; }); return agg; };
   const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(aggregate_(all.filter(function (r) { return r[0] === win; }), seeds)), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
   out.game = gamePublic_(); out.motm = motmTally_(); out.games = gamesPublic_();
-  const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_();
+  const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_();
   out.ballots = tab_('Voters').filter(function (r) { return r[3] && String(r[5] || '') && String(r[5]) !== '0'; }).length;   // people who have voted (a voter can hold an older anonymous ballot and a newer named one, so ballot ids would count them twice)
   cache_().put('results', JSON.stringify(out), 120);
   return out;
@@ -618,17 +619,40 @@ function withdraw_(body) {
   const me = voterName_(body.t);
   if (!me) return { ok: false, error: 'Find your card first.' };
   const date = String(body.date || ''), name = String(body.name || me).toLowerCase(), admin = isAdmin_(me);
-  const lock = LockService.getScriptLock(); lock.waitLock(10000); let done = false;
+  const lock = LockService.getScriptLock(); lock.waitLock(10000); let done = false, strike = null;
   try {
+    // Pulling out of a spot (not standby) within 36 hours of kick-off is a strike, unless the admin takes them off
+    const g = allGames_().filter(function (x) { return x.date === date; })[0], su = signupsByDate_()[date] || [];
+    const idx = su.map(function (x) { return x.name.toLowerCase(); }).indexOf(name), row = su[idx];
+    if (g && row && row.kind === 'player' && !admin && idx < 2 * (g.size || 6)) { const left = kickoff_(g).getTime() - Date.now(); if (left < 36 * 3600000 && left > -3600000) strike = row.name; }
     const sh = signupSheet_(), data = sh.getDataRange().getValues();
     for (let i = data.length - 1; i >= 1; i--) {
       if (String(data[i][0]).slice(0, 10) !== date || String(data[i][2]).toLowerCase() !== name) continue;
       if (!(admin || name === me.toLowerCase() || String(data[i][4]).toLowerCase() === me.toLowerCase())) return { ok: false, error: 'Only they, whoever added them, or the admin can take them off.' };
       sh.deleteRow(i + 1); done = true;
     }
+    if (done && strike) { const st = strikeSheet_(); st.appendRow(["'" + date, "'" + new Date().toISOString(), strike, me, '']); }
   } finally { lock.releaseLock(); }
-  bust_('Signups');
-  return done ? { ok: true, fixtures: fixturesPublic_() } : { ok: false, error: 'Not on that list.' };
+  bust_('Signups'); if (done && strike) bust_('Strikes');
+  return done ? { ok: true, fixtures: fixturesPublic_(), strikes: strikesPublic_(), strike: strike || '' } : { ok: false, error: 'Not on that list.' };
+}
+/* ───────── strikes ─────────
+   Strikes tab: date (game), ts, name, by (who took them off), cleared. One for each late drop-out (inside 36 hours of
+   kick-off, from a spot rather than standby). They only show; nothing is blocked. They stay until the admin clears them. */
+function strikeSheet_() { const sh = sheet_('Strikes'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'ts', 'name', 'by', 'cleared']); return sh; }
+function strikesPublic_() {
+  const out = {}; if (!ss_().getSheetByName('Strikes')) return out;
+  tab_('Strikes').forEach(function (r) { if (!r[2] || r[4]) return; const n = String(r[2]); (out[n] = out[n] || []).push(String(r[0]).slice(0, 10)); });
+  return out;
+}
+/** Admin: clear someone's strikes (all of them) */
+function clearStrikes_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const name = String(body.name || '').toLowerCase(); if (!name || !ss_().getSheetByName('Strikes')) return { ok: false, error: 'No strikes.' };
+  const sh = strikeSheet_(), data = sh.getDataRange().getValues(), stamp = "'" + new Date().toISOString();
+  for (let i = 1; i < data.length; i++) if (String(data[i][2]).toLowerCase() === name && !data[i][4]) sh.getRange(i + 1, 5).setValue(stamp);
+  bust_('Strikes');
+  return { ok: true, strikes: strikesPublic_() };
 }
 /** Admin: open a game for sign-ups (a Games row with no lineup yet), or remove one that has no sign-ups. */
 function addFixture_(body) {

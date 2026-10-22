@@ -478,6 +478,12 @@
   .fx-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .fx-teams > div { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; } .fx-teams .label { display: flex; align-items: center; gap: 6px; }
   details.fx-admin { display: block; border-top: 0; padding-top: 0; } details.fx-admin summary { list-style: none; cursor: pointer; width: 36px; height: 28px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line-2); color: var(--fg-3); font-size: 16px; line-height: 1; margin-left: auto; }
   details.fx-admin summary::-webkit-details-marker { display: none; } .fx-admin-in { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; } .fx-admin-in select { height: 36px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--fg); padding: 0 10px; font: inherit; font-size: 13px; }
+  .sk { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .04em; color: #ff6b5e; background: color-mix(in srgb, #ff6b5e 14%, transparent); vertical-align: 1px; white-space: nowrap; }
+  .sk em { font-style: normal; font-weight: 600; } .sk.max { background: #ff6b5e; color: #1a0705; } .fx-name .sk + small { margin-top: 2px; }
+  .fx-warn { display: grid; gap: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid #ff6b5e; background: color-mix(in srgb, #ff6b5e 10%, transparent); font-size: 13.5px; line-height: 1.4; } .fx-warn b { color: #ff6b5e; font-size: 15px; }
+  .fx-warn .btn:not(.ghost) { background: #ff6b5e; border-color: #ff6b5e; color: #1a0705; }
+  .me-sk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--fg-3); } .me-sk .sk { margin-left: 0; }
+  .sk-list { display: grid; gap: 8px; } .sk-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: 12px; } .sk-row small { flex: 1; color: var(--fg-3); font-size: 12px; } .sk-row .sk { margin-left: 0; }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
@@ -2032,6 +2038,7 @@ async function renderYou() {
         <div class="gp-foot"><button class="btn link" onclick="saveGame(true)">Clear · no game</button><span class="muted" id="gd-admin-st"></span><button class="btn" onclick="saveGame(false)">Save game day</button></div>
       </div></section>
     <section><div class="sh"><h2>All games</h2><span>Only you see this · fix the score, teams or who played for any game</span></div><div id="games-admin"></div></section>
+    <section><div class="sh"><h2>Strikes</h2><span>Only you see this · a strike is dropping out of a spot within 36 hours of kick-off</span></div><div id="strikes-admin"></div></section>
     <section><div class="sh"><h2>Man of the match</h2><span>Only you see this · the vote decides unless you pick someone</span></div><div id="motm-admin"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Who voted what</h2><span>Only you can see this · votes from 14 Oct on · earlier ballots stay anonymous</span></div><div id="named-body"><div class="loading">Loading…</div></div></section>
@@ -2100,6 +2107,7 @@ function meStripHtml(me, v, o) {
   return `<div class="me-box">
       <div class="me-top">${photo(me, 'avatar me-av')}<div class="me-id"><b>${esc(me.name)}</b><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]}</span></div>
         <div class="me-bal${neg ? ' neg' : ''}"><b class="num">${o.known ? kes(me.balance) : '—'}</b><span>${esc(o.balStatus)}</span></div></div>
+      ${strikesOf(me.name) ? `<div class="me-sk">${strikeTag(me.name)}<span>for dropping out late · ${Math.min(3, strikesOf(me.name))} of 3</span></div>` : ''}
       ${formStripHtml(me)}
       <div class="me-stats"><span><b class="num">${me.count}</b>games</span><span><b class="num">${me.currentStreak || 0}</b>in a row</span><span><b class="num">${me.gamesThisYear}</b>in ${THIS_YEAR}</span><span><b class="num">${o.ms.toGo}</b>to ${me.count < 100 ? '100' : o.ms.next}</span></div>
       ${next}
@@ -2194,6 +2202,18 @@ function setSeedValue(pi, k, raw) {
 }
 /* The admin panels refresh whenever the page comes back into view (phones keep tabs open for days), at most every 20 s, or on demand. */
 let ADMIN_AT = 0;
+function renderStrikesAdmin() {
+  const el = document.getElementById('strikes-admin'); if (!el) return;
+  const st = (RATINGS && RATINGS.strikes) || {}, names = Object.keys(st).sort((a, b) => st[b].length - st[a].length || a.localeCompare(b));
+  el.innerHTML = !names.length ? `<div class="empty">No strikes.</div>` : `<div class="sk-list">${names.map(n => `<div class="sk-row"><b>${esc(n)}</b>${strikeTag(n)}<small>${st[n].map(d => esc(dayOf({ date: d }))).join(' · ')}</small><button class="btn link" onclick="clearStrikes('${esc(n).replace(/'/g, "\\'")}', this)">Clear</button></div>`).join('')}</div>`;
+}
+async function clearStrikes(name, btn) {
+  btn.disabled = true; btn.textContent = '…';
+  let res; try { res = await api(null, { action: 'clearStrikes', t: TOKEN, name }); } catch (e) { res = { ok: false, error: e.message }; }
+  if (res.ok && RATINGS) RATINGS.strikes = res.strikes || {};
+  else { RATINGS_AT = 0; await fetchResults(); }
+  renderStrikesAdmin(); renderGameday();
+}
 function renderMotmAdmin() {
   const a = window.__ADMIN, el = document.getElementById('motm-admin'); if (!a || !el) return;
   const games = a.motmGames || [];
@@ -2472,6 +2492,7 @@ function lastCardHtml(L, onclick, label) {
 function renderGameday() {
   try { renderMatches(); } catch (e) { console.error(e); }
   try { if (VOTER && VOTER.isAdmin && !document.querySelector('#games-admin .ga[open]')) renderGamesAdmin(); } catch (e) { console.error(e); }
+  try { if (VOTER && VOTER.isAdmin) renderStrikesAdmin(); } catch (e) { console.error(e); }
   try { renderFixtures(); } catch (e) { console.error(e); }
   const el = document.getElementById('gameday'), ll = document.getElementById('lastline'); if (!el) return;
   const L = RATINGS && RATINGS.ok && ALL_PLAYERS.length ? RATINGS.last : null, now = Date.now();
@@ -2624,7 +2645,15 @@ function fxWhatsApp(f) {
   const nm = x => x.kind === 'guest' && x.by ? `${x.name} (via ${x.by})` : x.name, inl = f.signups.slice(0, f.slots), sb = f.signups.slice(f.slots);
   return `${fxDay(f.date)} ${fxSpan(f)}\n\n${inl.map((x, i) => `${i + 1}. ${nm(x)}`).join('\n')}${sb.length ? `\n\nStandby:\n${sb.map(nm).join('\n')}` : ''}\n\nSign up: ${location.origin}/#in`;
 }
-let FX_OPEN = '';
+let FX_OPEN = '', FX_WARN = null;
+const strikesOf = n => (((RATINGS && RATINGS.strikes) || {})[n] || []).length;
+const strikeTag = n => { const k = Math.min(3, strikesOf(n)); return k ? `<span class="sk${k >= 3 ? ' max' : ''}" title="Strikes for dropping out late">${'✕'.repeat(k)}<em>${k >= 3 ? '3 strikes' : k === 1 ? '1 strike' : k + ' strikes'}</em></span>` : ''; };
+/* Would taking this name off now be a strike? Only from a spot (not standby), inside 36 hours of kick-off, and not when the admin does it */
+function lateDrop(f, name) {
+  if (VOTER && VOTER.isAdmin) return false;
+  const i = f.signups.findIndex(x => x.name.toLowerCase() === name.toLowerCase()), left = koOf(f) - Date.now();
+  return i >= 0 && i < f.slots && f.signups[i].kind === 'player' && left < 36 * 3600000 && left > -3600000;
+}
 function fxToggle(date) { FX_OPEN = FX_OPEN === date ? '' : date; if (FX_ADD && FX_ADD !== FX_OPEN) FX_ADD = ''; renderFixtures(); }
 function fxOpen(date) { FX_OPEN = date; renderFixtures(); const c = document.getElementById('fx-' + date); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 /* Teams for an open game, once they've been made (from the Games tab) */
@@ -2653,7 +2682,7 @@ function renderFixtures() {
   try { renderNextLine(fx, me); } catch (e) { console.error(e); }
   if (!fx.length && !admin) { el.innerHTML = ''; return; }
   const mine = n => me && n.toLowerCase() === me.toLowerCase();
-  const chip = (n, extra) => { const p = ALL_PLAYERS.find(x => x.name === n); return `<span class="gd-chip${mine(n) ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}${esc(n)}${extra || ''}</span>`; };
+  const chip = (n, extra) => { const p = ALL_PLAYERS.find(x => x.name === n); return `<span class="gd-chip${mine(n) ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}${esc(n)}${strikeTag(n)}${extra || ''}</span>`; };
   el.innerHTML = `<div class="fx-h"><span class="label">Games</span><small>${fx.length ? 'First come, first in · standby moves up' : 'No games open yet'}</small></div>` + fx.map(f => {
     const pos = f.signups.findIndex(x => mine(x.name) && x.kind === 'player'), inn = pos >= 0 && pos < f.slots, sb = pos >= f.slots ? pos - f.slots : -1;
     const k = 'w910_fx_' + f.date; let was = ''; try { was = localStorage.getItem(k) || ''; localStorage.setItem(k, inn ? 'in' : sb >= 0 ? 'sb' : ''); } catch (_) {}
@@ -2661,7 +2690,7 @@ function renderFixtures() {
     const nIn = Math.min(f.slots, f.signups.length), nSb = Math.max(0, f.signups.length - f.slots), left = f.slots - nIn;
     const T = f.teams ? fxTeams(f) : null, open = FX_OPEN === f.date || FX_ADD === f.date;
     const row = (x, i, isSb) => { const canRm = me && (admin || mine(x.name) || (x.by && mine(x.by)));
-      return `<li class="${mine(x.name) ? 'me' : ''}"><span class="fx-n">${isSb ? '' : i + 1 + '.'}</span><span class="fx-name${x.pending ? ' pend' : ''}">${esc(x.name)}${x.kind === 'guest' ? `<small>guest${x.by ? ` · via ${esc(x.by)}` : ''}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</li>`; };
+      return `<li class="${mine(x.name) ? 'me' : ''}"><span class="fx-n">${isSb ? '' : i + 1 + '.'}</span><span class="fx-name${x.pending ? ' pend' : ''}">${esc(x.name)}${x.kind === 'player' ? strikeTag(x.name) : ''}${x.kind === 'guest' ? `<small>guest${x.by ? ` · via ${esc(x.by)}` : ''}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</li>`; };
     const others = fx.filter(o => o.date !== f.date), sbRows = f.signups.slice(f.slots);
     const stat = T ? `<span class="fx-tag">Teams out</span>` : left > 0 ? `<span class="fx-stat">${left} spot${left === 1 ? '' : 's'} left</span>` : `<span class="fx-stat full">Full · ${nSb ? `${nSb} on standby` : 'join standby'}</span>`;
     const primary = pos >= 0 ? `<span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${pos + 1}` : `Standby · ${ordN(sb)}`}</span>`
@@ -2691,11 +2720,19 @@ function renderFixtures() {
       <div class="fx-row">${stat}${primary}</div>
       ${promoted ? `<div class="fx-note">You're in now. Someone dropped out.</div>` : ''}
       ${FX_MSG[f.date] ? `<div class="fx-note err">${esc(FX_MSG[f.date])}</div>` : ''}
+      ${FX_WARN && FX_WARN.date === f.date ? (() => { const who = FX_WARN.name || me, self = !FX_WARN.name || mine(FX_WARN.name), k = strikesOf(who), nx = Math.min(3, k + 1);
+        return `<div class="fx-warn"><b>That's a strike.</b><span>Dropping out within 36 hours of kick-off counts as a strike. ${k >= 3 ? `${self ? "You're" : esc(who) + ' is'} already on 3 of 3.` : `${self ? "You'd" : esc(who) + ' would'} be on ${nx} of 3.`}</span><div class="fx-btns"><button class="btn" onclick="fxOutAnyway()">Drop out anyway</button><button class="btn ghost" onclick="FX_WARN = null; renderFixtures()">${self ? 'Stay in' : 'Keep them in'}</button></div></div>`; })() : ''}
       ${body}
     </article>`; }).join('') + (admin ? `<details class="fx-new"><summary>+ Open a game for sign-ups</summary><div class="fx-add-row" style="margin-top:10px"><input type="date" id="fx-new-d"><input type="time" id="fx-new-t" value="21:00"><select id="fx-new-s">${[5,6,7,8,9,10,11].map(n => `<option value="${n}" ${n === 6 ? 'selected' : ''}>${n}-a-side</option>`).join('')}</select><button class="btn" onclick="fxNewGame(this)">Open</button></div></details>` : '')
     + `<datalist id="fx-names">${ALL_PLAYERS.map(p => `<option value="${esc(p.name)}">`).join('')}</datalist>`;
 }
 /* Taps change the list on screen straight away; the save runs in the background and the list is put back only if it truly failed. */
+function fxOutAnyway() {
+  const w = FX_WARN; if (!w) return; FX_WARN = null;
+  const who = w.name || (VOTER && VOTER.name) || '';
+  if (RATINGS && who) { RATINGS.strikes = RATINGS.strikes || {}; (RATINGS.strikes[who] = RATINGS.strikes[who] || []).push(w.date); }
+  fxCall({ action: 'withdraw', date: w.date, name: w.name || undefined }, null, w.date);
+}
 function fxOptimistic(body) {
   const fx = RATINGS && RATINGS.fixtures; if (!fx) return;
   const f = fx.find(x => x.date === body.date); if (!f) return;
@@ -2717,7 +2754,7 @@ async function fxCall(body, btn, date) {
   let res; try { res = await api(null, Object.assign({ t: TOKEN }, body)); } catch (e) { res = { ok: false, error: e.message }; }
   FX_BUSY--;
   if (!quick && btn && btn.isConnected) { btn.disabled = false; btn.textContent = btn.dataset.l; }
-  if (res.ok) { if (RATINGS && res.fixtures && !FX_BUSY) RATINGS.fixtures = res.fixtures; renderFixtures(); RATINGS_AT = 0; fetchResults().then(() => { if (!FX_BUSY) renderGameday(); }); return res; }
+  if (res.ok) { if (RATINGS && res.strikes) RATINGS.strikes = res.strikes; if (RATINGS && res.fixtures && !FX_BUSY) RATINGS.fixtures = res.fixtures; renderFixtures(); RATINGS_AT = 0; fetchResults().then(() => { if (!FX_BUSY) renderGameday(); }); return res; }
   // Google sometimes answers a save with an error page even though it went through: check the list before saying so
   const benign = /already on the list|Not on that list/.test(res.error || '');
   if (!benign && RATINGS) RATINGS.fixtures = JSON.parse(snap);
@@ -2727,6 +2764,8 @@ async function fxCall(body, btn, date) {
 }
 function fxIn(date, btn) { if (!TOKEN) return openClaim(); fxCall({ action: 'signup', date }, btn, date); }
 function fxOut(date, name, btn) {
+  const f = ((RATINGS && RATINGS.fixtures) || []).find(x => x.date === date), who = name || (VOTER && VOTER.name) || '';
+  if (f && who && lateDrop(f, who)) { FX_WARN = { date, name }; FX_OPEN = date; return renderFixtures(); }
   if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.dataset.l0 = btn.textContent; btn.textContent = name ? 'Sure?' : 'Tap again'; setTimeout(() => { if (btn.isConnected) { btn.dataset.armed = ''; btn.textContent = btn.dataset.l0; } }, 3000); return; }
   fxCall({ action: 'withdraw', date, name: name || undefined }, btn, date);
 }

@@ -195,3 +195,8 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 - A lineup entered by the admin wins over sign-ups for that game (`allGames_`).
 - Sign-up taps update the list on screen immediately and save in the background (reverting only if the save really failed).
 
+
+## v33 · Strikes
+- Dropping out of a spot (not standby) within 36 hours of kick-off adds a row to a new **Strikes** tab (date, ts, name, by, cleared). The admin taking someone off never counts.
+- `results.strikes` = { name: [game dates] } for uncleared strikes. Strikes only show (next to names, on your strip, max 3 shown); nothing is blocked.
+- `clearStrikes` (admin): marks all of a player's strikes cleared.
