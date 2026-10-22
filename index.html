@@ -2578,7 +2578,13 @@ async function fxCall(body, btn, date) {
   if (btn) { btn.disabled = true; btn.dataset.l = btn.textContent; btn.textContent = '…'; }
   let res; try { res = await api(null, Object.assign({ t: TOKEN }, body)); } catch (e) { res = { ok: false, error: e.message }; }
   if (btn) { btn.disabled = false; btn.textContent = btn.dataset.l; }
-  FX_MSG = {}; if (!res.ok) { FX_MSG[date || body.date || ''] = res.error || 'Could not save'; renderFixtures(); return res; }
+  FX_MSG = {};
+  if (!res.ok) {   // Google sometimes answers a save with an error page even though it went through: check the list before saying so
+    const benign = /already on the list|Not on that list/.test(res.error || '');
+    RATINGS_AT = 0; await fetchResults(); renderGameday();
+    if (!benign) { FX_MSG[date || body.date || ''] = res.error || 'Could not save'; renderFixtures(); }
+    return res;
+  }
   if (RATINGS && res.fixtures) RATINGS.fixtures = res.fixtures;
   renderFixtures(); RATINGS_AT = 0; fetchResults().then(() => { renderGameday(); });   // the game strip and lineup follow the list
   return res;
