@@ -478,7 +478,7 @@
   .fx-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .fx-teams > div { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; } .fx-teams .label { display: flex; align-items: center; gap: 6px; }
   details.fx-admin { display: block; border-top: 0; padding-top: 0; } details.fx-admin summary { list-style: none; cursor: pointer; width: 36px; height: 28px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line-2); color: var(--fg-3); font-size: 16px; line-height: 1; margin-left: auto; }
   details.fx-admin summary::-webkit-details-marker { display: none; } .fx-admin-in { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; } .fx-admin-in select { height: 36px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--fg); padding: 0 10px; font: inherit; font-size: 13px; }
-  .sk { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .04em; color: #ff6b5e; background: color-mix(in srgb, #ff6b5e 14%, transparent); vertical-align: 1px; white-space: nowrap; }
+  .sk { flex-wrap: wrap; white-space: normal !important; } .sk { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .04em; color: #ff6b5e; background: color-mix(in srgb, #ff6b5e 14%, transparent); vertical-align: 1px; white-space: nowrap; }
   .sk em { font-style: normal; font-weight: 600; } .sk.max { background: #ff6b5e; color: #1a0705; } .fx-name .sk + small { margin-top: 2px; }
   .fx-warn { display: grid; gap: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid #ff6b5e; background: color-mix(in srgb, #ff6b5e 10%, transparent); font-size: 13.5px; line-height: 1.4; } .fx-warn b { color: #ff6b5e; font-size: 15px; }
   .fx-warn .btn:not(.ghost) { background: #ff6b5e; border-color: #ff6b5e; color: #1a0705; }
@@ -2647,7 +2647,8 @@ function fxWhatsApp(f) {
 }
 let FX_OPEN = '', FX_WARN = null;
 const strikesOf = n => (((RATINGS && RATINGS.strikes) || {})[n] || []).length;
-const strikeTag = n => { const k = Math.min(3, strikesOf(n)); return k ? `<span class="sk${k >= 3 ? ' max' : ''}" title="Strikes for dropping out late">${'✕'.repeat(k)}<em>${k >= 3 ? '3 strikes' : k === 1 ? '1 strike' : k + ' strikes'}</em></span>` : ''; };
+const skDate = d => new Date(`${d}T12:00:00+03:00`).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short' });
+const strikeTag = n => { const ds = (((RATINGS && RATINGS.strikes) || {})[n] || []).slice().sort(), k = Math.min(3, ds.length); return k ? `<span class="sk${k >= 3 ? ' max' : ''}" title="Strikes for dropping out late">${'✕'.repeat(k)}<em>${k >= 3 ? '3 strikes' : k === 1 ? '1 strike' : k + ' strikes'} · ${ds.slice(-3).map(skDate).join(', ')}</em></span>` : ''; };
 /* Would taking this name off now be a strike? Only from a spot (not standby), inside 36 hours of kick-off, and not when the admin does it */
 function lateDrop(f, name) {
   if (VOTER && VOTER.isAdmin) return false;
