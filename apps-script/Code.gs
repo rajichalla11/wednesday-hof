@@ -101,7 +101,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps'].forEach(bust_); cache_().remove('players'); }
 
 /** One-off: strips what could link a ballot to a voter from data written before Version 20. Voters keep only a rough
  *  "rated" band (no last-vote time), ballot and check-in times become the day only, and ballot rows are shuffled so
@@ -206,7 +206,26 @@ function me_(token) {
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name) };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name) };
+}
+
+/* ───────── top-ups ─────────
+   The sheet keeps only each player's running "paid in" total (column F). Every time the sheet is read (at most every 10
+   minutes), totals are compared with the last ones seen; a rise is logged in the TopUps tab (ts, name, amount, total).
+   The first read only takes the snapshot, so nothing is invented for money paid before tracking began. */
+function topupWatch_(players) {
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(3000)) return;
+  try {
+    const pr = props_(), prev = JSON.parse(pr.getProperty('paid_snap') || 'null'), now = {}, rows = [], ts = "'" + new Date().toISOString();
+    players.forEach(function (p) { now[p.name] = p.paid || 0; if (prev && now[p.name] > (prev[p.name] || 0) + 0.5) rows.push([ts, p.name, now[p.name] - (prev[p.name] || 0), now[p.name]]); });
+    if (rows.length) { const sh = sheet_('TopUps'); if (sh.getLastRow() === 0) sh.appendRow(['ts', 'name', 'amount', 'total']); sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows); bust_('TopUps'); }
+    pr.setProperty('paid_snap', JSON.stringify(now));
+    if (!prev) pr.setProperty('paid_since', new Date().toISOString());
+  } finally { lock.releaseLock(); }
+}
+function topupsFor_(name) {
+  const n = String(name || '').toLowerCase(), list = ss_().getSheetByName('TopUps') ? tab_('TopUps').filter(function (r) { return String(r[1]).toLowerCase() === n; }).map(function (r) { return { ts: String(r[0]), amount: Number(r[2]) || 0 }; }) : [];
+  return { since: props_().getProperty('paid_since') || '', list: list.slice(-10).reverse() };
 }
 
 function rate_(body) {
@@ -970,9 +989,11 @@ function players_() {
     const name = ALIASES_[raw.toLowerCase()] || raw, n = name.toLowerCase();   // rows that are the same person fold into one (attendance OR'd, counts added)
     if (SKIP.indexOf(n) >= 0 || /^\d/.test(n) || n.length < 2) return;
     const att = cols.map(function (i) { const v = parseFloat((r[i] || '').replace(/,/g, '')); return (!isNaN(v) && v > 0) ? 1 : 0; });
-    if (seen[n]) { const m = seen[n]; m.att = m.att.map(function (v, i) { return v | att[i]; }); m.count += count; return; }   // same name twice = one person
-    const p = { name: name, count: count, position: (r[2] || '').trim(), att: att }; seen[n] = p; out.push(p);
+    const paid = parseFloat((r[5] || '').replace(/,/g, '')) || 0;
+    if (seen[n]) { const m = seen[n]; m.att = m.att.map(function (v, i) { return v | att[i]; }); m.count += count; m.paid += paid; return; }   // same name twice = one person
+    const p = { name: name, count: count, position: (r[2] || '').trim(), att: att, paid: paid }; seen[n] = p; out.push(p);
   });
+  try { topupWatch_(out); } catch (e) { console.error(e); }
   cache_().put('players', JSON.stringify(out), 600);
   return out;
 }

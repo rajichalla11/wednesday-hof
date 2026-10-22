@@ -203,3 +203,7 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v34 · Sign yourself up only
 - `signup` with `name` (someone else) or `guest` is admin-only. Players can only add themselves.
+
+## v35 · Top-ups
+- `players_()` now reads column F (total paid in). On each fresh read (≤ every 10 min) it compares totals with the last snapshot (script property `paid_snap`) and logs any rise to a new **TopUps** tab (ts, name, amount, total). The first read only takes the snapshot (`paid_since`).
+- `me` returns `topups: { since, list: [{ ts, amount }] }` (latest 10, newest first) for the signed-in player only.
