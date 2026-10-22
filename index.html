@@ -500,7 +500,9 @@
   .adm-todo[hidden] { display: none; } .adm-todo .label { color: var(--gold); margin-right: 4px; }
   .adm-todo button { border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent); background: var(--surface); color: var(--fg); font: inherit; font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 999px; cursor: pointer; }
   #admin-wrap .adm-sec { border: 1px solid var(--line-2); border-radius: 16px; background: var(--surface); padding: 16px; margin: 0 0 14px !important; }
-  #admin-wrap .adm-sec[hidden] { display: none; } #admin-wrap .adm-sec > .sh { margin-bottom: 12px; } #admin-wrap .adm-sec > .sh h2 { font-size: 18px; }
+  #admin-wrap .adm-sec[hidden] { display: none; }
+  .adm-fold > .sh { cursor: pointer; flex-wrap: nowrap; align-items: center; } .adm-fold > .sh span { flex: 1; text-align: right; } .adm-fold.folded > :not(.sh) { display: none; } .adm-fold.folded > .sh { margin-bottom: 0; }
+  .adm-fold:not(.folded) > .sh .fx-chev { transform: rotate(-135deg) translate(-2px, -2px); } #admin-wrap .adm-sec > .sh { margin-bottom: 12px; } #admin-wrap .adm-sec > .sh h2 { font-size: 18px; }
   @media (max-width: 600px) { .adm-nav { width: 100%; } .adm-nav button { flex: 1; padding: 8px 6px; } #admin-wrap .adm-sec { padding: 14px 12px; } }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
@@ -2071,7 +2073,8 @@ async function renderYou() {
     <section><div class="sh"><h2>Self-ratings</h2><span>How players rated themselves</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   const aw = document.getElementById('admin-wrap');   // the admin's panels live on their own tab so Home stays short
   if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
-      [...body.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec); }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
+      [...body.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
+        if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
   paintSelfPreview();
   if (v.isAdmin) renderAdmin(me);
 }
