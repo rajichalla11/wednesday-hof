@@ -1023,3 +1023,26 @@ function players_() {
   cache_().put('players', JSON.stringify(out), 600);
   return out;
 }
+
+/** Editor-only: time each part of results_() to find what's slow. */
+function debugTiming() {
+  const t = {}, T = function (k, f) { const s = Date.now(); try { f(); } catch (e) { t[k + '_err'] = String(e); } t[k] = Date.now() - s; };
+  T('cacheGetResults', function () { cache_().get('results'); });
+  T('cacheGetPlayers', function () { t.playersCached = !!cache_().get('players'); });
+  T('players', function () { players_(); });
+  T('votes', function () { tab_('Votes'); });
+  T('photos', function () { photos_(); });
+  T('claimed', function () { claimedNames_(); });
+  T('seeds', function () { seeds_(); });
+  T('gamePublic', function () { gamePublic_(); });
+  T('motmTally', function () { motmTally_(); });
+  T('gamesPublic', function () { gamesPublic_(); });
+  T('lastNext', function () { lastGame_(); nextGame_(); });
+  T('fixtures', function () { fixturesPublic_(); });
+  T('strikes', function () { strikesPublic_(); });
+  cache_().remove('results');
+  T('resultsFull', function () { results_(); });
+  T('resultsCached', function () { results_(); });
+  T('playersAfter', function () { t.playersCachedAfter = !!cache_().get('players'); t.playersLen = (cache_().get('players') || '').length; });
+  Logger.log(JSON.stringify(t));
+}
