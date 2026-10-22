@@ -2671,7 +2671,7 @@ function renderNextLine(fx, me) {
   const i = pos(f), inn = i < f.slots, ko = koOf(f), now = Date.now(), today = f.date === todayNbo();
   const vg = VOTER && VOTER.game && VOTER.game.date === f.date ? VOTER.game : null;
   el.innerHTML = `<div class="nx" role="button" onclick="fxOpen('${f.date}')">
-    <div class="nx-l"><span class="label">Your next game</span><b>${today ? 'Tonight' : esc(fxDay(f.date))} · ${fmtKo(f)}</b><small>${now < ko ? `${today ? 'Kick-off in' : 'In'} ${fmtLeft(ko - now)}` : 'Playing now'}</small></div>
+    <div class="nx-l"><span class="label">Your next game</span><b>${today ? 'Tonight' : esc(fxDay(f.date))} ${esc(skDate(f.date))} · ${fmtKo(f)}</b><small>${now < ko ? `${today ? 'Kick-off in' : 'In'} ${fmtLeft(ko - now)}` : 'Playing now'}</small></div>
     <span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${i + 1}` : `Standby · ${ordN(i - f.slots)}`}</span>
     ${today && vg && vg.gate ? `<button class="gd-gate nx-gate" onclick="event.stopPropagation(); copyGate(this)"><span><span class="label">Gate</span><b>${esc(vg.gate)}</b></span><small>Tap to copy</small></button>` : ''}
   </div>`;
