@@ -2050,6 +2050,7 @@ async function renderYou() {
         <div class="gp-foot"><button class="btn link" onclick="saveGame(true)">Clear · no game</button><span class="muted" id="gd-admin-st"></span><button class="btn" onclick="saveGame(false)">Save game day</button></div>
       </div></section>
     <section><div class="sh"><h2>All games</h2><span>Only you see this · fix the score, teams or who played for any game</span></div><div id="games-admin"></div></section>
+    <section><div class="sh"><h2>Top-ups</h2><span>Only you see this · new ones are picked up from the sheet automatically; add older ones here</span></div><div id="topups-admin"></div></section>
     <section><div class="sh"><h2>Strikes</h2><span>Only you see this · a strike is dropping out of a spot within 36 hours of kick-off</span></div><div id="strikes-admin"></div></section>
     <section><div class="sh"><h2>Man of the match</h2><span>Only you see this · the vote decides unless you pick someone</span></div><div id="motm-admin"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
@@ -2262,6 +2263,25 @@ function setSeedValue(pi, k, raw) {
 }
 /* The admin panels refresh whenever the page comes back into view (phones keep tabs open for days), at most every 20 s, or on demand. */
 let ADMIN_AT = 0;
+function renderTopupsAdmin() {
+  const el = document.getElementById('topups-admin'), a = window.__ADMIN; if (!el || !a) return;
+  const list = a.topups || [], d = ts => new Date(ts).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short', year: 'numeric' });
+  el.innerHTML = `<div class="fx-add-row"><input id="tu-n" list="fx-names" placeholder="Player" autocomplete="off"><input id="tu-a" type="number" inputmode="numeric" placeholder="KES" style="max-width:110px"><input id="tu-d" type="date" style="max-width:160px"><button class="btn" onclick="addTopup(this)">Add</button></div>
+    <div class="fx-note err" id="tu-err" hidden></div>
+    ${list.length ? `<div class="sk-list" style="margin-top:10px">${list.map(x => `<div class="sk-row"><b>${esc(x.name)}</b><span class="num">${kes(x.amount)}</span><small>${esc(d(x.ts))}${x.hand ? ' · added by hand' : ''}</small>${x.hand ? `<button class="btn link" onclick="removeTopup('${esc(x.ts)}', '${esc(x.name).replace(/'/g, "\\'")}', this)">Remove</button>` : ''}</div>`).join('')}</div>` : `<div class="empty" style="margin-top:10px">No top-ups logged yet.</div>`}`;
+}
+async function addTopup(btn) {
+  const name = resolvePlayer(document.getElementById('tu-n').value.trim()), amount = document.getElementById('tu-a').value, date = document.getElementById('tu-d').value;
+  btn.disabled = true; btn.textContent = '…';
+  let res; try { res = await api(null, { action: 'addTopup', t: TOKEN, name, amount, date }); } catch (e) { res = { ok: false, error: e.message }; }
+  btn.disabled = false; btn.textContent = 'Add';
+  if (!res.ok) { const e = document.getElementById('tu-err'); e.hidden = false; e.textContent = res.error || 'Could not save'; return; }
+  window.__ADMIN.topups = res.list; renderTopupsAdmin(); VOTER = null; ensureVoter && ensureVoter().then(() => renderYou());
+}
+async function removeTopup(ts, name, btn) {
+  btn.disabled = true; let res; try { res = await api(null, { action: 'removeTopup', t: TOKEN, ts, name }); } catch (e) { res = { ok: false }; }
+  if (res.ok) { window.__ADMIN.topups = res.list; renderTopupsAdmin(); } else btn.disabled = false;
+}
 function renderStrikesAdmin() {
   const el = document.getElementById('strikes-admin'); if (!el) return;
   const st = (RATINGS && RATINGS.strikes) || {}, names = Object.keys(st).sort((a, b) => st[b].length - st[a].length || a.localeCompare(b));
@@ -2376,7 +2396,7 @@ async function renderAdmin(me) {
     return;
   }
   window.__ADMIN = a;
-  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
+  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin, renderTopupsAdmin].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
   const ab = document.getElementById('activity-body');
   if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
     const seenNames = new Set(x.names.map(n => n.name.toLowerCase()));

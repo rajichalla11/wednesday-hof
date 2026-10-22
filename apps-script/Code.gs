@@ -166,6 +166,8 @@ function doPost(e) {
     if (body.action === 'signup') return json_(signup_(body));
     if (body.action === 'withdraw') return json_(withdraw_(body));
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
+    if (body.action === 'addTopup') return json_(addTopup_(body));
+    if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
     if (body.action === 'removeFixture') return json_(removeFixture_(body));
     if (body.action === 'moveStandby') return json_(moveStandby_(body));
@@ -227,7 +229,29 @@ function topupWatch_(players) {
 const POTS_ = { 'dhruv': 'Rahul', 'tushar': 'Tanuj', 'meeral': 'Ajul', 'saurabh': 'Sid', 'uday': 'Ashish' };
 function topupsFor_(name) {
   const n = String(name || '').toLowerCase(), list = ss_().getSheetByName('TopUps') ? tab_('TopUps').filter(function (r) { return String(r[1]).toLowerCase() === n; }).map(function (r) { return { ts: String(r[0]), amount: Number(r[2]) || 0 }; }) : [];
-  return { since: props_().getProperty('paid_since') || '', list: list.slice(-10).reverse() };
+  list.sort(function (a, b) { return a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0; });
+  return { since: props_().getProperty('paid_since') || '', list: list.slice(0, 10) };
+}
+/** Admin: log a top-up by hand (one that was paid before tracking started, or missed). Doesn't touch the attendance sheet. */
+function addTopup_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const p = players_().filter(function (x) { return x.name.toLowerCase() === String(body.name || '').toLowerCase(); })[0];
+  const amount = Math.round(Number(body.amount) || 0), date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? String(body.date) : '';
+  if (!p) return { ok: false, error: 'Unknown player.' }; if (amount <= 0) return { ok: false, error: 'Amount?' }; if (!date) return { ok: false, error: 'Date?' };
+  const sh = sheet_('TopUps'); if (sh.getLastRow() === 0) sh.appendRow(['ts', 'name', 'amount', 'total']);
+  sh.appendRow(["'" + new Date(date + 'T12:00:00+03:00').toISOString(), p.name, amount, 'added by hand']); bust_('TopUps');
+  return { ok: true, list: topupsAll_() };
+}
+function removeTopup_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const sh = sheet_('TopUps'), data = sh.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) if (String(data[i][0]) === String(body.ts) && String(data[i][1]) === String(body.name)) { sh.deleteRow(i + 1); break; }
+  bust_('TopUps'); return { ok: true, list: topupsAll_() };
+}
+function topupsAll_() {
+  if (!ss_().getSheetByName('TopUps')) return [];
+  return tab_('TopUps').map(function (r) { return { ts: String(r[0]), name: String(r[1]), amount: Number(r[2]) || 0, hand: String(r[3]) === 'added by hand' }; })
+    .sort(function (a, b) { return a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0; }).slice(0, 60);
 }
 
 function rate_(body) {
@@ -388,7 +412,7 @@ function admin_(token) {
   const now = Date.now(), motmGames = ss_().getSheetByName('Games') ? tab_('Games').map(function (r) { return String(r[0]).slice(0, 10); }).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) && kickoff_({ date: d, time: '00:00' }).getTime() <= now; })
     .sort().reverse().slice(0, 6).map(function (d) { const r = tab_('Games').filter(function (x) { return String(x[0]).slice(0, 10) === d; })[0], split = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
       return { date: d, players: split(r[1]).concat(split(r[2]), split(r[6])), score: r[3] === '' || r[4] === '' ? null : { black: Number(r[3]), white: Number(r[4]) }, votes: motmVotes_(d), auto: motmAuto_(d), override: motmOverride_(d) }; }) : [];
-  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed, motmGames: motmGames };
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed, motmGames: motmGames, topups: topupsAll_() };
 }
 
 /** Admin approves (ok: true) or rejects (ok: false, row deleted so the name can be claimed again) a pending claim. */

@@ -210,3 +210,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v36 · Shared pots
 - `POTS_` maps brothers who share one balance (Dhruv→Rahul, Tushar→Tanuj, Meeral→Ajul, Saurabh→Sid, Uday→Ashish). `me` also returns `potTopups` (the pot holder's top-ups) for the second name.
+
+## v37 · Top-ups by hand
+- `addTopup` / `removeTopup` (admin): log a top-up with a date (rows marked "added by hand"; only those can be removed). `admin` returns `topups` (latest 60). Top-ups are now sorted by date, newest first.
