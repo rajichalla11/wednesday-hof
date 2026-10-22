@@ -446,10 +446,10 @@
   .pl-row.me { box-shadow: inset 3px 0 0 var(--fg); } .pl-lock { opacity: .4; }
   /* sign-ups */
   #fixtures { margin-top: 14px; } #fixtures:empty { display: none; }
-  .fx-h { display: flex; align-items: baseline; gap: 10px; margin: 0 2px 8px; } .fx-h small { font-size: 11.5px; color: var(--fg-3); }
+  .fx-h { display: flex; align-items: baseline; gap: 10px; margin: 0 2px 8px; } .fx-h small { font-size: 11.5px; color: var(--fg-3); } .fx-h .label { white-space: nowrap; }
   .fx { border: 1px solid var(--line-2); border-radius: 16px; background: var(--surface); padding: 14px 16px; margin-bottom: 10px; display: grid; gap: 12px; }
   .fx-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; } .fx-top b { display: block; font-size: 17px; font-weight: 800; } .fx-top span { font-size: 12.5px; color: var(--fg-2); }
-  .fx-count { text-align: right; font-size: 13px; color: var(--fg-3); white-space: nowrap; } .fx-count b { font-size: 26px; color: var(--fg); font-weight: 800; font-variation-settings: 'wdth' 80; } .fx-count small { display: block; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+  .fx-count { display: flex; flex-direction: column; align-items: flex-end; font-size: 14px; color: var(--fg-3); white-space: nowrap; } .fx-count .t { white-space: nowrap; } .fx-count b { font-size: 26px; color: var(--fg); font-weight: 800; font-variation-settings: 'wdth' 80; } .fx-count small { display: block; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
   .fx-bar { height: 4px; border-radius: 2px; background: var(--surface-3); overflow: hidden; } .fx-bar i { display: block; height: 100%; background: var(--fg); border-radius: 2px; transition: width .4s var(--ease); }
   .fx-btns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .fx-btns .btn:not(.link) { min-height: 40px; } .fx-copy { margin-left: auto; font-size: 12px; }
   .fx-note { font-size: 13px; padding: 9px 12px; border-radius: 10px; background: color-mix(in srgb, var(--fg) 10%, transparent); font-weight: 600; } .fx-note.err { background: color-mix(in srgb, var(--neg) 14%, transparent); color: var(--neg); font-weight: 500; }
@@ -2556,12 +2556,12 @@ function renderFixtures() {
     const others = fx.filter(o => o.date !== f.date);
     return `<article class="fx" id="fx-${f.date}">
       <div class="fx-top"><div><b>${esc(fxDay(f.date))} ${esc(dayOf(f).replace(/^\w+\s/, ''))}</b><span>${fxSpan(f)} · ${f.size}-a-side${f.teams ? ' · teams made' : ''}</span></div>
-        <div class="fx-count num"><b>${nIn}</b>/${f.slots}${nSb ? `<small>+${nSb} standby</small>` : left ? `<small>${left} left</small>` : '<small>full</small>'}</div></div>
+        <div class="fx-count num"><span class="t"><b>${nIn}</b>/${f.slots}</span>${nSb ? `<small>+${nSb} standby</small>` : left ? `<small>${left} left</small>` : '<small>full</small>'}</div></div>
       <div class="fx-bar"><i style="width:${f.slots ? nIn / f.slots * 100 : 0}%"></i></div>
       ${promoted ? `<div class="fx-note">You're in now. Someone dropped out.</div>` : ''}
       ${FX_MSG[f.date] ? `<div class="fx-note err">${esc(FX_MSG[f.date])}</div>` : ''}
       <div class="fx-btns">
-        ${!TOKEN ? `<button class="btn" onclick="openClaim()">I'm in</button>` : pos >= 0 ? `<span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${pos + 1}` : `Standby · ${['1st', '2nd', '3rd'][sb] || sb + 1 + 'th'}`}</span><button class="btn ghost" onclick="fxOut('${f.date}', '', this)">I'm out</button>` : `<button class="btn" onclick="fxIn('${f.date}', this)">${left > 0 ? "I'm in" : 'Join standby'}</button>`}
+        ${!TOKEN ? `<button class="btn" onclick="openClaim()">${left > 0 ? "I'm in" : 'Join standby'}</button>` : pos >= 0 ? `<span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${pos + 1}` : `Standby · ${['1st', '2nd', '3rd'][sb] || sb + 1 + 'th'}`}</span><button class="btn ghost" onclick="fxOut('${f.date}', '', this)">I'm out</button>` : `<button class="btn" onclick="fxIn('${f.date}', this)">${left > 0 ? "I'm in" : 'Join standby'}</button>`}
         ${me ? `<button class="btn ghost" onclick="FX_ADD = FX_ADD === '${f.date}' ? '' : '${f.date}'; renderFixtures()">+ Add</button>` : ''}
         <button class="btn link fx-copy" onclick="fxCopy('${f.date}', this)">Copy for WhatsApp</button>
       </div>
