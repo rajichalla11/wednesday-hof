@@ -1157,7 +1157,7 @@ function build(text) {
       const count = parseInt(colA,10); if (isNaN(count) || count <= 0 || !isPlayer(colB)) continue;
       const amt = i => { const n = parseFloat((row[i]||'').replace(/,/g,'').trim()); return !isNaN(n) && n > 0 ? n : 0; };
       const fees = sessionCols.map(({idx}) => amt(idx)), attendance = fees.map(f => f > 0 ? 1 : 0), inSess = new Set(sessionCols.map(c => c.idx));
-      let extra = 0; for (let i = SESSION_START_COL; i < row.length; i++) if (!inSess.has(i)) extra += amt(i);   // charges in columns with no date heading
+      let extra = 0; for (let i = SESSION_START_COL; i < row.length; i++) if (!inSess.has(i)) extra += amt(i);   // +1s: charges in columns with no date heading
       const bal = (row[6]||'').replace(/,/g,'').trim(), balN = parseFloat(bal);
       // A balance cell holding a name (e.g. "Rahul") means this row's games come out of that player's pot
       const money = [{ holder: bal && isNaN(balN) ? bal : colB, paid: amt(5), owing: amt(7), fees, extra, bal: isNaN(balN) ? 0 : balN }];
@@ -2142,7 +2142,7 @@ function balBreakHtml(me, v) {
     <div class="bb-sum">
       ${line(multi ? 'Paid in (shared)' : 'Paid in', kes(paid))}
       ${multi ? per.map(x => line(`${esc(x.p.name)}'s games · ${x.g.length}`, '− ' + kes(sum(x.g.map(y => y.f))))).join('') : line(`Games · ${games.length}`, '− ' + kes(fees))}
-      ${extra ? line('Other charges', '− ' + kes(extra)) : ''}
+      ${extra ? line('+1s', '− ' + kes(extra)) : ''}
       ${owing ? line('Carried over from before', '− ' + kes(owing)) : ''}
       ${adj ? line('Other adjustments', (adj > 0 ? '− ' : '+ ') + kes(Math.abs(adj))) : ''}
       ${line('Balance', (pot.balance < 0 ? '− ' : '') + kes(pot.balance), 'tot' + (pot.balance < 0 ? ' neg' : ''))}
