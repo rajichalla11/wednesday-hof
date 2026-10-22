@@ -2145,7 +2145,7 @@ function balBreakHtml(me, v) {
       ${extra ? line('Other charges', '− ' + kes(extra)) : ''}
       ${owing ? line('Carried over from before', '− ' + kes(owing)) : ''}
       ${adj ? line('Other adjustments', (adj > 0 ? '− ' : '+ ') + kes(Math.abs(adj))) : ''}
-      ${line('Balance', kes(pot.balance), 'tot' + (pot.balance < 0 ? ' neg' : ''))}
+      ${line('Balance', (pot.balance < 0 ? '− ' : '') + kes(pot.balance), 'tot' + (pot.balance < 0 ? ' neg' : ''))}
     </div>
     ${recent.length ? `<div class="label" style="margin-top:12px">Recent games</div><div class="bb-games">${recent.map(x => `<div class="bb-l"><span>${multi ? `<small class="bb-who">${esc(x.who.split(' ')[0])}</small> ` : ''}${esc(x.s && x.s.date ? x.s.date.toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short' }) : (x.s && x.s.label) || '')}${x.f >= 600 ? ' <small>with a +1</small>' : ''}</span><b class="num">${kes(x.f)}</b></div>`).join('')}</div>` : ''}
   </div>`;
