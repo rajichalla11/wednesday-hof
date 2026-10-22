@@ -176,28 +176,32 @@
   .sheet.dossier { max-width: 960px; background: transparent; border: 0; padding: 0; overflow: visible; max-height: none; }
   #profile-overlay { overflow-y: auto; align-items: flex-start; padding-top: 56px; }
   .sheet.dossier .controls { position: sticky; top: 0; z-index: 5; display: flex; justify-content: flex-end; gap: 6px; margin: -44px 0 8px; pointer-events: none; } .sheet.dossier .controls .ctl { pointer-events: auto; }
-  /* ── CARD FLIP: front and back are the same card-sized shield; the record scrolls inside the back ── */
-  #p-body { perspective: 1400px; }
-  .flip-inner { position: relative; width: 320px; margin: 0 auto; transform-style: preserve-3d; transition: transform .75s cubic-bezier(.3,.7,.2,1); will-change: transform; }
-  #p-body.go .flip-inner { transform: rotateY(180deg); }
-  .flip-front { position: relative; backface-visibility: hidden; -webkit-backface-visibility: hidden; cursor: pointer; }
+  /* ── CARD FLIP: the card turns over and grows into a bigger card whose back holds the record ── */
+  #profile-overlay { align-items: center; padding: 0; }
+  .sheet.dossier .controls { position: fixed; top: 12px; right: 12px; margin: 0; z-index: 20; }
+  .sheet.dossier { height: auto !important; max-height: none !important; padding: 0 !important; border: 0 !important; background: transparent !important; overflow: visible !important; width: auto; }
+  #p-body { --s0: .5; --inv: 2; --cw: 320px; perspective: 1800px; display: flex; justify-content: center; }
+  .flip-inner { position: relative; width: min(720px, calc(100vw - 24px)); height: min(820px, calc(100dvh - 80px)); transform-style: preserve-3d;
+    transform: scale(var(--s0)) rotateY(0deg); transition: transform .8s cubic-bezier(.25,.8,.25,1); will-change: transform; }
+  #p-body.go .flip-inner { transform: scale(1) rotateY(180deg); }
+  .flip-front { position: absolute; left: 50%; top: 50%; width: var(--cw); transform: translate(-50%, -50%) scale(var(--inv)); backface-visibility: hidden; -webkit-backface-visibility: hidden; cursor: pointer; }
   .flip-front .card { cursor: pointer; } .flip-front .card:hover { transform: none; filter: none; }
-  .flip-back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
-  .flip-back::-webkit-scrollbar { display: none; }
+  .flip-back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
   #p-body:not(.go) .flip-back { pointer-events: none; } #p-body.go .flip-front { pointer-events: none; }
-  .fut-back { --edge: #c9a042; --cut: polygon(0 4.2%, 7% 0, 93% 0, 100% 4.2%, 100% 94%, 50% 100%, 0 94%); clip-path: var(--cut); -webkit-clip-path: var(--cut); padding: 26px 16px 56px;
-    background: linear-gradient(#141416, #141416) padding-box, radial-gradient(90% 30% at 50% -5%, color-mix(in srgb, var(--edge) 40%, transparent), transparent 70%) border-box, var(--edge); border: 3px solid transparent; color: var(--fg); }
-  .fut-back.silver { --edge: #9aa1a9; } .fut-back.bronze { --edge: #a3643e; } .fut-back.icon { --edge: #d8c08a; } .fut-back.gold { --edge: #d2a94a; }
-  .fut-back .d-grid { display: block; } .fut-back .d-name { font-size: 26px; color: var(--fg); } .fut-back .label { color: color-mix(in srgb, var(--edge) 70%, var(--fg-2)); }
-  .fut-back .d-photo { aspect-ratio: 4 / 3; height: auto; max-height: none; margin-top: 12px; } .fut-back .kv { gap: 10px 16px; margin-top: 16px; } .fut-back .kv b { font-size: 24px; }
-  .fut-back .heat i { width: 6px; height: 6px; gap: 2px; } .fut-back .heat { gap: 2px; } .fut-back .heat-row { grid-template-columns: 34px 1fr; }
-  .fut-back .d-foot { grid-template-columns: 1fr 1fr; } .fut-back .hint { display: none; } .fut-back .badges { gap: 5px; }
-  .fut-back .c-stats { grid-template-columns: repeat(3, 1fr); } .fut-back .fg-row { padding: 7px 6px; }
-  .fut-back > .d-grid > div + div { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .fut-back { --edge: #d2a94a; --cut: polygon(0 3.2%, 5% 0, 95% 0, 100% 3.2%, 100% 95.5%, 50% 100%, 0 95.5%); clip-path: var(--cut); -webkit-clip-path: var(--cut);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--edge) 100%, white 25%), var(--edge) 40%, color-mix(in srgb, var(--edge) 70%, black) 100%); }
+  .fut-back .fb-in { position: absolute; inset: 3px; clip-path: var(--cut); -webkit-clip-path: var(--cut); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; color: var(--fg); padding: 34px 26px 70px;
+    background: radial-gradient(80% 22% at 50% 0%, color-mix(in srgb, var(--edge) 32%, transparent), transparent 70%), #141416; }
+  .fut-back .fb-in::-webkit-scrollbar { display: none; }
+  .fut-back.silver { --edge: #a3aab2; } .fut-back.bronze { --edge: #b06f45; } .fut-back.icon { --edge: #dcc48c; } .fut-back.gold { --edge: #d2a94a; }
+  .fut-back .label { color: color-mix(in srgb, var(--edge) 70%, var(--fg-2)); } .fut-back .hint { display: none; }
+  .fut-back .d-grid { grid-template-columns: 250px 1fr; gap: 28px; } .fut-back .d-name { font-size: 30px; }
   @media (max-width: 720px) {
-    #profile-overlay { padding: 0; align-items: center; } .sheet.dossier { padding: 0 12px; border: 0; height: auto; } .sheet.dossier .controls { position: fixed; top: 10px; right: 10px; margin: 0; }
-    .flip-inner { width: min(320px, calc(100vw - 40px)); } .fut-back { padding: 22px 12px 50px; }
+    .fut-back .d-grid { display: block; } .fut-back .d-grid > div + div { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .fut-back .fb-in { padding: 30px 16px 64px; } .fut-back .d-name { font-size: 26px; } .fut-back .d-photo { height: auto; aspect-ratio: 4 / 3; max-height: none; }
+    .fut-back .heat i { width: 6px; height: 6px; } .fut-back .heat { gap: 2px; } .fut-back .d-foot { grid-template-columns: 1fr 1fr; }
   }
+  @media (prefers-reduced-motion: reduce) { .flip-inner { transition-duration: .2s; } }
   .sheet.session { max-width: 680px; }
   #ballot-overlay { padding: 0; }
   .sheet.ballot { max-width: none; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 0; overflow: hidden; }
@@ -1403,7 +1407,7 @@ function openProfile(p) {
   const r = RATINGS && RATINGS.players[p.name];
   const rr = RATINGS && RATINGS.ok ? (RATINGS.players[p.name] || { n: 0 }) : { n: 0 };
   const el = document.getElementById('p-body'); el.classList.remove('go');
-  el.innerHTML = `<div class="flip-inner"><div class="flip-front">${cardHtml(p, rr.stats || null, { n: RATINGS && RATINGS.ok ? rr.n : null })}</div><div class="flip-back fut-back ${tierOf(p)}">
+  el.innerHTML = `<div class="flip-inner"><div class="flip-front">${cardHtml(p, rr.stats || null, { n: RATINGS && RATINGS.ok ? rr.n : null })}</div><div class="flip-back fut-back ${tierOf(p)}"><div class="fb-in">
     <div class="d-grid">
       <div>
         <div class="label">#${p.rank} all-time${posName(p) ? ' · '+esc(posName(p)) : ''}${p.foot ? ' · '+esc(p.foot)+' foot' : ''}</div>
@@ -1436,10 +1440,12 @@ function openProfile(p) {
         </div>
         <div class="hint">← → next player · esc to close · tap the card to flip it back</div>
       </div>
-    </div></div></div>`;
+    </div></div></div></div>`;
   document.getElementById('profile').scrollTop = 0;
   const ov = document.getElementById('profile-overlay'), wasOpen = ov.classList.contains('open');
   ov.classList.add('open'); document.body.style.overflow = 'hidden';
+  const fi = el.querySelector('.flip-inner'), cardW = Math.min(320, innerWidth - 40), s0 = Math.min(1, cardW / fi.offsetWidth);
+  el.style.setProperty('--s0', s0.toFixed(4)); el.style.setProperty('--inv', (1 / s0).toFixed(4)); el.style.setProperty('--cw', cardW + 'px');
   el.querySelector('.flip-front').onclick = e => { e.stopPropagation(); el.classList.toggle('go'); };
   el.querySelector('.flip-back').onclick = e => { if (e.target.closest('a, button, [data-tip]')) return; el.classList.remove('go'); };   // tap the back to see the front again
   setTimeout(() => el.classList.add('go'), wasOpen ? 60 : 320);   // show the front for a beat, then flip to the record
