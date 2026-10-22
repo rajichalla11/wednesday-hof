@@ -2538,7 +2538,7 @@ let FX_ADD = '', FX_MSG = {};
 const fxDay = d => new Date(`${d}T12:00:00+03:00`).toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'long' });
 const fxSpan = f => { const h = +f.time.slice(0, 2), m = f.time.slice(3), e = (h + 1) % 24, ap = x => x % 12 || 12; return `${ap(h)}${m !== '00' ? ':' + m : ''}-${ap(e)}${m !== '00' ? ':' + m : ''}${e >= 12 ? 'pm' : 'am'}`; };
 function fxWhatsApp(f) {
-  const nm = x => x.kind === 'guest' ? `${x.name} (via ${x.by})` : x.name, inl = f.signups.slice(0, f.slots), sb = f.signups.slice(f.slots);
+  const nm = x => x.kind === 'guest' && x.by ? `${x.name} (via ${x.by})` : x.name, inl = f.signups.slice(0, f.slots), sb = f.signups.slice(f.slots);
   return `${fxDay(f.date)} ${fxSpan(f)}\n\n${inl.map((x, i) => `${i + 1}. ${nm(x)}`).join('\n')}${sb.length ? `\n\nStandby:\n${sb.map(nm).join('\n')}` : ''}\n\nSign up: ${location.origin}/#in`;
 }
 function renderFixtures() {
@@ -2552,7 +2552,7 @@ function renderFixtures() {
     const promoted = was === 'sb' && inn;
     const nIn = Math.min(f.slots, f.signups.length), nSb = Math.max(0, f.signups.length - f.slots), left = f.slots - nIn;
     const row = (x, i, isSb) => { const canRm = me && (admin || mine(x.name) || (x.by && mine(x.by)));
-      return `<li class="${mine(x.name) ? 'me' : ''}"><span class="fx-n">${isSb ? '' : i + 1 + '.'}</span><span class="fx-name">${esc(x.name)}${x.kind === 'guest' ? `<small>guest · via ${esc(x.by)}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</li>`; };
+      return `<li class="${mine(x.name) ? 'me' : ''}"><span class="fx-n">${isSb ? '' : i + 1 + '.'}</span><span class="fx-name">${esc(x.name)}${x.kind === 'guest' ? `<small>guest${x.by ? ` · via ${esc(x.by)}` : ''}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</li>`; };
     const others = fx.filter(o => o.date !== f.date);
     return `<article class="fx" id="fx-${f.date}">
       <div class="fx-top"><div><b>${esc(fxDay(f.date))} ${esc(dayOf(f).replace(/^\w+\s/, ''))}</b><span>${fxSpan(f)} · ${f.size}-a-side${f.teams ? ' · teams made' : ''}</span></div>
