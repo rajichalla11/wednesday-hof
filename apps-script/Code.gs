@@ -166,6 +166,7 @@ function doPost(e) {
     if (body.action === 'signup') return json_(signup_(body));
     if (body.action === 'withdraw') return json_(withdraw_(body));
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
+    if (body.action === 'setProfile') return json_(setProfile_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -763,6 +764,25 @@ function syncSheetSafe_(date) { try { return syncSheet_(date); } catch (e) { con
 function syncSheetsDryRun() { const out = {}; fixturesPublic_().forEach(function (f) { out[f.date] = syncSheet_(f.date, true); }); Logger.log(JSON.stringify(out, null, 1)); }
 /** Editor or admin: sync every open game now (e.g. right after deploying). */
 function syncAllSheets() { const out = {}; fixturesPublic_().forEach(function (f) { out[f.date] = syncSheetSafe_(f.date); }); Logger.log(JSON.stringify(out)); return out; }
+/** A player sets their own position and preferred foot. Written to the attendance sheet (Wednesday Group C/D on every row
+ *  that is this player, and Players B/C), which is where the site reads them from. */
+function setProfile_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
+  const POS = ['Attack', 'Midfield', 'Defense', 'Goalkeeper'], FOOT = ['Right', 'Left', 'Both'];
+  const pos = POS.indexOf(body.position) >= 0 ? body.position : null, foot = FOOT.indexOf(body.foot) >= 0 ? body.foot : null;
+  if (!pos && !foot) return { ok: false, error: 'Nothing to change.' };
+  const ss = SpreadsheetApp.openById(MAIN_SHEET_ID), l = me.toLowerCase(), alias = Object.keys(ALIASES_).filter(function (a) { return ALIASES_[a].toLowerCase() === l; });
+  const isMe = function (v) { const x = String(v || '').trim().toLowerCase(); return x === l || alias.indexOf(x) >= 0; };
+  let n = 0;
+  const wide = ss.getSheetByName('Wednesday Group');
+  if (wide) { const names = wide.getRange(4, 2, wide.getLastRow() - 3, 1).getValues(); names.forEach(function (r, i) { if (!isMe(r[0])) return; if (pos) wide.getRange(4 + i, 3).setValue(pos); if (foot) wide.getRange(4 + i, 4).setValue(foot); n++; }); }
+  const pl = ss.getSheetByName('Players');
+  if (pl) { const names = pl.getRange(2, 1, pl.getLastRow() - 1, 1).getValues(); names.forEach(function (r, i) { if (!isMe(r[0])) return; if (pos) pl.getRange(2 + i, 2).setValue(pos); if (foot) pl.getRange(2 + i, 3).setValue(foot); }); }
+  if (!n) return { ok: false, error: 'Your row was not found in the sheet.' };
+  cache_().remove('players'); bust_('Voters');
+  return { ok: true, position: pos, foot: foot };
+}
+
 /* ───────── strikes ─────────
    Strikes tab: date (game), ts, name, by (who took them off), cleared. One for each late drop-out (inside 36 hours of
    kick-off, from a spot rather than standby). They only show; nothing is blocked. They stay until the admin clears them. */

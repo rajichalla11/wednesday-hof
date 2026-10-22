@@ -220,3 +220,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 ## v39 · Fill the attendance sheet
 - Once a game's list is full, `syncSheet_` charges KES 350 per player in the attendance sheet the way FootballGameUpdater's "Submit This Weeks List" does: a row each in **Game Log** (note "from site sign-ups") and a fee in a new dated column (`dd MMM yyyy`) in **Wednesday Group**. Runs after every sign-up, drop-out, standby move, list import or game edit, until kick-off. Late drop-outs (strikes) stay charged. Guests get a new row. A column for that date made by hand is left alone. State per game in script property `sheet_<date>`.
 - `syncSheetsDryRun()` (editor) shows what it would write; `syncAllSheets()` (editor) syncs every open game.
+
+## v40 · Edit your profile
+- `setProfile` {position: Attack|Midfield|Defense|Goalkeeper, foot: Right|Left|Both}: a player sets their own; written to the attendance sheet (Wednesday Group C/D on every row that is them, Players B/C).

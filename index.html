@@ -504,6 +504,39 @@
   .adm-fold > .sh { cursor: pointer; flex-wrap: nowrap; align-items: center; } .adm-fold > .sh span { flex: 1; text-align: right; } .adm-fold.folded > :not(.sh) { display: none; } .adm-fold.folded > .sh { margin-bottom: 0; }
   .adm-fold:not(.folded) > .sh .fx-chev { transform: rotate(-135deg) translate(-2px, -2px); } #admin-wrap .adm-sec > .sh { margin-bottom: 12px; } #admin-wrap .adm-sec > .sh h2 { font-size: 18px; }
   @media (max-width: 600px) { .adm-nav { width: 100%; } .adm-nav button { flex: 1; padding: 8px 6px; } #admin-wrap .adm-sec { padding: 14px 12px; } }
+  /* Match card (Matches tab, last game) */
+  .mc { border: 1px solid var(--line-2); border-radius: 16px; background: var(--surface); overflow: hidden; margin-bottom: 12px; }
+  .mc-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 14px 16px 6px; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .mc-when b { display: block; font-size: 16px; font-weight: 800; } .mc-when small { font-size: 12px; color: var(--fg-3); }
+  .mc-res { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; background: var(--fg); color: var(--bg); white-space: nowrap; } .mc-res.none { background: none; color: var(--fg-3); border: 1px solid var(--line-2); }
+  .mc-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding: 6px 16px 12px; }
+  .mc-score .side { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-2); } .mc-score .side.w { justify-content: flex-end; } .mc-score .side.lost { color: var(--fg-3); } .mc-score .side.won { color: var(--fg); }
+  .mc-score .mid { font-size: 34px; font-weight: 800; letter-spacing: -.02em; } .mc-score .mid i { font-style: normal; color: var(--fg-3); margin: 0 6px; font-weight: 400; }
+  .mc-motm { display: flex; align-items: center; gap: 10px; margin: 0 16px 12px; padding: 8px 12px; border-radius: 12px; background: color-mix(in srgb, var(--gold) 12%, transparent); border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent); }
+  .mc-motm .avatar, .mc-motm .gd-last-star { width: 30px; height: 30px; flex: none; } .mc-motm .label { color: var(--gold); flex: none; } .mc-motm b { flex: 1; font-size: 15px; min-width: 0; } .mc-motm > i { font-style: normal; color: var(--gold); }
+  .mc-motm.none { background: none; border: 0; padding: 0; margin: -4px 16px 12px; font-size: 12.5px; color: var(--fg-3); }
+  .mc-more { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--fg-2); cursor: pointer; }
+  .mc.open .mc-more .fx-chev { transform: rotate(-135deg) translate(-2px, -2px); }
+  .mc-body { padding: 12px 16px 14px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+  .mc-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } .mc-teams.one { grid-template-columns: 1fr; } .mc-teams.one > div { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  .mc-teams .label { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .mc-p { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; min-width: 0; } .mc-p:last-child { border-bottom: 0; }
+  .mc-p .avatar { width: 24px; height: 24px; flex: none; font-size: 9px; } .mc-n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .mc-n i { font-style: normal; color: var(--gold); }
+  .mc-p b { font-size: 13px; color: var(--fg-2); } .mc-p b.hi { color: var(--gold); } .mc-p.me .mc-n { font-weight: 800; } .mc-p.motm .mc-n { color: var(--gold); font-weight: 700; }
+  .mc-foot { font-size: 11.5px; color: var(--fg-3); }
+  .ll-wrap { margin: 4px 0 14px; } .ll-wrap > .label { display: block; margin: 0 2px 8px; } .ll-wrap .mc { margin: 0; }
+  /* Home game cards: list as a grid */
+  .fx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .fx-grid.sb .fx-cell { border-style: dashed; }
+  .fx-cell { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); font-size: 13px; }
+  .fx-cell .fx-n { width: 14px; flex: none; font-size: 10.5px; color: var(--fg-3); text-align: right; } .fx-cell .avatar { width: 22px; height: 22px; flex: none; font-size: 8px; }
+  .fx-cell .fx-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .fx-cell .fx-name small { display: block; font-size: 10px; color: var(--fg-3); overflow: hidden; text-overflow: ellipsis; }
+  .fx-cell .sk { display: none; } .fx-cell .fx-x { width: 22px; height: 22px; font-size: 13px; flex: none; }
+  .fx-cell.me { border-color: var(--fg); } .fx-cell.open { border-style: dashed; color: var(--fg-3); background: none; } .fx-cell.pend { opacity: .6; }
+  /* Position / foot */
+  .pf { display: grid; gap: 10px; padding: 12px 14px; margin-bottom: 14px; border-radius: 12px; border: 1px solid var(--line-2); }
+  .pf-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .pf-seg { display: flex; gap: 3px; padding: 3px; border-radius: 10px; background: var(--surface-2); } .pf-seg button { border: 0; background: none; color: var(--fg-3); font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 8px; cursor: pointer; } .pf-seg button.on { background: var(--fg); color: var(--bg); }
+  .pf-st { font-size: 11.5px; color: var(--fg-3); min-height: 0; } .pf-st:empty { display: none; }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
@@ -2018,6 +2051,7 @@ async function renderYou() {
     <div class="you-grid">
       <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates. ${Math.min(selfRated(), gateNeed())} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.fixed ? `Your own numbers, fixed: teammates' ${r.n} vote${r.n===1?'':'s'} set your traits, not your stats.` : r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
       <div>
+        ${profileEditHtml(me)}
         <div class="mile"><div class="l"><span>${me.count<100 ? 'To the century' : `Next milestone ${ms.next}`}</span><span>${ms.toGo} to go · ${esc(fmtEta(ms.eta))}</span></div><i style="--w:${ms.pct}%"></i></div>
         <div class="b-actions" style="margin-top:18px">
           ${v.open ? `<button class="btn" onclick="openBallot()">${done ? `Rate teammates · ${done} of ${queue.length} done` : 'Rate your teammates'}</button>` : `<span class="muted" style="font-size:12px">Rating window ${esc(v.window)} is closed.</span>`}
@@ -2081,6 +2115,23 @@ async function renderYou() {
         if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
   paintSelfPreview();
   if (v.isAdmin) renderAdmin(me);
+}
+/* Your position and preferred foot: tap to change; saved to the attendance sheet, shown straight away here. */
+function profileEditHtml(me) {
+  const pos = posName(me) || '', foot = (me.foot || '').trim(), seg = (k, opts, cur) => `<div class="pf-seg">${opts.map(o => `<button class="${cur === o ? 'on' : ''}" onclick="setProfile('${k}', '${o}', this)">${o}</button>`).join('')}</div>`;
+  return `<div class="pf" id="pf"><div class="pf-row"><span class="label">Position</span>${seg('position', ['Attack', 'Midfield', 'Defense'], pos)}</div>
+    <div class="pf-row"><span class="label">Preferred foot</span>${seg('foot', ['Left', 'Right', 'Both'], foot)}</div><small class="pf-st" id="pf-st"></small></div>`;
+}
+async function setProfile(k, v, btn) {
+  const me = ALL_PLAYERS.find(p => VOTER && p.name.toLowerCase() === VOTER.name.toLowerCase()); if (!me) return;
+  const was = k === 'position' ? me.position : me.foot;
+  if (k === 'position') me.position = v; else me.foot = v;
+  btn.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+  const st = document.getElementById('pf-st'); if (st) st.textContent = 'Saving…';
+  let res; try { res = await api(null, { action: 'setProfile', t: TOKEN, [k]: v }); } catch (e) { res = { ok: false, error: e.message }; }
+  if (!res.ok) { if (k === 'position') me.position = was; else me.foot = was; if (st) st.textContent = res.error || 'Could not save'; btn.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.textContent === (was || '').trim())); return; }
+  if (st) { st.textContent = 'Saved'; setTimeout(() => { if (st.isConnected) st.textContent = ''; }, 2000); }
+  try { renderPlayers(); } catch (_) {}
 }
 /* ── Admin tab: four groups behind a segmented switch, plus a "needs you" strip of things waiting on the admin ── */
 const ADM_GROUPS = [['games', 'Games'], ['players', 'Players'], ['money', 'Money'], ['activity', 'Activity']];
@@ -2633,6 +2684,8 @@ function renderGameday() {
   else { el.hidden = true; el.innerHTML = ''; }
   if (!ll) return;
   if (ph !== 'final') { ll.innerHTML = ''; return; }
+  const LG = ((RATINGS && RATINGS.games) || []).find(x => x.date === L.date);
+  if (LAST_OPEN && LG) { ll.innerHTML = `<div class="ll-wrap"><span class="label">Last game</span>${matchCardHtml(LG, true, 'lastToggle()')}</div>`; return; }
   ll.innerHTML = `<button class="ll${LAST_OPEN ? ' open' : ''}" onclick="lastToggle()"><span class="ll-in"><span class="label">Last game · ${esc(dayOf(L))}</span><span class="ll-t">${L.score ? resultTxt(L.score) : 'Full time'}${(L.motm || []).length ? ` · <b>★ ${esc(L.motm.join(', '))}</b>` : ''}</span></span><i class="fx-chev"></i></button>${LAST_OPEN ? '<section class="gd open" id="lastgame"></section>' : ''}`;
   if (LAST_OPEN) paintGame(document.getElementById('lastgame'), { g: L, ph: 'final' }, true, 'lastToggle()');
 }
@@ -2823,6 +2876,8 @@ function renderFixtures() {
     const T = f.teams ? fxTeams(f) : null, open = FX_OPEN === f.date || FX_ADD === f.date;
     const row = (x, i, isSb) => { const canRm = me && (admin || mine(x.name) || (x.by && mine(x.by)));
       return `<li class="${mine(x.name) ? 'me' : ''}"><span class="fx-n">${isSb ? '' : i + 1 + '.'}</span><span class="fx-name${x.pending ? ' pend' : ''}">${esc(x.name)}${x.kind === 'player' ? strikeTag(x.name) : ''}${x.kind === 'guest' ? `<small>guest${x.by ? ` · via ${esc(x.by)}` : ''}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</li>`; };
+    const cell = (x, i, isSb) => { const canRm = me && (admin || mine(x.name) || (x.by && mine(x.by))), p = ALL_PLAYERS.find(y => y.name === x.name);
+      return `<div class="fx-cell${mine(x.name) ? ' me' : ''}${x.pending ? ' pend' : ''}"><span class="fx-n">${i + 1}</span>${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span class="fx-name">${esc(x.name)}${x.kind === 'player' ? strikeTag(x.name) : ''}${x.kind === 'guest' ? `<small>guest${x.by ? ` · via ${esc(x.by)}` : ''}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</div>`; };
     const others = fx.filter(o => o.date !== f.date), sbRows = f.signups.slice(f.slots);
     const stat = T ? `<span class="fx-tag">Teams out</span>` : left > 0 ? `<span class="fx-stat">${left} spot${left === 1 ? '' : 's'} left</span>` : `<span class="fx-stat full">Full · ${nSb ? `${nSb} on standby` : 'join standby'}</span>`;
     const primary = pos >= 0 ? `<span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${pos + 1}` : `Standby · ${ordN(sb)}`}</span>`
@@ -2831,8 +2886,8 @@ function renderFixtures() {
     const body = !open ? '' : `<div class="fx-body">
       ${T ? `<div class="fx-teams"><div><div class="label"><i class="gd-shirt"></i>Black</div>${(T.black || []).map(n => chip(n)).join('')}</div><div><div class="label"><i class="gd-shirt w"></i>White</div>${(T.white || []).map(n => chip(n)).join('')}</div></div>
           ${sbRows.length ? `<div class="label">Standby</div><div class="gd-chips">${sbRows.map((x, i) => chip(x.name, `<i>${i + 1}</i>`)).join('')}</div>` : ''}`
-        : f.signups.length ? `<div class="fx-list"><ol>${f.signups.slice(0, f.slots).map((x, i) => row(x, i, false)).join('')}</ol>
-          ${nSb ? `<div class="label" style="margin:12px 0 4px">Standby · in order</div><ol class="sb">${sbRows.map((x, i) => row(x, i, true)).join('')}</ol>` : ''}</div>` : `<div class="fx-empty">Nobody yet. Be first.</div>`}
+        : f.signups.length ? `<div class="fx-grid">${f.signups.slice(0, f.slots).map((x, i) => cell(x, i, false)).join('')}${Array.from({ length: Math.max(0, left) }, (_, i) => `<div class="fx-cell open"><span class="fx-n">${nIn + i + 1}</span><span class="fx-name">Open spot</span></div>`).join('')}</div>
+          ${nSb ? `<div class="label" style="margin:4px 0 0">Standby · in order</div><div class="fx-grid sb">${sbRows.map((x, i) => cell(x, i, true)).join('')}</div>` : ''}` : `<div class="fx-empty">Nobody yet. Be first.</div>`}
       ${vg ? `<button class="gd-gate" onclick="copyGate(this)"><span><span class="label">Gate code</span><b>${esc(vg.gate)}</b></span><small>Tap to copy</small></button>` : ''}
       <div class="fx-btns">
         ${pos >= 0 ? `<button class="btn ghost" onclick="fxOut('${f.date}', '', this)">I'm out</button>` : ''}
@@ -2912,29 +2967,45 @@ function fxCopy(date, btn) {
   if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done).catch(() => { prompt('Copy this', txt); }); else prompt('Copy this', txt);
 }
 /* ── Matches: every game in the Games tab, newest first ── */
+let MT_OPEN = {};
+function mtToggle(date) { MT_OPEN[date] = !MT_OPEN[date]; renderMatches(); }
+/* One played game: result and score up top, man of the match in one line, then (open) both teams side by side with each
+   player's match rating. Used on the Matches tab and for "Last game" on Home. */
+function matchCardHtml(g, open, toggle) {
+  const sc = g.b != null && g.w != null ? { black: g.b, white: g.w } : null, motm = g.motm || [], r = g.ratings || {};
+  const won = side => !sc || sc.black === sc.white ? '' : (sc[side] > sc[side === 'black' ? 'white' : 'black'] ? ' won' : ' lost');
+  const res = !sc ? 'No score' : sc.black === sc.white ? 'Draw' : `${sc.black > sc.white ? 'Black' : 'White'} won`;
+  const hasTeams = (g.black || []).length || (g.white || []).length, played = hasTeams ? g.black.length + g.white.length : (g.list || []).length;
+  const me = VOTER && VOTER.ok ? VOTER.name : '', showRt = !gateLocked(), rt = n => showRt && r[n] && r[n].n >= 2 ? r[n].avg : null;
+  const best = Object.keys(r).filter(n => rt(n) != null).sort((x, y) => r[y].avg - r[x].avg)[0];
+  const pl = n => { const p = ALL_PLAYERS.find(x => x.name === n), v = rt(n);
+    return `<div class="mc-p${motm.includes(n) ? ' motm' : ''}${n === me ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span class="mc-n">${esc(n)}${motm.includes(n) ? ' <i>★</i>' : ''}</span>${v != null ? `<b class="num${n === best ? ' hi' : ''}">${v.toFixed(1)}</b>` : ''}</div>`; };
+  const byRt = arr => arr.slice().sort((x, y) => (rt(y) ?? -1) - (rt(x) ?? -1));
+  const mp = motm.length ? ALL_PLAYERS.find(x => x.name === motm[0]) : null;
+  const pending = !motm.length && Date.now() < koOf(g) + 38 * 3600000;
+  const body = !open ? '' : `<div class="mc-body">${hasTeams
+      ? `<div class="mc-teams"><div><div class="label"><i class="gd-shirt"></i>Black${sc ? ` · ${sc.black}` : ''}</div>${byRt(g.black).map(pl).join('')}</div><div><div class="label"><i class="gd-shirt w"></i>White${sc ? ` · ${sc.white}` : ''}</div>${byRt(g.white).map(pl).join('')}</div></div>`
+      : `<div class="mc-teams one"><div>${byRt(g.list || []).map(pl).join('')}</div></div>`}
+    ${Object.keys(r).length ? `<div class="mc-foot">${gateLocked() ? `Match ratings show once you've rated ${gateNeed()} teammates.` : `Match ratings out of 10${g.raters ? ` · ${g.raters} rated` : ''}`}</div>` : ''}</div>`;
+  return `<article class="mc${open ? ' open' : ''}" id="mc-${g.date}">
+    <button class="mc-head" onclick="${toggle}">
+      <span class="mc-when"><b>${esc(dayOf(g))}</b><small>${fmtKo(g)} · ${g.size || 6}-a-side${played ? ` · ${played} played` : ''}</small></span>
+      <span class="mc-res${sc ? '' : ' none'}">${res}</span></button>
+    <div class="mc-score"><span class="side${won('black')}"><i class="gd-shirt"></i>Black</span><span class="mid num">${sc ? `${sc.black}<i>–</i>${sc.white}` : '–'}</span><span class="side w${won('white')}">White<i class="gd-shirt w"></i></span></div>
+    ${motm.length ? `<div class="mc-motm">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span class="label">Man of the match</span><b>${esc(motm.join(', '))}</b><i>★</i></div>`
+      : `<div class="mc-motm none">${pending ? 'Man of the match is decided at 11am the morning after.' : 'No man of the match.'}</div>`}
+    ${played ? `<button class="mc-more" onclick="${toggle}">${open ? 'Hide' : hasTeams ? 'Teams & ratings' : 'Who played'} <i class="fx-chev"></i></button>` : ''}
+    ${body}
+  </article>`;
+}
+/* ── Matches: every game in the Games tab, newest first ── */
 function renderMatches() {
   const el = document.getElementById('matches'); if (!el) return;
   if (!RATINGS || !RATINGS.ok) { el.innerHTML = `<div class="loading">Loading…</div>`; return; }
   const now = Date.now(), games = (RATINGS.games || []).filter(g => koOf(g) <= now).sort((a, b) => b.date.localeCompare(a.date));
   const n = document.getElementById('tab-n-matches'); if (n) n.textContent = games.length || '';
   if (!games.length) { el.innerHTML = `<div class="empty">No games yet.</div>`; return; }
-  const me = VOTER && VOTER.ok ? VOTER.name : '';
-  const pill = nm => { const p = ALL_PLAYERS.find(x => x.name === nm); return `<span class="gd-chip${nm === me ? ' me' : ''}">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}${esc(nm)}</span>`; };
-  el.innerHTML = games.map(g => {
-    const hasTeams = (g.black || []).length || (g.white || []).length, played = hasTeams ? g.black.length + g.white.length : (g.list || []).length;
-    const sc = g.b != null && g.w != null ? { black: g.b, white: g.w } : null, won = side => !sc || sc.black === sc.white ? '' : (sc[side] > sc[side === 'black' ? 'white' : 'black'] ? ' won' : ' lost');
-    const res = sc ? (sc.black === sc.white ? 'Draw' : `${sc.black > sc.white ? 'Black' : 'White'} won`) : 'No score';
-    const mp = (g.motm || []).length ? ALL_PLAYERS.find(x => x.name === g.motm[0]) : null;
-    const pending = !(g.motm || []).length && Date.now() < koOf(g) + 14 * 3600000 + 86400000;
-    return `<article class="mt">
-      <div class="mt-top"><div><b>${esc(dayOf(g))}</b><span>${fmtKo(g)} · ${g.size || 6}-a-side${played ? ` · ${played} played` : ''}</span></div><span class="mt-res">${res}</span></div>
-      <div class="gd-score"><span class="side${won('black')}"><i class="gd-shirt"></i>Black</span>${sc ? `<span class="mid num">${sc.black}<i>–</i>${sc.white}</span>` : '<span class="mid vs">–</span>'}<span class="side w${won('white')}">White<i class="gd-shirt w"></i></span></div>
-      ${(g.motm || []).length ? `<div class="mt-motm">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span><span class="label">Man of the match</span><b>${esc(g.motm.join(', '))}</b></span><i>★</i></div>`
-        : `<div class="mt-none">${pending ? 'Man of the match is decided at 11am the morning after.' : 'No man of the match.'}</div>`}
-      ${played ? `<details class="mt-more"><summary>${hasTeams ? 'Teams' : 'Who played'}</summary>${hasTeams
-        ? `<div class="gd-teams" style="margin-top:10px"><div class="gd-team"><div class="label" style="margin-bottom:4px">Black</div>${g.black.map(pill).join('')}</div><div class="gd-team"><div class="label" style="margin-bottom:4px">White</div>${g.white.map(pill).join('')}</div></div>`
-        : `<div class="gd-chips" style="margin-top:10px">${g.list.map(pill).join('')}</div>`}</details>` : ''}
-    </article>`; }).join('');
+  el.innerHTML = games.map(g => matchCardHtml(g, !!MT_OPEN[g.date], `mtToggle('${g.date}')`)).join('');
 }
 function copyGate(btn) { const code = btn.querySelector('b').textContent, small = btn.querySelector('small'); const done = () => { small.textContent = 'Copied'; setTimeout(() => small.textContent = 'Tap to copy', 1500); }; if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(done); else done(); }
 async function toggleIn(isIn) {
