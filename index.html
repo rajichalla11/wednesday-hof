@@ -491,6 +491,17 @@
   .bb-note { font-size: 11.5px; color: var(--fg-3); margin: -2px 0 2px; } .bb-pot { font-size: 12px; font-weight: 700; color: var(--gold); } .bb-who { display: inline-block; min-width: 46px; color: var(--fg-3); font-size: 11px; }
   .bb-sum, .bb-games { display: grid; } .bb-l { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; } .bb-l span { color: var(--fg-2); } .bb-l small { color: var(--fg-3); font-size: 11px; }
   .bb-sum { border-top: 1px solid var(--line); margin-top: 4px; } .bb-l.tot { border-bottom: 0; font-weight: 800; } .bb-l.tot span { color: var(--fg); } .bb-l.tot.neg b { color: #ff6b5e; } .bb-games .bb-l:last-child { border-bottom: 0; }
+  .adm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 8px 0 14px; } .adm-head h2 { margin: 0; }
+  .adm-nav { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); overflow-x: auto; }
+  .adm-nav button { position: relative; border: 0; background: none; color: var(--fg-3); font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
+  .adm-nav button.on { background: var(--fg); color: var(--bg); }
+  .adm-badge { font-style: normal; font-size: 10px; font-weight: 800; margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--gold); color: #1a1408; } .adm-badge:empty { display: none; }
+  .adm-todo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; margin-bottom: 18px; border-radius: 14px; border: 1px solid var(--gold); background: color-mix(in srgb, var(--gold) 9%, transparent); }
+  .adm-todo[hidden] { display: none; } .adm-todo .label { color: var(--gold); margin-right: 4px; }
+  .adm-todo button { border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent); background: var(--surface); color: var(--fg); font: inherit; font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+  #admin-wrap .adm-sec { border: 1px solid var(--line-2); border-radius: 16px; background: var(--surface); padding: 16px; margin: 0 0 14px !important; }
+  #admin-wrap .adm-sec[hidden] { display: none; } #admin-wrap .adm-sec > .sh { margin-bottom: 12px; } #admin-wrap .adm-sec > .sh h2 { font-size: 18px; }
+  @media (max-width: 600px) { .adm-nav { width: 100%; } .adm-nav button { flex: 1; padding: 8px 6px; } #admin-wrap .adm-sec { padding: 14px 12px; } }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
@@ -2033,7 +2044,7 @@ async function renderYou() {
       </div>
     </details>
     ${quickLinksHtml()}
-    ${v.isAdmin ? `<section><div class="sh"><h2>Game day</h2><span>Only you see this panel · the gate code only shows to players with a claimed card</span></div>
+    ${v.isAdmin ? `<section><div class="sh"><h2>Game day</h2><span>The current game: kick-off, lineup, gate code, score</span></div>
       <div class="gp">
         <div class="gp-step"><div class="gp-h"><span class="gp-n">1</span>When${v.game && v.game.date && koOf(v.game) < Date.now() ? `<button class="btn link gp-next" onclick="nextGameForm()">Set up the next game →</button>` : ''}</div>
           <div class="gp-when">
@@ -2049,19 +2060,49 @@ async function renderYou() {
           <div class="gp-score"><span class="gp-side"><i class="gd-shirt b"></i>Black</span><input id="ga-sb" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.black : ''}" placeholder="–" aria-label="Black goals"><span class="gp-dash">–</span><input id="ga-sw" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.white : ''}" placeholder="–" aria-label="White goals"><span class="gp-side"><i class="gd-shirt w"></i>White</span></div></div>
         <div class="gp-foot"><button class="btn link" onclick="saveGame(true)">Clear · no game</button><span class="muted" id="gd-admin-st"></span><button class="btn" onclick="saveGame(false)">Save game day</button></div>
       </div></section>
-    <section><div class="sh"><h2>All games</h2><span>Only you see this · fix the score, teams or who played for any game</span></div><div id="games-admin"></div></section>
-    <section><div class="sh"><h2>Top-ups</h2><span>Only you see this · new ones are picked up from the sheet automatically; add older ones here</span></div><div id="topups-admin"></div></section>
-    <section><div class="sh"><h2>Strikes</h2><span>Only you see this · a strike is dropping out of a spot within 36 hours of kick-off</span></div><div id="strikes-admin"></div></section>
-    <section><div class="sh"><h2>Man of the match</h2><span>Only you see this · the vote decides unless you pick someone</span></div><div id="motm-admin"><div class="loading">Loading…</div></div></section>
-    <section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
-    <section><div class="sh"><h2>Who voted what</h2><span>Only you can see this · votes from 14 Oct on · earlier ballots stay anonymous</span></div><div id="named-body"><div class="loading">Loading…</div></div></section>
-    <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Only you can see this · approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
-    <section><div class="sh"><h2>Starting points</h2><span>Only you can see this · what voters see as the suggested level · saves as you tap</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
-    <section><div class="sh"><h2>Self-ratings from the squad</h2><span>Only you can see this</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
+    <section><div class="sh"><h2>All games</h2><span>Fix the score, teams or who played for any game</span></div><div id="games-admin"></div></section>
+    <section><div class="sh"><h2>Top-ups</h2><span>New ones come from the sheet automatically · add older ones here</span></div><div id="topups-admin"></div></section>
+    <section><div class="sh"><h2>Strikes</h2><span>Dropping out of a spot within 36 hours of kick-off</span></div><div id="strikes-admin"></div></section>
+    <section><div class="sh"><h2>Man of the match</h2><span>The vote decides unless you pick someone</span></div><div id="motm-admin"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Site activity</h2><span>One count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Who voted what</h2><span>Votes from 14 Oct on</span></div><div id="named-body"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Starting points</h2><span>The suggested level voters see · saves as you type</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Self-ratings</h2><span>How players rated themselves</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   const aw = document.getElementById('admin-wrap');   // the admin's panels live on their own tab so Home stays short
-  if (aw) { aw.innerHTML = v.isAdmin ? '<div class="sh" style="margin-top:8px"><h2>Admin</h2><span>Only you see this tab</span></div>' : ''; if (v.isAdmin) { [...body.querySelectorAll(':scope > section')].forEach(sec => aw.appendChild(sec)); try { renderGamesAdmin(); } catch (_) {} } }
+  if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { [...body.querySelectorAll(':scope > section')].forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec); }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
   paintSelfPreview();
   if (v.isAdmin) renderAdmin(me);
+}
+/* ── Admin tab: four groups behind a segmented switch, plus a "needs you" strip of things waiting on the admin ── */
+const ADM_GROUPS = [['games', 'Games'], ['players', 'Players'], ['money', 'Money'], ['activity', 'Activity']];
+let ADM_GRP = (() => { try { return localStorage.getItem('w910_adm') || 'games'; } catch (_) { return 'games'; } })();
+function admGroupOf(sec) {
+  const has = id => !!sec.querySelector('#' + id);
+  return has('ga-teams') || has('games-admin') || has('motm-admin') ? 'games' : has('topups-admin') ? 'money' : has('activity-body') || has('named-body') ? 'activity' : 'players';
+}
+function adminShellHtml() {
+  return `<div class="adm-head"><h2>Admin</h2><div class="adm-nav" role="tablist">${ADM_GROUPS.map(([k, l]) => `<button role="tab" data-g="${k}" onclick="admShow('${k}')">${l}<i class="adm-badge" id="adm-b-${k}"></i></button>`).join('')}</div></div><div class="adm-todo" id="adm-todo"></div>`;
+}
+function admShow(g) {
+  ADM_GRP = g; try { localStorage.setItem('w910_adm', g); } catch (_) {}
+  document.querySelectorAll('.adm-nav button').forEach(b => b.classList.toggle('on', b.dataset.g === g));
+  document.querySelectorAll('#admin-wrap .adm-sec').forEach(s => s.hidden = s.dataset.grp !== g);
+}
+function admJump(g, id) { admShow(g); const el = document.getElementById(id); if (el) el.closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+/* What's waiting on the admin, worked out from what's already loaded */
+function renderAdminTodo() {
+  const el = document.getElementById('adm-todo'); if (!el) return;
+  const a = window.__ADMIN || {}, items = [], now = Date.now(), L = RATINGS && RATINGS.ok && RATINGS.last, N = RATINGS && RATINGS.ok && RATINGS.next;
+  const pend = (a.pending || []).length;
+  if (pend) items.push(['players', 'pending-body', `${pend} claim${pend === 1 ? '' : 's'} to approve`]);
+  if (L && !L.score && now > koOf(L) + 3600000) items.push(['games', 'ga-teams', `Score for ${dayOf(L)} not in yet`]);
+  if (N && N.date === todayNbo() && !N.hasGate) items.push(['games', 'ga-gate', `No gate code for tonight`]);
+  const sk = Object.keys((RATINGS && RATINGS.strikes) || {}).filter(n => RATINGS.strikes[n].length >= 3);
+  if (sk.length) items.push(['players', 'strikes-admin', `${sk.join(', ')} on 3 strikes`]);
+  el.innerHTML = items.length ? `<span class="label">Needs you</span>${items.map(([g, id, t]) => `<button onclick="admJump('${g}', '${id}')">${esc(t)} →</button>`).join('')}` : '';
+  el.hidden = !items.length;
+  const b = document.getElementById('adm-b-players'); if (b) b.textContent = pend || '';
 }
 /* Form guide: a player's recent games, newest first — result for their side, the night's average match rating, ★ if man of the match. */
 function formFor(p, limit = 8) {
@@ -2396,7 +2437,7 @@ async function renderAdmin(me) {
     return;
   }
   window.__ADMIN = a;
-  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin, renderTopupsAdmin].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
+  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin, renderTopupsAdmin, renderAdminTodo].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
   const ab = document.getElementById('activity-body');
   if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
     const seenNames = new Set(x.names.map(n => n.name.toLowerCase()));
@@ -2572,7 +2613,7 @@ function lastCardHtml(L, onclick, label) {
 function renderGameday() {
   try { renderMatches(); } catch (e) { console.error(e); }
   try { if (VOTER && VOTER.isAdmin && !document.querySelector('#games-admin .ga[open]')) renderGamesAdmin(); } catch (e) { console.error(e); }
-  try { if (VOTER && VOTER.isAdmin) renderStrikesAdmin(); } catch (e) { console.error(e); }
+  try { if (VOTER && VOTER.isAdmin) { renderStrikesAdmin(); renderAdminTodo(); } } catch (e) { console.error(e); }
   try { renderFixtures(); } catch (e) { console.error(e); }
   const el = document.getElementById('gameday'), ll = document.getElementById('lastline'); if (!el) return;
   const L = RATINGS && RATINGS.ok && ALL_PLAYERS.length ? RATINGS.last : null, now = Date.now();
