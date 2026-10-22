@@ -2706,10 +2706,10 @@ function renderFixtures() {
       <div class="fx-btns">
         ${pos >= 0 ? `<button class="btn ghost" onclick="fxOut('${f.date}', '', this)">I'm out</button>` : ''}
         ${T || nIn ? `<button class="btn ghost" onclick="openTeamMaker('${f.date}')">Team maker</button>` : ''}
-        ${me ? `<button class="btn ghost" onclick="FX_ADD = FX_ADD === '${f.date}' ? '' : '${f.date}'; renderFixtures()">+ Add</button>` : ''}
+        ${admin ? `<button class="btn ghost" onclick="FX_ADD = FX_ADD === '${f.date}' ? '' : '${f.date}'; renderFixtures()">+ Add</button>` : ''}
         <button class="btn link fx-copy" onclick="fxCopy('${f.date}', this)">Copy for WhatsApp</button>
       </div>
-      ${FX_ADD === f.date ? `<div class="fx-add"><div class="fx-add-row"><input id="fx-p-${f.date}" list="fx-names" placeholder="Add a player" autocomplete="off"><button class="btn" onclick="fxAddPlayer('${f.date}', this)">Add</button></div>
+      ${admin && FX_ADD === f.date ? `<div class="fx-add"><div class="fx-add-row"><input id="fx-p-${f.date}" list="fx-names" placeholder="Add a player" autocomplete="off"><button class="btn" onclick="fxAddPlayer('${f.date}', this)">Add</button></div>
         <div class="fx-add-row"><input id="fx-g-${f.date}" placeholder="Or a guest's name (not on the site)" autocomplete="off"><button class="btn ghost" onclick="fxAddGuest('${f.date}', this)">Add guest</button></div></div>` : ''}
       ${admin ? `<details class="fx-admin"><summary aria-label="Admin">⋯</summary><div class="fx-admin-in">${nSb && others.length ? `<select onchange="if (this.value) fxMove('${f.date}', this.value, this)"><option value="">Move standby to…</option>${others.map(o => `<option value="${o.date}">${esc(fxDay(o.date))} ${esc(o.date.slice(8))}</option>`).join('')}</select>` : ''}<button class="btn link" onclick="fxRemoveGame('${f.date}', ${f.signups.length}, this)">Remove game</button></div></details>` : ''}
     </div>`;

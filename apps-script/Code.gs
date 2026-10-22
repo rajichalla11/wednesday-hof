@@ -583,8 +583,8 @@ function nextGame_() {
 
 /* ───────── sign-ups ─────────
    Signups tab: date, ts, name, kind (player|guest), by. Order of ts is the order of the list; the first 2×size are in,
-   the rest standby, so dropping out promotes the next standby automatically. Anyone with a claimed card can add
-   themselves, another player, or a guest (shown as "via" them). Only you, whoever added you, or the admin can remove you. */
+   the rest standby, so dropping out promotes the next standby automatically. Players sign themselves up; only the admin
+   adds another player or a guest (shown as "via" whoever brought them). Only you, whoever added you, or the admin can remove you. */
 function signupsByDate_() {
   const out = {}; if (!ss_().getSheetByName('Signups')) return out;
   tab_('Signups').forEach(function (r) { const d = String(r[0]).slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return; (out[d] = out[d] || []).push({ name: String(r[2]), kind: String(r[3] || 'player'), by: String(r[4] || ''), ts: String(r[1]) }); });
@@ -604,6 +604,8 @@ function signup_(body) {
   if (!g) return { ok: false, error: 'That game is not open.' };
   if (kickoff_(g).getTime() + 3600000 < Date.now()) return { ok: false, error: 'That game has been played.' };
   let name = me, kind = 'player';
+  // Players sign up themselves only; adding someone else or a guest (+1) is for the admin
+  if ((body.guest || (body.name && String(body.name).toLowerCase() !== me.toLowerCase())) && !isAdmin_(me)) return { ok: false, error: 'You can only sign yourself up. Ask the admin to add anyone else.' };
   if (body.guest) { name = String(body.guest).replace(/\s+/g, ' ').trim().slice(0, 30); kind = 'guest'; if (!name) return { ok: false, error: 'Type the guest’s name.' }; }
   else if (body.name) { const p = players_().filter(function (x) { return x.name.toLowerCase() === String(body.name).toLowerCase(); })[0]; if (!p) return { ok: false, error: 'Unknown player.' }; name = p.name; }
   const lock = LockService.getScriptLock(); lock.waitLock(10000);

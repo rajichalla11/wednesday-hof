@@ -200,3 +200,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 - Dropping out of a spot (not standby) within 36 hours of kick-off adds a row to a new **Strikes** tab (date, ts, name, by, cleared). The admin taking someone off never counts.
 - `results.strikes` = { name: [game dates] } for uncleared strikes. Strikes only show (next to names, on your strip, max 3 shown); nothing is blocked.
 - `clearStrikes` (admin): marks all of a player's strikes cleared.
+
+## v34 · Sign yourself up only
+- `signup` with `name` (someone else) or `guest` is admin-only. Players can only add themselves.
