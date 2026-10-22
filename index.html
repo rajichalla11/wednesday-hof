@@ -459,7 +459,7 @@
   .fx-list li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 14px; } .fx-list li:last-child { border-bottom: 0; } .fx-list li.me { background: color-mix(in srgb, var(--fg) 8%, transparent); font-weight: 600; }
   .fx-n { width: 22px; color: var(--fg-3); font-size: 12px; text-align: right; } .fx-list ol.sb .fx-n { width: 0; } .fx-name { flex: 1; } .fx-name small { display: block; font-size: 11px; color: var(--fg-3); font-weight: 400; }
   .fx-x { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line-2); background: none; color: var(--fg-3); font-size: 16px; line-height: 1; cursor: pointer; } .fx-x[data-armed="1"] { width: auto; padding: 0 10px; border-radius: 999px; color: var(--neg); border-color: var(--neg); font-size: 12px; }
-  .fx-empty { font-size: 13px; color: var(--fg-3); }
+  .fx-empty { font-size: 13px; color: var(--fg-3); } .fx-name.pend { opacity: .6; }
   .fx-admin { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 10px; } .fx-admin select { height: 36px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--bg); color: var(--fg); font: inherit; padding: 0 10px; } .fx-admin .btn.link { margin-left: auto; font-size: 12px; color: var(--fg-3); }
   .fx-new { margin: 4px 2px 10px; }
   .gd-sum { display: grid; gap: 12px; } .gd-sum-row { display: flex; align-items: center; gap: 10px; } .gd-sum-row .n { font-size: 13px; color: var(--fg-2); }
@@ -2552,7 +2552,7 @@ function renderFixtures() {
     const promoted = was === 'sb' && inn;
     const nIn = Math.min(f.slots, f.signups.length), nSb = Math.max(0, f.signups.length - f.slots), left = f.slots - nIn;
     const row = (x, i, isSb) => { const canRm = me && (admin || mine(x.name) || (x.by && mine(x.by)));
-      return `<li class="${mine(x.name) ? 'me' : ''}"><span class="fx-n">${isSb ? '' : i + 1 + '.'}</span><span class="fx-name">${esc(x.name)}${x.kind === 'guest' ? `<small>guest${x.by ? ` · via ${esc(x.by)}` : ''}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</li>`; };
+      return `<li class="${mine(x.name) ? 'me' : ''}"><span class="fx-n">${isSb ? '' : i + 1 + '.'}</span><span class="fx-name${x.pending ? ' pend' : ''}">${esc(x.name)}${x.kind === 'guest' ? `<small>guest${x.by ? ` · via ${esc(x.by)}` : ''}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</li>`; };
     const others = fx.filter(o => o.date !== f.date);
     return `<article class="fx" id="fx-${f.date}">
       <div class="fx-top"><div><b>${esc(fxDay(f.date))} ${esc(dayOf(f).replace(/^\w+\s/, ''))}</b><span>${fxSpan(f)} · ${f.size}-a-side${f.teams ? ' · teams made' : ''}</span></div>
@@ -2574,19 +2574,34 @@ function renderFixtures() {
     </article>`; }).join('') + (admin ? `<details class="fx-new"><summary>+ Open a game for sign-ups</summary><div class="fx-add-row" style="margin-top:10px"><input type="date" id="fx-new-d"><input type="time" id="fx-new-t" value="21:00"><select id="fx-new-s">${[5,6,7,8,9,10,11].map(n => `<option value="${n}" ${n === 6 ? 'selected' : ''}>${n}-a-side</option>`).join('')}</select><button class="btn" onclick="fxNewGame(this)">Open</button></div></details>` : '')
     + `<datalist id="fx-names">${ALL_PLAYERS.map(p => `<option value="${esc(p.name)}">`).join('')}</datalist>`;
 }
-async function fxCall(body, btn, date) {
-  if (btn) { btn.disabled = true; btn.dataset.l = btn.textContent; btn.textContent = '…'; }
-  let res; try { res = await api(null, Object.assign({ t: TOKEN }, body)); } catch (e) { res = { ok: false, error: e.message }; }
-  if (btn) { btn.disabled = false; btn.textContent = btn.dataset.l; }
-  FX_MSG = {};
-  if (!res.ok) {   // Google sometimes answers a save with an error page even though it went through: check the list before saying so
-    const benign = /already on the list|Not on that list/.test(res.error || '');
-    RATINGS_AT = 0; await fetchResults(); renderGameday();
-    if (!benign) { FX_MSG[date || body.date || ''] = res.error || 'Could not save'; renderFixtures(); }
-    return res;
+/* Taps change the list on screen straight away; the save runs in the background and the list is put back only if it truly failed. */
+function fxOptimistic(body) {
+  const fx = RATINGS && RATINGS.fixtures; if (!fx) return;
+  const f = fx.find(x => x.date === body.date); if (!f) return;
+  const me = VOTER && VOTER.ok ? VOTER.name : '';
+  if (body.action === 'signup') {
+    const name = body.guest ? body.guest : body.name || me, kind = body.guest ? 'guest' : 'player', by = (body.guest || (body.name && body.name !== me)) ? me : '';
+    if (!f.signups.some(x => x.name.toLowerCase() === name.toLowerCase())) f.signups.push({ name, kind, by, pending: true });
+  } else if (body.action === 'withdraw') {
+    const n = (body.name || me).toLowerCase(); f.signups = f.signups.filter(x => x.name.toLowerCase() !== n);
   }
-  if (RATINGS && res.fixtures) RATINGS.fixtures = res.fixtures;
-  renderFixtures(); RATINGS_AT = 0; fetchResults().then(() => { renderGameday(); });   // the game strip and lineup follow the list
+}
+let FX_BUSY = 0;
+async function fxCall(body, btn, date) {
+  const snap = JSON.stringify((RATINGS && RATINGS.fixtures) || []), quick = body.action === 'signup' || body.action === 'withdraw';
+  FX_MSG = {};
+  if (quick) { fxOptimistic(body); renderFixtures(); }
+  else if (btn) { btn.disabled = true; btn.dataset.l = btn.textContent; btn.textContent = '…'; }
+  FX_BUSY++;
+  let res; try { res = await api(null, Object.assign({ t: TOKEN }, body)); } catch (e) { res = { ok: false, error: e.message }; }
+  FX_BUSY--;
+  if (!quick && btn && btn.isConnected) { btn.disabled = false; btn.textContent = btn.dataset.l; }
+  if (res.ok) { if (RATINGS && res.fixtures && !FX_BUSY) RATINGS.fixtures = res.fixtures; renderFixtures(); RATINGS_AT = 0; fetchResults().then(() => { if (!FX_BUSY) renderGameday(); }); return res; }
+  // Google sometimes answers a save with an error page even though it went through: check the list before saying so
+  const benign = /already on the list|Not on that list/.test(res.error || '');
+  if (!benign && RATINGS) RATINGS.fixtures = JSON.parse(snap);
+  RATINGS_AT = 0; await fetchResults(); renderGameday();
+  if (!benign) { FX_MSG[date || body.date || ''] = res.error || 'Could not save'; renderFixtures(); }
   return res;
 }
 function fxIn(date, btn) { if (!TOKEN) return openClaim(); fxCall({ action: 'signup', date }, btn, date); }
