@@ -474,7 +474,7 @@
   .fx-stat { font-size: 13.5px; font-weight: 600; color: var(--fg-2); } .fx-stat.full { color: var(--gold); }
   .fx-tag { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; background: var(--fg); color: var(--bg); }
   .fx-go { min-height: 40px; padding: 0 22px; }
-  .fx-body { display: grid; gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .fx-body .fx-list li { padding: 6px 12px; } .fx-body { display: grid; gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
   .fx-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .fx-teams > div { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; } .fx-teams .label { display: flex; align-items: center; gap: 6px; }
   details.fx-admin { display: block; border-top: 0; padding-top: 0; } details.fx-admin summary { list-style: none; cursor: pointer; width: 36px; height: 28px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line-2); color: var(--fg-3); font-size: 16px; line-height: 1; margin-left: auto; }
   details.fx-admin summary::-webkit-details-marker { display: none; } .fx-admin-in { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; } .fx-admin-in select { height: 36px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--fg); padding: 0 10px; font: inherit; font-size: 13px; }
@@ -485,7 +485,7 @@
   .nx-gate, .fx-body .gd-gate { width: 100%; margin: 0; }
   /* Last game, one line */
   .ll { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 16px; margin: 4px 0 14px; border: 1px solid var(--line-2); border-radius: 14px; background: var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
-  .ll .label { flex: none; } .ll-t { flex: 1; min-width: 0; font-size: 13.5px; color: var(--fg-2); } .ll-t b { color: var(--gold); font-weight: 700; white-space: nowrap; }
+  .ll-in { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; } .ll-t { font-size: 14px; color: var(--fg); font-weight: 600; } .ll-t b { color: var(--gold); font-weight: 700; white-space: nowrap; }
   .ll.open { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; } #lastgame { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; border-top: 0; margin-bottom: 14px; }
   /* Straight after a game, rating takes over the top of Home */
   .gd[data-phase="post"] { border-color: var(--gold); box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 40%, transparent), 0 10px 40px -12px color-mix(in srgb, var(--gold) 45%, transparent); }
@@ -2481,7 +2481,7 @@ function renderGameday() {
   else { el.hidden = true; el.innerHTML = ''; }
   if (!ll) return;
   if (ph !== 'final') { ll.innerHTML = ''; return; }
-  ll.innerHTML = `<button class="ll${LAST_OPEN ? ' open' : ''}" onclick="lastToggle()"><span class="label">Last game</span><span class="ll-t">${esc(dayOf(L))}${L.score ? ` · ${resultTxt(L.score)}` : ''}${(L.motm || []).length ? ` · <b>★ ${esc(L.motm.join(', '))}</b>` : ''}</span><i class="fx-chev"></i></button>${LAST_OPEN ? '<section class="gd open" id="lastgame"></section>' : ''}`;
+  ll.innerHTML = `<button class="ll${LAST_OPEN ? ' open' : ''}" onclick="lastToggle()"><span class="ll-in"><span class="label">Last game · ${esc(dayOf(L))}</span><span class="ll-t">${L.score ? resultTxt(L.score) : 'Full time'}${(L.motm || []).length ? ` · <b>★ ${esc(L.motm.join(', '))}</b>` : ''}</span></span><i class="fx-chev"></i></button>${LAST_OPEN ? '<section class="gd open" id="lastgame"></section>' : ''}`;
   if (LAST_OPEN) paintGame(document.getElementById('lastgame'), { g: L, ph: 'final' }, true, 'lastToggle()');
 }
 /* The full view of one game (result, lineup, ratings board); Home opens it from the rate panel or the last-game line. */
@@ -2552,7 +2552,7 @@ function paintGame(el, view, open, toggleFn) {
       <div class="gd-top"><span class="gd-dot"></span><span class="label">${ph === 'live' ? 'Live' : ph === 'post' ? 'Results' : 'Wednesday 9–10'}</span>${ph === 'post' && closes > now ? `<span class="label gd-closes">Closes in ${fmtLeft(closes - now)}</span>` : ''}</div>
       <div class="gd-row"><div><div class="gd-title">${head[0]}</div><div class="gd-sub">${head[1]}</div></div><div class="gd-count num">${head[2]}<small>${head[3]}</small></div></div>
       ${gate}
-    </div>${foot.includes('gd-last') ? foot : ''}${motmSec}${scoreOnly}${actionSec}${GD_OPEN ? lineupSec + standbySec + storySec + boardSec : ''}${pre ? summarySecX : ''}`;
+    </div>${foot.includes('gd-last') ? foot : ''}${motmSec}${scoreOnly}${actionSec}${GD_OPEN ? lineupSec + standbySec + storySec + boardSec : ''}${pre ? summarySecX : `<div class="gd-sec gd-sum"><div class="gd-btns">${toggle}</div></div>`}`;
 }
 /* ── Team maker: drag the next game's players between two halves of a pitch. Only on this device (localStorage per game). ── */
 let TM = null;
