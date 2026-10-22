@@ -189,3 +189,9 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 - Admin: move one game's standby onto another game's list, remove a game, and `importList` to load a list taken elsewhere.
 - **Copy for WhatsApp** produces the usual "Monday 9-10pm / 1. … / Standby:" text with a sign-up link (`/#in`).
 
+## Editing any game (Version 32)
+
+- Admin tab → **All games** lists every game (newest first). Each opens to edit kick-off, format, the teams (BLACK / WHITE paste) or a plain list of who played, and the score. `editGame` rewrites that Games row (keeping its man-of-the-match pick) and, if it's the game in Settings, updates the game-day settings too.
+- A lineup entered by the admin wins over sign-ups for that game (`allGames_`).
+- Sign-up taps update the list on screen immediately and save in the background (reverting only if the save really failed).
+

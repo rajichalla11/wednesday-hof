@@ -169,6 +169,7 @@ function doPost(e) {
     if (body.action === 'removeFixture') return json_(removeFixture_(body));
     if (body.action === 'moveStandby') return json_(moveStandby_(body));
     if (body.action === 'importList') return json_(importList_(body));
+    if (body.action === 'editGame') return json_(editGame_(body));
     if (body.action === 'unrate') return json_(unrate_(body));
     if (body.action === 'photo') return json_(photo_(body));
     if (body.action === 'approve') return json_(approve_(body));
@@ -564,7 +565,8 @@ function allGames_() {
     out.push({ date: d, time: String(r[5] || '21:00').slice(0, 5) || '21:00', gate: '', teams: b.length || w.length ? { black: b, white: w } : null, score: r[3] === '' || r[4] === '' ? null : { black: Number(r[3]), white: Number(r[4]) }, list: split(r[6]), standby: [], size: Number(r[7]) || 6 });
   });
   const su = signupsByDate_();
-  out.forEach(function (g) { const list = su[g.date]; if (!list || !list.length) return; const slots = 2 * (g.size || 6);   // sign-ups on the site are the list: first come, first in; the rest are standby
+  out.forEach(function (g) { const list = su[g.date]; if (!list || !list.length || (g.list && g.list.length)) return;   // a lineup the admin entered for the game wins over sign-ups
+    const slots = 2 * (g.size || 6);   // sign-ups on the site are the list: first come, first in; the rest are standby
     g.list = list.slice(0, slots).map(function (x) { return x.name; }); g.standby = list.slice(slots).map(function (x) { return x.name; }); });
   return out;
 }
@@ -648,6 +650,27 @@ function removeFixture_(body) {
   for (let i = data.length - 1; i >= 1; i--) if (String(data[i][0]).slice(0, 10) === date && !String(data[i][1]) && !String(data[i][2]) && data[i][3] === '') sh.deleteRow(i + 1);
   bust_('Games');
   return { ok: true, fixtures: fixturesPublic_() };
+}
+/** Admin: fix any game, past or upcoming: kick-off, format, teams or who played, and the score. */
+function editGame_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? String(body.date) : ''; if (!date) return { ok: false, error: 'Which game?' };
+  const time = /^\d{1,2}:\d{2}$/.test(String(body.time || '')) ? ('0' + body.time).slice(-5) : '21:00', size = Math.max(4, Math.min(11, parseInt(body.size, 10) || 6));
+  const teams = { black: cleanTeam_((body.teams || {}).black), white: cleanTeam_((body.teams || {}).white) }, list = cleanTeam_(body.list);
+  const b = parseInt(body.scoreBlack, 10), w = parseInt(body.scoreWhite, 10), score = !isNaN(b) && !isNaN(w) ? { black: b, white: w } : null;
+  const sh = sheet_('Games'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'black', 'white', 'black_goals', 'white_goals', 'time', 'list', 'size', 'motm']);
+  const row = [teams.black.join(', '), teams.white.join(', '), score ? score.black : '', score ? score.white : '', "'" + time, list.join(', '), size];
+  const data = sh.getDataRange().getValues(); let at = -1;
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date) { at = i + 1; break; }
+  if (at < 0) { sh.appendRow(["'" + date].concat(row)); } else sh.getRange(at, 2, 1, row.length).setValues([row]);
+  bust_('Games');
+  const cur = gameInfo_();
+  if (cur.date === date) {   // keep the game-day settings in step when it's the game being set up
+    setSetting_('game_time', "'" + time); setSetting_('game_size', size);
+    setSetting_('game_teams', teams.black.length || teams.white.length || list.length ? JSON.stringify({ black: teams.black, white: teams.white, list: list, standby: cur.standby || [] }) : '');
+    setSetting_('game_score', score ? "'" + score.black + '-' + score.white : '');
+  }
+  return { ok: true, games: gamesPublic_() };
 }
 /** Admin: load a list that was taken on WhatsApp, in order: entries [{ name, kind, by }]. Names already on the list are skipped. */
 function importList_(body) {

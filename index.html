@@ -565,6 +565,11 @@
   .seed-sub .ss-t span { font-size: 10px; letter-spacing: .05em; padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); } .seed-sub .ss-t b { color: var(--fg); }
   .act { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
   .act > div { background: var(--surface); padding: 12px 14px; } .act b { font-size: 24px; display: block; line-height: 1; } .act .label { margin-top: 6px; } .act small { display: block; color: var(--fg-3); font-size: 11px; margin-top: 4px; }
+  .ga-list { display: grid; gap: 8px; }
+  .ga { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  .ga > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; flex-wrap: wrap; } .ga > summary::-webkit-details-marker { display: none; }
+  .ga > summary b { font-size: 14px; } .ga > summary span { font-size: 12px; color: var(--fg-3); flex: 1; } .ga > summary i { font-style: normal; font-size: 12px; font-weight: 600; color: var(--fg-2); } .ga[open] > summary i { color: var(--fg-3); }
+  .ga-body { padding: 0 14px 14px; } .ga[open] { border-color: var(--line-2); }
   .mo-list { display: grid; gap: 10px; } .mo-row { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); display: grid; gap: 10px; }
   .mo-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 14px; } .mo-head .muted { font-size: 12px; } .mo-st { margin-left: auto; }
   .mo-votes { display: flex; flex-wrap: wrap; gap: 6px; } .mo-votes span { font-size: 12px; padding: 3px 9px; border: 1px solid var(--line-2); border-radius: 999px; } .mo-votes b { color: var(--gold); font-weight: 700; } .mo-votes i { font-style: normal; color: var(--fg-3); }
@@ -1996,6 +2001,7 @@ async function renderYou() {
           <div class="gp-score"><span class="gp-side"><i class="gd-shirt b"></i>Black</span><input id="ga-sb" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.black : ''}" placeholder="–" aria-label="Black goals"><span class="gp-dash">–</span><input id="ga-sw" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.white : ''}" placeholder="–" aria-label="White goals"><span class="gp-side"><i class="gd-shirt w"></i>White</span></div></div>
         <div class="gp-foot"><button class="btn link" onclick="saveGame(true)">Clear · no game</button><span class="muted" id="gd-admin-st"></span><button class="btn" onclick="saveGame(false)">Save game day</button></div>
       </div></section>
+    <section><div class="sh"><h2>All games</h2><span>Only you see this · fix the score, teams or who played for any game</span></div><div id="games-admin"></div></section>
     <section><div class="sh"><h2>Man of the match</h2><span>Only you see this · the vote decides unless you pick someone</span></div><div id="motm-admin"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Site activity</h2><span>Only you can see this · one count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Who voted what</h2><span>Only you can see this · votes from 14 Oct on · earlier ballots stay anonymous</span></div><div id="named-body"><div class="loading">Loading…</div></div></section>
@@ -2190,6 +2196,41 @@ async function freeClaim(btn) {
   if (!res.ok) { btn.disabled = false; btn.dataset.armed = ''; btn.textContent = res.error || 'Failed'; return; }
   btn.closest('tr').remove(); RATINGS_AT = 0; fetchResults(); refreshAdmin(true);
 }
+/* Admin: every game in one list, each editable — kick-off, format, teams (or who played) and the score. */
+let GA_OPEN = '';
+function renderGamesAdmin() {
+  const el = document.getElementById('games-admin'); if (!el) return;
+  const games = ((RATINGS && RATINGS.ok && RATINGS.games) || []).slice().sort((a, b) => b.date.localeCompare(a.date));
+  if (!games.length) { el.innerHTML = `<div class="empty">No games yet.</div>`; return; }
+  el.innerHTML = `<div class="ga-list">${games.map(g => {
+    const hasT = (g.black || []).length || (g.white || []).length, n = hasT ? g.black.length + g.white.length : (g.list || []).length;
+    const sc = g.b != null && g.w != null ? `Black ${g.b}–${g.w} White` : 'No score', future = koOf(g) > Date.now();
+    const text = hasT ? teamsToText({ black: g.black, white: g.white }) : (g.list || []).map((x, i) => `${i + 1}. ${x}`).join('\n');
+    return `<details class="ga" data-date="${g.date}" ${GA_OPEN === g.date ? 'open' : ''} ontoggle="if (this.open) GA_OPEN = this.dataset.date">
+      <summary><b>${esc(dayOf(g))}</b><span>${future ? 'Upcoming' : sc} · ${g.size || 6}-a-side${n ? ` · ${n} ${future ? 'in' : 'played'}` : ''}</span><i>Edit</i></summary>
+      <div class="ga-body">
+        <div class="gp-when" style="grid-template-columns:1fr 1fr">
+          <label class="gp-f"><span>Kick-off</span><input type="time" id="ga-t-${g.date}" value="${esc(g.time || '21:00')}"></label>
+          <label class="gp-f"><span>Format</span><select id="ga-s-${g.date}" onchange="gaPreview('${g.date}')">${[5,6,7,8,9,10,11].map(k => `<option value="${k}" ${k === (g.size || 6) ? 'selected' : ''}>${k}-a-side</option>`).join('')}</select></label>
+        </div>
+        <label class="gp-f" style="margin-top:10px"><span>Teams or who played</span></label>
+        <textarea class="gp-ta" id="ga-x-${g.date}" rows="7" spellcheck="false" oninput="gaPreview('${g.date}')" placeholder="*BLACK        WHITE*&#10;Priyam.       Raj&#10;&#10;or a numbered list of who played">${esc(text)}</textarea>
+        <div class="ga-preview" id="ga-p-${g.date}">${lineupPreviewHtml(hasT ? { teams: { black: g.black, white: g.white } } : { list: g.list || [] }, g.size || 6)}</div>
+        <div class="gp-score" style="margin-top:12px"><span class="gp-side"><i class="gd-shirt b"></i>Black</span><input id="ga-b-${g.date}" inputmode="numeric" maxlength="2" value="${g.b != null ? g.b : ''}" placeholder="–" aria-label="Black goals"><span class="gp-dash">–</span><input id="ga-w-${g.date}" inputmode="numeric" maxlength="2" value="${g.w != null ? g.w : ''}" placeholder="–" aria-label="White goals"><span class="gp-side"><i class="gd-shirt w"></i>White</span></div>
+        <div class="gp-foot" style="margin-top:12px"><span class="muted" id="ga-st-${g.date}"></span><button class="btn" onclick="gaSave('${g.date}', this)">Save</button></div>
+      </div></details>`; }).join('')}</div>`;
+}
+function gaPreview(date) { const size = Number(document.getElementById('ga-s-' + date).value) || 6, L = parseLineup(document.getElementById('ga-x-' + date).value, 99); document.getElementById('ga-p-' + date).innerHTML = lineupPreviewHtml(L.black.length || L.white.length ? { teams: { black: L.black, white: L.white } } : { list: L.list }, size); }
+async function gaSave(date, btn) {
+  const st = document.getElementById('ga-st-' + date), L = parseLineup(document.getElementById('ga-x-' + date).value, 99);   // no standby when fixing a game: everyone listed played
+  btn.disabled = true; st.textContent = 'Saving…'; GA_OPEN = date;
+  let res; try { res = await api(null, { action: 'editGame', t: TOKEN, date, time: document.getElementById('ga-t-' + date).value, size: document.getElementById('ga-s-' + date).value,
+    teams: { black: L.black, white: L.white }, list: L.black.length || L.white.length ? [] : L.list, scoreBlack: document.getElementById('ga-b-' + date).value.trim(), scoreWhite: document.getElementById('ga-w-' + date).value.trim() }); } catch (e) { res = { ok: false, error: e.message }; }
+  btn.disabled = false;
+  if (!res.ok) { RATINGS_AT = 0; await fetchResults(); const g = (RATINGS.games || []).find(x => x.date === date); st.textContent = g ? 'Saved' : (res.error || 'Failed'); renderGamesAdmin(); return; }
+  st.textContent = 'Saved'; if (RATINGS && res.games) RATINGS.games = res.games;
+  RATINGS_AT = 0; fetchResults().then(() => { renderGamesAdmin(); renderGameday(); renderPlayers(); const s2 = document.getElementById('ga-st-' + date); if (s2) s2.textContent = 'Saved'; });
+}
 let NAMED_FOR = '';
 function renderNamed(pick) {
   const a = window.__ADMIN, el = document.getElementById('named-body'); if (!a || !el) return;
@@ -2227,7 +2268,7 @@ async function renderAdmin(me) {
     return;
   }
   window.__ADMIN = a;
-  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
+  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
   const ab = document.getElementById('activity-body');
   if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
     const seenNames = new Set(x.names.map(n => n.name.toLowerCase()));
