@@ -488,6 +488,7 @@
   .bb { display: grid; gap: 8px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
   .bb-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; } .bb-top b { font-size: 18px; } .bb-top small { font-size: 12.5px; color: var(--fg-3); }
   .bb-tu { display: flex; gap: 6px 12px; flex-wrap: wrap; font-size: 12px; color: var(--fg-3); }
+  .bb-pot { font-size: 12px; font-weight: 700; color: var(--gold); } .bb-who { display: inline-block; min-width: 46px; color: var(--fg-3); font-size: 11px; }
   .bb-sum, .bb-games { display: grid; } .bb-l { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; } .bb-l span { color: var(--fg-2); } .bb-l small { color: var(--fg-3); font-size: 11px; }
   .bb-sum { border-top: 1px solid var(--line); margin-top: 4px; } .bb-l.tot { border-bottom: 0; font-weight: 800; } .bb-l.tot span { color: var(--fg); } .bb-l.tot.neg b { color: #ff6b5e; } .bb-games .bb-l:last-child { border-bottom: 0; }
   /* Your next game */
@@ -1986,12 +1987,12 @@ async function renderYou() {
   const r = RATINGS && RATINGS.ok ? (RATINGS.players[me.name] || { n:0 }) : { n:0 };
   const queue = ALL_PLAYERS.filter(p => canRate(me, p, v));
   const done = queue.filter(p => v.mine[p.name]).length;
-  const known = me.balance !== null && !isNaN(me.balance);
-  const balStatus = !known ? 'Not recorded' : me.balance < 0 ? 'Owing to the pot' : me.balance > 0 ? 'In credit' : 'Settled';
+  const pot = potOf(me), bal = pot.holder.balance, known = bal !== null && !isNaN(bal);
+  const balStatus = !known ? 'Not recorded' : pot.shared ? `Shared with ${pot.members.filter(p => p !== me).map(p => p.name.split(' ')[0]).join(' & ')}` : bal < 0 ? 'Owing to the pot' : bal > 0 ? 'In credit' : 'Settled';
   const ms = milestoneFor(me);
   SELF = { values: Object.assign({}, v.self ? v.self.stats : (v.seeds && v.seeds[me.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{})), traits: v.self ? v.self.traits.slice() : [], note: v.self ? v.self.note : '' };
   const at = document.getElementById('tab-admin'); if (at) at.hidden = !v.isAdmin;
-  body.innerHTML = meStripHtml(me, v, { known, balStatus, ms, done, queue }) + `
+  body.innerHTML = meStripHtml(me, v, { known, bal, balStatus, ms, done, queue }) + `
     <div class="sh"><h2>Your card</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
     <div class="you-grid">
       <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates. ${Math.min(selfRated(), gateNeed())} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.fixed ? `Your own numbers, fixed: teammates' ${r.n} vote${r.n===1?'':'s'} set your traits, not your stats.` : r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
@@ -2104,39 +2105,52 @@ function quickLinksHtml() {
   const tile = (tab, t, sub) => `<button class="ql" onclick="showTab('${tab}')"><b>${t}</b><span>${sub}</span></button>`;
   return `<div class="ql-row">${tile('hall', 'Players', `${ALL_PLAYERS.length} cards`)}${tile('matches', 'Matches', games ? `${games} played` : 'Scores')}${tile('records', 'Records', `${(typeof RECORDS !== 'undefined' && RECORDS.length) || ''} records`.trim())}</div>`;
 }
+/* Brothers who share one pot: the second name's games are paid from the first name's balance (their own balance cell just
+   names the brother). A partner whose row has its own non-zero balance has gone back to their own pot. Keep in step with POTS_ in Code.gs. */
+const SHARED_POTS = { 'Dhruv': 'Rahul', 'Tushar': 'Tanuj', 'Meeral': 'Ajul', 'Saurabh': 'Sid', 'Uday': 'Ashish' };
+const hasOwnBal = p => p.balance !== null && !isNaN(p.balance) && p.balance !== 0;
+function potOf(me) {
+  const hn = SHARED_POTS[me.name], holder = hn && !hasOwnBal(me) ? ALL_PLAYERS.find(p => p.name === hn) || me : me;
+  const members = [holder, ...ALL_PLAYERS.filter(p => SHARED_POTS[p.name] === holder.name && !hasOwnBal(p))];
+  return { holder, members, shared: members.length > 1 };
+}
 /* What makes up your balance: paid in, minus each game's fee, minus anything carried over; whatever is left over in the
    sheet's own sum shows as an adjustment so the lines always add up to the balance shown. Top-ups come from the backend,
    which notices when the paid-in total goes up. */
 function balBreakHtml(me, v) {
-  const games = (me.fees || []).map((f, i) => ({ f, s: SESSIONS[i] })).filter(x => x.f > 0), fees = games.reduce((t, x) => t + x.f, 0);
-  const adj = Math.round((me.paid || 0) - fees - (me.owing || 0) - me.balance);
+  const pot = potOf(me), H = pot.holder, sum = a => a.reduce((t, x) => t + x, 0);
+  const gamesOf = p => (p.fees || []).map((f, i) => ({ f, s: SESSIONS[i], who: p.name })).filter(x => x.f > 0);
+  const per = pot.members.map(p => ({ p, g: gamesOf(p) })), games = per.flatMap(x => x.g).sort((a, b) => ((a.s && a.s.date) || 0) - ((b.s && b.s.date) || 0));
+  const fees = sum(games.map(x => x.f)), paid = sum(pot.members.map(p => p.paid || 0)), owing = sum(pot.members.map(p => p.owing || 0));
+  const adj = Math.round(paid - fees - owing - H.balance);
   const line = (l, n, cls) => `<div class="bb-l${cls ? ' ' + cls : ''}"><span>${l}</span><b class="num">${n}</b></div>`;
-  const tu = (v && v.topups) || { list: [] }, last = tu.list[0], d = ts => new Date(ts).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short', year: 'numeric' });
+  const tu = (v && (H !== me ? v.potTopups : v.topups)) || { list: [] }, last = tu.list[0], d = ts => new Date(ts).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short', year: 'numeric' });
   const since = tu.since ? new Date(tu.since).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short' }) : '';
   const recent = games.slice(-8).reverse();
   return `<div class="bb" id="bal-break" hidden>
     <div class="bb-top">${last ? `<span class="label">Last top-up</span><b class="num">${kes(last.amount)}</b><small>${esc(d(last.ts))}</small>` : `<span class="label">Last top-up</span><small>${since ? `None since ${esc(since)}, when top-ups started being tracked` : 'Top-ups show here once you pay in'}</small>`}</div>
     ${tu.list.length > 1 ? `<div class="bb-tu">${tu.list.slice(1, 5).map(x => `<span>${kes(x.amount)} · ${esc(d(x.ts))}</span>`).join('')}</div>` : ''}
+    ${pot.shared ? `<div class="bb-pot">Shared pot · ${pot.members.map(p => esc(p.name)).join(' & ')}</div>` : ''}
     <div class="bb-sum">
-      ${line('Paid in', kes(me.paid || 0))}
-      ${line(`Games · ${games.length}`, '− ' + kes(fees))}
-      ${me.owing ? line('Carried over from before', '− ' + kes(me.owing)) : ''}
+      ${line(pot.shared ? 'Paid in (shared)' : 'Paid in', kes(paid))}
+      ${pot.shared ? per.map(x => line(`${esc(x.p.name)}'s games · ${x.g.length}`, '− ' + kes(sum(x.g.map(y => y.f))))).join('') : line(`Games · ${games.length}`, '− ' + kes(fees))}
+      ${owing ? line('Carried over from before', '− ' + kes(owing)) : ''}
       ${adj ? line('Other adjustments', (adj > 0 ? '− ' : '+ ') + kes(Math.abs(adj))) : ''}
-      ${line('Balance', kes(me.balance), 'tot' + (me.balance < 0 ? ' neg' : ''))}
+      ${line('Balance', kes(H.balance), 'tot' + (H.balance < 0 ? ' neg' : ''))}
     </div>
-    ${recent.length ? `<div class="label" style="margin-top:12px">Recent games</div><div class="bb-games">${recent.map(x => `<div class="bb-l"><span>${esc(x.s && x.s.date ? x.s.date.toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short' }) : (x.s && x.s.label) || '')}${x.f >= 600 ? ' <small>with a +1</small>' : ''}</span><b class="num">${kes(x.f)}</b></div>`).join('')}</div>` : ''}
+    ${recent.length ? `<div class="label" style="margin-top:12px">Recent games</div><div class="bb-games">${recent.map(x => `<div class="bb-l"><span>${pot.shared ? `<small class="bb-who">${esc(x.who.split(' ')[0])}</small> ` : ''}${esc(x.s && x.s.date ? x.s.date.toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short' }) : (x.s && x.s.label) || '')}${x.f >= 600 ? ' <small>with a +1</small>' : ''}</span><b class="num">${kes(x.f)}</b></div>`).join('')}</div>` : ''}
   </div>`;
 }
 /* The top of Home for a claimed player: who you are, your balance, and the one thing worth doing next. */
 function meStripHtml(me, v, o) {
-  const neg = o.known && me.balance < 0, lastG = RATINGS && RATINGS.ok && RATINGS.last, now = Date.now();
+  const bal = o.bal !== undefined ? o.bal : me.balance, neg = o.known && bal < 0, lastG = RATINGS && RATINGS.ok && RATINGS.last, now = Date.now();
   const need = gateNeed(), rated = Math.min(selfRated(), need);
   const next = gateLocked() ? `<button class="btn me-go" onclick="openBallot()">Rate ${need - rated} more teammate${need - rated === 1 ? '' : 's'} to unlock ratings<span class="me-prog"><i style="width:${need ? rated / need * 100 : 0}%"></i></span></button>`
     : v.open && o.done < o.queue.length ? `<button class="btn ghost me-go" onclick="openBallot()">Rate teammates · ${o.done} of ${o.queue.length} done</button>`
     : !photoSrc(me) ? `<button class="btn ghost me-go" onclick="document.getElementById('photo-file') && document.getElementById('photo-file').click()">Add your photo</button>` : '';
   return `<div class="me-box">
       <div class="me-top">${photo(me, 'avatar me-av')}<div class="me-id"><b>${esc(me.name)}</b><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]}</span></div>
-        <button class="me-bal${neg ? ' neg' : ''}" onclick="const b = document.getElementById('bal-break'); b.hidden = !b.hidden; this.classList.toggle('open', !b.hidden)" ${o.known ? '' : 'disabled'}><b class="num">${o.known ? kes(me.balance) : '—'}</b><span>${esc(o.balStatus)}${o.known ? ' <i class="fx-chev"></i>' : ''}</span></button></div>
+        <button class="me-bal${neg ? ' neg' : ''}" onclick="const b = document.getElementById('bal-break'); b.hidden = !b.hidden; this.classList.toggle('open', !b.hidden)" ${o.known ? '' : 'disabled'}><b class="num">${o.known ? kes(bal) : '—'}</b><span>${esc(o.balStatus)}${o.known ? ' <i class="fx-chev"></i>' : ''}</span></button></div>
       ${o.known ? balBreakHtml(me, v) : ''}
       ${strikesOf(me.name) ? `<div class="me-sk">${strikeTag(me.name)}<span>for dropping out late · ${Math.min(3, strikesOf(me.name))} of 3</span></div>` : ''}
       ${formStripHtml(me)}

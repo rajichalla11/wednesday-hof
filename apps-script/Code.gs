@@ -206,7 +206,7 @@ function me_(token) {
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name) };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
 }
 
 /* ───────── top-ups ─────────
@@ -223,6 +223,8 @@ function topupWatch_(players) {
     if (!prev) pr.setProperty('paid_since', new Date().toISOString());
   } finally { lock.releaseLock(); }
 }
+/* Brothers who share one pot: the second name's games come out of the first name's balance. Keep in step with SHARED_POTS in index.html. */
+const POTS_ = { 'dhruv': 'Rahul', 'tushar': 'Tanuj', 'meeral': 'Ajul', 'saurabh': 'Sid', 'uday': 'Ashish' };
 function topupsFor_(name) {
   const n = String(name || '').toLowerCase(), list = ss_().getSheetByName('TopUps') ? tab_('TopUps').filter(function (r) { return String(r[1]).toLowerCase() === n; }).map(function (r) { return { ts: String(r[0]), amount: Number(r[2]) || 0 }; }) : [];
   return { since: props_().getProperty('paid_since') || '', list: list.slice(-10).reverse() };
