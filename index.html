@@ -2112,9 +2112,10 @@ function quickLinksHtml() {
 /* Pots: each sheet row's money belongs to a pot. Usually that's the player's own; brothers who share one (Dhruv on Rahul's,
    Tushar on Tanuj's, Meeral on Ajul's, Saurabh on Sid's, Uday's older row on Ashish's) have the brother's name in their
    balance cell, or a zero balance on a row the brother pays for. The pot's balance is the sum of its rows' balances. */
+const BROTHERS = { 'Dhruv': 'Rahul', 'Tushar': 'Tanuj', 'Meeral': 'Ajul', 'Saurabh': 'Sid', 'Uday': 'Ashish' };   // keep in step with POTS_ in Code.gs
 function potCanon(n) { const t = String(n || '').trim(), a = ALIASES[t.toLowerCase()] || t, p = ALL_PLAYERS.find(x => x.name.toLowerCase() === a.toLowerCase()); return p ? p.name : a; }
 function potOf(me) {
-  const E = ALL_PLAYERS.flatMap(p => (p.money || []).map(m => Object.assign({}, m, { member: p.name, holder: potCanon(m.holder) })));
+  const E = ALL_PLAYERS.flatMap(p => (p.money || []).map(m => Object.assign({}, m, { member: p.name, holder: BROTHERS[p.name] && !m.bal && potCanon(m.holder) === p.name ? BROTHERS[p.name] : potCanon(m.holder) })));   // a brother's row with a zero balance is paid from the shared pot
   const mine = E.filter(e => e.member === me.name), own = mine.some(e => e.holder === me.name);
   const H = own ? me : ALL_PLAYERS.find(p => p.name === (mine[0] || {}).holder) || me;
   const entries = E.filter(e => e.holder === H.name), members = [...new Set(entries.map(e => e.member))].map(n => ALL_PLAYERS.find(p => p.name === n));
