@@ -213,3 +213,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v37 · Top-ups by hand
 - `addTopup` / `removeTopup` (admin): log a top-up with a date (rows marked "added by hand"; only those can be removed). `admin` returns `topups` (latest 60). Top-ups are now sorted by date, newest first.
+
+## v38 · Faster under load
+- `results` is cached 5 min with a 6 h stale copy; when the fresh one times out, one request rebuilds while the rest get the stale copy (no stampede). `bust_` clears both. Top-up check waits at most 0.5 s for the lock. `debugTiming()` (editor only) times each part of results.

@@ -216,7 +216,7 @@ function me_(token) {
    minutes), totals are compared with the last ones seen; a rise is logged in the TopUps tab (ts, name, amount, total).
    The first read only takes the snapshot, so nothing is invented for money paid before tracking began. */
 function topupWatch_(players) {
-  const lock = LockService.getScriptLock(); if (!lock.tryLock(3000)) return;
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(500)) return;
   try {
     const pr = props_(), prev = JSON.parse(pr.getProperty('paid_snap') || 'null'), now = {}, rows = [], ts = "'" + new Date().toISOString();
     players.forEach(function (p) { now[p.name] = p.paid || 0; if (prev && now[p.name] > (prev[p.name] || 0) + 0.5) rows.push([ts, p.name, now[p.name] - (prev[p.name] || 0), now[p.name]]); });
@@ -325,9 +325,18 @@ function claim_(body) {
 }
 
 /** Aggregated ratings: calibrated, trimmed, familiarity-weighted means. Cached 2 min. */
+/* Results are cached for 5 minutes, with a stale copy kept for 6 hours. When the fresh copy times out, one request rebuilds it
+   (about 4 s) while everyone else gets the stale copy straight away, instead of all of them rebuilding at once and queueing.
+   A write (bust_) clears both, so changes always show on the next read. */
 function results_() {
-  const cached = cache_().get('results');
+  const c = cache_(), cached = c.get('results');
   if (cached) return JSON.parse(cached);
+  const stale = c.get('results_stale');
+  if (stale && c.get('results_building')) return JSON.parse(stale);
+  if (stale) c.put('results_building', '1', 30);
+  try { return buildResults_(); } finally { c.remove('results_building'); }
+}
+function buildResults_() {
   const win = props_().getProperty('window'), open = props_().getProperty('open') === '1';
   const windows = tab_('Windows').map(function (r) { return r[0]; });
   const prevWin = windows[windows.indexOf(win) - 1] || null;
@@ -339,7 +348,7 @@ function results_() {
   out.game = gamePublic_(); out.motm = motmTally_(); out.games = gamesPublic_();
   const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_();
   out.ballots = tab_('Voters').filter(function (r) { return r[3] && String(r[5] || '') && String(r[5]) !== '0'; }).length;   // people who have voted (a voter can hold an older anonymous ballot and a newer named one, so ballot ids would count them twice)
-  cache_().put('results', JSON.stringify(out), 120);
+  const js = JSON.stringify(out); cache_().put('results', js, 300); cache_().put('results_stale', js, 21600);
   return out;
 }
 
@@ -941,7 +950,7 @@ function bust_(name) {
   SpreadsheetApp.flush();   // Sheets batches writes until the script ends; without this, a request landing in between could re-cache the old rows for 5 minutes
   const c = cache_(), meta = c.get('rows|' + name);
   if (meta) { const keys = ['rows|' + name]; for (let i = 0; i < Number(meta); i++) keys.push('rows|' + name + '|' + i); c.removeAll(keys); }
-  c.remove('results');
+  c.removeAll(['results', 'results_stale']);
 }
 
 function ss_() { return SpreadsheetApp.getActive(); }
