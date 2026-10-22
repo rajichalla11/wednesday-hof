@@ -179,3 +179,13 @@ From 14 Oct 2026, Raji chose to see who voted what, while other players still on
 - `results.games[].ratings` holds each player's average match rating for that night (players with 2+ votes). The site builds a form guide from it: the last 5 games as chips in the player's strip on Home (rating, W/D/L for their side, ★ for man of the match), and the last 8 as a table on their profile. Numbers follow the rate-10-teammates lock.
 - The site's API helper retries when Google answers with an HTML error page instead of JSON (it happens when several calls land at once), and the admin panels show a Try again button instead of hanging on Loading….
 
+## Sign-ups on the site (Version 31)
+
+Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game for sign-ups" on Home: date, kick-off, format), which adds a Games row with no lineup. Several can be open at once.
+
+- **Signups tab**: date, ts, name, kind (player | guest), by. Order by ts is the list; the first 2 × size are in, the rest standby, so when someone drops out the next standby moves up automatically (their card says "You're in now").
+- Players with a claimed card tap **I'm in** / **I'm out**, add another player ("added by …") or a guest ("guest · via …"). Only the person, whoever added them, or the admin can take someone off. No lock.
+- The list feeds the game: `allGames_()` uses sign-ups as the game's list and standby (unless teams are set), so the banner, team maker and match ratings follow it. `results.fixtures` lists open games with their sign-ups.
+- Admin: move one game's standby onto another game's list, remove a game, and `importList` to load a list taken elsewhere.
+- **Copy for WhatsApp** produces the usual "Monday 9-10pm / 1. … / Standby:" text with a sign-up link (`/#in`).
+
