@@ -216,3 +216,7 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v38 · Faster under load
 - `results` is cached 5 min with a 6 h stale copy; when the fresh one times out, one request rebuilds while the rest get the stale copy (no stampede). `bust_` clears both. Top-up check waits at most 0.5 s for the lock. `debugTiming()` (editor only) times each part of results.
+
+## v39 · Fill the attendance sheet
+- Once a game's list is full, `syncSheet_` charges KES 350 per player in the attendance sheet the way FootballGameUpdater's "Submit This Weeks List" does: a row each in **Game Log** (note "from site sign-ups") and a fee in a new dated column (`dd MMM yyyy`) in **Wednesday Group**. Runs after every sign-up, drop-out, standby move, list import or game edit, until kick-off. Late drop-outs (strikes) stay charged. Guests get a new row. A column for that date made by hand is left alone. State per game in script property `sheet_<date>`.
+- `syncSheetsDryRun()` (editor) shows what it would write; `syncAllSheets()` (editor) syncs every open game.

@@ -1162,18 +1162,22 @@ function build(text) {
     }
     if (!hasMarkers && sessionCols.length) { const wy = sessionCols.filter(s=>s.labelYear!=null); const a = wy.length ? wy[wy.length-1] : sessionCols[sessionCols.length-1]; a.anchorYear = a.labelYear ?? THIS_YEAR; }
     assignYears(sessionCols); resolveDates(sessionCols);
+    // Columns for games not played yet (the site fills them in once a list is full): charged, but not appearances yet
+    const nowT = Date.now(), upcomingCols = sessionCols.filter(c => c.date && c.date.getTime() + 22 * 3600000 > nowT);
+    for (const c of upcomingCols) sessionCols.splice(sessionCols.indexOf(c), 1);
 
     const players = [];
     for (const row of rows.slice(headerIdx+1)) {
       const colA = (row[0]||'').replace(/,/g,'').trim(), colB = (row[1]||'').trim();
       if (!colA || !colB) continue;
-      const count = parseInt(colA,10); if (isNaN(count) || count <= 0 || !isPlayer(colB)) continue;
       const amt = i => { const n = parseFloat((row[i]||'').replace(/,/g,'').trim()); return !isNaN(n) && n > 0 ? n : 0; };
-      const fees = sessionCols.map(({idx}) => amt(idx)), attendance = fees.map(f => f > 0 ? 1 : 0), inSess = new Set(sessionCols.map(c => c.idx));
+      const upcoming = upcomingCols.map(c => ({ s: c, f: amt(c.idx) })).filter(x => x.f > 0);
+      const count = parseInt(colA,10) - upcoming.length; if (isNaN(count) || count <= 0 || !isPlayer(colB)) continue;
+      const fees = sessionCols.map(({idx}) => amt(idx)), attendance = fees.map(f => f > 0 ? 1 : 0), inSess = new Set(sessionCols.concat(upcomingCols).map(c => c.idx));
       let extra = 0; for (let i = SESSION_START_COL; i < row.length; i++) if (!inSess.has(i)) extra += amt(i);   // charges in columns with no date heading
       const bal = (row[6]||'').replace(/,/g,'').trim(), balN = parseFloat(bal);
       // A balance cell holding a name (e.g. "Rahul") means this row's games come out of that player's pot
-      const money = [{ holder: bal && isNaN(balN) ? bal : colB, paid: amt(5), owing: amt(7), fees, extra, bal: isNaN(balN) ? 0 : balN }];
+      const money = [{ holder: bal && isNaN(balN) ? bal : colB, paid: amt(5), owing: amt(7), fees, extra, upcoming, bal: isNaN(balN) ? 0 : balN }];
       players.push({ name:colB, count, position:(row[2]||'').trim(), foot:(row[3]||'').trim(), photo:(row[4]||'').trim(), balance: bal ? balN : null, attendance, money });
     }
     /* Fold one row into another: sessions are OR'd so a night marked on both rows counts once; column A beyond the tracked
@@ -2178,13 +2182,14 @@ function balBreakHtml(me, v) {
   const pot = potOf(me), H = pot.holder, sum = a => a.reduce((t, x) => t + x, 0), multi = pot.members.length > 1;
   const per = pot.members.map(p => { const es = pot.entries.filter(e => e.member === p.name); return { p, g: es.flatMap(e => e.fees.map((f, i) => ({ f, s: SESSIONS[i], who: p.name })).filter(x => x.f > 0)), extra: sum(es.map(e => e.extra || 0)) }; });
   const games = per.flatMap(x => x.g).sort((a, b) => ((a.s && a.s.date) || 0) - ((b.s && b.s.date) || 0)), extra = sum(per.map(x => x.extra));
+  const up = per.flatMap(x => pot.entries.filter(e => e.member === x.p.name).flatMap(e => (e.upcoming || []).map(u => ({ f: u.f, s: u.s, who: x.p.name, up: true })))), upFees = sum(up.map(x => x.f));
   const fees = sum(games.map(x => x.f)), paid = sum(pot.entries.map(e => e.paid || 0)), owing = sum(pot.entries.map(e => e.owing || 0));
   const tOut = TRANSFERS.filter(t => pot.members.some(p => p.name === t.from)), tIn = TRANSFERS.filter(t => pot.members.some(p => p.name === t.to));
-  const adj = Math.round(paid - fees - extra - owing - sum(tOut.map(t => t.amount)) - pot.balance);
+  const adj = Math.round(paid - fees - upFees - extra - owing - sum(tOut.map(t => t.amount)) - pot.balance);
   const line = (l, n, cls) => `<div class="bb-l${cls ? ' ' + cls : ''}"><span>${l}</span><b class="num">${n}</b></div>`;
   const tu = (v && (H !== me ? v.potTopups : v.topups)) || { list: [] }, last = tu.list[0], d = ts => new Date(ts).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short', year: 'numeric' });
   const since = tu.since ? new Date(tu.since).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short' }) : '';
-  const recent = games.slice(-8).reverse();
+  const recent = up.slice().sort((a, b) => b.s.date - a.s.date).concat(games.slice(-8).reverse()).slice(0, 10);
   return `<div class="bb" id="bal-break" hidden>
     <div class="bb-top">${last ? `<span class="label">Last top-up</span><b class="num">${kes(last.amount)}</b><small>${esc(d(last.ts))}</small>` : `<span class="label">Last top-up</span><small>${since ? `None since ${esc(since)}, when top-ups started being tracked` : 'Top-ups show here once you pay in'}</small>`}</div>
     ${tu.list.length > 1 ? `<div class="bb-tu">${tu.list.slice(1, 5).map(x => `<span>${kes(x.amount)} · ${esc(d(x.ts))}</span>`).join('')}</div>` : ''}
@@ -2193,13 +2198,14 @@ function balBreakHtml(me, v) {
       ${line(multi ? 'Paid in (shared)' : 'Paid in', kes(paid))}
       ${tIn.map(t => `<div class="bb-note">incl. ${kes(t.amount)} moved over from ${esc(t.from)}</div>`).join('')}
       ${multi ? per.map(x => line(`${esc(x.p.name)}'s games · ${x.g.length}`, '− ' + kes(sum(x.g.map(y => y.f))))).join('') : line(`Games · ${games.length}`, '− ' + kes(fees))}
+      ${up.length ? line(`Coming up · ${up.length}`, '− ' + kes(upFees)) : ''}
       ${extra ? line('+1s', '− ' + kes(extra)) : ''}
       ${tOut.map(t => line(`Moved to ${esc(t.to)}`, '− ' + kes(t.amount))).join('')}
       ${owing ? line('Carried over from before', '− ' + kes(owing)) : ''}
       ${adj ? line('Other adjustments', (adj > 0 ? '− ' : '+ ') + kes(Math.abs(adj))) : ''}
       ${line('Balance', (pot.balance < 0 ? '− ' : '') + kes(pot.balance), 'tot' + (pot.balance < 0 ? ' neg' : ''))}
     </div>
-    ${recent.length ? `<div class="label" style="margin-top:12px">Recent games</div><div class="bb-games">${recent.map(x => `<div class="bb-l"><span>${multi ? `<small class="bb-who">${esc(x.who.split(' ')[0])}</small> ` : ''}${esc(x.s && x.s.date ? x.s.date.toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short' }) : (x.s && x.s.label) || '')}${x.f >= 600 ? ' <small>with a +1</small>' : ''}</span><b class="num">${kes(x.f)}</b></div>`).join('')}</div>` : ''}
+    ${recent.length ? `<div class="label" style="margin-top:12px">Recent games</div><div class="bb-games">${recent.map(x => `<div class="bb-l"><span>${multi ? `<small class="bb-who">${esc(x.who.split(' ')[0])}</small> ` : ''}${esc(x.s && x.s.date ? x.s.date.toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short' }) : (x.s && x.s.label) || '')}${x.up ? ' <small>coming up</small>' : x.f >= 600 ? ' <small>with a +1</small>' : ''}</span><b class="num">${kes(x.f)}</b></div>`).join('')}</div>` : ''}
   </div>`;
 }
 /* The top of Home for a claimed player: who you are, your balance, and the one thing worth doing next. */
