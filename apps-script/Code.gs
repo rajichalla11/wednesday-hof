@@ -668,7 +668,7 @@ function signup_(body) {
     for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date && String(data[i][2]).toLowerCase() === name.toLowerCase()) return { ok: false, error: name + ' is already on the list.' };
     sh.appendRow(["'" + date, "'" + new Date().toISOString(), name, kind, name === me && kind === 'player' ? '' : me]);
   } finally { lock.releaseLock(); }
-  bust_('Signups');
+  bust_('Signups'); syncSheetSafe_(date);
   return { ok: true, fixtures: fixturesPublic_() };
 }
 function withdraw_(body) {
@@ -689,9 +689,80 @@ function withdraw_(body) {
     }
     if (done && strike) { const st = strikeSheet_(); st.appendRow(["'" + date, "'" + new Date().toISOString(), strike, me, '']); }
   } finally { lock.releaseLock(); }
-  bust_('Signups'); if (done && strike) bust_('Strikes');
+  bust_('Signups'); if (done && strike) bust_('Strikes'); if (done) syncSheetSafe_(date);
   return done ? { ok: true, fixtures: fixturesPublic_(), strikes: strikesPublic_(), strike: strike || '' } : { ok: false, error: 'Not on that list.' };
 }
+/* ───────── fill the attendance sheet from sign-ups ─────────
+   Once a game's list is full, the people in the spots are charged in the attendance sheet the same way the sheet's own
+   "Submit This Weeks List" does it (FootballGameUpdater): a row each in Game Log (date, name, fee, note) and a fee in a new
+   dated column of Wednesday Group (header row 3, data from row 4, dates from column I; balance G = F − SUM(H:ZZ)).
+   Until kick-off it keeps both in step: someone joining from standby is added, someone leaving is taken off, except that a
+   player who dropped out of a spot within 36 hours (a strike) stays charged. After kick-off the game is left alone.
+   What was written is remembered in the script property sheet_<date>, so a column made by hand for the same date is never
+   touched (no double charge), and only rows this code wrote are ever changed. */
+const SHEET_FEE = 350, SHEET_NOTE = 'from site sign-ups';
+function sheetLabel_(date) { return Utilities.formatDate(new Date(date + 'T12:00:00+03:00'), 'Africa/Nairobi', 'dd MMM yyyy'); }
+function sheetCharges_(g) {
+  const slots = 2 * (g.size || 6), su = signupsByDate_()[g.date] || [];
+  const T = g.teams && ((g.teams.black || []).length || (g.teams.white || []).length), names = T ? (g.teams.black || []).concat(g.teams.white || []) : (g.list || []);
+  const out = [], seen = {}, add = function (n, note) { const k = String(n).toLowerCase(); if (!n || seen[k]) return; seen[k] = 1; out.push({ name: n, note: note }); };
+  names.forEach(function (n) { const x = su.filter(function (y) { return y.name.toLowerCase() === n.toLowerCase(); })[0]; add(n, x && x.kind === 'guest' ? 'guest, ' + SHEET_NOTE + (x.by ? ', via ' + x.by : '') : SHEET_NOTE); });
+  if (ss_().getSheetByName('Strikes')) tab_('Strikes').forEach(function (r) { if (String(r[0]).slice(0, 10) === g.date && r[2] && !r[4]) add(String(r[2]), SHEET_NOTE + ', dropped out late'); });
+  return { full: !!T || names.length >= slots, list: out };
+}
+function syncSheet_(date, dry) {
+  const g = allGames_().filter(function (x) { return x.date === date; })[0]; if (!g) return { ok: false, error: 'no game' };
+  if (kickoff_(g).getTime() <= Date.now()) return { ok: true, skipped: 'played' };
+  const pr = props_(), key = 'sheet_' + date, prev = JSON.parse(pr.getProperty(key) || 'null');
+  const c = sheetCharges_(g); if (!prev && !c.full) return { ok: true, skipped: 'not full' };
+  const lock = dry ? null : LockService.getScriptLock(); if (lock && !lock.tryLock(20000)) return { ok: false, error: 'busy' };
+  try {
+    const ss = SpreadsheetApp.openById(MAIN_SHEET_ID), wide = ss.getSheetByName('Wednesday Group'), log = ss.getSheetByName('Game Log');
+    if (!wide || !log) return { ok: false, error: 'sheet tabs not found' };
+    const label = sheetLabel_(date), HR = 3, FR = 4, DC = 9;
+    // the date column: ours if we made it, otherwise make one; a column for this date made by hand means hands off
+    const lastCol = wide.getLastColumn(), heads = wide.getRange(HR, 1, 1, lastCol).getDisplayValues()[0];
+    let col = -1; for (let i = DC - 1; i < heads.length; i++) if (String(heads[i]).trim() === label) col = i + 1;
+    if (dry) { const rn = wide.getRange(4, 2, wide.getLastRow() - 3, 1).getValues().map(function (r) { return String(r[0] || '').trim().toLowerCase(); }); return { dry: true, label: label, existingCol: col, prev: prev, charge: c.list.map(function (x) { return x.name + (rn.indexOf(x.name.toLowerCase()) >= 0 ? '' : ' (NEW ROW?)') + ' · ' + x.note; }) }; }
+    if (col > 0 && !prev) { pr.setProperty(key, JSON.stringify({ hands: true })); return { ok: true, skipped: 'column already there' }; }
+    if (prev && prev.hands) return { ok: true, skipped: 'column made by hand' };
+    if (col < 0) {
+      let last = DC - 1; for (let i = DC - 1; i < heads.length; i++) if (String(heads[i]).trim() !== '') last = i + 1;
+      col = last + 1; if (col > wide.getMaxColumns()) wide.insertColumnsAfter(wide.getMaxColumns(), col - wide.getMaxColumns());
+      wide.getRange(HR, col).setNumberFormat('@').setValue(label);
+      if (col > DC) wide.getRange(HR, col - 1).copyTo(wide.getRange(HR, col), SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+    }
+    // rows by name: exact, then the site's alias, then a unique prefix; anyone not there gets a new row like the sheet's script makes
+    let lastRow = wide.getLastRow(); const rowNames = wide.getRange(FR, 2, Math.max(lastRow - FR + 1, 1), 1).getValues().map(function (r) { return String(r[0] || '').trim(); });
+    const findRow = function (n) {
+      const l = n.toLowerCase(), alias = Object.keys(ALIASES_).filter(function (a) { return ALIASES_[a].toLowerCase() === l; });
+      let i = rowNames.findIndex(function (x) { return x.toLowerCase() === l; }); if (i >= 0) return FR + i;
+      i = rowNames.findIndex(function (x) { return alias.indexOf(x.toLowerCase()) >= 0; }); if (i >= 0) return FR + i;
+      const pre = rowNames.map(function (x, k) { return x.toLowerCase().indexOf(l) === 0 ? k : -1; }).filter(function (k) { return k >= 0; }); return pre.length === 1 ? FR + pre[0] : -1;
+    };
+    const want = {}; c.list.forEach(function (x) { want[x.name.toLowerCase()] = x; });
+    const had = (prev && prev.rows) || {};
+    // take off anyone no longer charged (only cells this code filled)
+    Object.keys(had).forEach(function (k) { if (!want[k]) { wide.getRange(had[k], col).clearContent(); } });
+    const rows = {};
+    c.list.forEach(function (x) {
+      let r = findRow(x.name);
+      if (r < 0) { r = ++lastRow; wide.getRange(r, 2).setValue(x.name); wide.getRange(r, 1).setFormula('=COUNT(H' + r + ':ZZ' + r + ')'); wide.getRange(r, 6).setValue(0); wide.getRange(r, 7).setFormula('=F' + r + '-SUM(H' + r + ':ZZ' + r + ')'); rowNames.push(x.name); }
+      wide.getRange(r, col).setValue(SHEET_FEE); rows[x.name.toLowerCase()] = r;
+    });
+    // Game Log: replace this code's rows for the date
+    const data = log.getDataRange().getDisplayValues();
+    for (let i = data.length - 1; i >= 1; i--) if (String(data[i][0]).trim() === label && String(data[i][3]).indexOf(SHEET_NOTE) >= 0) log.deleteRow(i + 1);
+    if (c.list.length) log.getRange(log.getLastRow() + 1, 1, c.list.length, 4).setValues(c.list.map(function (x) { return [label, x.name, SHEET_FEE, x.note]; }));
+    pr.setProperty(key, JSON.stringify({ col: label, rows: rows, at: new Date().toISOString(), n: c.list.length }));
+    return { ok: true, charged: c.list.length, label: label };
+  } finally { if (lock) lock.releaseLock(); }
+}
+function syncSheetSafe_(date) { try { return syncSheet_(date); } catch (e) { console.error('syncSheet_ ' + date + ': ' + e); return { ok: false, error: String(e) }; } }
+/** Editor only: what syncing would write, without writing anything. */
+function syncSheetsDryRun() { const out = {}; fixturesPublic_().forEach(function (f) { out[f.date] = syncSheet_(f.date, true); }); Logger.log(JSON.stringify(out, null, 1)); }
+/** Editor or admin: sync every open game now (e.g. right after deploying). */
+function syncAllSheets() { const out = {}; fixturesPublic_().forEach(function (f) { out[f.date] = syncSheetSafe_(f.date); }); Logger.log(JSON.stringify(out)); return out; }
 /* ───────── strikes ─────────
    Strikes tab: date (game), ts, name, by (who took them off), cleared. One for each late drop-out (inside 36 hours of
    kick-off, from a spot rather than standby). They only show; nothing is blocked. They stay until the admin clears them. */
@@ -750,6 +821,7 @@ function editGame_(body) {
     setSetting_('game_teams', teams.black.length || teams.white.length || list.length ? JSON.stringify({ black: teams.black, white: teams.white, list: list, standby: cur.standby || [] }) : '');
     setSetting_('game_score', score ? "'" + score.black + '-' + score.white : '');
   }
+  syncSheetSafe_(date);
   return { ok: true, games: gamesPublic_() };
 }
 /** Admin: load a list that was taken on WhatsApp, in order: entries [{ name, kind, by }]. Names already on the list are skipped. */
@@ -765,7 +837,7 @@ function importList_(body) {
     entries.forEach(function (e, k) { const name = String(e.name || '').replace(/\s+/g, ' ').trim().slice(0, 30); if (!name || have[name.toLowerCase()]) return; have[name.toLowerCase()] = 1;
       sh.appendRow(["'" + date, "'" + new Date(base + k).toISOString(), name, e.kind === 'guest' ? 'guest' : 'player', String(e.by || '').slice(0, 30)]); n++; });
   } finally { lock.releaseLock(); }
-  bust_('Signups');
+  bust_('Signups'); syncSheetSafe_(date);
   return { ok: true, added: n, fixtures: fixturesPublic_() };
 }
 /** Admin: move the standby of one game to the end of another game's list, in their order. */
@@ -781,7 +853,7 @@ function moveStandby_(body) {
     const base = Date.now();
     moving.forEach(function (x, k) { if (!already[x.name.toLowerCase()]) sh.appendRow(["'" + to, "'" + new Date(base + k).toISOString(), x.name, x.kind, x.by]); });
   } finally { lock.releaseLock(); }
-  bust_('Signups');
+  bust_('Signups'); syncSheetSafe_(from); syncSheetSafe_(to);
   return { ok: true, moved: moving.length, fixtures: fixturesPublic_() };
 }
 /** Man of the match for one night: most stars; a tie goes to the better match rating; still tied, they share it. */
