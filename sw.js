@@ -1,6 +1,6 @@
 /* Wednesday 9–10 service worker: makes the site installable as an app. Pages always come from the network first (so updates
    show straight away) and fall back to the last copy when offline. Data calls (the sheet, the backend, /api) are left alone. */
-const CACHE = 'w910-v4';
+const CACHE = 'w910-v5';
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/', '/icons/icon-192.png', '/icons/apple-touch-icon.png']).catch(() => {}))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
@@ -11,7 +11,7 @@ self.addEventListener('fetch', e => {
     // (it then offers "Tap to refresh"). No saved copy yet: wait for the network.
     e.respondWith(caches.open(CACHE).then(async c => {
       const hit = await c.match('/');
-      const net = fetch(r).then(async res => {
+      const net = fetch(r.url, { cache: 'no-cache', credentials: 'same-origin' }).then(async res => {   // past the browser's own cache
         if (res.ok) { const fresh = res.clone(), prev = await c.match('/'), old = prev ? await prev.text() : null; await c.put('/', res.clone());   // a fresh read: the copy handed to the page can't be read twice
           if (old !== null && old !== await fresh.text()) { const cs = await self.clients.matchAll({ type: 'window' }); cs.forEach(cl => cl.postMessage({ type: 'w910-update' })); } }
         return res;
