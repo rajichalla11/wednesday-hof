@@ -2,20 +2,24 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "https://rajichalla11.github.io/wednesday-hof/"
+      "destination": "/api/page"
     },
     {
-      "source": "/:path*",
-      "destination": "https://rajichalla11.github.io/wednesday-hof/:path*"
+      "source": "/index.html",
+      "destination": "/api/page"
+    },
+    {
+      "source": "/:path((?!api/).*)",
+      "destination": "https://rajichalla11.github.io/wednesday-hof/:path"
     }
   ],
   "headers": [
     {
-      "source": "/((?!api/).*)",
+      "source": "/((?!api/).+)",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=0, s-maxage=60, stale-while-revalidate=86400"
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     }

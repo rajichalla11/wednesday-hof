@@ -2611,7 +2611,7 @@ function offerPushAfterSignup() {
 /* A page left open (or a phone app) keeps the old version until it reloads: when someone comes back to it and the site has
    changed since, a small bar offers to refresh. */
 let PAGE_TAG = '';
-async function pageTag() { try { const r = await fetch(location.pathname + '?v=' + Date.now(), { method: 'HEAD', cache: 'no-store' }); return r.headers.get('etag') || r.headers.get('last-modified') || ''; } catch (_) { return ''; } }
+async function pageTag() { try { const r = await fetch('/', { method: 'HEAD', cache: 'no-store' }); return r.headers.get('etag') || r.headers.get('last-modified') || ''; } catch (_) { return ''; } }
 pageTag().then(t => { PAGE_TAG = t; });
 function showUpdateBar() { if (document.getElementById('upd-bar')) return; const b = document.createElement('button'); b.id = 'upd-bar'; b.className = 'upd-bar'; b.innerHTML = 'New version of the site <b>Tap to refresh</b>'; b.onclick = () => location.reload(); document.body.appendChild(b); }
 if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'w910-update') showUpdateBar(); });
