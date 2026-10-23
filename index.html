@@ -585,8 +585,15 @@
   .app-cta { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: 14px 0 0; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); background: linear-gradient(100deg, color-mix(in srgb, var(--gold) 14%, transparent), transparent); }
   .app-cta img { width: 40px; height: 40px; border-radius: 10px; flex: none; } .app-t { flex: 1; min-width: 0; display: flex; flex-direction: column; } .app-t b { font-size: 14.5px; } .app-t span { font-size: 12px; color: var(--fg-3); }
   .app-cta .btn { min-height: 36px; padding: 0 16px; background: var(--gold); border-color: var(--gold); color: #1a1408; font-weight: 800; } .app-x { border: 0; background: none; color: var(--fg-3); font-size: 20px; cursor: pointer; padding: 0 2px; }
-  .sheet.app-sheet { max-width: 420px; } .app-big { display: block; width: 84px; height: 84px; border-radius: 20px; margin: 4px auto 12px; }
+  .adm-view { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0 4px; } .adm-view .btn { min-height: 32px; font-size: 12.5px; padding: 0 12px; }
+  .viewas-bar { position: sticky; top: 0; z-index: 200; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 12px; background: var(--gold); color: #1a1408; font-size: 13px; font-weight: 700; }
+  .viewas-bar button { border: 0; border-radius: 999px; padding: 5px 12px; background: #1a1408; color: var(--gold); font: inherit; font-size: 12px; cursor: pointer; }
+  .sheet.app-sheet { max-width: 420px; } .app-pop { text-align: center; }
+  .app-perks { list-style: none; padding: 0; margin: 14px 0 20px; display: grid; gap: 8px; font-size: 14.5px; color: var(--fg-2); } .app-perks li::before { content: '★'; color: var(--gold); margin-right: 8px; }
+  .app-go { width: 100%; justify-content: center; min-height: 52px; font-size: 16px; font-weight: 800; background: var(--gold); border-color: var(--gold); color: #1a1408; } .app-later { margin-top: 8px; } .app-big { display: block; width: 84px; height: 84px; border-radius: 20px; margin: 4px auto 12px; }
   .app-steps { margin: 16px 0 18px; padding-left: 22px; display: grid; gap: 10px; font-size: 14.5px; line-height: 1.4; } .app-steps svg { width: 18px; height: 18px; vertical-align: -3px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .me-more { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px; padding: 8px; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--fg-2); cursor: pointer; } .me-more .fx-chev { transform: rotate(-45deg); width: 7px; height: 7px; }
+  #panel-me > #me-body { padding-top: 14px; }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
@@ -969,6 +976,7 @@
       <button class="tab" data-tab="hall"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="10" height="14" rx="2"/><path d="M10 4h8.5a2 2 0 0 1 2 2v11"/></svg><span>Players</span><small id="tab-n-hall"></small></button>
       <button class="tab" data-tab="matches"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5l3.6 2.6-1.4 4.2H9.8L8.4 10.1z"/></svg><span>Matches</span><small id="tab-n-matches"></small></button>
       <button class="tab" data-tab="history"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5.5a2.5 2.5 0 0 0 2.6 3.6M16 6h2.5a2.5 2.5 0 0 1-2.6 3.6M12 13v4M8.5 20h7M9.5 17h5"/></svg><span>History</span></button>
+      <button class="tab" data-tab="me"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.8-3.8 3.9-6 7.5-6s6.7 2.2 7.5 6"/></svg><span>Me</span></button>
       <button class="tab" data-tab="admin" id="tab-admin" hidden><svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>Admin</span></button>
     </div>
   </nav>
@@ -1036,6 +1044,7 @@
     <div class="mt-list" id="matches"><div class="loading">Loading…</div></div>
   </section>
 
+  <section class="panel" id="panel-me"><div id="me-body"></div></section>
   <section class="panel" id="panel-admin"><div id="admin-wrap"></div></section>
 
   <footer><span>Wednesday 9–10 · Nairobi</span><span id="last-updated"></span></footer>
@@ -1122,8 +1131,12 @@ let ALL_PLAYERS = [], SESSIONS = [], YEARS = [], RECORDS = [], RECORD_HOLDERS = 
 let ACTIVE_FILTER = '', CURRENT_PLAYER = null, CURRENT_SESSION = null, PLAYER_Q = '', PLAYER_VIEW = 'cards';
 try { PLAYER_VIEW = localStorage.getItem('w910_plview') === 'list' ? 'list' : 'cards'; } catch (_) {}
 let RATINGS = null, VOTER = null, PENDING_VOTE = false, BALLOT = null, TOKEN = '', BOOTED = false;
+/* Admin "View as": 'player' keeps your card but drops the admin bits; 'visitor' shows the site as someone who hasn't found their card. Only on this device; the bar at the top switches back. */
+let VIEW_AS = ''; try { VIEW_AS = localStorage.getItem('w910_viewas') || ''; } catch (_) {}
+const viewAs = v => v && v.ok && VIEW_AS === 'player' ? Object.assign({}, v, { isAdmin: false }) : v;
 const THIS_YEAR = new Date().getFullYear();
 try { TOKEN = localStorage.getItem('w910_token') || ''; } catch (_) {}
+if (VIEW_AS === 'visitor') TOKEN = '';   // in memory only: the saved link stays
 /* Site lock while the ratings are being set up. Set LOCKED to false to open the site to everyone. */
 const LOCKED = false, LOCK_CODE = 'nineten';
 let UNLOCKED = !LOCKED; try { if (localStorage.getItem('w910_unlock') === LOCK_CODE) UNLOCKED = true; } catch (_) {}
@@ -1751,11 +1764,11 @@ const writeCache = (k, v) => { try { if (v == null) localStorage.removeItem(k); 
 /* Both calls show the last answer this device saw straight away and repaint only if the fresh answer differs. */
 function fetchMe() {
   if (!ME_PROMISE) {
-    if (!VOTER) { const c = readCache('w910_me'); if (c && c.ok && c.name) VOTER = c; }
+    if (!VOTER) { const c = readCache('w910_me'); if (c && c.ok && c.name) VOTER = viewAs(c); }
     const norm = v => JSON.stringify(v && v.ok ? Object.assign({}, v, { feedback: (v.feedback || []).slice().sort() }) : v);   // feedback comes back shuffled; order is not a change
     const before = norm(VOTER);
     ME_PROMISE = api({ action:'me', t: TOKEN }).catch(e => ({ ok:false, error: e.message })).then(v => {
-      ME_PROMISE = null; VOTER = v; setTimeout(renderGameday, 0);
+      ME_PROMISE = null; VOTER = v = viewAs(v); setTimeout(renderGameday, 0);
       if (!v.ok && /recognised/i.test(v.error || '') && TOKEN) { setTimeout(deadLink, 0); return v; }   // the claim was reset: forget it and let them pick their card again
       if (v.ok && v.name) { try { localStorage.setItem('w910_name', v.name); } catch (_) {} writeCache('w910_me', v); } else if (!/^Failed to fetch|NetworkError|Load failed/.test(v.error || '')) writeCache('w910_me', null);
       if (before && before !== norm(v) && BOOTED && TOKEN && !YOU_WAITING) { renderYou(); renderBalances(); }
@@ -2068,7 +2081,8 @@ async function ensureVoter() {
 }
 async function renderYou() {
   const body = document.getElementById('you-body');
-  if (!TOKEN) { body.innerHTML = visitorHomeHtml(); const at = document.getElementById('tab-admin'); if (at) at.hidden = true; return; }
+  const meb = document.getElementById('me-body');
+  if (!TOKEN) { body.innerHTML = visitorHomeHtml(); if (meb) meb.innerHTML = visitorHomeHtml(); const at = document.getElementById('tab-admin'); if (at) at.hidden = true; return; }
   if (!VOTER || !RATINGS) {
     let cachedName = ''; try { cachedName = localStorage.getItem('w910_name') || ''; } catch (_) {}
     const cp = cachedName && ALL_PLAYERS.find(p => p.name.toLowerCase() === cachedName.toLowerCase());
@@ -2080,19 +2094,21 @@ async function renderYou() {
           <div class="stat"><b class="num">${cp.currentStreak || '—'}</b><div class="label">Current streak</div></div>
           <div class="stat"><b class="num">—</b><div class="label">Balance</div></div></div>
         <div class="loading" style="margin-top:18px">Checking your link…</div></div></div>` : `<div class="loading">Loading your page…</div>`;
+    if (meb) meb.innerHTML = body.innerHTML;
   }
   YOU_WAITING = true;
   const [v] = await Promise.all([ensureVoter(), RATINGS ? null : (RESULTS_PROMISE || fetchResults())]);
   YOU_WAITING = false;
-  if (!v || !v.ok) { body.innerHTML = `<div class="error">${esc((v && v.error) || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
+  if (!v || !v.ok) { body.innerHTML = `<div class="error">${esc((v && v.error) || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; if (meb) meb.innerHTML = body.innerHTML; return; }
   const me = pfApply(ALL_PLAYERS.find(p => p.name.toLowerCase() === v.name.toLowerCase()));
-  if (!me) { body.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; return; }
+  if (!me) { body.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; if (meb) meb.innerHTML = body.innerHTML; return; }
   if (v.pending) {
     body.innerHTML = `<div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card</span></div>
       <div class="you-grid"><div>${cardHtml(me, (RATINGS && RATINGS.ok && RATINGS.players[me.name] && RATINGS.players[me.name].stats) || null)}</div>
       <div><div class="label">Waiting for approval</div><div class="b-title" style="margin-top:8px">Claim sent.</div>
       <div class="b-copy">Each claim is approved so nobody can pick someone else's name. Once yours is, this page unlocks: your balance, the ballot and your photo. Nothing to do until then, just come back.</div>
       <div class="b-actions"><button class="btn ghost" onclick="VOTER = null; renderYou()">Check again</button><button class="btn link" data-label="Not ${esc(me.name.split(' ')[0])}? Not me" onclick="releaseClaim(this)">Not ${esc(me.name.split(' ')[0])}? Not me</button></div></div></div>`;
+    if (meb) meb.innerHTML = body.innerHTML;
     return;
   }
   const r = RATINGS && RATINGS.ok ? (RATINGS.players[me.name] || { n:0 }) : { n:0 };
@@ -2103,7 +2119,8 @@ async function renderYou() {
   const ms = milestoneFor(me);
   SELF = { values: Object.assign({}, v.self ? v.self.stats : (v.seeds && v.seeds[me.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{})), traits: v.self ? v.self.traits.slice() : [], note: v.self ? v.self.note : '' };
   const at = document.getElementById('tab-admin'); if (at) at.hidden = !v.isAdmin;
-  body.innerHTML = meStripHtml(me, v, { known, bal, balStatus, ms, done, queue }) + `
+  body.innerHTML = meStripHtml(me, v, { known, bal, balStatus, ms, done, queue });
+  meb.innerHTML = `
     <div class="sh"><h2>Your card</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
     <div class="you-grid">
       <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates. ${Math.min(selfRated(), gateNeed())} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.fixed ? `Your own numbers, fixed: teammates' ${r.n} vote${r.n===1?'':'s'} set your traits, not your stats.` : r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
@@ -2168,7 +2185,7 @@ async function renderYou() {
     <section><div class="sh"><h2>Self-ratings</h2><span>How players rated themselves</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   const aw = document.getElementById('admin-wrap');   // the admin's panels live on their own tab so Home stays short
   if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
-      [...body.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
+      [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
   paintSelfPreview();
   if (v.isAdmin) renderAdmin(me);
@@ -2336,10 +2353,12 @@ async function setProfile(k, v, btn) {
 let INSTALL_EVT = null;
 const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTALL_EVT = e; renderAppCta(); });
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTALL_EVT = e; renderAppCta(); maybeAppPop(); });
 addEventListener('appinstalled', () => { INSTALL_EVT = null; try { localStorage.setItem('w910_app', 'installed'); } catch (_) {} renderAppCta(); });
+if (VIEW_AS) addEventListener('DOMContentLoaded', () => { const b = document.createElement('div'); b.className = 'viewas-bar'; b.innerHTML = `Viewing as ${VIEW_AS === 'visitor' ? 'someone new' : 'a player'} <button onclick="setViewAs('')">Back to admin</button>`; document.body.prepend(b); });
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
-function renderAppCta() {
+function renderAppCta() { maybeAppPop(); renderAppCtaStrip(); }
+function renderAppCtaStrip() {
   const el = document.getElementById('app-cta'); if (!el) return;
   let off = ''; try { off = localStorage.getItem('w910_app') || ''; } catch (_) {}
   const snoozed = off === 'installed' || (off && Date.now() - Number(off) < 14 * 86400000);
@@ -2347,6 +2366,25 @@ function renderAppCta() {
   if (isStandalone() || snoozed || !phone || (!INSTALL_EVT && !isIOS())) { el.innerHTML = ''; return; }
   el.innerHTML = `<div class="app-cta"><img src="/icons/icon-192.png" alt=""><div class="app-t"><b>Get the app</b><span>Wednesday 9–10 on your home screen, one tap away.</span></div>
     <button class="btn" onclick="installApp()">${INSTALL_EVT ? 'Install' : 'How'}</button><button class="app-x" onclick="snoozeApp()" aria-label="Not now">×</button></div>`;
+}
+/* The first visit on a phone gets a proper pop-up, once. After that only the small strip on Home (which × hides for two weeks). */
+let APP_POP_TRIES = 0;
+function maybeAppPop() {
+  let seen = ''; try { seen = localStorage.getItem('w910_app_pop') || ''; } catch (_) {}
+  const phone = /android|iphone|ipad|ipod/i.test(navigator.userAgent) || isIOS();
+  if (seen || isStandalone() || !phone || (!INSTALL_EVT && !isIOS())) return;
+  setTimeout(() => {
+    if (document.querySelector('.overlay.open')) { if (++APP_POP_TRIES < 4) setTimeout(maybeAppPop, 15000); return; }   // never on top of another pop-up
+    try { if (localStorage.getItem('w910_app_pop')) return; localStorage.setItem('w910_app_pop', String(Date.now())); } catch (_) {}
+    let ov = document.getElementById('app-overlay');
+    if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'app-overlay'; ov.onclick = e => { if (e.target === ov) ov.classList.remove('open'); }; document.body.appendChild(ov); }
+    ov.innerHTML = `<div class="sheet app-sheet app-pop"><div class="controls"><button class="ctl" onclick="document.getElementById('app-overlay').classList.remove('open')">✕</button></div>
+      <img src="/icons/icon-192.png" alt="" class="app-big"><div class="pp-title" style="text-align:center">Get the 9–10 app</div>
+      <ul class="app-perks"><li>One tap from your home screen</li><li>Full screen, no browser bars</li><li>Sign up for games and rate faster</li></ul>
+      <button class="btn app-go" onclick="installApp()">${INSTALL_EVT ? 'Install the app' : 'Show me how'}</button>
+      <button class="btn link app-later" onclick="document.getElementById('app-overlay').classList.remove('open')">Not now</button></div>`;
+    ov.classList.add('open');
+  }, 3500);
 }
 function snoozeApp() { try { localStorage.setItem('w910_app', String(Date.now())); } catch (_) {} renderAppCta(); }
 async function installApp() {
@@ -2369,8 +2407,10 @@ function admGroupOf(sec) {
   const has = id => !!sec.querySelector('#' + id);
   return has('ga-teams') || has('games-admin') || has('motm-admin') ? 'games' : has('topups-admin') ? 'money' : has('activity-body') || has('named-body') ? 'activity' : 'players';
 }
+function setViewAs(m) { try { if (m) localStorage.setItem('w910_viewas', m); else localStorage.removeItem('w910_viewas'); localStorage.removeItem('w910_me'); } catch (_) {} location.href = location.pathname + (m ? '#home' : '#admin'); location.reload(); }
 function adminShellHtml() {
-  return `<div class="adm-head"><h2>Admin</h2><div class="adm-nav" role="tablist">${ADM_GROUPS.map(([k, l]) => `<button role="tab" data-g="${k}" onclick="admShow('${k}')">${l}<i class="adm-badge" id="adm-b-${k}"></i></button>`).join('')}</div></div><div class="adm-todo" id="adm-todo"></div>`;
+  return `<div class="adm-view"><span class="label">See the site as</span><button class="btn ghost" onclick="setViewAs('player')">A player</button><button class="btn ghost" onclick="setViewAs('visitor')">Someone new</button></div>
+    <div class="adm-head"><h2>Admin</h2><div class="adm-nav" role="tablist">${ADM_GROUPS.map(([k, l]) => `<button role="tab" data-g="${k}" onclick="admShow('${k}')">${l}<i class="adm-badge" id="adm-b-${k}"></i></button>`).join('')}</div></div><div class="adm-todo" id="adm-todo"></div>`;
 }
 function admShow(g) {
   ADM_GRP = g; try { localStorage.setItem('w910_adm', g); } catch (_) {}
@@ -2504,6 +2544,7 @@ function meStripHtml(me, v, o) {
       ${formStripHtml(me)}
       <div class="me-stats"><span><b class="num">${me.count}</b>games</span><span><b class="num">${me.currentStreak || 0}</b>in a row</span><span><b class="num">${me.gamesThisYear}</b>in ${THIS_YEAR}</span><span><b class="num">${o.ms.toGo}</b>to ${me.count < 100 ? '100' : o.ms.next}</span></div>
       ${next}${prof}
+      <button class="me-more" onclick="showTab('me')">Your card, profile and more <i class="fx-chev"></i></button>
     </div>`;
 }
 function exactRowsHtml(values) {
@@ -3346,10 +3387,10 @@ document.addEventListener('keydown', e => {
 });
 
 /* ── tabs ── */
-const TABS = ['home','hall','matches','history','admin'];
+const TABS = ['home','hall','matches','history','me','admin'];
 /* Four tabs (plus Admin for the admin). Old links still work: #you and #balances open Home; #records, #wall and #timeline
    open History on that section. Every tab starts at the top: the game strip lives on Home, the Hall header on History. */
-const TAB_ALIAS = { in: 'home', signup: 'home', you: 'home', balances: 'home', cards: 'hall', records: 'history', wall: 'history', timeline: 'history' };
+const TAB_ALIAS = { in: 'home', signup: 'home', you: 'me', profile: 'me', balances: 'home', cards: 'hall', records: 'history', wall: 'history', timeline: 'history' };
 let HIST_SUB = 'records';
 function showHistory(sub) {
   HIST_SUB = ['records', 'wall', 'timeline'].includes(sub) ? sub : 'records';
