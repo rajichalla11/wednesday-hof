@@ -226,3 +226,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v41 · Two-footed goes to review
 - `setProfile` with foot "Both" opens a claim in **FootClaims** instead of writing the sheet. Teammates answer in the ballot (`footVote` {name, agree}) → **FootVotes**. After 5 answers the majority decides: agree writes "Both" to the sheet; disagree leaves the old foot. Picking Left/Right withdraws an open claim. `results.footReviews` = open claims with counts; `me.footVotes` = the voter's own answers.
+
+## v42 · More about you
+- `setAttrs` {attrs: {weakFoot 1–5, skills 1–5, wrAtt/wrDef Low|Med|High, number 1–99, nickname, club}}: a player's own extra card details, in a new **Profiles** tab (name, JSON, updated). `results.profiles` = { name: attrs }, shown on the back of the card.

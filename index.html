@@ -540,6 +540,13 @@
   .pf-rev { font-size: 12px; color: var(--fg-3); line-height: 1.4; }
   .fr { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 12px; margin: 0 0 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); background: color-mix(in srgb, var(--gold) 8%, transparent); }
   .fr b { display: block; font-size: 13.5px; } .fr span { font-size: 11.5px; color: var(--fg-3); }
+  .pf-more { border-top: 1px solid var(--line); padding-top: 10px; } .pf-more summary { display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; } .pf-more summary::-webkit-details-marker { display: none; }
+  .pf-more summary small { flex: 1; font-size: 12px; color: var(--fg-3); } .pf-more[open] summary .fx-chev { transform: rotate(-135deg) translate(-2px, -2px); } .pf-more .pf-row { margin-top: 10px; }
+  .pf-stars { display: flex; gap: 2px; } .pf-stars button { border: 0; background: none; font-size: 20px; line-height: 1; color: var(--line-2); cursor: pointer; padding: 2px 3px; } .pf-stars button.on { color: var(--gold); }
+  .pf-in { width: 150px; height: 34px; padding: 0 10px; border-radius: 9px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--fg); font: inherit; font-size: 13px; } .pf-in[inputmode="numeric"] { width: 64px; text-align: center; }
+  .d-num { font-size: .6em; opacity: .6; font-weight: 700; }
+  .d-attrs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; } .d-attrs span { font-size: 11.5px; padding: 4px 9px; border-radius: 999px; background: color-mix(in srgb, currentColor 10%, transparent); }
+  .d-attrs .st { color: var(--gold); letter-spacing: 1px; } .d-attrs .st i { font-style: normal; opacity: .25; }
   .pf-st { font-size: 11.5px; color: var(--fg-3); min-height: 0; } .pf-st:empty { display: none; }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
@@ -1537,7 +1544,8 @@ function openProfile(p) {
     <div class="d-grid">
       <div>
         <div class="label">#${p.rank} all-time${posName(p) ? ' · '+esc(posName(p)) : ''}${p.foot ? ' · '+esc(p.foot)+' foot' : ''}</div>
-        <div class="d-name">${esc(p.name)}</div>
+        <div class="d-name">${esc(p.name)}${attrsOf(p.name).number ? ` <span class="d-num">#${attrsOf(p.name).number}</span>` : ''}</div>
+        ${attrsBackHtml(p)}
         <div class="d-sub">First game ${esc(fmtSession(first,false))} · Last game ${esc(fmtSession(last,false))}${daysSince!==null ? ` (${daysSince===0?'today':daysSince===1?'yesterday':daysSince+' days ago'})` : ''}</div>
         ${photo(p,'d-photo')}
         ${(() => { const rec = recordFor(p); return rec ? `<div class="label" style="margin-top:14px">Recorded results · ${rec.w + rec.d + rec.l} games</div><div class="d-sub" style="margin-top:4px"><b>${rec.w}</b> won · <b>${rec.d}</b> drawn · <b>${rec.l}</b> lost</div>` : ''; })()}
@@ -2128,10 +2136,61 @@ function profileEditHtml(me) {
   const seg = (k, opts, cur) => `<div class="pf-seg">${opts.map(o => `<button class="${cur === o ? 'on' : ''}${k === 'foot' && o === 'Both' && rv ? ' rev' : ''}" onclick="setProfile('${k}', '${o}', this)">${o === 'Both' && rv && k === 'foot' ? 'Both · in review' : o}</button>`).join('')}</div>`;
   return `<div class="pf" id="pf"><div class="pf-row"><span class="label">Position</span>${seg('position', ['Attack', 'Midfield', 'Defense'], pos)}</div>
     <div class="pf-row"><span class="label">Preferred foot</span>${seg('foot', ['Left', 'Right', 'Both'], foot)}</div>
+    ${attrsEditHtml(me)}
     ${rv ? `<div class="pf-rev">Two-footed is under review. Teammates agree or disagree when they rate you · ${rv.agree + rv.disagree} of ${rv.need} answered.</div>` : ''}
     <small class="pf-st" id="pf-st"></small></div>`;
 }
-function repaintProfile() { const me = ALL_PLAYERS.find(p => VOTER && p.name.toLowerCase() === VOTER.name.toLowerCase()), el = document.getElementById('pf'); if (me && el) el.outerHTML = profileEditHtml(me); }
+/* What players say about themselves, beyond position and foot: shown on the back of their card */
+const attrsOf = n => ((RATINGS && RATINGS.profiles) || {})[n] || {};
+const ATTR_KEYS = ['weakFoot', 'skills', 'wrAtt', 'wrDef', 'number', 'nickname', 'club'];
+function profileDone(me) {
+  const a = attrsOf(me.name), have = [!!posName(me), !!(me.foot || '').trim(), !!photoSrc(me), ...ATTR_KEYS.map(k => a[k] != null && a[k] !== '')];
+  return { done: have.filter(Boolean).length, total: have.length };
+}
+function attrsEditHtml(me) {
+  const a = attrsOf(me.name), n = ATTR_KEYS.filter(k => a[k] != null).length;
+  const stars = k => `<div class="pf-stars">${[1, 2, 3, 4, 5].map(i => `<button class="${(a[k] || 0) >= i ? 'on' : ''}" onclick="setAttr('${k}', ${i})" aria-label="${i}">★</button>`).join('')}</div>`;
+  const seg = k => `<div class="pf-seg">${['Low', 'Med', 'High'].map(o => `<button class="${a[k] === o ? 'on' : ''}" onclick="setAttr('${k}', '${o}')">${o}</button>`).join('')}</div>`;
+  const txt = (k, ph, max, type) => `<input class="pf-in" ${type === 'num' ? 'inputmode="numeric" maxlength="2"' : `maxlength="${max}"`} value="${esc(a[k] != null ? a[k] : '')}" placeholder="${ph}" onchange="setAttr('${k}', this.value)">`;
+  return `<details class="pf-more" id="pf-more"${n < ATTR_KEYS.length && PF_OPEN ? ' open' : ''}><summary><span class="label">More about you</span><small>${n} of ${ATTR_KEYS.length} filled</small><i class="fx-chev"></i></summary>
+    <div class="pf-row"><span class="label">Weak foot</span>${stars('weakFoot')}</div>
+    <div class="pf-row"><span class="label">Skill moves</span>${stars('skills')}</div>
+    <div class="pf-row"><span class="label">Work rate · attack</span>${seg('wrAtt')}</div>
+    <div class="pf-row"><span class="label">Work rate · defence</span>${seg('wrDef')}</div>
+    <div class="pf-row"><span class="label">Shirt number</span>${txt('number', '#', 2, 'num')}</div>
+    <div class="pf-row"><span class="label">Nickname</span>${txt('nickname', 'Optional', 20)}</div>
+    <div class="pf-row"><span class="label">Favourite club</span>${txt('club', 'e.g. Arsenal', 24)}</div>
+  </details>`;
+}
+let PF_OPEN = false;
+async function setAttr(k, v) {
+  const me = ALL_PLAYERS.find(p => VOTER && p.name.toLowerCase() === VOTER.name.toLowerCase()); if (!me || !RATINGS) return;
+  RATINGS.profiles = RATINGS.profiles || {}; const a = RATINGS.profiles[me.name] = Object.assign({}, attrsOf(me.name));
+  const val = typeof v === 'string' ? v.trim() : v;
+  if (a[k] === val || val === '') delete a[k]; else a[k] = k === 'number' ? parseInt(val, 10) || null : val;   // tapping the same star or level again clears it
+  if (a[k] == null) delete a[k];
+  PF_OPEN = true; repaintProfile();
+  const st = document.getElementById('pf-st'); if (st) st.textContent = 'Saving…';
+  let res; try { res = await api(null, { action: 'setAttrs', t: TOKEN, attrs: { [k]: a[k] == null ? '' : a[k] } }); } catch (e) { res = { ok: false, error: e.message }; }
+  const st2 = document.getElementById('pf-st');
+  if (res.ok) { RATINGS.profiles[me.name] = res.attrs; if (st2) { st2.textContent = 'Saved'; setTimeout(() => { if (st2.isConnected) st2.textContent = ''; }, 1500); } }
+  else if (st2) st2.textContent = res.error || 'Could not save';
+}
+function attrsBackHtml(p) {
+  const a = attrsOf(p.name), st = n => '★'.repeat(n) + '<i>' + '★'.repeat(5 - n) + '</i>', bits = [];
+  if (a.nickname) bits.push(`<span>aka <b>“${esc(a.nickname)}”</b></span>`);
+  if (a.weakFoot) bits.push(`<span>Weak foot <b class="st">${st(a.weakFoot)}</b></span>`);
+  if (a.skills) bits.push(`<span>Skill moves <b class="st">${st(a.skills)}</b></span>`);
+  if (a.wrAtt || a.wrDef) bits.push(`<span>Work rate <b>${esc(a.wrAtt || '–')} / ${esc(a.wrDef || '–')}</b></span>`);
+  if (a.club) bits.push(`<span>Supports <b>${esc(a.club)}</b></span>`);
+  if (footReview(p.name)) bits.push(`<span>Two-footed? <b>under review</b></span>`);
+  return bits.length ? `<div class="d-attrs">${bits.join('')}</div>` : '';
+}
+function openProfileEdit() {
+  const me = ALL_PLAYERS.find(p => VOTER && p.name.toLowerCase() === VOTER.name.toLowerCase()), pd = me && profileDone(me);
+  if (me && !photoSrc(me) && pd.done === pd.total - 1 && document.getElementById('photo-file')) return document.getElementById('photo-file').click();   // only the photo is missing
+  PF_OPEN = true; repaintProfile(); const el = document.getElementById('pf'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+function repaintProfile() { const d = document.getElementById('pf-more'); if (d) PF_OPEN = d.open || PF_OPEN; const me = ALL_PLAYERS.find(p => VOTER && p.name.toLowerCase() === VOTER.name.toLowerCase()), el = document.getElementById('pf'); if (me && el) el.outerHTML = profileEditHtml(me); const d2 = document.getElementById('pf-more'); if (d2 && PF_OPEN) d2.open = true; }
 /* In the ballot: a teammate who says they're two-footed gets an agree / disagree, saved on its own */
 function footReviewHtml(p) {
   const rv = footReview(p.name); if (!rv) return '';
@@ -2297,7 +2356,7 @@ function meStripHtml(me, v, o) {
   const need = gateNeed(), rated = Math.min(selfRated(), need);
   const next = gateLocked() ? `<button class="btn me-go" onclick="openBallot()">Rate ${need - rated} more teammate${need - rated === 1 ? '' : 's'} to unlock ratings<span class="me-prog"><i style="width:${need ? rated / need * 100 : 0}%"></i></span></button>`
     : v.open && o.done < o.queue.length ? `<button class="btn ghost me-go" onclick="openBallot()">Rate teammates · ${o.done} of ${o.queue.length} done</button>`
-    : !photoSrc(me) ? `<button class="btn ghost me-go" onclick="document.getElementById('photo-file') && document.getElementById('photo-file').click()">Add your photo</button>` : '';
+    : (() => { const pd = profileDone(me); return pd.done < pd.total ? `<button class="btn ghost me-go" onclick="openProfileEdit()">Finish your profile · ${pd.done} of ${pd.total}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span></button>` : ''; })();
   return `<div class="me-box">
       <div class="me-top">${photo(me, 'avatar me-av')}<div class="me-id"><b>${esc(me.name)}</b><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]}</span></div>
         <button class="me-bal${neg ? ' neg' : ''}" onclick="const b = document.getElementById('bal-break'); b.hidden = !b.hidden; this.classList.toggle('open', !b.hidden)" ${o.known ? '' : 'disabled'}><b class="num">${o.known ? kes(bal) : '—'}</b><span>${esc(o.balStatus)}${o.known ? ' <i class="fx-chev"></i>' : ''}</span></button></div>

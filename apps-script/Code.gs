@@ -101,7 +101,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles'].forEach(bust_); cache_().remove('players'); }
 
 /** One-off: strips what could link a ballot to a voter from data written before Version 20. Voters keep only a rough
  *  "rated" band (no last-vote time), ballot and check-in times become the day only, and ballot rows are shuffled so
@@ -168,6 +168,7 @@ function doPost(e) {
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
     if (body.action === 'setProfile') return json_(setProfile_(body));
     if (body.action === 'footVote') return json_(footVote_(body));
+    if (body.action === 'setAttrs') return json_(setAttrs_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -348,7 +349,7 @@ function buildResults_() {
   const strip = function (agg) { Object.keys(agg).forEach(function (n) { delete agg[n].vote; delete agg[n].vw; if (hide.indexOf(n.toLowerCase()) >= 0) agg[n] = { n: agg[n].n, traits: agg[n].traits, hidden: true }; }); return agg; };
   const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(aggregate_(all.filter(function (r) { return r[0] === win; }), seeds)), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
   out.game = gamePublic_(); out.motm = motmTally_(); out.games = gamesPublic_();
-  const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_(); out.footReviews = footReviews_();
+  const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_(); out.footReviews = footReviews_(); out.profiles = profiles_();
   out.ballots = tab_('Voters').filter(function (r) { return r[3] && String(r[5] || '') && String(r[5]) !== '0'; }).length;   // people who have voted (a voter can hold an older anonymous ballot and a newer named one, so ballot ids would count them twice)
   const js = JSON.stringify(out); cache_().put('results', js, 300); cache_().put('results_stale', js, 21600);
   return out;
@@ -791,6 +792,34 @@ function writeProfile_(name, pos, foot) {
   cache_().remove('players'); bust_('Voters');
   return n;
 }
+/* Profiles tab: name, JSON of what players say about themselves (weak foot, skill moves, work rates, shirt number,
+   nickname, favourite club), updated. Public: shown on the back of their card. */
+function profiles_() {
+  const out = {}; if (!ss_().getSheetByName('Profiles')) return out;
+  tab_('Profiles').forEach(function (r) { if (!r[0]) return; try { out[String(r[0])] = JSON.parse(String(r[1] || '{}')); } catch (_) {} });
+  return out;
+}
+function setAttrs_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
+  const a = body.attrs || {}, cur = profiles_()[me] || {}, clean = function (v, n) { return String(v == null ? '' : v).replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, n); };
+  const star = function (v) { const n = parseInt(v, 10); return n >= 1 && n <= 5 ? n : null; }, wr = function (v) { return ['Low', 'Med', 'High'].indexOf(v) >= 0 ? v : null; };
+  if ('weakFoot' in a) cur.weakFoot = star(a.weakFoot);
+  if ('skills' in a) cur.skills = star(a.skills);
+  if ('wrAtt' in a) cur.wrAtt = wr(a.wrAtt);
+  if ('wrDef' in a) cur.wrDef = wr(a.wrDef);
+  if ('number' in a) { const n = parseInt(a.number, 10); cur.number = n >= 1 && n <= 99 ? n : null; }
+  if ('nickname' in a) cur.nickname = clean(a.nickname, 20) || null;
+  if ('club' in a) cur.club = clean(a.club, 24) || null;
+  Object.keys(cur).forEach(function (k) { if (cur[k] === null || cur[k] === '') delete cur[k]; });
+  const sh = sheet_('Profiles'); if (sh.getLastRow() === 0) sh.appendRow(['name', 'data', 'updated']);
+  const d = sh.getDataRange().getValues(); let at = -1;
+  for (let i = 1; i < d.length; i++) if (String(d[i][0]).toLowerCase() === me.toLowerCase()) at = i + 1;
+  const row = [me, JSON.stringify(cur), new Date()];
+  if (at > 0) sh.getRange(at, 1, 1, 3).setValues([row]); else sh.appendRow(row);
+  bust_('Profiles');
+  return { ok: true, attrs: cur };
+}
+
 /* FootClaims: ts, name, status (review | approved | rejected | withdrawn), decided. FootVotes: claim ts, name, voter, agree (1/0), ts. */
 function footClaimSheet_() { const sh = sheet_('FootClaims'); if (sh.getLastRow() === 0) sh.appendRow(['ts', 'name', 'status', 'decided']); return sh; }
 function openFootClaim_(name) {
