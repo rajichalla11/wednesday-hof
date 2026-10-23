@@ -241,3 +241,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v45 · Send a notification
 - `pushBroadcast` (admin): `dry` counts phones/people with notifications on; otherwise sends {title, body} to all of them (kind `news`).
+
+## v46 · Sign in on another device
+- `linkCode` {t}: a 6-character code (valid 15 min, server cache only) for the signed-in player. `linkRedeem` {code}: returns that same token, so a new device (e.g. the installed iPhone app, which has its own storage) gets the same card and ballot. Wrong codes are rate-limited.

@@ -175,6 +175,8 @@ function doPost(e) {
     if (body.action === 'pushConfig') return json_(pushConfig_(body));
     if (body.action === 'pushTest') return json_(pushTest_(body));
     if (body.action === 'pushBroadcast') return json_(pushBroadcast_(body));
+    if (body.action === 'linkCode') return json_(linkCode_(body));
+    if (body.action === 'linkRedeem') return json_(linkRedeem_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -998,6 +1000,26 @@ function pushBroadcast_(body) {
 function pushTest_(body) {
   const me = voterName_(body.t); if (!me) return { ok: false };
   return { ok: true, sent: pushTo_([me], 'test', 'Notifications are on', "You'll get a ping when it matters. You can change which ones on the Me tab.", '/#me') };
+}
+
+/* ───────── sign in on another device ─────────
+   An installed iPhone app has its own storage, so it doesn't know the card picked in Safari. A signed-in device asks for a
+   short code (valid 15 minutes); typing it on the new device hands over the same link, so it's the same card and ballot. */
+const LINK_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function linkCode_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
+  let code = ''; for (let i = 0; i < 6; i++) code += LINK_ABC.charAt(Math.floor(Math.random() * LINK_ABC.length));
+  cache_().put('lc|' + code, String(body.t), 900);
+  return { ok: true, code: code, minutes: 15 };
+}
+function linkRedeem_(body) {
+  const c = cache_(), code = String(body.code || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), fails = Number(c.get('lcfail') || 0);
+  if (fails > 40) return { ok: false, error: 'Too many tries. Wait a few minutes and get a new code.' };
+  const t = code.length === 6 ? c.get('lc|' + code) : null;
+  if (!t) { c.put('lcfail', String(fails + 1), 900); return { ok: false, error: 'That code is wrong or has expired. Get a new one.' }; }
+  c.remove('lc|' + code);
+  const name = voterName_(t); if (!name) return { ok: false, error: 'That card is no longer linked. Pick it again.' };
+  return { ok: true, token: t, name: name };
 }
 
 /* ───────── strikes ─────────

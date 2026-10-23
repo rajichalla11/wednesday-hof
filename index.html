@@ -629,6 +629,12 @@
   @media (max-width: 720px) { .mx-hero { grid-template-columns: 1fr; gap: 18px; } .mx-card { max-width: 250px; margin: 0 auto; width: 100%; } .mx-id { text-align: center; align-items: center; } .mx-acts { justify-content: center; } .mx-id .mile { width: 100%; text-align: left; } .mx-name { font-size: 28px; } }
   .bc { display: grid; gap: 10px; } .bc-n { font-size: 13.5px; color: var(--fg-2); } .bc-n b { font-size: 20px; color: var(--fg); margin-right: 4px; } .bc-n small { display: block; margin-top: 4px; font-size: 12px; color: var(--fg-3); }
   .bc-in { width: 100%; } textarea.bc-in { min-height: 70px; } .bc-acts { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .bc-acts small { font-size: 12px; color: var(--fg-3); }
+  .lc-box { margin: 12px 0 4px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--gold) 8%, transparent); }
+  .lc-toggle { width: 100%; padding: 11px 14px; border: 0; background: none; color: var(--fg-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer; } .lc-toggle b { color: var(--gold); }
+  .lc-form { display: none; padding: 0 14px 12px; font-size: 12.5px; color: var(--fg-3); } .lc-box.open .lc-form { display: grid; gap: 8px; }
+  .lc-in { text-transform: uppercase; letter-spacing: .25em; font-weight: 800; font-size: 16px !important; text-align: center; } .lc-msg { color: var(--neg); font-size: 12px; } .lc-msg:empty { display: none; }
+  .lc-show:empty { display: none; } .lc-show { display: grid; gap: 6px; justify-items: center; padding: 14px; margin: 6px 0; border-radius: 12px; border: 1px dashed var(--gold); text-align: center; font-size: 12.5px; color: var(--fg-3); }
+  .lc-code { font-size: 34px; font-weight: 800; letter-spacing: .14em; color: var(--gold); }
   .seen-seg { width: max-content; margin-bottom: 10px; } .seen-list { display: grid; max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; }
   .seen-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); } .seen-row:last-child { border-bottom: 0; } .seen-row .avatar { width: 30px; height: 30px; flex: none; font-size: 10px; }
   .seen-n { flex: 1; min-width: 0; display: flex; flex-direction: column; } .seen-n b { font-size: 14px; display: flex; align-items: center; gap: 6px; } .seen-n small, .seen-r small { font-size: 11.5px; color: var(--fg-3); }
@@ -1900,6 +1906,10 @@ function openClaim() {
     <div class="b-title" style="margin-top:8px">Find your card</div>
     ${DEAD_LINK_NOTE ? `<div class="error" style="margin-top:12px;font-size:13px">${esc(DEAD_LINK_NOTE)}</div>` : ''}
     <div class="b-copy">Tap your name and this device remembers you: your balance, the ballot and your photo. Picked the wrong one? There is a Not me button on your page.</div>
+    <div class="lc-box" id="lc-box"><button type="button" class="lc-toggle" onclick="document.getElementById('lc-box').classList.toggle('open'); setTimeout(() => { const i = document.getElementById('lc-in'); if (i) i.focus(); }, 50)">Already have your card on another phone or browser? <b>Use a code</b></button>
+      <div class="lc-form"><span>On the phone or browser you used before, open <b>Me → Sign in on another device</b> for a code.</span>
+        <div class="fx-add-row"><input id="lc-in" class="lc-in" maxlength="7" autocapitalize="characters" autocomplete="one-time-code" placeholder="CODE" onkeydown="if (event.key === 'Enter') redeemCode(this.nextElementSibling)"><button class="btn" type="button" onclick="redeemCode(this)">Sign in</button></div>
+        <small class="lc-msg" id="lc-msg"></small></div></div>
     <input class="pick-search" id="pick-q" placeholder="Search names" autocomplete="off" oninput="filterPick(this.value)">
     <div class="pick-grid" id="pick-grid">${names.map(p => { const t = taken.has(p.name.toLowerCase()); return `<button type="button" class="pick${t?' taken':''}" data-name="${esc(p.name)}" onclick="pickName(this)">${photo(p,'pick-ph')}<b>${esc(p.name)}</b><span>${t ? 'Taken' : `${p.count} game${p.count===1?'':'s'}`}</span></button>`; }).join('')}</div>
     ${needCode ? `<div class="field"><label for="claim-code">Group code</label><input id="claim-code" autocomplete="one-time-code" inputmode="text" placeholder="e.g. W1234"></div>` : ''}
@@ -1909,10 +1919,33 @@ function openClaim() {
 function filterPick(q) { q = q.trim().toLowerCase(); document.querySelectorAll('#pick-grid .pick').forEach(el => el.classList.toggle('hide', !!q && !el.dataset.name.toLowerCase().includes(q))); }
 function pickName(el) {
   const msg = document.getElementById('claim-msg'), btn = document.getElementById('claim-btn');
-  if (el.classList.contains('taken')) { msg.textContent = `${el.dataset.name} is already claimed. If that's you, ask in the group for it to be freed.`; msg.style.color = 'var(--neg)'; msg.classList.add('show'); return; }
+  if (el.classList.contains('taken')) { msg.textContent = `${el.dataset.name} is already set up on another phone or browser. If that's you, use a code from there (above). Lost that phone? Ask in the group for it to be reset.`; msg.style.color = 'var(--neg)'; msg.classList.add('show'); const b = document.getElementById('lc-box'); if (b) { b.classList.add('open'); b.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; }
   document.querySelectorAll('#pick-grid .pick').forEach(x => x.classList.toggle('on', x === el));
   CLAIM_PICK = el.dataset.name; btn.disabled = false; btn.textContent = `That's me · ${CLAIM_PICK.split(' ')[0]}`;
   msg.classList.remove('show');
+}
+async function redeemCode(btn) {
+  const inp = document.getElementById('lc-in'), msg = document.getElementById('lc-msg'), code = (inp.value || '').trim(); if (!code) return;
+  btn.disabled = true; btn.textContent = '…'; msg.textContent = '';
+  let res; try { res = await api(null, { action: 'linkRedeem', code }); } catch (e) { res = { ok: false, error: e.message }; }
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (!res.ok) { msg.textContent = res.error || 'Could not sign in.'; return; }
+  TOKEN = res.token; DEAD_LINK_NOTE = ''; try { localStorage.setItem('w910_token', TOKEN); localStorage.setItem('w910_name', res.name); localStorage.removeItem('w910_me'); } catch (_) {}
+  VOTER = null;
+  document.getElementById('c-body').innerHTML = `<div class="label">Signed in</div><div class="b-title" style="margin-top:8px">Welcome back, ${esc(res.name.split(' ')[0])}.</div>
+    <div class="b-copy">This phone now has your card, the same one as before: ratings, balance and all.</div>
+    <div class="b-actions"><button class="btn" onclick="closeClaimDirect(); showTab('home')">Let's go</button></div>`;
+  renderCards(); renderBalances(); renderYou();
+}
+async function getLinkCode(btn) {
+  btn.disabled = true; btn.textContent = '…';
+  let res; try { res = await api(null, { action: 'linkCode', t: TOKEN }); } catch (e) { res = { ok: false, error: e.message }; }
+  btn.disabled = false; btn.textContent = 'Get a new code';
+  const box = document.getElementById('lc-show'); if (!box) return;
+  if (!res.ok) { box.innerHTML = `<small class="lc-msg">${esc(res.error || 'Could not get a code.')}</small>`; return; }
+  const until = Date.now() + res.minutes * 60000;
+  box.innerHTML = `<div class="lc-code num">${res.code.slice(0, 3)} ${res.code.slice(3)}</div><small>On the other phone or the installed app: <b>Find your card → Use a code</b>, and type this in. <span id="lc-left">Valid ${res.minutes} minutes.</span></small>`;
+  clearInterval(window.__lcT); window.__lcT = setInterval(() => { const l = document.getElementById('lc-left'); if (!l) return clearInterval(window.__lcT); const m = Math.ceil((until - Date.now()) / 60000); l.textContent = m > 0 ? `Valid ${m} more minute${m === 1 ? '' : 's'}.` : 'Expired. Get a new code.'; }, 20000);
 }
 async function submitClaim() {
   const name = CLAIM_PICK, codeEl = document.getElementById('claim-code'), code = codeEl ? codeEl.value.trim() : '';
@@ -2216,7 +2249,9 @@ async function renderYou() {
       </div>
     </details>
     <div class="mx-sec mx-acct"><div class="sh"><h2>Account</h2></div>
-      <div class="mx-row"><span>Use the site on another phone or laptop</span><button class="btn ghost" onclick="copyLink(this)">Copy my link</button></div>
+      <div class="mx-row"><span>Sign in on another device or the installed app</span><button class="btn" onclick="getLinkCode(this)">Get a code</button></div>
+      <div class="lc-show" id="lc-show"></div>
+      <div class="mx-row"><span>Or send yourself your link</span><button class="btn ghost" onclick="copyLink(this)">Copy my link</button></div>
       <details class="mx-link"><summary>Show my link · keep it to yourself</summary><code id="mylink">${esc(myLink())}</code></details>
       ${hasPhoto ? `<div class="mx-row"><span>Your photo</span><button class="btn link" onclick="removePhoto()">Remove photo</button></div>` : ''}
       <div class="mx-row"><span>Not you on this phone?</span><button class="btn link" data-label="Not ${first}? Not me" onclick="releaseClaim(this)">Not ${first}? Not me</button></div>
