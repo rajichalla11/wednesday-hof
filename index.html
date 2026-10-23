@@ -548,6 +548,22 @@
   .d-attrs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; } .d-attrs span { font-size: 11.5px; padding: 4px 9px; border-radius: 999px; background: color-mix(in srgb, currentColor 10%, transparent); }
   .d-attrs .st { color: var(--gold); letter-spacing: 1px; } .d-attrs .st i { font-style: normal; opacity: .25; }
   .pf-st { font-size: 11.5px; color: var(--fg-3); min-height: 0; } .pf-st:empty { display: none; }
+  /* Build your card pop-up */
+  .sheet.pp { max-width: 560px; padding: 24px 22px 18px; overflow-x: hidden; }
+  .pp-head .label { color: var(--gold); } .pp-title { font-size: 28px; font-weight: 800; letter-spacing: -.01em; margin-top: 4px; } .pp-sub { font-size: 13px; color: var(--fg-3); margin-top: 2px; }
+  .pp-prog { display: flex; align-items: center; gap: 4px; margin: 14px 0 6px; } .pp-prog i { flex: 1; height: 8px; border-radius: 4px; background: var(--surface-3); transition: background .3s; }
+  .pp-prog i.on { background: var(--gold); } .pp-prog i.pop { animation: ppPop .6s ease; } .pp-prog b { margin-left: 8px; font-size: 14px; }
+  @keyframes ppPop { 0% { transform: scaleY(1); } 40% { transform: scaleY(2.2); box-shadow: 0 0 14px var(--gold); } 100% { transform: scaleY(1); } }
+  .pp-cheer { display: inline-block; font-size: 12.5px; font-weight: 700; color: var(--gold); animation: ppCheer 1.8s ease forwards; } .pp-cheer.up { font-size: 15px; letter-spacing: .02em; }
+  @keyframes ppCheer { 0% { opacity: 0; transform: translateY(6px) scale(.9); } 15% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+  .pp-preview { display: grid; grid-template-columns: 150px 1fr; gap: 16px; align-items: center; margin: 12px 0 14px; }
+  .pp-card { width: 150px; } .pp-card .card { width: 100%; } .pp-name { font-size: 18px; font-weight: 800; } .pp-name span { opacity: .55; font-size: .8em; }
+  .pp-tags .d-attrs span { background: var(--surface-2); } .pp-empty { font-size: 12px; color: var(--fg-3); margin-top: 8px; }
+  .pp-photo { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; color: var(--fg-3); } .pp-photo:empty { display: none; }
+  .pp .pf { margin-bottom: 4px; } .pp-foot { display: flex; justify-content: center; margin-top: 8px; }
+  .cf { position: absolute; top: -10px; width: 8px; height: 12px; border-radius: 2px; z-index: 5; pointer-events: none; animation: cfFall 1.8s ease-in forwards; }
+  @keyframes cfFall { to { top: 105%; transform: translateX(40px) rotate(720deg); opacity: .2; } }
+  @media (max-width: 480px) { .pp-preview { grid-template-columns: 112px 1fr; gap: 12px; } .pp-card { width: 112px; } .pp-title { font-size: 24px; } }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
@@ -2131,17 +2147,18 @@ async function renderYou() {
         if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
   paintSelfPreview();
   if (v.isAdmin) renderAdmin(me);
+  if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else maybeProfilePop(me);
 }
 /* Your position and preferred foot: tap to change; saved to the attendance sheet, shown straight away here. */
 const footReview = n => ((RATINGS && RATINGS.footReviews) || {})[n];
 function profileEditHtml(me) {
   const pos = posName(me) || '', foot = (me.foot || '').trim(), rv = footReview(me.name);
   const seg = (k, opts, cur) => `<div class="pf-seg">${opts.map(o => `<button class="${cur === o ? 'on' : ''}${k === 'foot' && o === 'Both' && rv ? ' rev' : ''}" onclick="setProfile('${k}', '${o}', this)">${o === 'Both' && rv && k === 'foot' ? 'Both · in review' : o}</button>`).join('')}</div>`;
-  return `<div class="pf" id="pf"><div class="pf-row"><span class="label">Position</span>${seg('position', ['Attack', 'Midfield', 'Defense'], pos)}</div>
+  return `<div class="pf"><div class="pf-row"><span class="label">Position</span>${seg('position', ['Attack', 'Midfield', 'Defense'], pos)}</div>
     <div class="pf-row"><span class="label">Preferred foot</span>${seg('foot', ['Left', 'Right', 'Both'], foot)}</div>
     ${attrsEditHtml(me)}
     ${rv ? `<div class="pf-rev">Two-footed is under review. Teammates agree or disagree when they rate you · ${rv.agree + rv.disagree} of ${rv.need} answered.</div>` : ''}
-    <small class="pf-st" id="pf-st"></small></div>`;
+    <small class="pf-st"></small></div>`;
 }
 /* What players say about themselves, beyond position and foot: shown on the back of their card */
 const attrsOf = n => ((RATINGS && RATINGS.profiles) || {})[n] || {};
@@ -2155,7 +2172,7 @@ function attrsEditHtml(me) {
   const stars = k => `<div class="pf-stars">${[1, 2, 3, 4, 5].map(i => `<button class="${(a[k] || 0) >= i ? 'on' : ''}" onclick="setAttr('${k}', ${i})" aria-label="${i}">★</button>`).join('')}</div>`;
   const seg = k => `<div class="pf-seg">${['Low', 'Med', 'High'].map(o => `<button class="${a[k] === o ? 'on' : ''}" onclick="setAttr('${k}', '${o}')">${o}</button>`).join('')}</div>`;
   const txt = (k, ph, max, type) => `<input class="pf-in" ${type === 'num' ? 'inputmode="numeric" maxlength="2"' : `maxlength="${max}"`} value="${esc(a[k] != null ? a[k] : '')}" placeholder="${ph}" onchange="setAttr('${k}', this.value)">`;
-  return `<details class="pf-more" id="pf-more"${n < ATTR_KEYS.length && PF_OPEN ? ' open' : ''}><summary><span class="label">More about you</span><small>${n} of ${ATTR_KEYS.length} filled</small><i class="fx-chev"></i></summary>
+  return `<details class="pf-more"${n < ATTR_KEYS.length && PF_OPEN ? ' open' : ''}><summary><span class="label">More about you</span><small>${n} of ${ATTR_KEYS.length} filled</small><i class="fx-chev"></i></summary>
     <div class="pf-row"><span class="label">Weak foot</span>${stars('weakFoot')}</div>
     <div class="pf-row"><span class="label">Skill moves</span>${stars('skills')}</div>
     <div class="pf-row"><span class="label">Work rate · attack</span>${seg('wrAtt')}</div>
@@ -2166,18 +2183,17 @@ function attrsEditHtml(me) {
   </details>`;
 }
 let PF_OPEN = false;
+const meP = () => ALL_PLAYERS.find(p => VOTER && VOTER.name && p.name.toLowerCase() === VOTER.name.toLowerCase());
+function pfSay(t, ms) { document.querySelectorAll('.pf-st').forEach(el => { el.textContent = t; if (ms) setTimeout(() => { if (el.isConnected && el.textContent === t) el.textContent = ''; }, ms); }); }
 async function setAttr(k, v) {
-  const me = ALL_PLAYERS.find(p => VOTER && p.name.toLowerCase() === VOTER.name.toLowerCase()); if (!me || !RATINGS) return;
+  const me = meP(); if (!me || !RATINGS) return;
   RATINGS.profiles = RATINGS.profiles || {}; const a = RATINGS.profiles[me.name] = Object.assign({}, attrsOf(me.name));
   const val = typeof v === 'string' ? v.trim() : v;
   if (a[k] === val || val === '') delete a[k]; else a[k] = k === 'number' ? parseInt(val, 10) || null : val;   // tapping the same star or level again clears it
   if (a[k] == null) delete a[k];
-  PF_OPEN = true; repaintProfile();
-  const st = document.getElementById('pf-st'); if (st) st.textContent = 'Saving…';
+  PF_OPEN = true; repaintProfile(); pfSay('Saving…');
   let res; try { res = await api(null, { action: 'setAttrs', t: TOKEN, attrs: { [k]: a[k] == null ? '' : a[k] } }); } catch (e) { res = { ok: false, error: e.message }; }
-  const st2 = document.getElementById('pf-st');
-  if (res.ok) { RATINGS.profiles[me.name] = res.attrs; if (st2) { st2.textContent = 'Saved'; setTimeout(() => { if (st2.isConnected) st2.textContent = ''; }, 1500); } }
-  else if (st2) st2.textContent = res.error || 'Could not save';
+  if (res.ok) { RATINGS.profiles[me.name] = res.attrs; pfSay('Saved', 1500); } else pfSay(res.error || 'Could not save');
 }
 function attrsBackHtml(p) {
   const a = attrsOf(p.name), st = n => '★'.repeat(n) + '<i>' + '★'.repeat(5 - n) + '</i>', bits = [];
@@ -2190,10 +2206,63 @@ function attrsBackHtml(p) {
   return bits.length ? `<div class="d-attrs">${bits.join('')}</div>` : '';
 }
 function openProfileEdit() {
-  const me = ALL_PLAYERS.find(p => VOTER && p.name.toLowerCase() === VOTER.name.toLowerCase()), pd = me && profileDone(me);
-  if (me && !photoSrc(me) && pd.done === pd.total - 1 && document.getElementById('photo-file')) return document.getElementById('photo-file').click();   // only the photo is missing
-  PF_OPEN = true; repaintProfile(); const el = document.getElementById('pf'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-function repaintProfile() { const d = document.getElementById('pf-more'); if (d) PF_OPEN = d.open || PF_OPEN; const me = ALL_PLAYERS.find(p => VOTER && p.name.toLowerCase() === VOTER.name.toLowerCase()), el = document.getElementById('pf'); if (me && el) el.outerHTML = profileEditHtml(me); const d2 = document.getElementById('pf-more'); if (d2 && PF_OPEN) d2.open = true; }
+  openProfilePop();
+}
+/* Repaint every copy of the profile box (Home and the pop-up), the Home nudge and the pop-up's progress */
+function repaintProfile() {
+  document.querySelectorAll('.pf-more').forEach(d => { if (d.open) PF_OPEN = true; });
+  const me = meP(); if (!me) return;
+  document.querySelectorAll('.pf').forEach(el => { el.outerHTML = profileEditHtml(me); });
+  if (PF_OPEN) document.querySelectorAll('.pf-more').forEach(d => d.open = true);
+  const pd = profileDone(me), nb = document.querySelector('.me-go.me-gold');
+  if (nb) { if (pd.done >= pd.total) nb.remove(); else nb.innerHTML = `Finish your profile · ${pd.done} of ${pd.total}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span>`; }
+  paintProfilePopTop();
+}
+/* ── "Build your card": pops up when a player opens the site with their profile unfinished, once per visit ── */
+const PP_LEVELS = [[0, 'Trialist'], [4, 'Squad player'], [7, 'First XI'], [10, 'Fully built']];
+const PP_CHEERS = ['Looking sharp', 'Scouts are watching', 'Card getting heavier', 'Proper baller', 'Now we’re talking', 'Main character energy', 'The gaffer approves', 'Clean'];
+let PP_LAST = -1;
+function maybeProfilePop(me) {
+  if (!me || !VOTER || !VOTER.ok || VOTER.pending) return;
+  const pd = profileDone(me); if (pd.done >= pd.total) return;
+  try { if (sessionStorage.getItem('w910_pp')) return; sessionStorage.setItem('w910_pp', '1'); } catch (_) {}
+  setTimeout(() => { if (document.querySelector('.overlay.open') || !document.getElementById('panel-home').classList.contains('active')) return; openProfilePop(); }, 1200);
+}
+function openProfilePop() {
+  const me = meP(); if (!me) return;
+  let ov = document.getElementById('pp-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'pp-overlay'; ov.onclick = e => { if (e.target === ov) closeProfilePop(); };
+    ov.innerHTML = `<div class="sheet pp"><div class="controls"><button class="ctl" onclick="closeProfilePop()" title="Close">✕</button></div><div id="pp-top"></div><div id="pp-form"></div><div class="pp-foot"><button class="btn link" onclick="closeProfilePop()" id="pp-later">Later</button></div></div>`;
+    document.body.appendChild(ov); }
+  PF_OPEN = true; PP_LAST = -1;
+  document.getElementById('pp-form').innerHTML = `<div class="pp-photo" id="pp-photo"></div>${profileEditHtml(me)}`;
+  document.querySelectorAll('#pp-form .pf-more').forEach(d => d.open = true);
+  paintProfilePopTop();
+  ov.classList.add('open'); document.body.style.overflow = 'hidden';
+}
+function closeProfilePop() { const ov = document.getElementById('pp-overlay'); if (ov) ov.classList.remove('open'); document.body.style.overflow = ''; }
+function paintProfilePopTop() {
+  const top = document.getElementById('pp-top'), me = meP(); if (!top || !me) return;
+  const pd = profileDone(me), lvl = PP_LEVELS.filter(l => pd.done >= l[0]).pop()[1], a = attrsOf(me.name), r = RATINGS && RATINGS.ok && RATINGS.players[me.name];
+  const grew = PP_LAST >= 0 && pd.done > PP_LAST, lvlUp = grew && PP_LEVELS.some(l => l[0] > PP_LAST && l[0] <= pd.done);
+  top.innerHTML = `<div class="pp-head"><span class="label">Build your card</span><div class="pp-title">${pd.done >= pd.total ? 'Card complete' : lvl}</div>
+      <div class="pp-sub">${pd.done >= pd.total ? 'Everyone can see the full you on the back of your card now.' : `${pd.total - pd.done} to go. Teammates see all of this when they tap your card.`}</div></div>
+    <div class="pp-prog">${Array.from({ length: pd.total }, (_, i) => `<i class="${i < pd.done ? 'on' : ''}${grew && i >= PP_LAST && i < pd.done ? ' pop' : ''}"></i>`).join('')}<b class="num">${pd.done}/${pd.total}</b></div>
+    ${grew ? `<div class="pp-cheer${lvlUp ? ' up' : ''}">${lvlUp ? `Level up · ${lvl}` : PP_CHEERS[Math.floor(Math.random() * PP_CHEERS.length)]}</div>` : ''}
+    <div class="pp-preview"><div class="pp-card">${cardHtml(me, (r && r.stats) || null, { n: r ? r.n : 0 })}</div>
+      <div class="pp-tags"><div class="pp-name">${esc(me.name)}${a.number ? ` <span>#${a.number}</span>` : ''}</div><div class="label">${[posName(me), me.foot ? me.foot + ' foot' : ''].filter(Boolean).map(esc).join(' · ') || 'Position and foot not set'}</div>${attrsBackHtml(me) || '<div class="pp-empty">Your details show up here as you add them.</div>'}</div></div>`;
+  const ph = document.getElementById('pp-photo');
+  if (ph) ph.innerHTML = photoSrc(me) ? '' : `<button class="btn ghost" onclick="document.getElementById('photo-file') && document.getElementById('photo-file').click()">Add your photo</button><span>A real face beats the initials</span>`;
+  const later = document.getElementById('pp-later'); if (later) later.textContent = pd.done >= pd.total ? 'Done' : 'Later';
+  if (pd.done >= pd.total && PP_LAST >= 0 && PP_LAST < pd.total && document.querySelector('#pp-overlay.open')) confetti(document.querySelector('#pp-overlay .sheet'));
+  PP_LAST = pd.done;
+}
+function confetti(host) {
+  if (!host) return; const colors = ['var(--gold)', '#fff', '#e8c76a', '#b9b9b9'];
+  for (let i = 0; i < 60; i++) { const c = document.createElement('i'); c.className = 'cf';
+    c.style.cssText = `left:${Math.random() * 100}%;background:${colors[i % colors.length]};animation-delay:${Math.random() * .4}s;animation-duration:${1.4 + Math.random()}s;transform:rotate(${Math.random() * 360}deg)`;
+    host.appendChild(c); setTimeout(() => c.remove(), 2800); }
+}
 /* In the ballot: a teammate who says they're two-footed gets an agree / disagree, saved on its own */
 function footReviewHtml(p) {
   const rv = footReview(p.name); if (!rv) return '';
@@ -2213,18 +2282,16 @@ async function setProfile(k, v, btn) {
   if (k === 'foot' && v === 'Both' && (me.foot || '').trim() !== 'Both') {   // two-footed goes to review instead of straight on
     if (RATINGS) { RATINGS.footReviews = RATINGS.footReviews || {}; RATINGS.footReviews[me.name] = { agree: 0, disagree: 0, need: 5 }; } repaintProfile();
     let r2; try { r2 = await api(null, { action: 'setProfile', t: TOKEN, foot: 'Both' }); } catch (e) { r2 = { ok: false, error: e.message }; }
-    const st2 = document.getElementById('pf-st'); if (!r2.ok) { delete RATINGS.footReviews[me.name]; repaintProfile(); const s3 = document.getElementById('pf-st'); if (s3) s3.textContent = r2.error || 'Could not save'; } else if (st2) st2.textContent = '';
+    if (!r2.ok) { delete RATINGS.footReviews[me.name]; repaintProfile(); pfSay(r2.error || 'Could not save'); }
     return;
   }
   if (k === 'foot' && RATINGS && RATINGS.footReviews) delete RATINGS.footReviews[me.name];
   const was = k === 'position' ? me.position : me.foot;
   if (k === 'position') me.position = v; else me.foot = v;
-  btn.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
-  const st = document.getElementById('pf-st'); if (st) st.textContent = 'Saving…';
+  repaintProfile(); pfSay('Saving…');
   let res; try { res = await api(null, { action: 'setProfile', t: TOKEN, [k]: v }); } catch (e) { res = { ok: false, error: e.message }; }
-  if (!res.ok) { if (k === 'position') me.position = was; else me.foot = was; if (st) st.textContent = res.error || 'Could not save'; btn.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.textContent === (was || '').trim())); return; }
-  if (k === 'foot') { repaintProfile(); } const st4 = document.getElementById('pf-st');
-  if (st4) { st4.textContent = 'Saved'; setTimeout(() => { if (st4.isConnected) st4.textContent = ''; }, 2000); }
+  if (!res.ok) { if (k === 'position') me.position = was; else me.foot = was; repaintProfile(); pfSay(res.error || 'Could not save'); return; }
+  pfSay('Saved', 2000);
   try { renderPlayers(); } catch (_) {}
 }
 /* ── Admin tab: four groups behind a segmented switch, plus a "needs you" strip of things waiting on the admin ── */
