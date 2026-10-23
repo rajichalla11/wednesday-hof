@@ -602,6 +602,13 @@
   .nt-row i { position: relative; width: 40px; height: 24px; flex: none; border-radius: 12px; background: var(--surface-3); transition: background .2s; } .nt-row i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--fg-3); transition: transform .2s, background .2s; }
   .nt-row input:checked + i { background: var(--gold); } .nt-row input:checked + i::after { transform: translateX(16px); background: #1a1408; }
   .nt-st { font-size: 11.5px; color: var(--fg-3); } .nt-st:empty { display: none; }
+  /* Cards open: the Me card, and a one-time peek that shows cards can be tapped */
+  .me-card { position: relative; cursor: pointer; } .me-card .card { transition: transform .2s; } .me-card:hover .card { transform: translateY(-2px); }
+  .peek { position: relative; animation: cardPeek 1.2s cubic-bezier(.3,.7,.3,1); transform-style: preserve-3d; }
+  .card.peek { animation-name: cardPeek; }
+  @keyframes cardPeek { 0% { transform: perspective(900px) rotateY(0); } 35% { transform: perspective(900px) rotateY(-32deg) scale(1.03); } 65% { transform: perspective(900px) rotateY(10deg); } 100% { transform: perspective(900px) rotateY(0); } }
+  .tap-hint { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); z-index: 5; padding: 6px 12px; border-radius: 999px; background: var(--gold); color: #1a1408; font-size: 12px; font-weight: 800; white-space: nowrap; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.4); animation: tapHint 4.2s ease forwards; }
+  @keyframes tapHint { 0% { opacity: 0; transform: translate(-50%, 6px); } 10% { opacity: 1; transform: translate(-50%, 0); } 80% { opacity: 1; } 100% { opacity: 0; } }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
@@ -1505,6 +1512,18 @@ function renderPlayers() {
   grid.innerHTML = html || `<div class="empty" style="grid-column:1/-1">${PLAYER_Q ? `No player matches “${esc(PLAYER_Q)}”.` : 'Nobody here.'}</div>`;
   paintGate();
   grid.querySelectorAll('.card').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
+  flipHint(grid.querySelector('.card'));
+}
+/* Until someone has opened a card once, a card gives a little half-turn with "Tap to flip", so people learn cards open. */
+const flippedBefore = () => { try { return !!localStorage.getItem('w910_flipped'); } catch (_) { return true; } };
+function flipHint(card) {
+  if (!card || flippedBefore() || card.dataset.hinted) return; card.dataset.hinted = '1';
+  const host = card.closest('.me-card') || card;
+  const go = () => { if (!host.isConnected || flippedBefore()) return;
+    host.classList.remove('peek'); void host.offsetWidth; host.classList.add('peek');
+    if (!host.querySelector('.tap-hint')) { const t = document.createElement('span'); t.className = 'tap-hint'; t.textContent = 'Tap to flip ↻'; host.appendChild(t); setTimeout(() => t.remove(), 4200); } };
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); setTimeout(go, 600); } }, { threshold: .6 }) : null;
+  if (io) io.observe(host); else setTimeout(go, 1200);
 }
 
 /* ── wall ── */
@@ -1591,7 +1610,7 @@ async function renderBalances() {
 
 /* ── dossier ── */
 function openProfile(p) {
-  CURRENT_PLAYER = p;
+  CURRENT_PLAYER = p; try { localStorage.setItem('w910_flipped', '1'); } catch (_) {}
   if (CURRENT_SESSION !== null) { document.getElementById('session-overlay').classList.remove('open'); CURRENT_SESSION = null; }
   const ms = milestoneFor(p), n = SESSIONS.length, played = p.played, sinceDebut = p.firstIdx>=0 ? n-p.firstIdx : 0;
   const first = SESSIONS[p.firstIdx], last = SESSIONS[p.lastIdx], streakStart = n - p.currentStreak;
@@ -2131,7 +2150,7 @@ async function renderYou() {
   meb.innerHTML = `
     <div class="sh"><h2>Your card</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
     <div class="you-grid">
-      <div>${cardHtml(me, r.stats || null, { n: r.n })}<p class="muted" style="font-size:12px;margin-top:10px">${gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates. ${Math.min(selfRated(), gateNeed())} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.fixed ? `Your own numbers, fixed: teammates' ${r.n} vote${r.n===1?'':'s'} set your traits, not your stats.` : r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
+      <div><div class="me-card" onclick="openProfile(ALL_PLAYERS[${ALL_PLAYERS.indexOf(me)}])">${cardHtml(me, r.stats || null, { n: r.n })}</div><p class="muted" style="font-size:12px;margin-top:10px">${gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates. ${Math.min(selfRated(), gateNeed())} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.fixed ? `Your own numbers, fixed: teammates' ${r.n} vote${r.n===1?'':'s'} set your traits, not your stats.` : r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
       <div>
         ${profileEditHtml(me)}
         <div class="mile"><div class="l"><span>${me.count<100 ? 'To the century' : `Next milestone ${ms.next}`}</span><span>${ms.toGo} to go · ${esc(fmtEta(ms.eta))}</span></div><i style="--w:${ms.pct}%"></i></div>
@@ -2196,7 +2215,7 @@ async function renderYou() {
   if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
-  paintSelfPreview(); paintNotif(); pushAuto();
+  paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
   if (v.isAdmin) renderAdmin(me);
   if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else maybeProfilePop(me);
 }
