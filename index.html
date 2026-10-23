@@ -2243,7 +2243,7 @@ function openProfilePop() {
   const me = meP(); if (!me) return;
   let ov = document.getElementById('pp-overlay');
   if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'pp-overlay'; ov.onclick = e => { if (e.target === ov) closeProfilePop(); };
-    ov.innerHTML = `<div class="sheet pp"><div class="controls"><button class="ctl" onclick="closeProfilePop()" title="Close">✕</button></div><div id="pp-top"></div><div id="pp-form"></div><div class="pp-foot"><button class="btn" onclick="closeProfilePop()" id="pp-later">Done for now</button></div></div>`;
+    ov.innerHTML = `<div class="sheet pp"><div class="controls"><button class="ctl" onclick="closeProfilePop()" title="Close">✕</button></div><div id="pp-top"></div><div id="pp-form"></div><div class="pp-foot"><button class="btn" onclick="ppDone()" id="pp-later">Done for now</button></div></div>`;
     document.body.appendChild(ov); }
   PF_OPEN = true; PP_LAST = -1;
   document.getElementById('pp-form').innerHTML = `<div class="pp-photo" id="pp-photo"></div>${profileEditHtml(me)}`;
@@ -2251,12 +2251,13 @@ function openProfilePop() {
   paintProfilePopTop();
   ov.classList.add('open'); document.body.style.overflow = 'hidden';
 }
+function ppDone() { const me = meP(), pd = me && profileDone(me); closeProfilePop(); if (pd && pd.done >= pd.total) setTimeout(() => openProfile(me), 250); }   // finished: show them the card everyone sees
 function closeProfilePop() { const ov = document.getElementById('pp-overlay'); if (ov) ov.classList.remove('open'); document.body.style.overflow = ''; }
 function paintProfilePopTop() {
   const top = document.getElementById('pp-top'), me = meP(); if (!top || !me) return;
   const pd = profileDone(me), lvl = PP_LEVELS.filter(l => pd.done >= l[0]).pop()[1], a = attrsOf(me.name), r = RATINGS && RATINGS.ok && RATINGS.players[me.name];
   const grew = PP_LAST >= 0 && pd.done > PP_LAST, lvlUp = grew && PP_LEVELS.some(l => l[0] > PP_LAST && l[0] <= pd.done);
-  top.innerHTML = `<div class="pp-head"><span class="label">Build your card</span><div class="pp-title">${pd.done >= pd.total ? `Card complete <button class="btn pp-done" onclick="closeProfilePop()">Done</button>` : lvl}</div>
+  top.innerHTML = `<div class="pp-head"><span class="label">Build your card</span><div class="pp-title">${pd.done >= pd.total ? `Card complete <button class="btn pp-done" onclick="ppDone()">Done</button>` : lvl}</div>
       <div class="pp-sub">${pd.done >= pd.total ? 'Everyone can see the full you on the back of your card now.' : `${pd.total - pd.done} to go. Teammates see all of this when they tap your card.`}</div></div>
     <div class="pp-prog">${Array.from({ length: pd.total }, (_, i) => `<i class="${i < pd.done ? 'on' : ''}${grew && i >= PP_LAST && i < pd.done ? ' pop' : ''}"></i>`).join('')}<b class="num">${pd.done}/${pd.total}</b></div>
     ${grew ? `<div class="pp-cheer${lvlUp ? ' up' : ''}">${lvlUp ? `Level up · ${lvl}` : PP_CHEERS[Math.floor(Math.random() * PP_CHEERS.length)]}</div>` : ''}
