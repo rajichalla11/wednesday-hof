@@ -235,3 +235,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 - Sending goes through Vercel `/api/push` (web-push, VAPID) with a shared secret kept in the script property `push_secret` (set once with the admin-only `pushConfig`).
 - Straight away: moved up from standby (`withdraw`), new game opened (`addFixture`), admin: new pending claim, late drop-out.
 - Timed (`pushTick`, every 15 min trigger from `setupPushTrigger()` + whenever results are rebuilt, at most every 10 min): game day 2 h before kick-off with the gate code, rate the game after it, balance below zero (9am–9pm, once per amount). **PushLog** keeps each to once.
+
+## v44 · Who's been on
+- `admin.activity.recent` = the latest 120 visits (ts, name or '', device tail, phone?, page), newest first, for the Admin → Activity "Who's been on" panel.

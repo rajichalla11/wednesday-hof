@@ -627,6 +627,11 @@
   .mx-link { padding: 8px 0 10px; border-bottom: 1px solid var(--line); } .mx-link summary { cursor: pointer; font-size: 12.5px; color: var(--fg-3); } .mx-link code { display: block; margin-top: 8px; font-size: 11.5px; word-break: break-all; color: var(--fg-2); }
   #panel-me .ntf { margin-top: 30px; } #panel-me .self-wrap { margin-top: 30px; }
   @media (max-width: 720px) { .mx-hero { grid-template-columns: 1fr; gap: 18px; } .mx-card { max-width: 250px; margin: 0 auto; width: 100%; } .mx-id { text-align: center; align-items: center; } .mx-acts { justify-content: center; } .mx-id .mile { width: 100%; text-align: left; } .mx-name { font-size: 28px; } }
+  .seen-seg { width: max-content; margin-bottom: 10px; } .seen-list { display: grid; max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; }
+  .seen-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); } .seen-row:last-child { border-bottom: 0; } .seen-row .avatar { width: 30px; height: 30px; flex: none; font-size: 10px; }
+  .seen-n { flex: 1; min-width: 0; display: flex; flex-direction: column; } .seen-n b { font-size: 14px; display: flex; align-items: center; gap: 6px; } .seen-n small, .seen-r small { font-size: 11.5px; color: var(--fg-3); }
+  .seen-live { display: inline-block; width: 7px; height: 7px; flex: none; border-radius: 50%; background: #3ecf6e; box-shadow: 0 0 0 3px color-mix(in srgb, #3ecf6e 25%, transparent); }
+  .seen-r { display: flex; flex-direction: column; align-items: flex-end; text-align: right; } .seen-r b { font-size: 13px; }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
@@ -2234,13 +2239,14 @@ async function renderYou() {
     <section><div class="sh"><h2>Top-ups</h2><span>New ones come from the sheet automatically · add older ones here</span></div><div id="topups-admin"></div></section>
     <section><div class="sh"><h2>Strikes</h2><span>Dropping out of a spot within 36 hours of kick-off</span></div><div id="strikes-admin"></div></section>
     <section><div class="sh"><h2>Man of the match</h2><span>The vote decides unless you pick someone</span></div><div id="motm-admin"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Who's been on</h2><span>Most recent first · one entry per visit</span></div><div id="seen-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Site activity</h2><span>One count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Who voted what</h2><span>Votes from 14 Oct on</span></div><div id="named-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Starting points</h2><span>The suggested level voters see · saves as you type</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Self-ratings</h2><span>How players rated themselves</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   const aw = document.getElementById('admin-wrap');   // the admin's panels live on their own tab so Home stays short
-  if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
+  if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'seen-body', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
   paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
@@ -2543,7 +2549,7 @@ const ADM_GROUPS = [['games', 'Games'], ['players', 'Players'], ['money', 'Money
 let ADM_GRP = (() => { try { return localStorage.getItem('w910_adm') || 'games'; } catch (_) { return 'games'; } })();
 function admGroupOf(sec) {
   const has = id => !!sec.querySelector('#' + id);
-  return has('ga-teams') || has('games-admin') || has('motm-admin') ? 'games' : has('topups-admin') ? 'money' : has('activity-body') || has('named-body') ? 'activity' : 'players';
+  return has('ga-teams') || has('games-admin') || has('motm-admin') ? 'games' : has('topups-admin') ? 'money' : has('activity-body') || has('named-body') || has('seen-body') ? 'activity' : 'players';
 }
 function setViewAs(m) { try { if (m) localStorage.setItem('w910_viewas', m); else localStorage.removeItem('w910_viewas'); localStorage.removeItem('w910_me'); } catch (_) {} location.href = location.pathname + (m ? '#home' : '#admin'); location.reload(); }
 function adminShellHtml() {
@@ -2774,6 +2780,21 @@ function setSeedValue(pi, k, raw) {
 }
 /* The admin panels refresh whenever the page comes back into view (phones keep tabs open for days), at most every 20 s, or on demand. */
 let ADMIN_AT = 0;
+/* Who's been on: people by their latest visit, or every visit, newest first */
+let SEEN_MODE = 'people';
+function renderSeen() {
+  const el = document.getElementById('seen-body'), x = window.__ADMIN && window.__ADMIN.activity; if (!el) return;
+  if (!x) { el.innerHTML = `<div class="empty">No visits recorded yet.</div>`; return; }
+  const ago = iso => { const d = (Date.now() - new Date(iso)) / 60000; return d < 1 ? 'just now' : d < 60 ? `${Math.round(d)} min ago` : d < 1440 ? `${Math.round(d / 60)} h ago` : d < 2880 ? 'yesterday' : `${Math.round(d / 1440)} days ago`; };
+  const when = iso => new Date(iso).toLocaleString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  const av = n => { const p = ALL_PLAYERS.find(q => q.name === n); return p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">?</span></span>'; };
+  const seg = `<div class="pf-seg seen-seg"><button class="${SEEN_MODE === 'people' ? 'on' : ''}" onclick="SEEN_MODE='people'; renderSeen()">People</button><button class="${SEEN_MODE === 'visits' ? 'on' : ''}" onclick="SEEN_MODE='visits'; renderSeen()">Every visit</button></div>`;
+  const list = SEEN_MODE === 'people'
+    ? (x.names || []).map(n => { const live = Date.now() - new Date(n.last) < 15 * 60000;
+        return `<div class="seen-row">${av(n.name)}<span class="seen-n"><b>${live ? '<i class="seen-live" title="On in the last 15 minutes"></i>' : ''}${esc(n.name)}</b><small>${esc(when(n.last))}</small></span><span class="seen-r"><b>${ago(n.last)}</b><small>${n.opens} visit${n.opens === 1 ? '' : 's'}</small></span></div>`; }).join('')
+    : (x.recent || []).map(v => `<div class="seen-row">${v.name ? av(v.name) : '<span class="avatar ph"><span class="fb">·</span></span>'}<span class="seen-n"><b>${v.name ? esc(v.name) : 'Someone new'}</b><small>${v.m ? 'Phone' : 'Computer'}${v.page ? ' · ' + esc({ home: 'Home', hall: 'Players', matches: 'Matches', history: 'History', me: 'Me', admin: 'Admin' }[v.page] || v.page) : ''} · device …${esc(v.dev)}</small></span><span class="seen-r"><b>${ago(v.ts)}</b><small>${esc(when(v.ts))}</small></span></div>`).join('');
+  el.innerHTML = seg + `<div class="seen-list">${list || '<div class="empty">Nothing yet.</div>'}</div>`;
+}
 function renderTopupsAdmin() {
   const el = document.getElementById('topups-admin'), a = window.__ADMIN; if (!el || !a) return;
   const list = a.topups || [], d = ts => new Date(ts).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short', year: 'numeric' });
@@ -2907,7 +2928,7 @@ async function renderAdmin(me) {
     return;
   }
   window.__ADMIN = a;
-  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin, renderTopupsAdmin, renderAdminTodo].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
+  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin, renderTopupsAdmin, renderAdminTodo, renderSeen].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
   const ab = document.getElementById('activity-body');
   if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
     const seenNames = new Set(x.names.map(n => n.name.toLowerCase()));

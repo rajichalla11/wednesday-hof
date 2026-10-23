@@ -485,7 +485,8 @@ function activity_() {
   rows.forEach(function (r) { const n = String(r[2] || ''); if (!n) return; const ts = new Date(r[0]).getTime(); byName[n] = byName[n] || { name: n, opens: 0, last: 0 }; byName[n].opens++; if (ts > byName[n].last) byName[n].last = ts; });
   const names = Object.keys(byName).map(function (n) { return { name: n, opens: byName[n].opens, last: new Date(byName[n].last).toISOString() }; }).sort(function (a, b) { return b.last < a.last ? -1 : 1; });
   const tabs = {}; if (ss_().getSheetByName('Taps')) tab_('Taps').forEach(function (r) { if (new Date(r[0]).getTime() < now - 7 * day) return; const k = String(r[2] || ''); tabs[k] = tabs[k] || {}; tabs[k][r[1]] = 1; });
-  return { today: sum(now - day), week: sum(now - 7 * day), total: sum(0), names: names, tabs: Object.keys(tabs).map(function (k) { return { tab: k, people: Object.keys(tabs[k]).length }; }).sort(function (a, b) { return b.people - a.people; }) };
+  const recent = rows.slice(-120).reverse().map(function (r) { return { ts: new Date(r[0]).toISOString(), name: String(r[2] || ''), dev: String(r[1] || '').slice(-4), m: !!Number(r[3]), page: String(r[4] || '') }; });
+  return { today: sum(now - day), week: sum(now - 7 * day), total: sum(0), names: names, recent: recent, tabs: Object.keys(tabs).map(function (k) { return { tab: k, people: Object.keys(tabs[k]).length }; }).sort(function (a, b) { return b.people - a.people; }) };
 }
 /** Which tabs people open: one row per device per tab per visit (no names). */
 function tap_(body) {
