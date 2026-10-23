@@ -829,6 +829,9 @@
   .me-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); padding-top: 12px; }
   .me-stats span { display: flex; flex-direction: column; gap: 2px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; } .me-stats b { font-size: 20px; color: var(--fg); letter-spacing: 0; font-weight: 700; font-variation-settings: 'wdth' 80; }
   .me-go { width: 100%; justify-content: center; position: relative; overflow: hidden; min-height: 44px; } .me-go + .me-go { margin-top: 8px; }
+  .me-go:not(.ghost) { font-weight: 700; font-size: 14.5px; min-height: 50px; box-shadow: 0 6px 22px -10px color-mix(in srgb, var(--fg) 60%, transparent); }
+  .me-go.me-gold { background: var(--gold); border-color: var(--gold); color: #1a1408; box-shadow: 0 6px 22px -8px color-mix(in srgb, var(--gold) 70%, transparent); }
+  .me-go.me-gold .me-prog i { background: #1a1408; }
   .me-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(0,0,0,.18); } .me-prog i { display: block; height: 100%; background: currentColor; opacity: .45; }
   .me-cta { gap: 8px; } .me-cta-t { font-size: 24px; font-weight: 800; letter-spacing: -.02em; } .me-cta p { color: var(--fg-2); font-size: 13.5px; line-height: 1.5; margin: 0 0 6px; } .me-cta small { color: var(--fg-3); font-size: 12px; text-align: center; }
   .me-form { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: var(--fg); cursor: pointer; text-align: left; }
@@ -2355,9 +2358,9 @@ function meStripHtml(me, v, o) {
   const bal = o.bal !== undefined ? o.bal : me.balance, neg = o.known && bal < 0, lastG = RATINGS && RATINGS.ok && RATINGS.last, now = Date.now();
   const need = gateNeed(), rated = Math.min(selfRated(), need);
   const next = gateLocked() ? `<button class="btn me-go" onclick="openBallot()">Rate ${need - rated} more teammate${need - rated === 1 ? '' : 's'} to unlock ratings<span class="me-prog"><i style="width:${need ? rated / need * 100 : 0}%"></i></span></button>`
-    : v.open && o.done < o.queue.length ? `<button class="btn ghost me-go" onclick="openBallot()">Rate teammates · ${o.done} of ${o.queue.length} done</button>` : '';
+    : v.open && o.done < o.queue.length ? `<button class="btn me-go" onclick="openBallot()">Rate your teammates · ${o.done} of ${o.queue.length} done<span class="me-prog"><i style="width:${o.queue.length ? o.done / o.queue.length * 100 : 0}%"></i></span></button>` : '';
   // the profile nudge shows alongside, whatever else is waiting, until it's complete
-  const pd = profileDone(me), prof = pd.done < pd.total ? `<button class="btn ghost me-go" onclick="openProfileEdit()">Finish your profile · ${pd.done} of ${pd.total}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span></button>` : '';
+  const pd = profileDone(me), prof = pd.done < pd.total ? `<button class="btn me-go me-gold" onclick="openProfileEdit()">Finish your profile · ${pd.done} of ${pd.total}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span></button>` : '';
   return `<div class="me-box">
       <div class="me-top">${photo(me, 'avatar me-av')}<div class="me-id"><b>${esc(me.name)}</b><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]}</span></div>
         <button class="me-bal${neg ? ' neg' : ''}" onclick="const b = document.getElementById('bal-break'); b.hidden = !b.hidden; this.classList.toggle('open', !b.hidden)" ${o.known ? '' : 'disabled'}><b class="num">${o.known ? kes(bal) : '—'}</b><span>${esc(o.balStatus)}${o.known ? ' <i class="fx-chev"></i>' : ''}</span></button></div>
