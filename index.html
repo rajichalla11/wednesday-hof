@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Wednesday 9–10 · Hall of Fame</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="9–10">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..800&display=swap" rel="stylesheet">
 <style>
@@ -573,6 +581,12 @@
   .cf { position: absolute; top: -10px; width: 8px; height: 12px; border-radius: 2px; z-index: 5; pointer-events: none; animation: cfFall 1.8s ease-in forwards; }
   @keyframes cfFall { to { top: 105%; transform: translateX(40px) rotate(720deg); opacity: .2; } }
   @media (max-width: 480px) { .pp-preview { grid-template-columns: 112px 1fr; gap: 12px; } .pp-card { width: 115px; } .pp-card .card { zoom: .48; } .pp-title { font-size: 24px; } }
+  /* Get the app */
+  .app-cta { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: 14px 0 0; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); background: linear-gradient(100deg, color-mix(in srgb, var(--gold) 14%, transparent), transparent); }
+  .app-cta img { width: 40px; height: 40px; border-radius: 10px; flex: none; } .app-t { flex: 1; min-width: 0; display: flex; flex-direction: column; } .app-t b { font-size: 14.5px; } .app-t span { font-size: 12px; color: var(--fg-3); }
+  .app-cta .btn { min-height: 36px; padding: 0 16px; background: var(--gold); border-color: var(--gold); color: #1a1408; font-weight: 800; } .app-x { border: 0; background: none; color: var(--fg-3); font-size: 20px; cursor: pointer; padding: 0 2px; }
+  .sheet.app-sheet { max-width: 420px; } .app-big { display: block; width: 84px; height: 84px; border-radius: 20px; margin: 4px auto 12px; }
+  .app-steps { margin: 16px 0 18px; padding-left: 22px; display: grid; gap: 10px; font-size: 14.5px; line-height: 1.4; } .app-steps svg { width: 18px; height: 18px; vertical-align: -3px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
@@ -963,6 +977,7 @@
 
   <section class="panel active" id="panel-home">
     <section class="gd" id="gameday" hidden></section>
+    <div id="app-cta"></div>
     <div id="nextline"></div>
     <div id="fixtures"></div>
     <div id="lastline"></div>
@@ -1425,7 +1440,7 @@ function render() {
   ls.onclick = () => openSession(n-1);
   document.getElementById('tab-n-hall').textContent = ALL_PLAYERS.length;
 
-  renderPlayers(); renderWall(); renderRecords(); renderTimeline(); renderBalances(); renderGameday();
+  renderPlayers(); renderWall(); renderRecords(); renderTimeline(); renderBalances(); renderGameday(); renderAppCta();
   if (!BOOTED) {
     BOOTED = true;
     renderYou();   // shows your card at once from the cached name; the link check and ratings fill in behind it
@@ -2315,6 +2330,37 @@ async function setProfile(k, v, btn) {
   if (!res.ok) { if (k === 'position') me.position = was; else me.foot = was; pfKeep(me.name, { [k]: was }); repaintProfile(); pfSay(res.error || 'Could not save'); return; }
   pfSay('Saved', 2000);
   try { renderPlayers(); } catch (_) {}
+}
+/* ── Install as an app: Android gets the one-tap install, iPhone gets the two Share-menu steps. On phones only, not when
+   already opened as the app, and gone for two weeks once dismissed. ── */
+let INSTALL_EVT = null;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTALL_EVT = e; renderAppCta(); });
+addEventListener('appinstalled', () => { INSTALL_EVT = null; try { localStorage.setItem('w910_app', 'installed'); } catch (_) {} renderAppCta(); });
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+function renderAppCta() {
+  const el = document.getElementById('app-cta'); if (!el) return;
+  let off = ''; try { off = localStorage.getItem('w910_app') || ''; } catch (_) {}
+  const snoozed = off === 'installed' || (off && Date.now() - Number(off) < 14 * 86400000);
+  const phone = /android|iphone|ipad|ipod/i.test(navigator.userAgent) || isIOS();
+  if (isStandalone() || snoozed || !phone || (!INSTALL_EVT && !isIOS())) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="app-cta"><img src="/icons/icon-192.png" alt=""><div class="app-t"><b>Get the app</b><span>Wednesday 9–10 on your home screen, one tap away.</span></div>
+    <button class="btn" onclick="installApp()">${INSTALL_EVT ? 'Install' : 'How'}</button><button class="app-x" onclick="snoozeApp()" aria-label="Not now">×</button></div>`;
+}
+function snoozeApp() { try { localStorage.setItem('w910_app', String(Date.now())); } catch (_) {} renderAppCta(); }
+async function installApp() {
+  if (INSTALL_EVT) { INSTALL_EVT.prompt(); const c = await INSTALL_EVT.userChoice.catch(() => null); INSTALL_EVT = null; if (c && c.outcome === 'accepted') { try { localStorage.setItem('w910_app', 'installed'); } catch (_) {} } renderAppCta(); return; }
+  let ov = document.getElementById('app-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'app-overlay'; ov.onclick = e => { if (e.target === ov) ov.classList.remove('open'); }; document.body.appendChild(ov); }
+  const safari = /safari/i.test(navigator.userAgent) && !/crios|fxios|edgios|gsa|instagram|fban|fbav/i.test(navigator.userAgent);
+  ov.innerHTML = `<div class="sheet app-sheet"><div class="controls"><button class="ctl" onclick="document.getElementById('app-overlay').classList.remove('open')">✕</button></div>
+    <img src="/icons/icon-192.png" alt="" class="app-big"><div class="pp-title" style="text-align:center">Add to your home screen</div>
+    <ol class="app-steps">${safari ? '' : '<li>Open this page in <b>Safari</b> (tap ⋯ or the compass, then Open in Safari)</li>'}
+      <li>Tap the <b>Share</b> button <svg viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M5 11v9h14v-9"/></svg> at the bottom of the screen</li>
+      <li>Scroll down and tap <b>Add to Home Screen</b></li><li>Tap <b>Add</b>. The 9–10 icon is now on your phone.</li></ol>
+    <button class="btn" style="width:100%;justify-content:center;min-height:48px" onclick="document.getElementById('app-overlay').classList.remove('open')">Got it</button></div>`;
+  ov.classList.add('open');
 }
 /* ── Admin tab: four groups behind a segmented switch, plus a "needs you" strip of things waiting on the admin ── */
 const ADM_GROUPS = [['games', 'Games'], ['players', 'Players'], ['money', 'Money'], ['activity', 'Activity']];
