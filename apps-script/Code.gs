@@ -101,7 +101,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes'].forEach(bust_); cache_().remove('players'); }
 
 /** One-off: strips what could link a ballot to a voter from data written before Version 20. Voters keep only a rough
  *  "rated" band (no last-vote time), ballot and check-in times become the day only, and ballot rows are shuffled so
@@ -167,6 +167,7 @@ function doPost(e) {
     if (body.action === 'withdraw') return json_(withdraw_(body));
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
     if (body.action === 'setProfile') return json_(setProfile_(body));
+    if (body.action === 'footVote') return json_(footVote_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -209,7 +210,7 @@ function me_(token) {
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
 }
 
 /* ───────── top-ups ─────────
@@ -347,7 +348,7 @@ function buildResults_() {
   const strip = function (agg) { Object.keys(agg).forEach(function (n) { delete agg[n].vote; delete agg[n].vw; if (hide.indexOf(n.toLowerCase()) >= 0) agg[n] = { n: agg[n].n, traits: agg[n].traits, hidden: true }; }); return agg; };
   const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(aggregate_(all.filter(function (r) { return r[0] === win; }), seeds)), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
   out.game = gamePublic_(); out.motm = motmTally_(); out.games = gamesPublic_();
-  const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_();
+  const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_(); out.footReviews = footReviews_();
   out.ballots = tab_('Voters').filter(function (r) { return r[3] && String(r[5] || '') && String(r[5]) !== '0'; }).length;   // people who have voted (a voter can hold an older anonymous ballot and a newer named one, so ballot ids would count them twice)
   const js = JSON.stringify(out); cache_().put('results', js, 300); cache_().put('results_stale', js, 21600);
   return out;
@@ -765,22 +766,75 @@ function syncSheetsDryRun() { const out = {}; fixturesPublic_().forEach(function
 /** Editor or admin: sync every open game now (e.g. right after deploying). */
 function syncAllSheets() { const out = {}; fixturesPublic_().forEach(function (f) { out[f.date] = syncSheetSafe_(f.date); }); Logger.log(JSON.stringify(out)); return out; }
 /** A player sets their own position and preferred foot. Written to the attendance sheet (Wednesday Group C/D on every row
- *  that is this player, and Players B/C), which is where the site reads them from. */
+ *  that is this player, and Players B/C), which is where the site reads them from. Claiming to be two-footed ("Both") goes to
+ *  review instead: teammates agree or disagree when they rate the player, and after FOOT_NEED answers the majority decides. */
+const FOOT_NEED = 5;
 function setProfile_(body) {
   const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
   const POS = ['Attack', 'Midfield', 'Defense', 'Goalkeeper'], FOOT = ['Right', 'Left', 'Both'];
   const pos = POS.indexOf(body.position) >= 0 ? body.position : null, foot = FOOT.indexOf(body.foot) >= 0 ? body.foot : null;
   if (!pos && !foot) return { ok: false, error: 'Nothing to change.' };
-  const ss = SpreadsheetApp.openById(MAIN_SHEET_ID), l = me.toLowerCase(), alias = Object.keys(ALIASES_).filter(function (a) { return ALIASES_[a].toLowerCase() === l; });
+  if (foot === 'Both') { openFootClaim_(me); if (pos) writeProfile_(me, pos, null); return { ok: true, review: true }; }
+  if (foot) closeFootClaim_(me, 'withdrawn');
+  const n = writeProfile_(me, pos, foot);
+  if (!n) return { ok: false, error: 'Your row was not found in the sheet.' };
+  return { ok: true, position: pos, foot: foot };
+}
+function writeProfile_(name, pos, foot) {
+  const ss = SpreadsheetApp.openById(MAIN_SHEET_ID), l = name.toLowerCase(), alias = Object.keys(ALIASES_).filter(function (a) { return ALIASES_[a].toLowerCase() === l; });
   const isMe = function (v) { const x = String(v || '').trim().toLowerCase(); return x === l || alias.indexOf(x) >= 0; };
   let n = 0;
   const wide = ss.getSheetByName('Wednesday Group');
-  if (wide) { const names = wide.getRange(4, 2, wide.getLastRow() - 3, 1).getValues(); names.forEach(function (r, i) { if (!isMe(r[0])) return; if (pos) wide.getRange(4 + i, 3).setValue(pos); if (foot) wide.getRange(4 + i, 4).setValue(foot); n++; }); }
+  if (wide) wide.getRange(4, 2, wide.getLastRow() - 3, 1).getValues().forEach(function (r, i) { if (!isMe(r[0])) return; if (pos) wide.getRange(4 + i, 3).setValue(pos); if (foot) wide.getRange(4 + i, 4).setValue(foot); n++; });
   const pl = ss.getSheetByName('Players');
-  if (pl) { const names = pl.getRange(2, 1, pl.getLastRow() - 1, 1).getValues(); names.forEach(function (r, i) { if (!isMe(r[0])) return; if (pos) pl.getRange(2 + i, 2).setValue(pos); if (foot) pl.getRange(2 + i, 3).setValue(foot); }); }
-  if (!n) return { ok: false, error: 'Your row was not found in the sheet.' };
+  if (pl) pl.getRange(2, 1, pl.getLastRow() - 1, 1).getValues().forEach(function (r, i) { if (!isMe(r[0])) return; if (pos) pl.getRange(2 + i, 2).setValue(pos); if (foot) pl.getRange(2 + i, 3).setValue(foot); });
   cache_().remove('players'); bust_('Voters');
-  return { ok: true, position: pos, foot: foot };
+  return n;
+}
+/* FootClaims: ts, name, status (review | approved | rejected | withdrawn), decided. FootVotes: claim ts, name, voter, agree (1/0), ts. */
+function footClaimSheet_() { const sh = sheet_('FootClaims'); if (sh.getLastRow() === 0) sh.appendRow(['ts', 'name', 'status', 'decided']); return sh; }
+function openFootClaim_(name) {
+  closeFootClaim_(name, 'withdrawn');
+  footClaimSheet_().appendRow(["'" + new Date().toISOString(), name, 'review', '']); bust_('FootClaims');
+}
+function closeFootClaim_(name, status) {
+  if (!ss_().getSheetByName('FootClaims')) return;
+  const sh = footClaimSheet_(), d = sh.getDataRange().getValues();
+  for (let i = 1; i < d.length; i++) if (String(d[i][1]).toLowerCase() === name.toLowerCase() && d[i][2] === 'review') sh.getRange(i + 1, 3, 1, 2).setValues([[status, "'" + new Date().toISOString()]]);
+  bust_('FootClaims');
+}
+function footReviews_() {
+  const out = {}; if (!ss_().getSheetByName('FootClaims')) return out;
+  tab_('FootClaims').forEach(function (r) { if (r[2] === 'review') out[String(r[1])] = { ts: String(r[0]), agree: 0, disagree: 0, need: FOOT_NEED }; });
+  if (ss_().getSheetByName('FootVotes')) tab_('FootVotes').forEach(function (r) { const c = out[String(r[1])]; if (c && String(r[0]) === c.ts) { if (Number(r[3])) c.agree++; else c.disagree++; } });
+  return out;
+}
+function myFootVotes_(me) {
+  const open = footReviews_(), out = {}; if (!ss_().getSheetByName('FootVotes')) return out;
+  tab_('FootVotes').forEach(function (r) { const c = open[String(r[1])]; if (c && String(r[0]) === c.ts && String(r[2]).toLowerCase() === me.toLowerCase()) out[String(r[1])] = !!Number(r[3]); });
+  return out;
+}
+function footVote_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
+  const name = String(body.name || ''), agree = body.agree ? 1 : 0;
+  if (name.toLowerCase() === me.toLowerCase()) return { ok: false, error: "You can't vote on your own." };
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const c = footReviews_()[name]; if (!c) return { ok: false, error: 'That review is closed.' };
+    const sh = sheet_('FootVotes'); if (sh.getLastRow() === 0) sh.appendRow(['claim', 'name', 'voter', 'agree', 'ts']);
+    const d = sh.getDataRange().getValues(); let at = -1;
+    for (let i = 1; i < d.length; i++) if (String(d[i][0]) === c.ts && String(d[i][1]) === name && String(d[i][2]).toLowerCase() === me.toLowerCase()) at = i + 1;
+    if (at > 0) sh.getRange(at, 4, 1, 2).setValues([[agree, "'" + new Date().toISOString()]]); else sh.appendRow([c.ts, name, me, agree, "'" + new Date().toISOString()]);
+    bust_('FootVotes');
+    const t = footReviews_()[name], total = t.agree + t.disagree;
+    let decided = '';
+    if (total >= FOOT_NEED && t.agree !== t.disagree) {
+      decided = t.agree > t.disagree ? 'approved' : 'rejected';
+      closeFootClaim_(name, decided);
+      if (decided === 'approved') writeProfile_(name, null, 'Both');
+    }
+    return { ok: true, review: decided ? null : footReviews_()[name], decided: decided, footReviews: footReviews_() };
+  } finally { lock.releaseLock(); }
 }
 
 /* ───────── strikes ─────────

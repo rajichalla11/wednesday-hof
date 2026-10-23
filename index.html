@@ -536,6 +536,10 @@
   .pf { display: grid; gap: 10px; padding: 12px 14px; margin-bottom: 14px; border-radius: 12px; border: 1px solid var(--line-2); }
   .pf-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .pf-seg { display: flex; gap: 3px; padding: 3px; border-radius: 10px; background: var(--surface-2); } .pf-seg button { border: 0; background: none; color: var(--fg-3); font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 8px; cursor: pointer; } .pf-seg button.on { background: var(--fg); color: var(--bg); }
+  .pf-seg button.rev { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
+  .pf-rev { font-size: 12px; color: var(--fg-3); line-height: 1.4; }
+  .fr { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 12px; margin: 0 0 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); background: color-mix(in srgb, var(--gold) 8%, transparent); }
+  .fr b { display: block; font-size: 13.5px; } .fr span { font-size: 11.5px; color: var(--fg-3); }
   .pf-st { font-size: 11.5px; color: var(--fg-3); min-height: 0; } .pf-st:empty { display: none; }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
@@ -1941,6 +1945,7 @@ function renderBallotCard(dir) {
       </div>
       <div class="pane">
         <div class="b-who"><div class="b-title">${esc(p.name)}</div><span>${sharedCount(me,p)} nights together</span></div>
+        ${footReviewHtml(p)}
         <p class="muted" style="font-size:12px;margin-bottom:10px">Tap a level for each of the six. The dot marks the suggested level. Five is the best in the group, one needs work.</p>
         ${levelRowsHtml('b', values, seed)}
         <div class="label" style="margin-top:16px" id="b-traits-l">Traits · <span>${BALLOT.traits.length}</span> of ${MAX_TRAITS} chosen</div>
@@ -2117,20 +2122,47 @@ async function renderYou() {
   if (v.isAdmin) renderAdmin(me);
 }
 /* Your position and preferred foot: tap to change; saved to the attendance sheet, shown straight away here. */
+const footReview = n => ((RATINGS && RATINGS.footReviews) || {})[n];
 function profileEditHtml(me) {
-  const pos = posName(me) || '', foot = (me.foot || '').trim(), seg = (k, opts, cur) => `<div class="pf-seg">${opts.map(o => `<button class="${cur === o ? 'on' : ''}" onclick="setProfile('${k}', '${o}', this)">${o}</button>`).join('')}</div>`;
+  const pos = posName(me) || '', foot = (me.foot || '').trim(), rv = footReview(me.name);
+  const seg = (k, opts, cur) => `<div class="pf-seg">${opts.map(o => `<button class="${cur === o ? 'on' : ''}${k === 'foot' && o === 'Both' && rv ? ' rev' : ''}" onclick="setProfile('${k}', '${o}', this)">${o === 'Both' && rv && k === 'foot' ? 'Both · in review' : o}</button>`).join('')}</div>`;
   return `<div class="pf" id="pf"><div class="pf-row"><span class="label">Position</span>${seg('position', ['Attack', 'Midfield', 'Defense'], pos)}</div>
-    <div class="pf-row"><span class="label">Preferred foot</span>${seg('foot', ['Left', 'Right', 'Both'], foot)}</div><small class="pf-st" id="pf-st"></small></div>`;
+    <div class="pf-row"><span class="label">Preferred foot</span>${seg('foot', ['Left', 'Right', 'Both'], foot)}</div>
+    ${rv ? `<div class="pf-rev">Two-footed is under review. Teammates agree or disagree when they rate you · ${rv.agree + rv.disagree} of ${rv.need} answered.</div>` : ''}
+    <small class="pf-st" id="pf-st"></small></div>`;
+}
+function repaintProfile() { const me = ALL_PLAYERS.find(p => VOTER && p.name.toLowerCase() === VOTER.name.toLowerCase()), el = document.getElementById('pf'); if (me && el) el.outerHTML = profileEditHtml(me); }
+/* In the ballot: a teammate who says they're two-footed gets an agree / disagree, saved on its own */
+function footReviewHtml(p) {
+  const rv = footReview(p.name); if (!rv) return '';
+  const mine = (VOTER.footVotes || {})[p.name];
+  return `<div class="fr" id="fr"><div><b>${esc(p.name.split(' ')[0])} says they're two-footed</b><span>${rv.agree + rv.disagree} of ${rv.need} teammates answered</span></div>
+    <div class="pf-seg"><button class="${mine === true ? 'on' : ''}" onclick="footVote('${esc(p.name).replace(/'/g, "\\'")}', true)">Agree</button><button class="${mine === false ? 'on' : ''}" onclick="footVote('${esc(p.name).replace(/'/g, "\\'")}', false)">Disagree</button></div></div>`;
+}
+async function footVote(name, agree) {
+  const before = (VOTER.footVotes || {})[name]; VOTER.footVotes = VOTER.footVotes || {}; VOTER.footVotes[name] = agree;
+  const rv = footReview(name); if (rv) { if (before === undefined) rv[agree ? 'agree' : 'disagree']++; else if (before !== agree) { rv[agree ? 'agree' : 'disagree']++; rv[agree ? 'disagree' : 'agree']--; } }
+  const el = document.getElementById('fr'), p = ALL_PLAYERS.find(x => x.name === name); if (el && p) el.outerHTML = footReviewHtml(p);
+  let res; try { res = await api(null, { action: 'footVote', t: TOKEN, name, agree }); } catch (e) { res = { ok: false }; }
+  if (res.ok && RATINGS) { RATINGS.footReviews = res.footReviews || RATINGS.footReviews; const el2 = document.getElementById('fr'); if (el2 && p) el2.outerHTML = footReviewHtml(p); }
 }
 async function setProfile(k, v, btn) {
   const me = ALL_PLAYERS.find(p => VOTER && p.name.toLowerCase() === VOTER.name.toLowerCase()); if (!me) return;
+  if (k === 'foot' && v === 'Both' && (me.foot || '').trim() !== 'Both') {   // two-footed goes to review instead of straight on
+    if (RATINGS) { RATINGS.footReviews = RATINGS.footReviews || {}; RATINGS.footReviews[me.name] = { agree: 0, disagree: 0, need: 5 }; } repaintProfile();
+    let r2; try { r2 = await api(null, { action: 'setProfile', t: TOKEN, foot: 'Both' }); } catch (e) { r2 = { ok: false, error: e.message }; }
+    const st2 = document.getElementById('pf-st'); if (!r2.ok) { delete RATINGS.footReviews[me.name]; repaintProfile(); const s3 = document.getElementById('pf-st'); if (s3) s3.textContent = r2.error || 'Could not save'; } else if (st2) st2.textContent = '';
+    return;
+  }
+  if (k === 'foot' && RATINGS && RATINGS.footReviews) delete RATINGS.footReviews[me.name];
   const was = k === 'position' ? me.position : me.foot;
   if (k === 'position') me.position = v; else me.foot = v;
   btn.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
   const st = document.getElementById('pf-st'); if (st) st.textContent = 'Saving…';
   let res; try { res = await api(null, { action: 'setProfile', t: TOKEN, [k]: v }); } catch (e) { res = { ok: false, error: e.message }; }
   if (!res.ok) { if (k === 'position') me.position = was; else me.foot = was; if (st) st.textContent = res.error || 'Could not save'; btn.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.textContent === (was || '').trim())); return; }
-  if (st) { st.textContent = 'Saved'; setTimeout(() => { if (st.isConnected) st.textContent = ''; }, 2000); }
+  if (k === 'foot') { repaintProfile(); } const st4 = document.getElementById('pf-st');
+  if (st4) { st4.textContent = 'Saved'; setTimeout(() => { if (st4.isConnected) st4.textContent = ''; }, 2000); }
   try { renderPlayers(); } catch (_) {}
 }
 /* ── Admin tab: four groups behind a segmented switch, plus a "needs you" strip of things waiting on the admin ── */

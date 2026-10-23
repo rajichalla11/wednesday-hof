@@ -223,3 +223,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v40 · Edit your profile
 - `setProfile` {position: Attack|Midfield|Defense|Goalkeeper, foot: Right|Left|Both}: a player sets their own; written to the attendance sheet (Wednesday Group C/D on every row that is them, Players B/C).
+
+## v41 · Two-footed goes to review
+- `setProfile` with foot "Both" opens a claim in **FootClaims** instead of writing the sheet. Teammates answer in the ballot (`footVote` {name, agree}) → **FootVotes**. After 5 answers the majority decides: agree writes "Both" to the sheet; disagree leaves the old foot. Picking Left/Right withdraws an open claim. `results.footReviews` = open claims with counts; `me.footVotes` = the voter's own answers.
