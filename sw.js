@@ -1,7 +1,7 @@
 /* Wednesday 9–10 service worker: makes the site installable as an app. Pages always come from the network first (so updates
    show straight away) and fall back to the last copy when offline. Data calls (the sheet, the backend, /api) are left alone. */
 const CACHE = 'w910-v5';
-self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/', '/icons/icon-192.png', '/icons/apple-touch-icon.png']).catch(() => {}))); self.skipWaiting(); });
+self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll([new Request('/', { cache: 'reload' }), '/icons/icon-192.png', '/icons/apple-touch-icon.png']).catch(() => {}))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   const r = e.request, u = new URL(r.url);
