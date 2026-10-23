@@ -238,3 +238,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v44 · Who's been on
 - `admin.activity.recent` = the latest 120 visits (ts, name or '', device tail, phone?, page), newest first, for the Admin → Activity "Who's been on" panel.
+
+## v45 · Send a notification
+- `pushBroadcast` (admin): `dry` counts phones/people with notifications on; otherwise sends {title, body} to all of them (kind `news`).

@@ -174,6 +174,7 @@ function doPost(e) {
     if (body.action === 'pushPrefs') return json_(pushPrefs_(body));
     if (body.action === 'pushConfig') return json_(pushConfig_(body));
     if (body.action === 'pushTest') return json_(pushTest_(body));
+    if (body.action === 'pushBroadcast') return json_(pushBroadcast_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -984,6 +985,15 @@ function pushTickThrottled_() { const c = cache_(); if (c.get('pushtick')) retur
 function setupPushTrigger() {
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'pushTick') ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('pushTick').timeBased().everyMinutes(15).create();
+}
+/** Admin: send a notification to everyone with notifications on (or just count them first with dry). */
+function pushBroadcast_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const rows = pushRows_(), people = []; rows.forEach(function (r) { const n = String(r[1]); if (people.indexOf(n) < 0) people.push(n); });
+  if (body.dry) return { ok: true, phones: rows.length, people: people };
+  const title = String(body.title || '').slice(0, 60).trim(), text = String(body.body || '').slice(0, 200).trim();
+  if (!title) return { ok: false, error: 'Add a title.' };
+  return { ok: true, sent: pushTo_(people, 'news', title, text, String(body.url || '/#home')), phones: rows.length, people: people };
 }
 function pushTest_(body) {
   const me = voterName_(body.t); if (!me) return { ok: false };
