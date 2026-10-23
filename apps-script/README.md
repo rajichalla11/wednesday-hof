@@ -244,3 +244,7 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v46 · Sign in on another device
 - `linkCode` {t}: a 6-character code (valid 15 min, server cache only) for the signed-in player. `linkRedeem` {code}: returns that same token, so a new device (e.g. the installed iPhone app, which has its own storage) gets the same card and ballot. Wrong codes are rate-limited.
+
+## v47 · Nicknames
+- `ALIASES_` gains veer → Vali; a guest sign-up under a player's nickname becomes that player.
+- `renameSignup` (admin) {date, from, to}: renames a sign-up in place, drops the person's other entry for that game, re-syncs the attendance sheet and deletes the old name's row there if it's empty.

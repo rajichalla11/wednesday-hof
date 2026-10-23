@@ -1158,7 +1158,7 @@ const SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 const SESSION_START_COL = 8;
 /* Rows in the sheet that are the same person: alias (lower case) → the name shown on the site. Counts, attendance and balance are combined. */
-const ALIASES = { 'rj': 'Rahul', 'sahil m.': 'Sahil M' };
+const ALIASES = { 'rj': 'Rahul', 'sahil m.': 'Sahil M', 'veer': 'Vali' };
 /* Founders are whoever played the very first session, plus anyone listed here (lower case) who was there but not marked on the sheet. */
 const FOUNDERS = new Set(['raj']);
 const isFounder = p => p.attendance[0] === 1 || FOUNDERS.has(p.name.toLowerCase());
@@ -3089,7 +3089,7 @@ const fmtKo = (g) => new Date(`${g.date}T${g.time}:00+03:00`).toLocaleTimeString
    Columns are split on runs of 2+ spaces or a tab; trailing dots and asterisks are dropped; names are matched to players
    (exact, then "Mihir" → "Mihir N" when unique, then first name when unique). Unmatched names stay as typed, as guests. */
 /* Raji's standing call: a bare "Yash" is Yash Sharma and a bare "Karan" is Karan N, unless he names the other one. */
-const LINEUP_PREFER = { yash: 'Yash Sharma', karan: 'Karan N' };
+const LINEUP_PREFER = { yash: 'Yash Sharma', karan: 'Karan N', veer: 'Vali' };
 function resolvePlayer(raw) {
   const n = raw.toLowerCase();
   if (LINEUP_PREFER[n] && ALL_PLAYERS.some(p => p.name === LINEUP_PREFER[n])) return LINEUP_PREFER[n];

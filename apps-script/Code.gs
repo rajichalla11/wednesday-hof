@@ -30,7 +30,7 @@ const SESSION_START_COL = 8;
 const SEED_BY_POS = { attack:[72,74,64,70,52,64], midfield:[68,64,74,70,64,66], defense:[66,54,64,58,74,72], other:[65,65,65,65,65,65] };
 function posClass_(pos) { const p = String(pos || '').toLowerCase(); return p.indexOf('attack') >= 0 ? 'attack' : (p.indexOf('defen') >= 0) ? 'defense' : p.indexOf('mid') >= 0 ? 'midfield' : 'other'; }
 /* Sheet rows that are the same person: alias (lower case) → the name used everywhere. Keep in step with ALIASES in index.html. */
-const ALIASES_ = { 'rj': 'Rahul', 'sahil m.': 'Sahil M' };
+const ALIASES_ = { 'rj': 'Rahul', 'sahil m.': 'Sahil M', 'veer': 'Vali' };
 const SKIP = ['', 'player', 'games played', 'amount paid', 'balance', 'owing from previous sessions', '+1s', 'krish p', 'images', 'postion', 'position', 'preferred foot'];
 
 /* ───────── admin: run these from the editor ───────── */
@@ -177,6 +177,7 @@ function doPost(e) {
     if (body.action === 'pushBroadcast') return json_(pushBroadcast_(body));
     if (body.action === 'linkCode') return json_(linkCode_(body));
     if (body.action === 'linkRedeem') return json_(linkRedeem_(body));
+    if (body.action === 'renameSignup') return json_(renameSignup_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -674,7 +675,8 @@ function signup_(body) {
   let name = me, kind = 'player';
   // Players sign up themselves only; adding someone else or a guest (+1) is for the admin
   if ((body.guest || (body.name && String(body.name).toLowerCase() !== me.toLowerCase())) && !isAdmin_(me)) return { ok: false, error: 'You can only sign yourself up. Ask the admin to add anyone else.' };
-  if (body.guest) { name = String(body.guest).replace(/\s+/g, ' ').trim().slice(0, 30); kind = 'guest'; if (!name) return { ok: false, error: 'Type the guest’s name.' }; }
+  if (body.guest) { name = String(body.guest).replace(/\s+/g, ' ').trim().slice(0, 30); kind = 'guest'; if (!name) return { ok: false, error: 'Type the guest’s name.' };
+    if (ALIASES_[name.toLowerCase()]) { name = ALIASES_[name.toLowerCase()]; kind = 'player'; } }   // a nickname of a player (Veer is Vali) is that player, not a guest
   else if (body.name) { const p = players_().filter(function (x) { return x.name.toLowerCase() === String(body.name).toLowerCase(); })[0]; if (!p) return { ok: false, error: 'Unknown player.' }; name = p.name; }
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
@@ -1039,6 +1041,36 @@ function clearStrikes_(body) {
   for (let i = 1; i < data.length; i++) if (String(data[i][2]).toLowerCase() === name && !data[i][4]) sh.getRange(i + 1, 5).setValue(stamp);
   bust_('Strikes');
   return { ok: true, strikes: strikesPublic_() };
+}
+/** Admin: a name on a game's list was really someone else (Veer is Vali): rename it in place (keeps the spot), drop that
+ *  person's other entry for the same game, re-sync the attendance sheet, and delete the sheet row the old name got if empty. */
+function renameSignup_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const date = String(body.date || ''), from = String(body.from || '').trim(), to = String(body.to || '').trim();
+  const p = players_().filter(function (x) { return x.name.toLowerCase() === to.toLowerCase(); })[0]; if (!p) return { ok: false, error: 'Unknown player ' + to };
+  const lock = LockService.getScriptLock(); lock.waitLock(10000); let renamed = 0, dropped = 0;
+  try {
+    const sh = signupSheet_(), d = sh.getDataRange().getValues();
+    let at = -1; for (let i = 1; i < d.length; i++) if (String(d[i][0]).slice(0, 10) === date && String(d[i][2]).toLowerCase() === from.toLowerCase()) at = i;
+    if (at < 0) return { ok: false, error: from + ' is not on ' + date };
+    sh.getRange(at + 1, 3, 1, 3).setValues([[p.name, 'player', '']]); renamed = 1;
+    for (let i = d.length - 1; i >= 1; i--) if (i !== at && String(d[i][0]).slice(0, 10) === date && String(d[i][2]).toLowerCase() === p.name.toLowerCase()) { sh.deleteRow(i + 1); dropped++; }
+  } finally { lock.releaseLock(); }
+  bust_('Signups');
+  const sync = syncSheetSafe_(date);
+  let removedRow = false;
+  try {   // the old name's own row in Wednesday Group, if it now holds nothing
+    const wide = SpreadsheetApp.openById(MAIN_SHEET_ID).getSheetByName('Wednesday Group'), last = wide.getLastRow(), w = wide.getLastColumn();
+    const vals = wide.getRange(4, 1, last - 3, w).getValues();
+    for (let i = vals.length - 1; i >= 0; i--) if (String(vals[i][1]).trim().toLowerCase() === from.toLowerCase()) {
+      const fees = vals[i].slice(7).some(function (v) { return v !== '' && v !== null && Number(v) !== 0; }), paid = Number(vals[i][5]) || 0;
+      if (!fees && !paid) { const r = 4 + i; wide.deleteRow(r); removedRow = true;
+        const pr = props_(), all = pr.getProperties();   // rows remembered by the sheet sync shift up by one below the deleted row
+        Object.keys(all).forEach(function (k) { if (k.indexOf('sheet_') !== 0) return; const st = JSON.parse(all[k] || 'null'); if (!st || !st.rows) return;
+          Object.keys(st.rows).forEach(function (n) { if (st.rows[n] > r) st.rows[n]--; else if (st.rows[n] === r) delete st.rows[n]; }); pr.setProperty(k, JSON.stringify(st)); }); }
+    }
+  } catch (e) { console.error(e); }
+  return { ok: true, renamed: renamed, dropped: dropped, sync: sync, removedRow: removedRow, fixtures: fixturesPublic_() };
 }
 /** Admin: open a game for sign-ups (a Games row with no lineup yet), or remove one that has no sign-ups. */
 function addFixture_(body) {
