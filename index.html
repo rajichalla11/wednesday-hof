@@ -2196,7 +2196,7 @@ async function renderYou() {
   if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
-  paintSelfPreview(); paintNotif();
+  paintSelfPreview(); paintNotif(); pushAuto();
   if (v.isAdmin) renderAdmin(me);
   if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else maybeProfilePop(me);
 }
@@ -2284,8 +2284,13 @@ let PP_LAST = -1;
 function maybeProfilePop(me) {
   if (!me || !VOTER || !VOTER.ok || VOTER.pending) return;
   const pd = profileDone(me); if (pd.done >= pd.total) return;
-  try { if (sessionStorage.getItem('w910_pp')) return; sessionStorage.setItem('w910_pp', '1'); } catch (_) {}
-  setTimeout(() => { if (document.querySelector('.overlay.open') || !document.getElementById('panel-home').classList.contains('active')) return; openProfilePop(); }, 1200);
+  try { if (sessionStorage.getItem('w910_pp')) return; } catch (_) {}
+  let tries = 0;
+  const go = () => { if (document.querySelector('.overlay.open')) { if (++tries < 40) setTimeout(go, 3000); return; }   // wait for any other pop-up to close
+    if (!document.getElementById('panel-home').classList.contains('active')) return;
+    try { if (sessionStorage.getItem('w910_pp')) return; sessionStorage.setItem('w910_pp', '1'); } catch (_) {}
+    openProfilePop(); };
+  setTimeout(go, 1200);
 }
 function openProfilePop() {
   const me = meP(); if (!me) return;
@@ -2450,6 +2455,30 @@ async function setPushPref(k, on) {
   const s2 = document.getElementById('nt-st'); if (s2) { s2.textContent = res.ok ? 'Saved' : 'Could not save'; setTimeout(() => { if (s2.isConnected) s2.textContent = ''; }, 1500); }
 }
 async function testPush(btn) { btn.disabled = true; btn.textContent = 'Sending…'; const res = await api(null, { action: 'pushTest', t: TOKEN }).catch(() => ({})); btn.textContent = res && res.sent ? 'Sent · check your phone' : 'Not sent'; setTimeout(() => { if (btn.isConnected) { btn.disabled = false; btn.textContent = 'Send me a test'; } }, 4000); }
+/* Notifications can't be on without the phone's Allow, so: where it's already allowed, switch on quietly; in the installed
+   app, ask straight away (a tap first, because iPhone only shows Allow after one); ask again after 3 days if they said not now. */
+async function pushAuto() {
+  if (!pushSupported() || !TOKEN || !VOTER || !VOTER.ok || VOTER.pending) return;
+  if (Notification.permission === 'granted') {
+    const sub = await pushSubNow();
+    if (!sub || !(VOTER.push && VOTER.push.devices)) {
+      try { const reg = await navigator.serviceWorker.ready; const s2 = sub || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(VAPID_PUB) });
+        const res = await api(null, { action: 'pushSub', t: TOKEN, sub: s2.toJSON(), ua: navigator.userAgent }); if (res.ok) { VOTER.push = res.push; paintNotif(); } } catch (_) {}
+    }
+    return;
+  }
+  if (Notification.permission !== 'default' || !isStandalone()) return;
+  let last = 0; try { last = Number(localStorage.getItem('w910_push_pop') || 0); } catch (_) {}
+  if (Date.now() - last < 3 * 86400000) return;
+  try { localStorage.setItem('w910_push_pop', String(Date.now())); } catch (_) {}
+  let ov = document.getElementById('push-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'push-overlay'; document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="sheet app-sheet app-pop"><img src="/icons/icon-192.png" alt="" class="app-big"><div class="pp-title" style="text-align:center">Turn on notifications</div>
+    <ul class="app-perks"><li>When you move up from standby</li><li>The gate code on game day</li><li>Rate the game after you play</li></ul>
+    <button class="btn app-go" onclick="document.getElementById('push-overlay').classList.remove('open'); enablePush()">Turn on</button>
+    <button class="btn link app-later" onclick="document.getElementById('push-overlay').classList.remove('open')">Not now</button></div>`;
+  setTimeout(() => ov.classList.add('open'), 500);
+}
 /* After someone's first sign-up, offer notifications once (where the phone can do them) */
 function offerPushAfterSignup() {
   if (!pushSupported() || Notification.permission !== 'default' || !VOTER || !VOTER.ok) return;
