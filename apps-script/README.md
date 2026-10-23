@@ -248,3 +248,7 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 ## v47 · Nicknames
 - `ALIASES_` gains veer → Vali; a guest sign-up under a player's nickname becomes that player.
 - `renameSignup` (admin) {date, from, to}: renames a sign-up in place, drops the person's other entry for that game, re-syncs the attendance sheet and deletes the old name's row there if it's empty.
+
+## v48 · Sheet sync race
+- `syncSheet_` reads its saved state only after taking the lock (two syncs at once could mark a column it had just made as "made by hand").
+- `sheetAdopt` (admin) {date}: rebuilds the saved state from the dated column in Wednesday Group and syncs.

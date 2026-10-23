@@ -178,6 +178,7 @@ function doPost(e) {
     if (body.action === 'linkCode') return json_(linkCode_(body));
     if (body.action === 'linkRedeem') return json_(linkRedeem_(body));
     if (body.action === 'renameSignup') return json_(renameSignup_(body));
+    if (body.action === 'sheetAdopt') return json_(sheetAdopt_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -731,10 +732,11 @@ function sheetCharges_(g) {
 function syncSheet_(date, dry) {
   const g = allGames_().filter(function (x) { return x.date === date; })[0]; if (!g) return { ok: false, error: 'no game' };
   if (kickoff_(g).getTime() <= Date.now()) return { ok: true, skipped: 'played' };
-  const pr = props_(), key = 'sheet_' + date, prev = JSON.parse(pr.getProperty(key) || 'null');
-  const c = sheetCharges_(g); if (!prev && !c.full) return { ok: true, skipped: 'not full' };
+  const pr = props_(), key = 'sheet_' + date;
   const lock = dry ? null : LockService.getScriptLock(); if (lock && !lock.tryLock(20000)) return { ok: false, error: 'busy' };
   try {
+    const prev = JSON.parse(pr.getProperty(key) || 'null');   // read under the lock: another sync may have just made the column
+    const c = sheetCharges_(g); if (!prev && !c.full) return { ok: true, skipped: 'not full' };
     const ss = SpreadsheetApp.openById(MAIN_SHEET_ID), wide = ss.getSheetByName('Wednesday Group'), log = ss.getSheetByName('Game Log');
     if (!wide || !log) return { ok: false, error: 'sheet tabs not found' };
     const label = sheetLabel_(date), HR = 3, FR = 4, DC = 9;
@@ -1041,6 +1043,19 @@ function clearStrikes_(body) {
   for (let i = 1; i < data.length; i++) if (String(data[i][2]).toLowerCase() === name && !data[i][4]) sh.getRange(i + 1, 5).setValue(stamp);
   bust_('Strikes');
   return { ok: true, strikes: strikesPublic_() };
+}
+/** Admin: take charge of a game's dated column again (e.g. after it was wrongly marked as made by hand): rebuild what was
+ *  written from the column itself (every row holding the fee), then sync. */
+function sheetAdopt_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const date = String(body.date || ''), label = sheetLabel_(date);
+  const wide = SpreadsheetApp.openById(MAIN_SHEET_ID).getSheetByName('Wednesday Group'), heads = wide.getRange(3, 1, 1, wide.getLastColumn()).getDisplayValues()[0];
+  let col = -1; for (let i = 8; i < heads.length; i++) if (String(heads[i]).trim() === label) col = i + 1;
+  if (col < 0) return { ok: false, error: 'No column for ' + label };
+  const vals = wide.getRange(4, 1, wide.getLastRow() - 3, col).getValues(), rows = {};
+  vals.forEach(function (r, i) { const v = Number(r[col - 1]); if (r[1] && v) rows[String(r[1]).trim().toLowerCase()] = 4 + i; });
+  props_().setProperty('sheet_' + date, JSON.stringify({ col: label, rows: rows, at: new Date().toISOString(), adopted: true }));
+  return { ok: true, adopted: Object.keys(rows).length, sync: syncSheetSafe_(date) };
 }
 /** Admin: a name on a game's list was really someone else (Veer is Vali): rename it in place (keeps the spot), drop that
  *  person's other entry for the same game, re-sync the attendance sheet, and delete the sheet row the old name got if empty. */
