@@ -557,13 +557,13 @@
   .pp-cheer { display: inline-block; font-size: 12.5px; font-weight: 700; color: var(--gold); animation: ppCheer 1.8s ease forwards; } .pp-cheer.up { font-size: 15px; letter-spacing: .02em; }
   @keyframes ppCheer { 0% { opacity: 0; transform: translateY(6px) scale(.9); } 15% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
   .pp-preview { display: grid; grid-template-columns: 150px 1fr; gap: 16px; align-items: center; margin: 12px 0 14px; }
-  .pp-card { width: 150px; } .pp-card .card { width: 100%; } .pp-name { font-size: 18px; font-weight: 800; } .pp-name span { opacity: .55; font-size: .8em; }
+  .pp-card { width: 150px; } .pp-card .card { width: 240px; zoom: .625; }   /* the card at its normal size, shrunk whole so nothing wraps */ .pp-name { font-size: 18px; font-weight: 800; } .pp-name span { opacity: .55; font-size: .8em; }
   .pp-tags .d-attrs span { background: var(--surface-2); } .pp-empty { font-size: 12px; color: var(--fg-3); margin-top: 8px; }
   .pp-photo { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; color: var(--fg-3); } .pp-photo:empty { display: none; }
   .pp .pf { margin-bottom: 4px; } .pp-foot { display: flex; justify-content: center; margin-top: 8px; }
   .cf { position: absolute; top: -10px; width: 8px; height: 12px; border-radius: 2px; z-index: 5; pointer-events: none; animation: cfFall 1.8s ease-in forwards; }
   @keyframes cfFall { to { top: 105%; transform: translateX(40px) rotate(720deg); opacity: .2; } }
-  @media (max-width: 480px) { .pp-preview { grid-template-columns: 112px 1fr; gap: 12px; } .pp-card { width: 112px; } .pp-title { font-size: 24px; } }
+  @media (max-width: 480px) { .pp-preview { grid-template-columns: 112px 1fr; gap: 12px; } .pp-card { width: 115px; } .pp-card .card { zoom: .48; } .pp-title { font-size: 24px; } }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
