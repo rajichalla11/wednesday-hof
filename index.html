@@ -2063,7 +2063,7 @@ async function renderYou() {
   const [v] = await Promise.all([ensureVoter(), RATINGS ? null : (RESULTS_PROMISE || fetchResults())]);
   YOU_WAITING = false;
   if (!v || !v.ok) { body.innerHTML = `<div class="error">${esc((v && v.error) || 'That link did not work.')}</div><div style="margin-top:12px"><button class="btn link" onclick="forgetToken()">Forget this link on this device</button></div>`; return; }
-  const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === v.name.toLowerCase());
+  const me = pfApply(ALL_PLAYERS.find(p => p.name.toLowerCase() === v.name.toLowerCase()));
   if (!me) { body.innerHTML = `<div class="empty">You are not on the attendance sheet yet.</div>`; return; }
   if (v.pending) {
     body.innerHTML = `<div class="sh"><h2>${esc(me.name)}</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card</span></div>
@@ -2164,7 +2164,13 @@ function profileEditHtml(me) {
     <small class="pf-st"></small></div>`;
 }
 /* What players say about themselves, beyond position and foot: shown on the back of their card */
-const attrsOf = n => ((RATINGS && RATINGS.profiles) || {})[n] || {};
+/* Your own edits are kept on this device for 30 minutes, so a refresh that brings slightly older data (the edge cache, or the
+   sheet's public copy) can't make your profile jump backwards while it catches up. */
+let PF_LOCAL = (() => { try { return JSON.parse(localStorage.getItem('w910_pf') || 'null'); } catch (_) { return null; } })();
+const pfFresh = n => PF_LOCAL && PF_LOCAL.name === n && Date.now() - PF_LOCAL.at < 30 * 60000;
+function pfKeep(name, patch) { PF_LOCAL = Object.assign(pfFresh(name) ? PF_LOCAL : { name }, patch, { at: Date.now() }); try { localStorage.setItem('w910_pf', JSON.stringify(PF_LOCAL)); } catch (_) {} }
+function pfApply(me) { if (me && pfFresh(me.name)) { if (PF_LOCAL.position) me.position = PF_LOCAL.position; if (PF_LOCAL.foot) me.foot = PF_LOCAL.foot; } return me; }
+const attrsOf = n => pfFresh(n) && PF_LOCAL.attrs ? PF_LOCAL.attrs : ((RATINGS && RATINGS.profiles) || {})[n] || {};
 const ATTR_KEYS = ['weakFoot', 'skills', 'wrAtt', 'wrDef', 'number', 'nickname', 'club'];
 const ATTR_COUNTED = ATTR_KEYS.filter(k => k !== 'nickname');   // a nickname is optional: it doesn't count towards finishing
 function profileDone(me) {
@@ -2187,17 +2193,18 @@ function attrsEditHtml(me) {
   </details>`;
 }
 let PF_OPEN = false;
-const meP = () => ALL_PLAYERS.find(p => VOTER && VOTER.name && p.name.toLowerCase() === VOTER.name.toLowerCase());
+const meP = () => pfApply(ALL_PLAYERS.find(p => VOTER && VOTER.name && p.name.toLowerCase() === VOTER.name.toLowerCase()));
 function pfSay(t, ms) { document.querySelectorAll('.pf-st').forEach(el => { el.textContent = t; if (ms) setTimeout(() => { if (el.isConnected && el.textContent === t) el.textContent = ''; }, ms); }); }
 async function setAttr(k, v) {
   const me = meP(); if (!me || !RATINGS) return;
-  RATINGS.profiles = RATINGS.profiles || {}; const a = RATINGS.profiles[me.name] = Object.assign({}, attrsOf(me.name));
+  RATINGS.profiles = RATINGS.profiles || {}; const a = Object.assign({}, attrsOf(me.name));
   const val = typeof v === 'string' ? v.trim() : v;
   if (a[k] === val || val === '') delete a[k]; else a[k] = k === 'number' ? parseInt(val, 10) || null : val;   // tapping the same star or level again clears it
   if (a[k] == null) delete a[k];
+  RATINGS.profiles[me.name] = a; pfKeep(me.name, { attrs: a });
   PF_OPEN = true; repaintProfile(); pfSay('Saving…');
   let res; try { res = await api(null, { action: 'setAttrs', t: TOKEN, attrs: { [k]: a[k] == null ? '' : a[k] } }); } catch (e) { res = { ok: false, error: e.message }; }
-  if (res.ok) { RATINGS.profiles[me.name] = res.attrs; pfSay('Saved', 1500); } else pfSay(res.error || 'Could not save');
+  if (res.ok) { RATINGS.profiles[me.name] = res.attrs; pfKeep(me.name, { attrs: res.attrs }); pfSay('Saved', 1500); } else pfSay(res.error || 'Could not save');
 }
 function attrsBackHtml(p) {
   const a = attrsOf(p.name), st = n => '★'.repeat(n) + '<i>' + '★'.repeat(5 - n) + '</i>', bits = [];
@@ -2292,9 +2299,9 @@ async function setProfile(k, v, btn) {
   if (k === 'foot' && RATINGS && RATINGS.footReviews) delete RATINGS.footReviews[me.name];
   const was = k === 'position' ? me.position : me.foot;
   if (k === 'position') me.position = v; else me.foot = v;
-  repaintProfile(); pfSay('Saving…');
+  pfKeep(me.name, { [k]: v }); repaintProfile(); pfSay('Saving…');
   let res; try { res = await api(null, { action: 'setProfile', t: TOKEN, [k]: v }); } catch (e) { res = { ok: false, error: e.message }; }
-  if (!res.ok) { if (k === 'position') me.position = was; else me.foot = was; repaintProfile(); pfSay(res.error || 'Could not save'); return; }
+  if (!res.ok) { if (k === 'position') me.position = was; else me.foot = was; pfKeep(me.name, { [k]: was }); repaintProfile(); pfSay(res.error || 'Could not save'); return; }
   pfSay('Saved', 2000);
   try { renderPlayers(); } catch (_) {}
 }
