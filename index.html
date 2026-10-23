@@ -609,6 +609,18 @@
   @keyframes cardPeek { 0% { transform: perspective(900px) rotateY(0); } 35% { transform: perspective(900px) rotateY(-32deg) scale(1.03); } 65% { transform: perspective(900px) rotateY(10deg); } 100% { transform: perspective(900px) rotateY(0); } }
   .card.fut > .tap-hint, .tap-hint { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); z-index: 5; padding: 6px 12px; border-radius: 999px; background: var(--gold); color: #1a1408; font-size: 12px; font-weight: 800; white-space: nowrap; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.4); animation: tapHint 4.2s ease forwards; z-index: 6; }
   @keyframes tapHint { 0% { opacity: 0; transform: translate(-50%, 6px); } 10% { opacity: 1; transform: translate(-50%, 0); } 80% { opacity: 1; } 100% { opacity: 0; } }
+  /* Me tab */
+  .mx-hero { display: grid; grid-template-columns: 250px 1fr; gap: 32px; align-items: center; margin: 6px 0 8px; }
+  .mx-card { display: flex; flex-direction: column; align-items: center; gap: 8px; } .mx-card .me-card { width: 100%; } .mx-tap { font-size: 11.5px; color: var(--fg-3); }
+  .mx-id { display: flex; flex-direction: column; gap: 10px; min-width: 0; } .mx-name { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -.01em; line-height: 1.05; } .mx-name span { font-size: .6em; opacity: .5; }
+  .mx-note { margin: 0; font-size: 12.5px; color: var(--fg-3); line-height: 1.4; } .mx-id .mile { margin: 4px 0 0; }
+  .mx-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; } .mx-acts .btn { min-height: 42px; }
+  .mx-sec { margin-top: 30px; } .mx-sec > .pf { margin: 0; }
+  .mx-quotes { display: grid; gap: 8px; } .mx-quotes blockquote { margin: 0; padding: 10px 14px; border-left: 2px solid var(--gold); background: var(--surface); border-radius: 0 10px 10px 0; font-size: 14px; color: var(--fg-2); }
+  .mx-acct .sh { margin-bottom: 6px; } .mx-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--fg-2); }
+  .mx-link { padding: 8px 0 10px; border-bottom: 1px solid var(--line); } .mx-link summary { cursor: pointer; font-size: 12.5px; color: var(--fg-3); } .mx-link code { display: block; margin-top: 8px; font-size: 11.5px; word-break: break-all; color: var(--fg-2); }
+  #panel-me .ntf { margin-top: 30px; } #panel-me .self-wrap { margin-top: 30px; }
+  @media (max-width: 720px) { .mx-hero { grid-template-columns: 1fr; gap: 18px; } .mx-card { max-width: 250px; margin: 0 auto; width: 100%; } .mx-id { text-align: center; align-items: center; } .mx-acts { justify-content: center; } .mx-id .mile { width: 100%; text-align: left; } .mx-name { font-size: 28px; } }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
@@ -2147,29 +2159,25 @@ async function renderYou() {
   SELF = { values: Object.assign({}, v.self ? v.self.stats : (v.seeds && v.seeds[me.name]) || STAT_KEYS.reduce((o,k)=>(o[k]=72,o),{})), traits: v.self ? v.self.traits.slice() : [], note: v.self ? v.self.note : '' };
   const at = document.getElementById('tab-admin'); if (at) at.hidden = !v.isAdmin;
   body.innerHTML = meStripHtml(me, v, { known, bal, balStatus, ms, done, queue });
+  const first = esc(me.name.split(' ')[0]), num = attrsOf(me.name).number, hasPhoto = !!(RATINGS && RATINGS.ok && RATINGS.photos && RATINGS.photos[me.name]);
+  const rateNote = gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates · ${Math.min(selfRated(), gateNeed())} done.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count.' : r.stats ? (r.fixed ? `Your own numbers. Teammates' ${r.n} vote${r.n===1?'':'s'} set your traits.` : r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.';
   meb.innerHTML = `
-    <div class="sh"><h2>Your card</h2><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span></div>
-    <div class="you-grid">
-      <div><div class="me-card" onclick="openProfile(ALL_PLAYERS[${ALL_PLAYERS.indexOf(me)}])">${cardHtml(me, r.stats || null, { n: r.n })}</div><p class="muted" style="font-size:12px;margin-top:10px">${gateLocked() ? `Ratings unlock once you have rated ${gateNeed()} teammates. ${Math.min(selfRated(), gateNeed())} done so far.` : r.hidden ? 'Hidden for now: everyone sees “To be determined”. Votes still count behind the scenes.' : r.stats ? (r.fixed ? `Your own numbers, fixed: teammates' ${r.n} vote${r.n===1?'':'s'} set your traits, not your stats.` : r.n ? `Starting point plus ${r.n} teammate vote${r.n===1?'':'s'}.` : 'Starting point. Votes will move it.') : 'No starting point yet.'}</p></div>
-      <div>
-        ${profileEditHtml(me)}
+    <div class="mx-hero">
+      <div class="mx-card"><div class="me-card" onclick="openProfile(ALL_PLAYERS[${ALL_PLAYERS.indexOf(me)}])">${cardHtml(me, r.stats || null, { n: r.n })}</div><small class="mx-tap">Tap your card for your full record</small></div>
+      <div class="mx-id">
+        <span class="label">#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span>
+        <h2 class="mx-name">${esc(me.name)}${num ? ` <span>#${num}</span>` : ''}</h2>
+        <p class="mx-note">${rateNote}</p>
         <div class="mile"><div class="l"><span>${me.count<100 ? 'To the century' : `Next milestone ${ms.next}`}</span><span>${ms.toGo} to go · ${esc(fmtEta(ms.eta))}</span></div><i style="--w:${ms.pct}%"></i></div>
-        <div class="b-actions" style="margin-top:18px">
-          ${v.open ? `<button class="btn" onclick="openBallot()">${done ? `Rate teammates · ${done} of ${queue.length} done` : 'Rate your teammates'}</button>` : `<span class="muted" style="font-size:12px">Rating window ${esc(v.window)} is closed.</span>`}
-          <button class="btn ghost" onclick="openProfile(ALL_PLAYERS[${ALL_PLAYERS.indexOf(me)}])">Full record</button>
-          <button class="btn ghost" onclick="copyLink(this)">Copy my link</button>
-          <button class="btn link" data-label="Not ${esc(me.name.split(' ')[0])}? Not me" onclick="releaseClaim(this)">Not ${esc(me.name.split(' ')[0])}? Not me</button>
-        </div>
-        <div class="b-actions" style="margin-top:10px">
+        <div class="mx-acts">
+          ${v.open ? `<button class="btn" onclick="openBallot()">${done ? `Rate teammates · ${done} of ${queue.length}` : 'Rate your teammates'}</button>` : `<span class="muted" style="font-size:12px">Rating window ${esc(v.window)} is closed.</span>`}
           <button class="btn ghost" onclick="document.getElementById('photo-file').click()">${photoSrc(me) ? 'Change photo' : 'Add a photo'}</button>
-          ${RATINGS && RATINGS.ok && RATINGS.photos && RATINGS.photos[me.name] ? `<button class="btn link" onclick="removePhoto()">Remove photo</button>` : ''}
-          <input type="file" id="photo-file" accept="image/*" hidden onchange="uploadPhoto(this)">
-          <span class="muted" id="photo-msg" style="font-size:12px"></span>
         </div>
-        <div class="linkbox">Your link, for another device · keep it to yourself<code id="mylink">${esc(myLink())}</code></div>
-        ${v.feedback && v.feedback.length ? `<div class="label" style="margin-top:22px">What teammates said · ${v.feedback.length}</div><div class="b-copy" style="margin-top:6px">${v.feedback.map(c=>`“${esc(c)}”`).join('<br>')}</div>` : ''}
+        <input type="file" id="photo-file" accept="image/*" hidden onchange="uploadPhoto(this)"><span class="muted" id="photo-msg" style="font-size:12px"></span>
       </div>
     </div>
+    <div class="mx-sec"><div class="sh"><h2>Profile</h2><span>Shown on the back of your card</span></div>${profileEditHtml(me)}</div>
+    ${v.feedback && v.feedback.length ? `<div class="mx-sec"><div class="sh"><h2>What teammates said</h2><span>${v.feedback.length}</span></div><div class="mx-quotes">${v.feedback.map(c => `<blockquote>“${esc(c)}”</blockquote>`).join('')}</div></div>` : ''}
     <div class="ntf" id="nt"></div>
     <details class="self-wrap" ${v.self ? '' : 'open'}>
       <summary class="sh"><h2>Rate yourself</h2><span>${v.self ? 'Submitted · tap to change' : 'Private. It helps set a fair starting point.'}</span></summary>
@@ -2185,7 +2193,12 @@ async function renderYou() {
         </div>
       </div>
     </details>
-    ${quickLinksHtml()}
+    <div class="mx-sec mx-acct"><div class="sh"><h2>Account</h2></div>
+      <div class="mx-row"><span>Use the site on another phone or laptop</span><button class="btn ghost" onclick="copyLink(this)">Copy my link</button></div>
+      <details class="mx-link"><summary>Show my link · keep it to yourself</summary><code id="mylink">${esc(myLink())}</code></details>
+      ${hasPhoto ? `<div class="mx-row"><span>Your photo</span><button class="btn link" onclick="removePhoto()">Remove photo</button></div>` : ''}
+      <div class="mx-row"><span>Not you on this phone?</span><button class="btn link" data-label="Not ${first}? Not me" onclick="releaseClaim(this)">Not ${first}? Not me</button></div>
+    </div>
     ${v.isAdmin ? `<section><div class="sh"><h2>Game day</h2><span>The current game: kick-off, lineup, gate code, score</span></div>
       <div class="gp">
         <div class="gp-step"><div class="gp-h"><span class="gp-n">1</span>When${v.game && v.game.date && koOf(v.game) < Date.now() ? `<button class="btn link gp-next" onclick="nextGameForm()">Set up the next game →</button>` : ''}</div>
