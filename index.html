@@ -2357,7 +2357,7 @@ async function installApp() {
   ov.innerHTML = `<div class="sheet app-sheet"><div class="controls"><button class="ctl" onclick="document.getElementById('app-overlay').classList.remove('open')">✕</button></div>
     <img src="/icons/icon-192.png" alt="" class="app-big"><div class="pp-title" style="text-align:center">Add to your home screen</div>
     <ol class="app-steps">${safari ? '' : '<li>Open this page in <b>Safari</b> (tap ⋯ or the compass, then Open in Safari)</li>'}
-      <li>Tap the <b>Share</b> button <svg viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M5 11v9h14v-9"/></svg> at the bottom of the screen</li>
+      <li>Tap the <b>Share</b> button <svg viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M5 11v9h14v-9"/></svg> (at the bottom, or under ⋯ on newer iPhones)</li>
       <li>Scroll down and tap <b>Add to Home Screen</b></li><li>Tap <b>Add</b>. The 9–10 icon is now on your phone.</li></ol>
     <button class="btn" style="width:100%;justify-content:center;min-height:48px" onclick="document.getElementById('app-overlay').classList.remove('open')">Got it</button></div>`;
   ov.classList.add('open');
