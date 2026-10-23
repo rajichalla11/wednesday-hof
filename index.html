@@ -81,7 +81,13 @@
   .btn.ghost:hover { color: var(--fg); border-color: var(--fg-3); }
   .btn.link { background: none; color: var(--fg-3); padding: 0; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
   .empty { padding: 28px 16px; border: 1px dashed var(--line-2); border-radius: 8px; color: var(--fg-2); font-size: 13px; text-align: center; }
-  .loading { padding: 32px 0; color: var(--fg-3); font-size: 12px; }
+  .loading { padding: 32px 0; color: var(--fg-3); font-size: 12.5px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .loading::before { content: ''; width: 14px; height: 14px; flex: none; border-radius: 50%; border: 2px solid var(--line-2); border-top-color: var(--gold); animation: spin .8s linear infinite; }
+  .loading::after { content: 'This can take a few seconds'; flex-basis: 100%; padding-left: 24px; font-size: 11.5px; color: var(--fg-3); opacity: 0; animation: slowNote .4s ease 3s forwards; }
+  @keyframes spin { to { transform: rotate(360deg); } } @keyframes slowNote { to { opacity: .8; } }
+  body::before { content: ''; position: fixed; top: 0; left: 0; z-index: 300; height: 3px; width: 35%; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  body.net-busy::before { opacity: 1; animation: netBar 1.1s ease-in-out infinite; }
+  @keyframes netBar { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
   .error { padding: 14px 16px; border: 1px solid rgba(229,72,77,.35); background: rgba(229,72,77,.08); color: #F0A0A3; border-radius: 6px; font-size: 13px; line-height: 1.6; }
   .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 8px; font-size: 11px; color: var(--fg-3); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
   .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
@@ -1342,8 +1348,9 @@ function build(text) {
 async function load() {
   let cached = null; try { cached = localStorage.getItem('w910_csv'); } catch (_) {}
   if (cached) { try { build(cached); } catch (e) { console.error(e); cached = null; } }
+  if (!cached) netStart();   // first visit: show the loading bar while the sheet comes in
   try {
-    const res = await fetch(CSV_URL);
+    const res = await fetch(CSV_URL).finally(() => { if (!cached) netEnd(); });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     if (text !== cached) { try { localStorage.setItem('w910_csv', text); } catch (_) {} build(text); }
@@ -1705,14 +1712,22 @@ function closeSession(e) { if (e.target === document.getElementById('session-ove
 function closeSessionDirect() { document.getElementById('session-overlay').classList.remove('open'); document.body.style.overflow = ''; CURRENT_SESSION = null; }
 
 /* ── cards ── */
+/* A thin gold bar across the top while the site waits on the server (only if the wait passes a quarter of a second). */
+const NET = { n: 0, t: null };
+function netStart() { NET.n++; if (NET.n === 1) { clearTimeout(NET.t); NET.t = setTimeout(() => { if (NET.n > 0) document.body.classList.add('net-busy'); }, 250); } }
+function netEnd() { NET.n = Math.max(0, NET.n - 1); if (!NET.n) { clearTimeout(NET.t); document.body.classList.remove('net-busy'); } }
 async function api(params, body, attempt = 0) {
+  if (attempt) return apiCall(params, body, attempt);
+  netStart(); try { return await apiCall(params, body, 0); } finally { netEnd(); }
+}
+async function apiCall(params, body, attempt) {
   if (!VOTE_API) throw new Error('Ratings backend not configured');
   const res = body ? await fetch(VOTE_API, { method:'POST', body: JSON.stringify(body), headers: { 'Content-Type':'text/plain;charset=utf-8' }, redirect:'follow' })
                    : await fetch(VOTE_API + (VOTE_API.includes('?') ? '&' : '?') + new URLSearchParams(params), { redirect:'follow' });
   const text = await res.text();
   try { return JSON.parse(text); }
   catch (_) {   // Google sometimes sends back an HTML error page when several calls land at once: wait a moment and try again
-    if (attempt < 2) { await new Promise(r => setTimeout(r, 1200 * (attempt + 1))); return api(params, body, attempt + 1); }
+    if (attempt < 2) { await new Promise(r => setTimeout(r, 1200 * (attempt + 1))); return apiCall(params, body, attempt + 1); }
     throw new Error('The server is busy. Try again in a moment.');
   }
 }
