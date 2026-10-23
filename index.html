@@ -2382,7 +2382,7 @@ function maybeAppPop() {
       <img src="/icons/icon-192.png" alt="" class="app-big"><div class="pp-title" style="text-align:center">Get the 9–10 app</div>
       <ul class="app-perks"><li>One tap from your home screen</li><li>Full screen, no browser bars</li><li>Sign up for games and rate faster</li></ul>
       <button class="btn app-go" onclick="installApp()">${INSTALL_EVT ? 'Install the app' : 'Show me how'}</button>
-      <button class="btn link app-later" onclick="document.getElementById('app-overlay').classList.remove('open')">Not now</button></div>`;
+      <button class="btn link app-later" onclick="document.getElementById('app-overlay').classList.remove('open'); snoozeApp()">Not now</button></div>`;
     ov.classList.add('open');
   }, 3500);
 }
