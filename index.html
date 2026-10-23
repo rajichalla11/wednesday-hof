@@ -559,7 +559,13 @@
   .pp-preview { display: grid; grid-template-columns: 150px 1fr; gap: 16px; align-items: center; margin: 12px 0 14px; }
   .pp-card { width: 150px; } .pp-card .card { width: 240px; zoom: .625; }   /* the card at its normal size, shrunk whole so nothing wraps */ .pp-name { font-size: 18px; font-weight: 800; } .pp-name span { opacity: .55; font-size: .8em; }
   .pp-tags .d-attrs span { background: var(--surface-2); } .pp-empty { font-size: 12px; color: var(--fg-3); margin-top: 8px; }
-  .pp-photo { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; color: var(--fg-3); } .pp-photo:empty { display: none; }
+  .pp-photo:empty { display: none; } .pp-photo { margin-bottom: 12px; }
+  .pp-ph-slot { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px; border-radius: 14px; border: 2px dashed var(--gold); background: color-mix(in srgb, var(--gold) 10%, transparent); color: var(--fg); font: inherit; text-align: left; cursor: pointer; animation: ppGlow 2.4s ease-in-out infinite; }
+  @keyframes ppGlow { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 18%, transparent); } }
+  .pp-cam { width: 46px; height: 46px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--gold); } .pp-cam svg { width: 24px; height: 24px; fill: none; stroke: #1a1408; stroke-width: 1.8; stroke-linejoin: round; }
+  .pp-ph-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .pp-ph-t b { font-size: 16px; } .pp-ph-t small { font-size: 12px; color: var(--fg-3); line-height: 1.35; } .pp-ph-t em { font-style: normal; font-size: 12px; color: var(--gold); font-weight: 700; } .pp-ph-t em:empty { display: none; }
+  .pp-ph-go { flex: none; padding: 8px 14px; border-radius: 999px; background: var(--gold); color: #1a1408; font-size: 13px; font-weight: 800; }
+  .pp-card.nophoto { position: relative; cursor: pointer; } .pp-card-add { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); padding: 5px 10px; border-radius: 999px; background: var(--gold); color: #1a1408; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
   .pp .pf { margin-bottom: 4px; }
   .pp-foot { position: sticky; bottom: -18px; margin: 10px -22px -18px; padding: 12px 22px 16px; background: linear-gradient(to top, var(--bg) 70%, transparent); z-index: 4; }
   .pp-foot .btn { width: 100%; justify-content: center; min-height: 50px; font-size: 15px; font-weight: 700; } .pp-foot .btn.gold { background: var(--gold); border-color: var(--gold); color: #1a1408; }
@@ -1844,14 +1850,15 @@ async function approveClaim(name, ok, btn) {
 }
 async function uploadPhoto(input) {
   const file = input.files && input.files[0]; if (!file) return; input.value = '';
-  const msg = document.getElementById('photo-msg'); msg.textContent = 'Preparing…';
+  const say = t => { const m = document.getElementById('photo-msg'); if (m) m.textContent = t; document.querySelectorAll('.pp-ph-st').forEach(x => x.textContent = t); };
+  say('Preparing…');
   try {
     const data = await shrinkImage(file, 720);
-    msg.textContent = 'Uploading…';
+    say('Uploading…');
     const res = await api(null, { action:'photo', t: TOKEN, data });
     if (!res.ok) throw new Error(res.error || 'Upload failed');
-    await renderCards(); await renderYou();
-  } catch (e) { msg.textContent = e.message; }
+    await renderCards(); await renderYou(); say('');
+  } catch (e) { say(e.message); }
 }
 async function removePhoto() {
   const msg = document.getElementById('photo-msg'); msg.textContent = 'Removing…';
@@ -2226,7 +2233,7 @@ function repaintProfile() {
   document.querySelectorAll('.pf').forEach(el => { el.outerHTML = profileEditHtml(me); });
   if (PF_OPEN) document.querySelectorAll('.pf-more').forEach(d => d.open = true);
   const pd = profileDone(me), nb = document.querySelector('.me-go.me-gold');
-  if (nb) { if (pd.done >= pd.total) nb.remove(); else nb.innerHTML = `Finish your profile · ${pd.done} of ${pd.total}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span>`; }
+  if (nb) { if (pd.done >= pd.total) nb.remove(); else nb.innerHTML = `${nudgeLabel(me, pd)}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span>`; }
   paintProfilePopTop();
 }
 /* ── "Build your card": pops up when a player opens the site with their profile unfinished, once per visit ── */
@@ -2251,6 +2258,8 @@ function openProfilePop() {
   paintProfilePopTop();
   ov.classList.add('open'); document.body.style.overflow = 'hidden';
 }
+const nudgeLabel = (me, pd) => photoSrc(me) ? `Finish your profile · ${pd.done} of ${pd.total}` : `Add your photo & finish your profile · ${pd.done} of ${pd.total}`;
+function ppPickPhoto() { const f = document.getElementById('photo-file'); if (f) f.click(); }
 function ppDone() { const me = meP(), pd = me && profileDone(me); closeProfilePop(); if (pd && pd.done >= pd.total) setTimeout(() => openProfile(me), 250); }   // finished: show them the card everyone sees
 function closeProfilePop() { const ov = document.getElementById('pp-overlay'); if (ov) ov.classList.remove('open'); document.body.style.overflow = ''; }
 function paintProfilePopTop() {
@@ -2258,13 +2267,14 @@ function paintProfilePopTop() {
   const pd = profileDone(me), lvl = PP_LEVELS.filter(l => pd.done >= l[0]).pop()[1], a = attrsOf(me.name), r = RATINGS && RATINGS.ok && RATINGS.players[me.name];
   const grew = PP_LAST >= 0 && pd.done > PP_LAST, lvlUp = grew && PP_LEVELS.some(l => l[0] > PP_LAST && l[0] <= pd.done);
   top.innerHTML = `<div class="pp-head"><span class="label">Build your card</span><div class="pp-title">${pd.done >= pd.total ? `Card complete <button class="btn pp-done" onclick="ppDone()">Done</button>` : lvl}</div>
-      <div class="pp-sub">${pd.done >= pd.total ? 'Everyone can see the full you on the back of your card now.' : `${pd.total - pd.done} to go. Teammates see all of this when they tap your card.`}</div></div>
+      <div class="pp-sub">${pd.done >= pd.total ? 'Everyone can see the full you on the back of your card now.' : !photoSrc(me) && pd.done === pd.total - 1 ? 'Just your photo left. Add it and the card is done.' : `${pd.total - pd.done} to go${photoSrc(me) ? '' : ', starting with your photo'}. Teammates see all of this when they tap your card.`}</div></div>
     <div class="pp-prog">${Array.from({ length: pd.total }, (_, i) => `<i class="${i < pd.done ? 'on' : ''}${grew && i >= PP_LAST && i < pd.done ? ' pop' : ''}"></i>`).join('')}<b class="num">${pd.done}/${pd.total}</b></div>
     ${grew ? `<div class="pp-cheer${lvlUp ? ' up' : ''}">${lvlUp ? `Level up · ${lvl}` : PP_CHEERS[Math.floor(Math.random() * PP_CHEERS.length)]}</div>` : ''}
-    <div class="pp-preview"><div class="pp-card">${cardHtml(me, (r && r.stats) || null, { n: r ? r.n : 0 })}</div>
+    <div class="pp-preview"><div class="pp-card${photoSrc(me) ? '' : ' nophoto'}"${photoSrc(me) ? '' : ' onclick="ppPickPhoto()" title="Add your photo"'}>${cardHtml(me, (r && r.stats) || null, { n: r ? r.n : 0 })}${photoSrc(me) ? '' : '<span class="pp-card-add">+ Photo</span>'}</div>
       <div class="pp-tags"><div class="pp-name">${esc(me.name)}${a.number ? ` <span>#${a.number}</span>` : ''}</div><div class="label">${[posName(me), me.foot ? me.foot + ' foot' : ''].filter(Boolean).map(esc).join(' · ') || 'Position and foot not set'}</div>${attrsBackHtml(me) || '<div class="pp-empty">Your details show up here as you add them.</div>'}</div></div>`;
   const ph = document.getElementById('pp-photo');
-  if (ph) ph.innerHTML = photoSrc(me) ? '' : `<button class="btn ghost" onclick="document.getElementById('photo-file') && document.getElementById('photo-file').click()">Add your photo</button><span>A real face beats the initials</span>`;
+  if (ph) ph.innerHTML = photoSrc(me) ? '' : `<button class="pp-ph-slot" onclick="ppPickPhoto()"><span class="pp-cam"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.6"/></svg></span>
+      <span class="pp-ph-t"><b>Add your photo</b><small>It goes on your card for everyone to see. Cards with a face get recognised, and look the part.</small><em class="pp-ph-st"></em></span><span class="pp-ph-go">Upload</span></button>`;
   const later = document.getElementById('pp-later'); if (later) { later.textContent = pd.done >= pd.total ? 'Done · show me my card' : 'Done for now'; later.classList.toggle('gold', pd.done >= pd.total); }
   if (pd.done >= pd.total && PP_LAST >= 0 && PP_LAST < pd.total && document.querySelector('#pp-overlay.open')) confetti(document.querySelector('#pp-overlay .sheet'));
   PP_LAST = pd.done;
@@ -2439,7 +2449,7 @@ function meStripHtml(me, v, o) {
   const next = gateLocked() ? `<button class="btn me-go" onclick="openBallot()">Rate ${need - rated} more teammate${need - rated === 1 ? '' : 's'} to unlock ratings<span class="me-prog"><i style="width:${need ? rated / need * 100 : 0}%"></i></span></button>`
     : v.open && o.done < o.queue.length ? `<button class="btn me-go" onclick="openBallot()">Rate your teammates · ${o.done} of ${o.queue.length} done<span class="me-prog"><i style="width:${o.queue.length ? o.done / o.queue.length * 100 : 0}%"></i></span></button>` : '';
   // the profile nudge shows alongside, whatever else is waiting, until it's complete
-  const pd = profileDone(me), prof = pd.done < pd.total ? `<button class="btn me-go me-gold" onclick="openProfileEdit()">Finish your profile · ${pd.done} of ${pd.total}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span></button>` : '';
+  const pd = profileDone(me), prof = pd.done < pd.total ? `<button class="btn me-go me-gold" onclick="openProfileEdit()">${nudgeLabel(me, pd)}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span></button>` : '';
   return `<div class="me-box">
       <div class="me-top">${photo(me, 'avatar me-av')}<div class="me-id"><b>${esc(me.name)}</b><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]}</span></div>
         <button class="me-bal${neg ? ' neg' : ''}" onclick="const b = document.getElementById('bal-break'); b.hidden = !b.hidden; this.classList.toggle('open', !b.hidden)" ${o.known ? '' : 'disabled'}><b class="num">${o.known ? kes(bal) : '—'}</b><span>${esc(o.balStatus)}${o.known ? ' <i class="fx-chev"></i>' : ''}</span></button></div>
