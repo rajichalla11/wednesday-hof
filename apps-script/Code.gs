@@ -101,7 +101,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles', 'Push', 'PushLog'].forEach(bust_); cache_().remove('players'); }
 
 /** One-off: strips what could link a ballot to a voter from data written before Version 20. Voters keep only a rough
  *  "rated" band (no last-vote time), ballot and check-in times become the day only, and ballot rows are shuffled so
@@ -169,6 +169,11 @@ function doPost(e) {
     if (body.action === 'setProfile') return json_(setProfile_(body));
     if (body.action === 'footVote') return json_(footVote_(body));
     if (body.action === 'setAttrs') return json_(setAttrs_(body));
+    if (body.action === 'pushSub') return json_(pushSub_(body));
+    if (body.action === 'pushUnsub') return json_(pushUnsub_(body));
+    if (body.action === 'pushPrefs') return json_(pushPrefs_(body));
+    if (body.action === 'pushConfig') return json_(pushConfig_(body));
+    if (body.action === 'pushTest') return json_(pushTest_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -211,7 +216,7 @@ function me_(token) {
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
 }
 
 /* ───────── top-ups ─────────
@@ -323,6 +328,7 @@ function claim_(body) {
     const status = String(settings_().require_approval || '').trim() === '1' ? 'pending' : 'approved';   // Settings → require_approval = 1 to make the admin approve each claim
     voters.appendRow([id1_(token), p.name, new Date(), new Date(), status]);
     cache_().remove(key); bust_('Voters');
+    if (status === 'pending') pushSafe_([adminName_()], 'claims', 'New claim: ' + p.name, 'Approve it in Admin → Players.', '/#admin');
     return { ok: true, token: token, name: p.name, pending: status === 'pending' };
   } finally { lock.releaseLock(); }
 }
@@ -352,6 +358,7 @@ function buildResults_() {
   const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_(); out.footReviews = footReviews_(); out.profiles = profiles_();
   out.ballots = tab_('Voters').filter(function (r) { return r[3] && String(r[5] || '') && String(r[5]) !== '0'; }).length;   // people who have voted (a voter can hold an older anonymous ballot and a newer named one, so ballot ids would count them twice)
   const js = JSON.stringify(out); cache_().put('results', js, 300); cache_().put('results_stale', js, 21600);
+  pushTickThrottled_();
   return out;
 }
 
@@ -677,7 +684,7 @@ function signup_(body) {
 function withdraw_(body) {
   const me = voterName_(body.t);
   if (!me) return { ok: false, error: 'Find your card first.' };
-  const date = String(body.date || ''), name = String(body.name || me).toLowerCase(), admin = isAdmin_(me);
+  const date = String(body.date || ''), name = String(body.name || me).toLowerCase(), admin = isAdmin_(me), before = signupsByDate_()[date] || [];
   const lock = LockService.getScriptLock(); lock.waitLock(10000); let done = false, strike = null;
   try {
     // Pulling out of a spot (not standby) within 36 hours of kick-off is a strike, unless the admin takes them off
@@ -693,6 +700,8 @@ function withdraw_(body) {
     if (done && strike) { const st = strikeSheet_(); st.appendRow(["'" + date, "'" + new Date().toISOString(), strike, me, '']); }
   } finally { lock.releaseLock(); }
   bust_('Signups'); if (done && strike) bust_('Strikes'); if (done) syncSheetSafe_(date);
+  if (done) { try { notifyPromoted_(date, before); } catch (e) { console.error(e); }
+    if (strike) pushSafe_([adminName_()], 'latedrop', 'Late drop-out: ' + strike, 'Pulled out of ' + dayLabel_(date) + ' inside 36 hours · strike ' + Math.min(3, (strikesPublic_()[strike] || []).length) + ' of 3.', '/#admin'); }
   return done ? { ok: true, fixtures: fixturesPublic_(), strikes: strikesPublic_(), strike: strike || '' } : { ok: false, error: 'Not on that list.' };
 }
 /* ───────── fill the attendance sheet from sign-ups ─────────
@@ -866,6 +875,120 @@ function footVote_(body) {
   } finally { lock.releaseLock(); }
 }
 
+/* ───────── push notifications ─────────
+   Phones that turned notifications on are kept in the Push tab (endpoint, name, keys, prefs). This backend decides who gets
+   what; https://wednesday910.vercel.app/api/push (Vercel) does the sending, because Apps Script can't sign web push.
+   The shared secret lives in the script property push_secret (set once by the admin through the pushConfig action).
+   Kinds, each switchable per player: promoted (moved up from standby), gameday (2 h before kick-off, with the gate code),
+   rate (after the game), newgame (sign-ups open), balance (dropped below zero); for the admin: claims, latedrop.
+   Timed ones are checked by pushTick (every 15 min trigger, and opportunistically when results are rebuilt); PushLog
+   makes sure each is sent once. */
+const PUSH_URL = 'https://wednesday910.vercel.app/api/push';
+const PUSH_KINDS = ['promoted', 'gameday', 'rate', 'newgame', 'balance', 'claims', 'latedrop'];
+function pushSheet_() { const sh = sheet_('Push'); if (sh.getLastRow() === 0) sh.appendRow(['endpoint', 'name', 'p256dh', 'auth', 'prefs', 'created', 'ua']); return sh; }
+function pushRows_() { return ss_().getSheetByName('Push') ? tab_('Push').filter(function (r) { return r[0] && r[1]; }) : []; }
+function parsePrefs_(v) { try { const o = JSON.parse(String(v || '{}')); return o && typeof o === 'object' ? o : {}; } catch (_) { return {}; } }
+function myPush_(me) {
+  const rows = pushRows_().filter(function (r) { return String(r[1]).toLowerCase() === me.toLowerCase(); });
+  return { devices: rows.length, prefs: rows.length ? parsePrefs_(rows[rows.length - 1][4]) : {}, endpoints: rows.map(function (r) { return String(r[0]).slice(-24); }) };
+}
+function pushSub_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
+  const sub = body.sub || {}, ep = String(sub.endpoint || ''), k = sub.keys || {};
+  if (!/^https:\/\//.test(ep) || !k.p256dh || !k.auth) return { ok: false, error: 'Bad subscription.' };
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const sh = pushSheet_(), d = sh.getDataRange().getValues(), mine = myPush_(me);
+    const prefs = JSON.stringify(body.prefs && typeof body.prefs === 'object' ? body.prefs : mine.prefs);
+    for (let i = d.length - 1; i >= 1; i--) if (String(d[i][0]) === ep) sh.deleteRow(i + 1);
+    sh.appendRow([ep, me, String(k.p256dh), String(k.auth), prefs, new Date(), String(body.ua || '').slice(0, 120)]);
+  } finally { lock.releaseLock(); }
+  bust_('Push');
+  return { ok: true, push: myPush_(me) };
+}
+function pushUnsub_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false };
+  const sh = pushSheet_(), d = sh.getDataRange().getValues();
+  for (let i = d.length - 1; i >= 1; i--) if (String(d[i][0]) === String(body.endpoint || '') && String(d[i][1]).toLowerCase() === me.toLowerCase()) sh.deleteRow(i + 1);
+  bust_('Push'); return { ok: true, push: myPush_(me) };
+}
+function pushPrefs_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false };
+  const p = {}; PUSH_KINDS.forEach(function (k) { if (body.prefs && k in body.prefs) p[k] = !!body.prefs[k]; });
+  const sh = pushSheet_(), d = sh.getDataRange().getValues(), js = JSON.stringify(p);
+  for (let i = 1; i < d.length; i++) if (String(d[i][1]).toLowerCase() === me.toLowerCase()) sh.getRange(i + 1, 5).setValue(js);
+  bust_('Push'); return { ok: true, push: myPush_(me) };
+}
+function pushConfig_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  if (body.secret) props_().setProperty('push_secret', String(body.secret));
+  return { ok: true, configured: !!props_().getProperty('push_secret') };
+}
+/** Send one notification to these players' phones (those who haven't switched this kind off). */
+function pushTo_(names, kind, title, text, url) {
+  const secret = props_().getProperty('push_secret'); if (!secret || !names || !names.length) return 0;
+  const want = {}; names.forEach(function (n) { want[String(n).toLowerCase()] = 1; });
+  const rows = pushRows_().filter(function (r) { return want[String(r[1]).toLowerCase()] && parsePrefs_(r[4])[kind] !== false; });
+  if (!rows.length) return 0;
+  const messages = rows.map(function (r) { return { sub: { endpoint: String(r[0]), keys: { p256dh: String(r[2]), auth: String(r[3]) } }, title: title, body: text, url: url || '/', tag: kind }; });
+  let res = null;
+  try { res = JSON.parse(UrlFetchApp.fetch(PUSH_URL, { method: 'post', contentType: 'application/json', payload: JSON.stringify({ secret: secret, messages: messages }), muteHttpExceptions: true }).getContentText()); } catch (e) { console.error('push ' + e); return 0; }
+  if (res && res.gone && res.gone.length) {   // phones that turned notifications off or uninstalled
+    const sh = pushSheet_(), d = sh.getDataRange().getValues();
+    for (let i = d.length - 1; i >= 1; i--) if (res.gone.indexOf(String(d[i][0])) >= 0) sh.deleteRow(i + 1);
+    bust_('Push');
+  }
+  return res && res.sent || 0;
+}
+function pushSafe_(names, kind, title, text, url) { try { return pushTo_(names, kind, title, text, url); } catch (e) { console.error('pushTo_ ' + e); return 0; } }
+/** Run fn once for this key (PushLog), so timed notifications go out once. */
+function pushOnce_(key, fn) {
+  const sh = sheet_('PushLog'); if (sh.getLastRow() === 0) sh.appendRow(['key', 'ts']);
+  if (tab_('PushLog').some(function (r) { return String(r[0]) === key; })) return false;
+  sh.appendRow([key, new Date()]); bust_('PushLog'); fn(); return true;
+}
+const adminName_ = function () { return String(settings_().admin_name || 'Raji'); };
+const dayLabel_ = function (date) { return Utilities.formatDate(new Date(date + 'T12:00:00+03:00'), 'Africa/Nairobi', 'EEEE d MMM'); };
+const koLabel_ = function (g) { const h = parseInt((g.time || '21:00').slice(0, 2), 10), m = (g.time || '21:00').slice(3, 5); return ((h % 12) || 12) + (m !== '00' ? ':' + m : '') + (h >= 12 ? 'pm' : 'am'); };
+function gameNames_(g) { return g.teams && ((g.teams.black || []).length || (g.teams.white || []).length) ? (g.teams.black || []).concat(g.teams.white || []) : (g.list || []); }
+/** People who moved from standby into a spot, comparing the list before a change with now. */
+function notifyPromoted_(date, before) {
+  const g = allGames_().filter(function (x) { return x.date === date; })[0]; if (!g || kickoff_(g).getTime() < Date.now()) return;
+  const slots = 2 * (g.size || 6), after = (signupsByDate_()[date] || []).map(function (x) { return x.name.toLowerCase(); });
+  const up = before.filter(function (x, i) { return i >= slots && x.kind === 'player' && after.indexOf(x.name.toLowerCase()) >= 0 && after.indexOf(x.name.toLowerCase()) < slots; }).map(function (x) { return x.name; });
+  if (up.length) pushSafe_(up, 'promoted', "You're in for " + dayLabel_(date), 'Someone dropped out, so you moved up from standby. Kick-off ' + koLabel_(g) + '.', '/#home');
+}
+/** Timed notifications: game day (2 h before), rate the game (after), balance below zero (daytime only). */
+function pushTick() {
+  if (!props_().getProperty('push_secret') || !pushRows_().length) return;
+  const now = Date.now(), today = Utilities.formatDate(new Date(), 'Africa/Nairobi', 'yyyy-MM-dd'), hour = Number(Utilities.formatDate(new Date(), 'Africa/Nairobi', 'H'));
+  allGames_().forEach(function (g) {
+    const left = kickoff_(g).getTime() - now;
+    if (g.date === today && left > 0 && left <= 2.25 * 3600000) pushOnce_('gameday|' + g.date, function () {
+      const cur = gameInfo_(), gate = cur.date === g.date && cur.gate ? String(cur.gate) : '';
+      pushSafe_(gameNames_(g), 'gameday', 'Game tonight · ' + koLabel_(g), gate ? 'Gate code ' + gate + '. See you on the pitch.' : 'See you on the pitch.', '/#home');
+    });
+  });
+  const L = lastGame_();
+  if (L) { const ko = kickoff_(L).getTime(), closes = closes_(L.date); if (now >= ko + 3600000 && now < closes) pushOnce_('rate|' + L.date, function () {
+    pushSafe_(gameNames_(L), 'rate', 'Rate the game', 'How did everyone play? Pick your man of the match. Voting closes at 11am.', '/#home'); }); }
+  if (hour >= 9 && hour < 21) {
+    const subs = {}; pushRows_().forEach(function (r) { subs[String(r[1]).toLowerCase()] = 1; });
+    players_().forEach(function (p) { if (!subs[p.name.toLowerCase()] || !(p.bal < 0)) return;
+      pushOnce_('bal|' + p.name + '|' + p.bal, function () { pushSafe_([p.name], 'balance', 'Your balance is −KES ' + Math.abs(p.bal).toLocaleString('en'), 'Time to top up the pot.', '/#home'); }); });
+  }
+}
+function pushTickThrottled_() { const c = cache_(); if (c.get('pushtick')) return; c.put('pushtick', '1', 600); try { pushTick(); } catch (e) { console.error('pushTick ' + e); } }
+/** Editor, once: run pushTick every 15 minutes. */
+function setupPushTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'pushTick') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('pushTick').timeBased().everyMinutes(15).create();
+}
+function pushTest_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false };
+  return { ok: true, sent: pushTo_([me], 'test', 'Notifications are on', "You'll get a ping when it matters. You can change which ones on the Me tab.", '/#me') };
+}
+
 /* ───────── strikes ─────────
    Strikes tab: date (game), ts, name, by (who took them off), cleared. One for each late drop-out (inside 36 hours of
    kick-off, from a spot rather than standby). They only show; nothing is blocked. They stay until the admin clears them. */
@@ -893,6 +1016,7 @@ function addFixture_(body) {
   const data = sh.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date) { sh.getRange(i + 1, 6, 1, 1).setValue("'" + time); sh.getRange(i + 1, 8).setValue(size); bust_('Games'); return { ok: true, fixtures: fixturesPublic_() }; }
   sh.appendRow(["'" + date, '', '', '', '', "'" + time, '', size, '']); bust_('Games');
+  pushSafe_(pushRows_().map(function (r) { return String(r[1]); }), 'newgame', 'New game: ' + dayLabel_(date), 'Sign-ups are open · ' + (2 * size) + ' spots, ' + koLabel_({ time: time }) + ' kick-off.', '/#in');
   return { ok: true, fixtures: fixturesPublic_() };
 }
 function removeFixture_(body) {
@@ -1199,9 +1323,9 @@ function players_() {
     const name = ALIASES_[raw.toLowerCase()] || raw, n = name.toLowerCase();   // rows that are the same person fold into one (attendance OR'd, counts added)
     if (SKIP.indexOf(n) >= 0 || /^\d/.test(n) || n.length < 2) return;
     const att = cols.map(function (i) { const v = parseFloat((r[i] || '').replace(/,/g, '')); return (!isNaN(v) && v > 0) ? 1 : 0; });
-    const paid = parseFloat((r[5] || '').replace(/,/g, '')) || 0;
-    if (seen[n]) { const m = seen[n]; m.att = m.att.map(function (v, i) { return v | att[i]; }); m.count += count; m.paid += paid; return; }   // same name twice = one person
-    const p = { name: name, count: count, position: (r[2] || '').trim(), att: att, paid: paid }; seen[n] = p; out.push(p);
+    const paid = parseFloat((r[5] || '').replace(/,/g, '')) || 0, balRaw = parseFloat((r[6] || '').replace(/,/g, '')), bal = isNaN(balRaw) ? null : balRaw;
+    if (seen[n]) { const m = seen[n]; m.att = m.att.map(function (v, i) { return v | att[i]; }); m.count += count; m.paid += paid; if (bal !== null) m.bal = (m.bal || 0) + bal; return; }   // same name twice = one person
+    const p = { name: name, count: count, position: (r[2] || '').trim(), att: att, paid: paid, bal: bal }; seen[n] = p; out.push(p);
   });
   try { topupWatch_(out); } catch (e) { console.error(e); }
   cache_().put('players', JSON.stringify(out), 600);

@@ -229,3 +229,9 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v42 · More about you
 - `setAttrs` {attrs: {weakFoot 1–5, skills 1–5, wrAtt/wrDef Low|Med|High, number 1–99, nickname, club}}: a player's own extra card details, in a new **Profiles** tab (name, JSON, updated). `results.profiles` = { name: attrs }, shown on the back of the card.
+
+## v43 · Push notifications
+- **Push** tab (endpoint, name, keys, prefs) via `pushSub` / `pushUnsub` / `pushPrefs`; `me.push` = { devices, prefs }. `pushTest` pings yourself.
+- Sending goes through Vercel `/api/push` (web-push, VAPID) with a shared secret kept in the script property `push_secret` (set once with the admin-only `pushConfig`).
+- Straight away: moved up from standby (`withdraw`), new game opened (`addFixture`), admin: new pending claim, late drop-out.
+- Timed (`pushTick`, every 15 min trigger from `setupPushTrigger()` + whenever results are rebuilt, at most every 10 min): game day 2 h before kick-off with the gate code, rate the game after it, balance below zero (9am–9pm, once per amount). **PushLog** keeps each to once.

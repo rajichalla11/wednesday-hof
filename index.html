@@ -594,6 +594,14 @@
   .app-steps { margin: 16px 0 18px; padding-left: 22px; display: grid; gap: 10px; font-size: 14.5px; line-height: 1.4; } .app-steps svg { width: 18px; height: 18px; vertical-align: -3px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .me-more { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px; padding: 8px; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--fg-2); cursor: pointer; } .me-more .fx-chev { transform: rotate(-45deg); width: 7px; height: 7px; }
   #panel-me > #me-body { padding-top: 14px; }
+  /* Notifications (Me tab) */
+  .nt { margin: 26px 0 8px; } .nt-box { display: grid; gap: 10px; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line-2); font-size: 13.5px; color: var(--fg-2); }
+  .nt-off b { font-size: 16px; color: var(--fg); } .nt-off span { color: var(--fg-3); } .nt-on { justify-content: center; min-height: 46px; background: var(--gold); border-color: var(--gold); color: #1a1408; font-weight: 800; }
+  .nt-state { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .nt-state b { flex: 1; color: var(--fg); }
+  .nt-row { display: flex; align-items: center; gap: 12px; justify-content: space-between; cursor: pointer; padding: 4px 0; } .nt-row input { display: none; }
+  .nt-row i { position: relative; width: 40px; height: 24px; flex: none; border-radius: 12px; background: var(--surface-3); transition: background .2s; } .nt-row i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--fg-3); transition: transform .2s, background .2s; }
+  .nt-row input:checked + i { background: var(--gold); } .nt-row input:checked + i::after { transform: translateX(16px); background: #1a1408; }
+  .nt-st { font-size: 11.5px; color: var(--fg-3); } .nt-st:empty { display: none; }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
   .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
@@ -2143,6 +2151,7 @@ async function renderYou() {
         ${v.feedback && v.feedback.length ? `<div class="label" style="margin-top:22px">What teammates said · ${v.feedback.length}</div><div class="b-copy" style="margin-top:6px">${v.feedback.map(c=>`“${esc(c)}”`).join('<br>')}</div>` : ''}
       </div>
     </div>
+    <section class="nt" id="nt"></section>
     <details class="self-wrap" ${v.self ? '' : 'open'}>
       <summary class="sh"><h2>Rate yourself</h2><span>${v.self ? 'Submitted · tap to change' : 'Private. It helps set a fair starting point.'}</span></summary>
       <div class="you-grid">
@@ -2187,7 +2196,7 @@ async function renderYou() {
   if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
-  paintSelfPreview();
+  paintSelfPreview(); paintNotif();
   if (v.isAdmin) renderAdmin(me);
   if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else maybeProfilePop(me);
 }
@@ -2399,6 +2408,59 @@ async function installApp() {
       <li>Scroll down and tap <b>Add to Home Screen</b></li><li>Tap <b>Add</b>. The 9–10 icon is now on your phone.</li></ol>
     <button class="btn" style="width:100%;justify-content:center;min-height:48px" onclick="document.getElementById('app-overlay').classList.remove('open')">Got it</button></div>`;
   ov.classList.add('open');
+}
+/* ── Push notifications: switched on per phone on the Me tab; the backend decides when, Vercel sends. ── */
+const VAPID_PUB = 'BNxrlDdeCF9eWPZCw6tX_SbL888RJFA53rLDGRLk_OF-Pn9bmwjd7qUNXWeOtkmEDVxpirHTM4hSzNU8IJh7Svo';
+const PUSH_LABELS = [['promoted', 'You move up from standby'], ['gameday', 'Game day, 2 hours before (with the gate code)'], ['rate', 'Rate the game after you play'], ['newgame', 'A new game opens for sign-ups'], ['balance', 'Your balance drops below zero']];
+const PUSH_ADMIN = [['claims', 'New claims to approve'], ['latedrop', 'Someone drops out late']];
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const b64u = s => { const p = '='.repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+async function pushSubNow() { try { const reg = await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); } catch (_) { return null; } }
+async function paintNotif() {
+  const el = document.getElementById('nt'); if (!el || !VOTER || !VOTER.ok) return;
+  const head = `<div class="sh"><h2>Notifications</h2><span>Only what matters, switch any off</span></div>`;
+  if (!pushSupported()) { el.innerHTML = head + `<div class="nt-box">${isIOS() && !isStandalone() ? `On iPhone, add the app to your home screen first, then turn notifications on here. <button class="btn" onclick="installApp()">Show me how</button>` : `This browser can't show notifications. Try Chrome, or the installed app.`}</div>`; return; }
+  if (Notification.permission === 'denied') { el.innerHTML = head + `<div class="nt-box">Notifications are blocked for this site. Allow them in your phone's settings for the browser or app, then come back.</div>`; return; }
+  const sub = await pushSubNow(), prefs = (VOTER.push && VOTER.push.prefs) || {};
+  if (!sub) { el.innerHTML = head + `<div class="nt-box nt-off"><b>Get a ping when it matters</b><span>Moving up from standby, the gate code on game day, rating after the game.</span><button class="btn nt-on" onclick="enablePush(this)">Turn on notifications</button></div>`; return; }
+  const row = ([k, l]) => `<label class="nt-row"><span>${l}</span><input type="checkbox" ${prefs[k] === false ? '' : 'checked'} onchange="setPushPref('${k}', this.checked)"><i></i></label>`;
+  el.innerHTML = head + `<div class="nt-box"><div class="nt-state"><b>On for this phone</b><button class="btn link" onclick="testPush(this)">Send me a test</button><button class="btn link" onclick="disablePush(this)">Turn off</button></div>
+    ${PUSH_LABELS.map(row).join('')}${VOTER.isAdmin ? `<div class="label" style="margin-top:8px">Admin</div>${PUSH_ADMIN.map(row).join('')}` : ''}<small class="nt-st" id="nt-st"></small></div>`;
+}
+async function enablePush(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const perm = await Notification.requestPermission(); if (perm !== 'granted') { paintNotif(); return false; }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(VAPID_PUB) });
+    const res = await api(null, { action: 'pushSub', t: TOKEN, sub: sub.toJSON(), ua: navigator.userAgent });
+    if (res.ok) { VOTER.push = res.push; api(null, { action: 'pushTest', t: TOKEN }).catch(() => {}); }
+    paintNotif(); return !!res.ok;
+  } catch (e) { const st = document.getElementById('nt-st'); paintNotif(); setTimeout(() => { const s2 = document.getElementById('nt-st'); if (s2) s2.textContent = 'Could not turn on: ' + e.message; }, 50); return false; }
+}
+async function disablePush(btn) {
+  btn.disabled = true; const sub = await pushSubNow();
+  if (sub) { const ep = sub.endpoint; await sub.unsubscribe().catch(() => {}); const res = await api(null, { action: 'pushUnsub', t: TOKEN, endpoint: ep }).catch(() => ({})); if (res && res.push) VOTER.push = res.push; }
+  paintNotif();
+}
+async function setPushPref(k, on) {
+  const prefs = Object.assign({}, (VOTER.push && VOTER.push.prefs) || {}, { [k]: on }); VOTER.push = Object.assign({}, VOTER.push, { prefs });
+  const st = document.getElementById('nt-st'); if (st) st.textContent = 'Saving…';
+  const res = await api(null, { action: 'pushPrefs', t: TOKEN, prefs }).catch(() => ({ ok: false }));
+  const s2 = document.getElementById('nt-st'); if (s2) { s2.textContent = res.ok ? 'Saved' : 'Could not save'; setTimeout(() => { if (s2.isConnected) s2.textContent = ''; }, 1500); }
+}
+async function testPush(btn) { btn.disabled = true; btn.textContent = 'Sending…'; const res = await api(null, { action: 'pushTest', t: TOKEN }).catch(() => ({})); btn.textContent = res && res.sent ? 'Sent · check your phone' : 'Not sent'; setTimeout(() => { if (btn.isConnected) { btn.disabled = false; btn.textContent = 'Send me a test'; } }, 4000); }
+/* After someone's first sign-up, offer notifications once (where the phone can do them) */
+function offerPushAfterSignup() {
+  if (!pushSupported() || Notification.permission !== 'default' || !VOTER || !VOTER.ok) return;
+  try { if (localStorage.getItem('w910_push_ask')) return; localStorage.setItem('w910_push_ask', '1'); } catch (_) { return; }
+  let ov = document.getElementById('push-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'push-overlay'; ov.onclick = e => { if (e.target === ov) ov.classList.remove('open'); }; document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="sheet app-sheet app-pop"><img src="/icons/icon-192.png" alt="" class="app-big"><div class="pp-title" style="text-align:center">You're on the list</div>
+    <p class="muted" style="margin:10px 0 18px">Want a ping if you move up from standby, and the gate code on game day?</p>
+    <button class="btn app-go" onclick="document.getElementById('push-overlay').classList.remove('open'); enablePush()">Turn on notifications</button>
+    <button class="btn link app-later" onclick="document.getElementById('push-overlay').classList.remove('open')">Not now</button></div>`;
+  setTimeout(() => ov.classList.add('open'), 600);
 }
 /* ── Admin tab: four groups behind a segmented switch, plus a "needs you" strip of things waiting on the admin ── */
 const ADM_GROUPS = [['games', 'Games'], ['players', 'Players'], ['money', 'Money'], ['activity', 'Activity']];
@@ -3220,7 +3282,7 @@ async function fxCall(body, btn, date) {
   if (!benign) { FX_MSG[date || body.date || ''] = res.error || 'Could not save'; renderFixtures(); }
   return res;
 }
-function fxIn(date, btn) { if (!TOKEN) return openClaim(); fxCall({ action: 'signup', date }, btn, date); }
+function fxIn(date, btn) { if (!TOKEN) return openClaim(); fxCall({ action: 'signup', date }, btn, date).then(r => { if (r && r.ok) offerPushAfterSignup(); }); }
 function fxOut(date, name, btn) {
   const f = ((RATINGS && RATINGS.fixtures) || []).find(x => x.date === date), who = name || (VOTER && VOTER.name) || '';
   if (f && who && lateDrop(f, who)) { FX_WARN = { date, name }; FX_OPEN = date; return renderFixtures(); }
