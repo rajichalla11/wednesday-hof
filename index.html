@@ -13,6 +13,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="9–10">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://lh3.googleusercontent.com">
+<link rel="preconnect" href="https://script.google.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..800&display=swap" rel="stylesheet">
 <style>
   /* One family (Archivo; narrower width for figures), monochrome surfaces, tier colours only on cards, red only for money owed. */
@@ -1232,9 +1234,15 @@ function photoSrc(p) {
   if (own) return /^(data:|https?:)/.test(own) ? own : `https://lh3.googleusercontent.com/d/${own}`;
   return driveToImg(p.photo);
 }
+/* Google serves the full upload unless asked for a size: ask for what each spot needs (avatars are tiny, cards medium). */
+const PHOTO_W = { avatar: 120, 'pick-ph': 240, 'fut-ph': 480, 'd-photo': 800 };
+function sizedSrc(src, cls) {
+  if (!/^https:\/\/lh3\.googleusercontent\.com\/d\/[\w-]+$/.test(src)) return src;
+  const k = Object.keys(PHOTO_W).find(c => (' ' + cls + ' ').includes(' ' + c + ' ')); return src + '=w' + (k ? PHOTO_W[k] : 480);
+}
 function photo(p, cls) {
   const src = photoSrc(p);
-  return `<div class="ph ${cls}">${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<div class="fb">${esc(initials(p.name))}</div></div>`;
+  return `<div class="ph ${cls}">${src ? `<img src="${esc(sizedSrc(src, cls))}" alt="" loading="lazy" decoding="async" onerror="if (!this.dataset.full && this.src.includes('=w')) { this.dataset.full = 1; this.src = this.src.replace(/=w\\d+$/, ''); } else this.remove()">` : ''}<div class="fb">${esc(initials(p.name))}</div></div>`;
 }
 function parseCSV(text) {
   const rows = [];
@@ -1376,7 +1384,7 @@ async function load() {
   if (cached) { try { build(cached); } catch (e) { console.error(e); cached = null; } }
   if (!cached) netStart();   // first visit: show the loading bar while the sheet comes in
   try {
-    const res = await fetch(CSV_URL).finally(() => { if (!cached) netEnd(); });
+    const res = await fetch('/api/sheet').then(r => r.ok ? r : fetch(CSV_URL)).catch(() => fetch(CSV_URL)).finally(() => { if (!cached) netEnd(); });   // Vercel keeps a 60 s copy of the sheet; Google directly if that fails
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     if (text !== cached) { try { localStorage.setItem('w910_csv', text); } catch (_) {} build(text); }
@@ -2605,10 +2613,12 @@ function offerPushAfterSignup() {
 let PAGE_TAG = '';
 async function pageTag() { try { const r = await fetch(location.pathname + '?v=' + Date.now(), { method: 'HEAD', cache: 'no-store' }); return r.headers.get('etag') || r.headers.get('last-modified') || ''; } catch (_) { return ''; } }
 pageTag().then(t => { PAGE_TAG = t; });
+function showUpdateBar() { if (document.getElementById('upd-bar')) return; const b = document.createElement('button'); b.id = 'upd-bar'; b.className = 'upd-bar'; b.innerHTML = 'New version of the site <b>Tap to refresh</b>'; b.onclick = () => location.reload(); document.body.appendChild(b); }
+if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'w910-update') showUpdateBar(); });
 document.addEventListener('visibilitychange', async () => {
   if (document.hidden || !PAGE_TAG || document.getElementById('upd-bar')) return;
   const t = await pageTag(); if (!t || t === PAGE_TAG) return;
-  const b = document.createElement('button'); b.id = 'upd-bar'; b.className = 'upd-bar'; b.innerHTML = 'New version of the site <b>Tap to refresh</b>'; b.onclick = () => location.reload(); document.body.appendChild(b);
+  showUpdateBar();
 });
 /* ── Admin tab: four groups behind a segmented switch, plus a "needs you" strip of things waiting on the admin ── */
 const ADM_GROUPS = [['games', 'Games'], ['players', 'Players'], ['money', 'Money'], ['activity', 'Activity']];
