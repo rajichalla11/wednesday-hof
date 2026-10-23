@@ -560,7 +560,10 @@
   .pp-card { width: 150px; } .pp-card .card { width: 240px; zoom: .625; }   /* the card at its normal size, shrunk whole so nothing wraps */ .pp-name { font-size: 18px; font-weight: 800; } .pp-name span { opacity: .55; font-size: .8em; }
   .pp-tags .d-attrs span { background: var(--surface-2); } .pp-empty { font-size: 12px; color: var(--fg-3); margin-top: 8px; }
   .pp-photo { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; color: var(--fg-3); } .pp-photo:empty { display: none; }
-  .pp .pf { margin-bottom: 4px; } .pp-foot { display: flex; justify-content: center; margin-top: 8px; }
+  .pp .pf { margin-bottom: 4px; }
+  .pp-foot { position: sticky; bottom: -18px; margin: 10px -22px -18px; padding: 12px 22px 16px; background: linear-gradient(to top, var(--bg) 70%, transparent); z-index: 4; }
+  .pp-foot .btn { width: 100%; justify-content: center; min-height: 50px; font-size: 15px; font-weight: 700; } .pp-foot .btn.gold { background: var(--gold); border-color: var(--gold); color: #1a1408; }
+  .pp-title .pp-done { vertical-align: middle; margin-left: 10px; font-size: 14px; background: var(--gold); border-color: var(--gold); color: #1a1408; }
   .cf { position: absolute; top: -10px; width: 8px; height: 12px; border-radius: 2px; z-index: 5; pointer-events: none; animation: cfFall 1.8s ease-in forwards; }
   @keyframes cfFall { to { top: 105%; transform: translateX(40px) rotate(720deg); opacity: .2; } }
   @media (max-width: 480px) { .pp-preview { grid-template-columns: 112px 1fr; gap: 12px; } .pp-card { width: 115px; } .pp-card .card { zoom: .48; } .pp-title { font-size: 24px; } }
@@ -2163,22 +2166,23 @@ function profileEditHtml(me) {
 /* What players say about themselves, beyond position and foot: shown on the back of their card */
 const attrsOf = n => ((RATINGS && RATINGS.profiles) || {})[n] || {};
 const ATTR_KEYS = ['weakFoot', 'skills', 'wrAtt', 'wrDef', 'number', 'nickname', 'club'];
+const ATTR_COUNTED = ATTR_KEYS.filter(k => k !== 'nickname');   // a nickname is optional: it doesn't count towards finishing
 function profileDone(me) {
-  const a = attrsOf(me.name), have = [!!posName(me), !!(me.foot || '').trim(), !!photoSrc(me), ...ATTR_KEYS.map(k => a[k] != null && a[k] !== '')];
+  const a = attrsOf(me.name), have = [!!posName(me), !!(me.foot || '').trim(), !!photoSrc(me), ...ATTR_COUNTED.map(k => a[k] != null && a[k] !== '')];
   return { done: have.filter(Boolean).length, total: have.length };
 }
 function attrsEditHtml(me) {
-  const a = attrsOf(me.name), n = ATTR_KEYS.filter(k => a[k] != null).length;
+  const a = attrsOf(me.name), n = ATTR_COUNTED.filter(k => a[k] != null).length;
   const stars = k => `<div class="pf-stars">${[1, 2, 3, 4, 5].map(i => `<button class="${(a[k] || 0) >= i ? 'on' : ''}" onclick="setAttr('${k}', ${i})" aria-label="${i}">★</button>`).join('')}</div>`;
   const seg = k => `<div class="pf-seg">${['Low', 'Med', 'High'].map(o => `<button class="${a[k] === o ? 'on' : ''}" onclick="setAttr('${k}', '${o}')">${o}</button>`).join('')}</div>`;
   const txt = (k, ph, max, type) => `<input class="pf-in" ${type === 'num' ? 'inputmode="numeric" maxlength="2"' : `maxlength="${max}"`} value="${esc(a[k] != null ? a[k] : '')}" placeholder="${ph}" onchange="setAttr('${k}', this.value)">`;
-  return `<details class="pf-more"${n < ATTR_KEYS.length && PF_OPEN ? ' open' : ''}><summary><span class="label">More about you</span><small>${n} of ${ATTR_KEYS.length} filled</small><i class="fx-chev"></i></summary>
+  return `<details class="pf-more"${n < ATTR_COUNTED.length && PF_OPEN ? ' open' : ''}><summary><span class="label">More about you</span><small>${n} of ${ATTR_COUNTED.length} filled</small><i class="fx-chev"></i></summary>
     <div class="pf-row"><span class="label">Weak foot</span>${stars('weakFoot')}</div>
     <div class="pf-row"><span class="label">Skill moves</span>${stars('skills')}</div>
     <div class="pf-row"><span class="label">Work rate · attack</span>${seg('wrAtt')}</div>
     <div class="pf-row"><span class="label">Work rate · defence</span>${seg('wrDef')}</div>
     <div class="pf-row"><span class="label">Shirt number</span>${txt('number', '#', 2, 'num')}</div>
-    <div class="pf-row"><span class="label">Nickname</span>${txt('nickname', 'Optional', 20)}</div>
+    <div class="pf-row"><span class="label">Nickname · optional</span>${txt('nickname', 'Optional', 20)}</div>
     <div class="pf-row"><span class="label">Favourite club</span>${txt('club', 'e.g. Arsenal', 24)}</div>
   </details>`;
 }
@@ -2232,7 +2236,7 @@ function openProfilePop() {
   const me = meP(); if (!me) return;
   let ov = document.getElementById('pp-overlay');
   if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'pp-overlay'; ov.onclick = e => { if (e.target === ov) closeProfilePop(); };
-    ov.innerHTML = `<div class="sheet pp"><div class="controls"><button class="ctl" onclick="closeProfilePop()" title="Close">✕</button></div><div id="pp-top"></div><div id="pp-form"></div><div class="pp-foot"><button class="btn link" onclick="closeProfilePop()" id="pp-later">Later</button></div></div>`;
+    ov.innerHTML = `<div class="sheet pp"><div class="controls"><button class="ctl" onclick="closeProfilePop()" title="Close">✕</button></div><div id="pp-top"></div><div id="pp-form"></div><div class="pp-foot"><button class="btn" onclick="closeProfilePop()" id="pp-later">Done for now</button></div></div>`;
     document.body.appendChild(ov); }
   PF_OPEN = true; PP_LAST = -1;
   document.getElementById('pp-form').innerHTML = `<div class="pp-photo" id="pp-photo"></div>${profileEditHtml(me)}`;
@@ -2245,7 +2249,7 @@ function paintProfilePopTop() {
   const top = document.getElementById('pp-top'), me = meP(); if (!top || !me) return;
   const pd = profileDone(me), lvl = PP_LEVELS.filter(l => pd.done >= l[0]).pop()[1], a = attrsOf(me.name), r = RATINGS && RATINGS.ok && RATINGS.players[me.name];
   const grew = PP_LAST >= 0 && pd.done > PP_LAST, lvlUp = grew && PP_LEVELS.some(l => l[0] > PP_LAST && l[0] <= pd.done);
-  top.innerHTML = `<div class="pp-head"><span class="label">Build your card</span><div class="pp-title">${pd.done >= pd.total ? 'Card complete' : lvl}</div>
+  top.innerHTML = `<div class="pp-head"><span class="label">Build your card</span><div class="pp-title">${pd.done >= pd.total ? `Card complete <button class="btn pp-done" onclick="closeProfilePop()">Done</button>` : lvl}</div>
       <div class="pp-sub">${pd.done >= pd.total ? 'Everyone can see the full you on the back of your card now.' : `${pd.total - pd.done} to go. Teammates see all of this when they tap your card.`}</div></div>
     <div class="pp-prog">${Array.from({ length: pd.total }, (_, i) => `<i class="${i < pd.done ? 'on' : ''}${grew && i >= PP_LAST && i < pd.done ? ' pop' : ''}"></i>`).join('')}<b class="num">${pd.done}/${pd.total}</b></div>
     ${grew ? `<div class="pp-cheer${lvlUp ? ' up' : ''}">${lvlUp ? `Level up · ${lvl}` : PP_CHEERS[Math.floor(Math.random() * PP_CHEERS.length)]}</div>` : ''}
@@ -2253,7 +2257,7 @@ function paintProfilePopTop() {
       <div class="pp-tags"><div class="pp-name">${esc(me.name)}${a.number ? ` <span>#${a.number}</span>` : ''}</div><div class="label">${[posName(me), me.foot ? me.foot + ' foot' : ''].filter(Boolean).map(esc).join(' · ') || 'Position and foot not set'}</div>${attrsBackHtml(me) || '<div class="pp-empty">Your details show up here as you add them.</div>'}</div></div>`;
   const ph = document.getElementById('pp-photo');
   if (ph) ph.innerHTML = photoSrc(me) ? '' : `<button class="btn ghost" onclick="document.getElementById('photo-file') && document.getElementById('photo-file').click()">Add your photo</button><span>A real face beats the initials</span>`;
-  const later = document.getElementById('pp-later'); if (later) later.textContent = pd.done >= pd.total ? 'Done' : 'Later';
+  const later = document.getElementById('pp-later'); if (later) { later.textContent = pd.done >= pd.total ? 'Done · show me my card' : 'Done for now'; later.classList.toggle('gold', pd.done >= pd.total); }
   if (pd.done >= pd.total && PP_LAST >= 0 && PP_LAST < pd.total && document.querySelector('#pp-overlay.open')) confetti(document.querySelector('#pp-overlay .sheet'));
   PP_LAST = pd.done;
 }
