@@ -607,7 +607,7 @@
   .peek { position: relative; animation: cardPeek 1.2s cubic-bezier(.3,.7,.3,1); transform-style: preserve-3d; }
   .card.peek { animation-name: cardPeek; }
   @keyframes cardPeek { 0% { transform: perspective(900px) rotateY(0); } 35% { transform: perspective(900px) rotateY(-32deg) scale(1.03); } 65% { transform: perspective(900px) rotateY(10deg); } 100% { transform: perspective(900px) rotateY(0); } }
-  .tap-hint { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); z-index: 5; padding: 6px 12px; border-radius: 999px; background: var(--gold); color: #1a1408; font-size: 12px; font-weight: 800; white-space: nowrap; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.4); animation: tapHint 4.2s ease forwards; }
+  .card.fut > .tap-hint, .tap-hint { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); z-index: 5; padding: 6px 12px; border-radius: 999px; background: var(--gold); color: #1a1408; font-size: 12px; font-weight: 800; white-space: nowrap; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.4); animation: tapHint 4.2s ease forwards; z-index: 6; }
   @keyframes tapHint { 0% { opacity: 0; transform: translate(-50%, 6px); } 10% { opacity: 1; transform: translate(-50%, 0); } 80% { opacity: 1; } 100% { opacity: 0; } }
   /* Your next game */
   .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
