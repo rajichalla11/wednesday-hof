@@ -2151,7 +2151,7 @@ async function renderYou() {
         ${v.feedback && v.feedback.length ? `<div class="label" style="margin-top:22px">What teammates said · ${v.feedback.length}</div><div class="b-copy" style="margin-top:6px">${v.feedback.map(c=>`“${esc(c)}”`).join('<br>')}</div>` : ''}
       </div>
     </div>
-    <section class="nt" id="nt"></section>
+    <div class="nt" id="nt"></div>
     <details class="self-wrap" ${v.self ? '' : 'open'}>
       <summary class="sh"><h2>Rate yourself</h2><span>${v.self ? 'Submitted · tap to change' : 'Private. It helps set a fair starting point.'}</span></summary>
       <div class="you-grid">
