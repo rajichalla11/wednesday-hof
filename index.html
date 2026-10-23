@@ -632,6 +632,8 @@
   .bc { display: grid; gap: 10px; } .bc-n { font-size: 13.5px; color: var(--fg-2); } .bc-n b { font-size: 20px; color: var(--fg); margin-right: 4px; } .bc-n small { display: block; margin-top: 4px; font-size: 12px; color: var(--fg-3); }
   .bc-in { width: 100%; } textarea.bc-in { min-height: 70px; } .bc-acts { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .bc-acts small { font-size: 12px; color: var(--fg-3); }
   .lc-home { display: block; margin: 8px auto 0; font-size: 12.5px; } .lc-home.me-go { font-size: 13.5px; margin-top: 10px; }
+  .lc-go { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--gold) !important; border-color: var(--gold) !important; color: #1a1408 !important; font-weight: 800; box-shadow: 0 6px 22px -8px color-mix(in srgb, var(--gold) 70%, transparent); }
+  .me-go + .lc-go, .lc-go { margin-top: 8px; } .mx-acts .lc-go { margin-top: 0; } .lc-go svg { width: 18px; height: 18px; flex: none; fill: none; stroke: #1a1408; stroke-width: 2; stroke-linecap: round; }
   .lc-strip { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px; padding: 10px 14px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--gold) 70%, transparent); background: color-mix(in srgb, var(--gold) 8%, transparent); color: var(--fg-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
   .lc-strip b { color: var(--gold); } .lc-strip svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; }
   .app-pop .app-steps { text-align: left; } .lc-big { display: grid; justify-items: center; gap: 4px; margin: 14px 0 4px; padding: 16px; border-radius: 14px; border: 1px dashed var(--gold); } .lc-big .lc-code { font-size: 40px; } .lc-big small { color: var(--fg-3); font-size: 12px; }
@@ -2269,7 +2271,7 @@ async function renderYou() {
         <div class="mx-acts">
           ${v.open ? `<button class="btn" onclick="openBallot()">${done ? `Rate teammates · ${done} of ${queue.length}` : 'Rate your teammates'}</button>` : `<span class="muted" style="font-size:12px">Rating window ${esc(v.window)} is closed.</span>`}
           <button class="btn ghost" onclick="document.getElementById('photo-file').click()">${photoSrc(me) ? 'Change photo' : 'Add a photo'}</button>
-          <button class="btn ghost lc-me" onclick="openCodeSheet()">Sign in on another device</button>
+          <button class="btn lc-me lc-go" onclick="openCodeSheet()"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>Sign-in code for the app</button>
         </div>
         <input type="file" id="photo-file" accept="image/*" hidden onchange="uploadPhoto(this)"><span class="muted" id="photo-msg" style="font-size:12px"></span>
       </div>
@@ -2784,7 +2786,7 @@ function meStripHtml(me, v, o) {
       ${formStripHtml(me)}
       <div class="me-stats"><span><b class="num">${me.count}</b>games</span><span><b class="num">${me.currentStreak || 0}</b>in a row</span><span><b class="num">${me.gamesThisYear}</b>in ${THIS_YEAR}</span><span><b class="num">${o.ms.toGo}</b>to ${me.count < 100 ? '100' : o.ms.next}</span></div>
       ${next}${prof}
-      ${!isStandalone() && /android|iphone|ipad|ipod/i.test(navigator.userAgent) ? `<button class="lc-strip" onclick="openCodeSheet()"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg><span>Using the app too? <b>Get a sign-in code</b></span></button>` : ''}
+      ${!isStandalone() ? `<button class="btn me-go lc-go" onclick="openCodeSheet()"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>Get a sign-in code for the app</button>` : ''}
       <button class="me-more" onclick="showTab('me')">Your card, profile and more <i class="fx-chev"></i></button>
     </div>`;
 }
