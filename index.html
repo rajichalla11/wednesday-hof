@@ -631,7 +631,11 @@
   @media (max-width: 720px) { .mx-hero { grid-template-columns: 1fr; gap: 18px; } .mx-card { max-width: 250px; margin: 0 auto; width: 100%; } .mx-id { text-align: center; align-items: center; } .mx-acts { justify-content: center; } .mx-id .mile { width: 100%; text-align: left; } .mx-name { font-size: 28px; } }
   .bc { display: grid; gap: 10px; } .bc-n { font-size: 13.5px; color: var(--fg-2); } .bc-n b { font-size: 20px; color: var(--fg); margin-right: 4px; } .bc-n small { display: block; margin-top: 4px; font-size: 12px; color: var(--fg-3); }
   .bc-in { width: 100%; } textarea.bc-in { min-height: 70px; } .bc-acts { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .bc-acts small { font-size: 12px; color: var(--fg-3); }
-  .lc-home { display: block; margin: 8px auto 0; font-size: 12.5px; }
+  .lc-home { display: block; margin: 8px auto 0; font-size: 12.5px; } .lc-home.me-go { font-size: 13.5px; margin-top: 10px; }
+  .lc-strip { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px; padding: 10px 14px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--gold) 70%, transparent); background: color-mix(in srgb, var(--gold) 8%, transparent); color: var(--fg-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+  .lc-strip b { color: var(--gold); } .lc-strip svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; }
+  .lc-big { display: grid; justify-items: center; gap: 4px; margin: 14px 0 4px; padding: 16px; border-radius: 14px; border: 1px dashed var(--gold); } .lc-big .lc-code { font-size: 40px; } .lc-big small { color: var(--fg-3); font-size: 12px; }
+  .lc-box.first { order: -1; } .lc-box.first .lc-toggle { font-size: 14px; color: var(--fg); }
   .upd-bar { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 250; display: flex; gap: 10px; align-items: center; padding: 10px 16px; border: 0; border-radius: 999px; background: var(--gold); color: #1a1408; font: inherit; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,.45); cursor: pointer; white-space: nowrap; }
   .lc-box { margin: 12px 0 4px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--gold) 8%, transparent); }
   .lc-toggle { width: 100%; padding: 11px 14px; border: 0; background: none; color: var(--fg-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer; } .lc-toggle b { color: var(--gold); }
@@ -1927,7 +1931,7 @@ function openClaim() {
     <div class="b-title" style="margin-top:8px">Find your card</div>
     ${DEAD_LINK_NOTE ? `<div class="error" style="margin-top:12px;font-size:13px">${esc(DEAD_LINK_NOTE)}</div>` : ''}
     <div class="b-copy">Tap your name and this device remembers you: your balance, the ballot and your photo. Picked the wrong one? There is a Not me button on your page.</div>
-    <div class="lc-box" id="lc-box"><button type="button" class="lc-toggle" onclick="document.getElementById('lc-box').classList.toggle('open'); setTimeout(() => { const i = document.getElementById('lc-in'); if (i) i.focus(); }, 50)">Already have your card on another phone or browser? <b>Use a code</b></button>
+    <div class="lc-box${isStandalone() ? ' open first' : ''}" id="lc-box"><button type="button" class="lc-toggle" onclick="document.getElementById('lc-box').classList.toggle('open'); setTimeout(() => { const i = document.getElementById('lc-in'); if (i) i.focus(); }, 50)">Already have your card on another phone or browser? <b>Use a code</b></button>
       <div class="lc-form"><span>On the phone or browser you used before, open <b>Me → Sign in on another device</b> for a code. Or paste your link here.</span>
         <div class="fx-add-row"><input id="lc-in" class="lc-in" autocapitalize="characters" autocomplete="one-time-code" placeholder="Code or link" onkeydown="if (event.key === 'Enter') redeemCode(this.nextElementSibling)"><button class="btn" type="button" onclick="redeemCode(this)">Sign in</button></div>
         <small class="lc-msg" id="lc-msg"></small></div></div>
@@ -1960,6 +1964,20 @@ async function redeemCode(btn) {
     <div class="b-copy">This phone now has your card, the same one as before: ratings, balance and all.</div>
     <div class="b-actions"><button class="btn" onclick="closeClaimDirect(); showTab('home')">Let's go</button></div>`;
   renderCards(); renderBalances(); renderYou();
+}
+/* Sign-in code in its own pop-up: big code, the three steps for the app, and a fresh one on demand */
+async function openCodeSheet() {
+  let ov = document.getElementById('code-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'code-overlay'; ov.onclick = e => { if (e.target === ov) ov.classList.remove('open'); }; document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="sheet app-sheet app-pop"><div class="controls"><button class="ctl" onclick="document.getElementById('code-overlay').classList.remove('open')">✕</button></div>
+    <div class="label" style="color:var(--gold)">Sign in on another phone or the app</div><div class="pp-title" style="margin-top:6px">Your code</div>
+    <div class="lc-big" id="lc-big"><div class="loading">Getting a code…</div></div>
+    <ol class="app-steps"><li>Open the <b>9–10 app</b> (or the site on the other phone)</li><li>Tap <b>Find your card</b>, then <b>Use a code</b></li><li>Type this code and tap <b>Sign in</b></li></ol>
+    <button class="btn link" onclick="openCodeSheet()">Get a new code</button></div>`;
+  ov.classList.add('open');
+  let res; try { res = await api(null, { action: 'linkCode', t: TOKEN }); } catch (e) { res = { ok: false, error: e.message }; }
+  const box = document.getElementById('lc-big'); if (!box) return;
+  box.innerHTML = res.ok ? `<div class="lc-code num">${res.code.slice(0, 3)} ${res.code.slice(3)}</div><small>Works for ${res.minutes} minutes</small>` : `<small class="lc-msg">${esc(res.error || 'Could not get a code.')}</small>`;
 }
 async function getLinkCode(btn) {
   btn.disabled = true; btn.textContent = '…';
@@ -2251,6 +2269,7 @@ async function renderYou() {
         <div class="mx-acts">
           ${v.open ? `<button class="btn" onclick="openBallot()">${done ? `Rate teammates · ${done} of ${queue.length}` : 'Rate your teammates'}</button>` : `<span class="muted" style="font-size:12px">Rating window ${esc(v.window)} is closed.</span>`}
           <button class="btn ghost" onclick="document.getElementById('photo-file').click()">${photoSrc(me) ? 'Change photo' : 'Add a photo'}</button>
+          <button class="btn ghost lc-me" onclick="openCodeSheet()">Sign in on another device</button>
         </div>
         <input type="file" id="photo-file" accept="image/*" hidden onchange="uploadPhoto(this)"><span class="muted" id="photo-msg" style="font-size:12px"></span>
       </div>
@@ -2273,7 +2292,7 @@ async function renderYou() {
       </div>
     </details>
     <div class="mx-sec mx-acct"><div class="sh"><h2>Account</h2></div>
-      <div class="mx-row"><span>Sign in on another device or the installed app</span><button class="btn" onclick="getLinkCode(this)">Get a code</button></div>
+      <div class="mx-row"><span>Sign in on another device or the installed app</span><button class="btn" onclick="openCodeSheet()">Get a code</button></div>
       <div class="lc-show" id="lc-show"></div>
       <div class="mx-row"><span>Or send yourself your link</span><button class="btn ghost" onclick="copyLink(this)">Copy my link</button></div>
       <details class="mx-link"><summary>Show my link · keep it to yourself</summary><code id="mylink">${esc(myLink())}</code></details>
@@ -2691,7 +2710,7 @@ function visitorHomeHtml() {
       <b class="me-cta-t">Find your card</b>
       <p>Tap your name once and this phone remembers you: your balance, your player card, rating your teammates and the night's man of the match.</p>
       <button class="btn me-go" onclick="openClaim()">Find your card</button>
-      <button class="btn link lc-home" onclick="openClaim(); setTimeout(() => { const b = document.getElementById('lc-box'); if (b) b.classList.add('open'); }, 60)">Already set up on another phone? Use a code</button>
+      <button class="btn ${isStandalone() ? 'ghost me-go' : 'link'} lc-home" onclick="openClaim(); setTimeout(() => { const b = document.getElementById('lc-box'); if (b) { b.classList.add('open'); const i = document.getElementById('lc-in'); if (i) i.focus(); } }, 60)">${isStandalone() ? 'Signed in on Safari or another phone? Sign in with a code' : 'Already set up on another phone? Use a code'}</button>
       ${n ? `<small>${free} of ${n} cards still to claim</small>` : ''}
     </div>${quickLinksHtml()}`;
 }
@@ -2765,6 +2784,7 @@ function meStripHtml(me, v, o) {
       ${formStripHtml(me)}
       <div class="me-stats"><span><b class="num">${me.count}</b>games</span><span><b class="num">${me.currentStreak || 0}</b>in a row</span><span><b class="num">${me.gamesThisYear}</b>in ${THIS_YEAR}</span><span><b class="num">${o.ms.toGo}</b>to ${me.count < 100 ? '100' : o.ms.next}</span></div>
       ${next}${prof}
+      ${!isStandalone() && /android|iphone|ipad|ipod/i.test(navigator.userAgent) ? `<button class="lc-strip" onclick="openCodeSheet()"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg><span>Using the app too? <b>Get a sign-in code</b></span></button>` : ''}
       <button class="me-more" onclick="showTab('me')">Your card, profile and more <i class="fx-chev"></i></button>
     </div>`;
 }
