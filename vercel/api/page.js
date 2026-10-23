@@ -7,7 +7,7 @@ export default async function handler() {
     const r = await fetch(ORIGIN, { redirect: 'follow' });
     const body = await r.text();
     if (!r.ok || !body.includes('<html')) throw new Error('bad upstream');
-    return new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400', 'etag': r.headers.get('etag') || '' } });
+    return new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, s-maxage=60, stale-while-revalidate=86400', 'x-page-version': r.headers.get('etag') || '' } });
   } catch (e) {
     return Response.redirect(ORIGIN, 302);
   }
