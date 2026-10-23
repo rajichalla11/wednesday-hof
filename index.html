@@ -637,6 +637,17 @@
   .lc-in:placeholder-shown { letter-spacing: normal; font-weight: 500; text-transform: none; } .lc-in { text-transform: uppercase; letter-spacing: .25em; font-weight: 800; font-size: 16px !important; text-align: center; } .lc-msg { color: var(--neg); font-size: 12px; } .lc-msg:empty { display: none; }
   .lc-show:empty { display: none; } .lc-show { display: grid; gap: 6px; justify-items: center; padding: 14px; margin: 6px 0; border-radius: 12px; border: 1px dashed var(--gold); text-align: center; font-size: 12.5px; color: var(--fg-3); }
   .lc-code { font-size: 34px; font-weight: 800; letter-spacing: .14em; color: var(--gold); }
+  .plx-sum { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--fg-3); margin-bottom: 10px; } .plx-sum b { font-size: 18px; color: var(--fg); margin-right: 4px; }
+  .plx-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; } .plx-q { width: 160px; } .plx-f { flex-wrap: wrap; }
+  button.plx-row { width: 100%; border: 0; border-bottom: 1px solid var(--line); background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; } button.plx-row:hover { background: var(--surface-2); }
+  .plx-bell { font-style: normal; font-size: 11px; } .plx-pd { position: relative; width: 70px; height: 20px; flex: none; border-radius: 6px; background: var(--surface-3); overflow: hidden; display: grid; place-items: center; }
+  .plx-pd i { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--gold) 45%, transparent); } .plx-pd.full i { background: var(--gold); } .plx-pd b { position: relative; font-size: 11px; } .plx-pd.full b { color: #1a1408; }
+  .sheet.plx { max-width: 640px; } .plx-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; } .plx-head .avatar { width: 52px; height: 52px; }
+  .plx-kv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .plx-kv div { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); display: flex; flex-direction: column; } .plx-kv b { font-size: 15px; } .plx-kv span { font-size: 11.5px; color: var(--fg-3); }
+  .plx-l { margin: 16px 0 6px; display: block; } .plx-ts { display: flex; flex-wrap: wrap; gap: 6px; } .plx-t { font-size: 12px; padding: 4px 9px; border-radius: 999px; border: 1px dashed var(--line-2); color: var(--fg-3); } .plx-t.ok { border-style: solid; color: var(--fg-2); }
+  .plx-tl { display: grid; border: 1px solid var(--line); border-radius: 12px; max-height: 360px; overflow-y: auto; } .plx-e { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--fg-2); } .plx-e:last-child { border-bottom: 0; }
+  .plx-e small { flex: none; font-size: 11.5px; color: var(--fg-3); text-align: right; } .plx-e.v { color: var(--fg-3); } .plx-d { margin-top: 14px; } .plx-d summary { cursor: pointer; margin-bottom: 6px; }
+  @media (max-width: 520px) { .plx-kv { grid-template-columns: 1fr 1fr; } }
   .seen-seg { width: max-content; margin-bottom: 10px; } .seen-list { display: grid; max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; }
   .seen-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); } .seen-row:last-child { border-bottom: 0; } .seen-row .avatar { width: 30px; height: 30px; flex: none; font-size: 10px; }
   .seen-n { flex: 1; min-width: 0; display: flex; flex-direction: column; } .seen-n b { font-size: 14px; display: flex; align-items: center; gap: 6px; } .seen-n small, .seen-r small { font-size: 11.5px; color: var(--fg-3); }
@@ -2285,11 +2296,12 @@ async function renderYou() {
     <section><div class="sh"><h2>Who's been on</h2><span>Most recent first · one entry per visit</span></div><div id="seen-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Site activity</h2><span>One count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Who voted what</h2><span>Votes from 14 Oct on</span></div><div id="named-body"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Players</h2><span>Tap a player for everything they've done</span></div><div id="plx-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Starting points</h2><span>The suggested level voters see · saves as you type</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Self-ratings</h2><span>How players rated themselves</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   const aw = document.getElementById('admin-wrap');   // the admin's panels live on their own tab so Home stays short
-  if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'bc-body', 'seen-body', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
+  if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'plx-body', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'bc-body', 'seen-body', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
   paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
@@ -2835,6 +2847,68 @@ function setSeedValue(pi, k, raw) {
 }
 /* The admin panels refresh whenever the page comes back into view (phones keep tabs open for days), at most every 20 s, or on demand. */
 let ADMIN_AT = 0;
+/* ── Admin player inspector: everyone at a glance, tap for one player's whole story ── */
+let PLX_F = 'all', PLX_Q = '';
+const plxAgo = iso => { if (!iso) return ''; const d = (Date.now() - new Date(iso)) / 60000; return d < 1 ? 'just now' : d < 60 ? `${Math.round(d)} min ago` : d < 1440 ? `${Math.round(d / 60)} h ago` : d < 2880 ? 'yesterday' : `${Math.round(d / 1440)} days ago`; };
+const plxWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); };
+function renderPlx() {
+  const el = document.getElementById('plx-body'), a = window.__ADMIN; if (!el || !a) return;
+  const seen = {}; ((a.activity && a.activity.names) || []).forEach(n => seen[n.name.toLowerCase()] = n);
+  const claims = {}; (a.claims || []).forEach(c => claims[c.name.toLowerCase()] = c);
+  const push = a.pushPeople || {};
+  const rows = ALL_PLAYERS.map(p => { const k = p.name.toLowerCase(), pd = profileDone(p); return { p, pd, seen: seen[k], claim: claims[k], push: push[p.name] || 0 }; })
+    .filter(r => !PLX_Q || r.p.name.toLowerCase().includes(PLX_Q))
+    .filter(r => PLX_F === 'all' ? true : PLX_F === 'incomplete' ? r.claim && r.pd.done < r.pd.total : PLX_F === 'never' ? r.claim && !r.seen : PLX_F === 'nopush' ? r.claim && !r.push : PLX_F === 'unclaimed' ? !r.claim : true)
+    .sort((x, y) => (y.seen ? new Date(y.seen.last) : 0) - (x.seen ? new Date(x.seen.last) : 0) || (y.claim ? 1 : 0) - (x.claim ? 1 : 0) || x.p.name.localeCompare(y.p.name));
+  const claimedN = ALL_PLAYERS.filter(p => claims[p.name.toLowerCase()]).length, doneN = ALL_PLAYERS.filter(p => { const pd = profileDone(p); return pd.done >= pd.total; }).length;
+  const chip = (k, l) => `<button class="${PLX_F === k ? 'on' : ''}" onclick="PLX_F='${k}'; renderPlx()">${l}</button>`;
+  el.innerHTML = `<div class="plx-sum"><span><b class="num">${claimedN}</b> of ${ALL_PLAYERS.length} claimed</span><span><b class="num">${doneN}</b> profiles complete</span><span><b class="num">${Object.keys(push).length}</b> with notifications</span></div>
+    <div class="plx-tools"><input class="pf-in plx-q" placeholder="Search" value="${esc(PLX_Q)}" oninput="PLX_Q=this.value.toLowerCase(); renderPlx(); const q=document.querySelector('.plx-q'); q.focus(); q.setSelectionRange(99,99)">
+      <div class="pf-seg plx-f">${chip('all', 'All')}${chip('incomplete', 'Profile not done')}${chip('never', 'Never on')}${chip('nopush', 'No notifications')}${chip('unclaimed', 'Not claimed')}</div></div>
+    <div class="seen-list">${rows.map(r => `<button class="seen-row plx-row" onclick="openPlx('${esc(r.p.name).replace(/'/g, "\\'")}')">${photo(r.p, 'avatar')}
+      <span class="seen-n"><b>${esc(r.p.name)}${r.push ? ' <i class="plx-bell" title="Notifications on">🔔</i>' : ''}</b><small>${r.claim ? (r.claim.status === 'pending' ? 'Claim waiting' : `Rated ${esc(r.claim.rated || '0')}`) : 'Not claimed'}${r.seen ? ' · ' + plxAgo(r.seen.last) : r.claim ? ' · never on' : ''}</small></span>
+      <span class="plx-pd${r.pd.done >= r.pd.total ? ' full' : ''}"><i style="width:${r.pd.done / r.pd.total * 100}%"></i><b>${r.pd.done}/${r.pd.total}</b></span></button>`).join('') || '<div class="empty">Nobody matches.</div>'}</div>`;
+}
+async function openPlx(name) {
+  const p = ALL_PLAYERS.find(x => x.name === name); if (!p) return;
+  let ov = document.getElementById('plx-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'plx-overlay'; ov.onclick = e => { if (e.target === ov) closePlx(); }; ov.innerHTML = `<div class="sheet plx"><div class="controls"><button class="ctl" onclick="closePlx()">✕</button></div><div id="plx-in"></div></div>`; document.body.appendChild(ov); }
+  const box = document.getElementById('plx-in'), pd = profileDone(p), a = attrsOf(p.name);
+  const head = `<div class="plx-head">${photo(p, 'avatar')}<div><div class="pp-title">${esc(p.name)}</div><span class="label">#${p.rank} all-time · ${p.count} games · ${TIER_NAME[tierOf(p)]}</span></div></div>`;
+  box.innerHTML = head + `<div class="loading">Loading everything…</div>`;
+  ov.classList.add('open'); document.body.style.overflow = 'hidden';
+  let d; try { d = await api(null, { action: 'adminPlayer', t: TOKEN, name }); } catch (e) { d = { ok: false, error: e.message }; }
+  if (!d.ok) { box.innerHTML = head + `<div class="error">${esc(d.error || 'Could not load')}</div>`; return; }
+  const tick = (ok, l) => `<span class="plx-t${ok ? ' ok' : ''}">${ok ? '✓' : '·'} ${l}</span>`;
+  const profItems = [[!!posName(p), 'Position' + (posName(p) ? ': ' + posName(p) : '')], [!!(p.foot || '').trim(), 'Foot' + (p.foot ? ': ' + p.foot : '')], [!!photoSrc(p), 'Photo'],
+    [a.weakFoot != null, 'Weak foot' + (a.weakFoot ? ' ' + '★'.repeat(a.weakFoot) : '')], [a.skills != null, 'Skill moves' + (a.skills ? ' ' + '★'.repeat(a.skills) : '')], [!!a.wrAtt, 'Work rate att' + (a.wrAtt ? ': ' + a.wrAtt : '')],
+    [!!a.wrDef, 'Work rate def' + (a.wrDef ? ': ' + a.wrDef : '')], [a.number != null, 'Number' + (a.number ? ' #' + a.number : '')], [!!a.club, 'Club' + (a.club ? ': ' + a.club : '')]];
+  const ev = [];
+  if (d.claim && d.claim.claimed) ev.push([d.claim.claimed, 'Found their card' + (d.claim.status === 'pending' ? ' (waiting for approval)' : '')]);
+  d.visits.forEach(v => ev.push([v.ts, `Opened the site · ${v.m ? 'phone' : 'computer'}${v.page ? ' · ' + ({ home: 'Home', hall: 'Players', matches: 'Matches', history: 'History', me: 'Me', admin: 'Admin' }[v.page] || v.page) : ''}`, 'v']));
+  d.signups.forEach(x => ev.push([x.ts, x.name.toLowerCase() === name.toLowerCase() ? `Signed up for ${dayOf({ date: x.date })} · #${x.pos} ${x.inn ? 'in' : 'standby'}${x.by ? ` (added by ${esc(x.by)})` : ''}` : `Added ${esc(x.name)}${x.kind === 'guest' ? ' (guest)' : ''} to ${dayOf({ date: x.date })}`]));
+  d.matchVotes.forEach(m => ev.push([m.ts, `Rated the game on ${dayOf({ date: m.date })} · ${m.rated} player${m.rated === 1 ? '' : 's'}${m.motm ? ' · man of the match: ' + esc(m.motm) : ''}`]));
+  d.given.forEach(g => { const dt = /^\d{4}-\d{2}-\d{2}/.test(g.day) ? g.day + 'T12:00:00+03:00' : ''; if (dt) ev.push([dt, `Rated ${esc(g.target)}`, 'day']); });
+  d.strikes.forEach(x => ev.push([x.ts, `Strike: dropped out of ${dayOf({ date: x.date })} late${x.cleared ? ' (cleared)' : ''}`]));
+  d.topups.forEach(t => ev.push([t.ts, `Topped up ${kes(t.amount)}`]));
+  d.foot.forEach(f => ev.push([f.ts, `Said they're two-footed · ${f.status === 'review' ? 'under review' : f.status}`]));
+  if (d.profile && d.profile.updated) ev.push([d.profile.updated, 'Updated their profile (latest)']);
+  d.self.forEach(x => ev.push([x.updated, `Rated themselves (${esc(x.win)})`]));
+  ev.sort((x, y) => new Date(y[0]) - new Date(x[0]));
+  const avg = st => Math.round(st.reduce((t, v) => t + v, 0) / st.length);
+  box.innerHTML = head + `
+    <div class="plx-kv"><div><b>${d.claim ? (d.claim.status === 'pending' ? 'Waiting' : 'Claimed') : 'Not claimed'}</b><span>${d.claim && d.claim.claimed ? plxWhen(d.claim.claimed) : ''}</span></div>
+      <div><b>${d.visits.length ? plxAgo(d.visits[0].ts) : 'Never'}</b><span>last on · ${d.visitCount} visit${d.visitCount === 1 ? '' : 's'}</span></div>
+      <div><b>${d.devices}</b><span>device${d.devices === 1 ? '' : 's'}</span></div>
+      <div><b>${d.push.devices ? 'On' : 'Off'}</b><span>notifications${d.push.devices ? ` · ${d.push.devices} phone${d.push.devices === 1 ? '' : 's'}` : ''}</span></div>
+      <div><b>${d.given.length}</b><span>ratings given</span></div><div><b>${d.received}</b><span>ratings received</span></div></div>
+    <div class="label plx-l">Profile · ${pd.done} of ${pd.total}</div><div class="plx-ts">${profItems.map(([ok, l]) => tick(ok, esc(l))).join('')}${a.nickname ? tick(true, 'aka “' + esc(a.nickname) + '”') : ''}</div>
+    ${(() => { const up = d.signups.filter(x => x.name.toLowerCase() === name.toLowerCase() && new Date(x.date + 'T23:00:00+03:00') > new Date()); return up.length ? `<div class="label plx-l">Coming up</div><div class="plx-ts">${up.map(x => `<span class="plx-t ok">${dayOf({ date: x.date })} · #${x.pos} ${x.inn ? 'in' : 'standby'}</span>`).join('')}</div>` : ''; })()}
+    <div class="label plx-l">Everything they've done · newest first</div>
+    <div class="plx-tl">${ev.slice(0, 120).map(e => `<div class="plx-e${e[2] === 'v' ? ' v' : ''}"><span>${e[1]}</span><small>${e[2] === 'day' ? new Date(e[0]).toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short' }) : plxWhen(e[0])}</small></div>`).join('') || '<div class="empty">Nothing yet.</div>'}</div>
+    ${d.given.length ? `<details class="plx-d"><summary class="label">Ratings they gave · ${d.given.length}</summary><div class="plx-tl">${d.given.slice().sort((x, y) => x.target.localeCompare(y.target)).map(g => `<div class="plx-e"><span><b>${esc(g.target)}</b> · ${STAT_KEYS.map((k, i) => `${k} ${g.stats[i]}`).join(' · ')}${g.traits ? ' · ' + esc(g.traits.replace(/,/g, ', ')) : ''}${g.comment ? `<br><i>“${esc(g.comment)}”</i>` : ''}</span><small>${avg(g.stats)}</small></div>`).join('')}</div></details>` : ''}`;
+}
+function closePlx() { const ov = document.getElementById('plx-overlay'); if (ov) ov.classList.remove('open'); document.body.style.overflow = ''; }
 /* Admin: one notification to everyone who has them on. Counts first, then a confirm tap before it goes. */
 async function renderBroadcast() {
   const el = document.getElementById('bc-body'); if (!el) return;
@@ -3000,7 +3074,7 @@ async function renderAdmin(me) {
     return;
   }
   window.__ADMIN = a;
-  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin, renderTopupsAdmin, renderAdminTodo, renderSeen, renderBroadcast].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
+  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin, renderTopupsAdmin, renderAdminTodo, renderSeen, renderBroadcast, renderPlx].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
   const ab = document.getElementById('activity-body');
   if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
     const seenNames = new Set(x.names.map(n => n.name.toLowerCase()));

@@ -252,3 +252,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 ## v48 · Sheet sync race
 - `syncSheet_` reads its saved state only after taking the lock (two syncs at once could mark a column it had just made as "made by hand").
 - `sheetAdopt` (admin) {date}: rebuilds the saved state from the dated column in Wednesday Group and syncs.
+
+## v49 · Player inspector
+- `adminPlayer` (admin) {name}: claim, visits, devices, ratings given (named) and received, match votes, sign-ups, strikes, notifications, profile, two-footed claims, self-ratings, top-ups. `admin` also returns `pushPeople` (phones with notifications per player).

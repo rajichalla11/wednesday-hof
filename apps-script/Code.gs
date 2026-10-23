@@ -179,6 +179,7 @@ function doPost(e) {
     if (body.action === 'linkRedeem') return json_(linkRedeem_(body));
     if (body.action === 'renameSignup') return json_(renameSignup_(body));
     if (body.action === 'sheetAdopt') return json_(sheetAdopt_(body));
+    if (body.action === 'adminPlayer') return json_(adminPlayer_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -436,7 +437,8 @@ function admin_(token) {
   const now = Date.now(), motmGames = ss_().getSheetByName('Games') ? tab_('Games').map(function (r) { return String(r[0]).slice(0, 10); }).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) && kickoff_({ date: d, time: '00:00' }).getTime() <= now; })
     .sort().reverse().slice(0, 6).map(function (d) { const r = tab_('Games').filter(function (x) { return String(x[0]).slice(0, 10) === d; })[0], split = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
       return { date: d, players: split(r[1]).concat(split(r[2]), split(r[6])), score: r[3] === '' || r[4] === '' ? null : { black: Number(r[3]), white: Number(r[4]) }, votes: motmVotes_(d), auto: motmAuto_(d), override: motmOverride_(d) }; }) : [];
-  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed, motmGames: motmGames, topups: topupsAll_() };
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed, motmGames: motmGames, topups: topupsAll_(),
+    pushPeople: pushRows_().reduce(function (o, r) { const n = String(r[1]); o[n] = (o[n] || 0) + 1; return o; }, {}) };
 }
 
 /** Admin approves (ok: true) or rejects (ok: false, row deleted so the name can be claimed again) a pending claim. */
@@ -1043,6 +1045,32 @@ function clearStrikes_(body) {
   for (let i = 1; i < data.length; i++) if (String(data[i][2]).toLowerCase() === name && !data[i][4]) sh.getRange(i + 1, 5).setValue(stamp);
   bust_('Strikes');
   return { ok: true, strikes: strikesPublic_() };
+}
+/** Admin: everything about one player, for the player inspector: claim, visits, profile, ratings given, match votes,
+ *  sign-ups, strikes, notifications, top-ups. Votes are only those saved with the voter's name (14 Oct on). */
+function adminPlayer_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const name = String(body.name || ''), l = name.toLowerCase(), has = function (t) { return !!ss_().getSheetByName(t); };
+  const iso = function (v) { const d = v instanceof Date ? v : new Date(String(v).replace(/^'/, '')); return isNaN(d) ? String(v || '') : d.toISOString(); };
+  const vr = tab_('Voters').filter(function (r) { return String(r[1]).toLowerCase() === l; })[0];
+  const visits = has('Visits') ? tab_('Visits').filter(function (r) { return String(r[2]).toLowerCase() === l; }).map(function (r) { return { ts: iso(r[0]), dev: String(r[1] || '').slice(-4), m: !!Number(r[3]), page: String(r[4] || '') }; }) : [];
+  const votesAll = tab_('Votes');
+  const given = votesAll.filter(function (r) { return String(r[13] || '').toLowerCase() === l; }).map(function (r) { return { win: String(r[0]), target: String(r[2]), stats: r.slice(4, 10).map(Number), day: r[11] instanceof Date ? Utilities.formatDate(r[11], 'Africa/Nairobi', 'yyyy-MM-dd') : String(r[11] || '').replace(/^'/, ''), traits: String(r[12] || ''), comment: String(r[10] || '') }; });
+  const received = votesAll.filter(function (r) { return String(r[2]).toLowerCase() === l; }).length;
+  const mv = {}; if (has('MatchVotes')) tab_('MatchVotes').forEach(function (r) { if (String(r[6] || '').toLowerCase() !== l) return; const d = String(r[0]).slice(0, 10); mv[d] = mv[d] || { date: d, rated: 0, motm: '', ts: iso(r[5]) }; mv[d].rated++; if (r[4]) mv[d].motm = String(r[2]); });
+  const su = []; const all = signupsByDate_(); Object.keys(all).forEach(function (d) { const g = allGames_().filter(function (x) { return x.date === d; })[0], slots = 2 * ((g && g.size) || 6);
+    all[d].forEach(function (x, i) { if (x.name.toLowerCase() === l || String(x.by).toLowerCase() === l) su.push({ date: d, ts: iso(x.ts), name: x.name, kind: x.kind, by: x.by, pos: i + 1, inn: i < slots }); }); });
+  const strikes = has('Strikes') ? tab_('Strikes').filter(function (r) { return String(r[2]).toLowerCase() === l; }).map(function (r) { return { date: String(r[0]).slice(0, 10), ts: iso(r[1]), by: String(r[3] || ''), cleared: !!r[4] }; }) : [];
+  const prof = has('Profiles') ? tab_('Profiles').filter(function (r) { return String(r[0]).toLowerCase() === l; })[0] : null;
+  const foot = has('FootClaims') ? tab_('FootClaims').filter(function (r) { return String(r[1]).toLowerCase() === l; }).map(function (r) { return { ts: iso(r[0]), status: String(r[2]), decided: iso(r[3]) }; }) : [];
+  const self = tab_('SelfRatings').filter(function (r) { return String(r[1]).toLowerCase() === l; }).map(function (r) { return { win: String(r[0]), updated: iso(r[r.length - 1]) }; });
+  return { ok: true, name: name,
+    claim: vr ? { created: iso(vr[2]), claimed: vr[3] ? iso(vr[3]) : '', status: String(vr[4] || 'approved'), rated: String(vr[5] || '') } : null,
+    visits: visits.slice(-200).reverse(), visitCount: visits.length, devices: Object.keys(visits.reduce(function (o, v) { o[v.dev] = 1; return o; }, {})).length,
+    given: given, received: received, matchVotes: Object.keys(mv).map(function (k) { return mv[k]; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; }),
+    signups: su.sort(function (a, b) { return a.ts < b.ts ? 1 : -1; }), strikes: strikes, push: myPush_(name),
+    profile: prof ? { attrs: parsePrefs_(prof[1]), updated: iso(prof[2]) } : null, foot: foot, self: self,
+    photo: !!photos_()[name], topups: topupsFor_(name).list };
 }
 /** Admin: take charge of a game's dated column again (e.g. after it was wrongly marked as made by hand): rebuild what was
  *  written from the column itself (every row holding the fee), then sync. */
