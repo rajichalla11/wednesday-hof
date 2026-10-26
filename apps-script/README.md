@@ -261,3 +261,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v51 · Strikes by hand
 - `addStrike` (admin) {name, date}: adds a strike (by "<admin> (by hand)") and re-syncs that game's sheet column (late drop-outs are charged).
+
+## v52 · Strike pop-up
+- `me.strikes` = the player's uncleared strikes {date, ts, seen, fee}; Strikes column F `seen`. `ackStrikes` marks them seen after the pop-up.

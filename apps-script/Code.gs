@@ -182,6 +182,7 @@ function doPost(e) {
     if (body.action === 'adminPlayer') return json_(adminPlayer_(body));
     if (body.action === 'setGate') return json_(setGate_(body));
     if (body.action === 'addStrike') return json_(addStrike_(body));
+    if (body.action === 'ackStrikes') return json_(ackStrikes_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -224,7 +225,7 @@ function me_(token) {
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), strikes: myStrikes_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
 }
 
 /* ───────── top-ups ─────────
@@ -1038,6 +1039,19 @@ function strikesPublic_() {
   const out = {}; if (!ss_().getSheetByName('Strikes')) return out;
   tab_('Strikes').forEach(function (r) { if (!r[2] || r[4]) return; const n = String(r[2]); (out[n] = out[n] || []).push(String(r[0]).slice(0, 10)); });
   return out;
+}
+/** A player's own strikes (not cleared), with whether they've seen the pop-up about each (column F). */
+function myStrikes_(name) {
+  if (!ss_().getSheetByName('Strikes')) return [];
+  return tab_('Strikes').filter(function (r) { return String(r[2]).toLowerCase() === name.toLowerCase() && !r[4]; })
+    .map(function (r) { return { date: String(r[0]).slice(0, 10), ts: String(r[1]).replace(/^'/, ''), seen: !!r[5], fee: SHEET_FEE }; });
+}
+function ackStrikes_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false };
+  const sh = strikeSheet_(), d = sh.getDataRange().getValues(), stamp = "'" + new Date().toISOString();
+  if (sh.getRange(1, 6).getValue() !== 'seen') sh.getRange(1, 6).setValue('seen');
+  for (let i = 1; i < d.length; i++) if (String(d[i][2]).toLowerCase() === me.toLowerCase() && !d[i][4] && !d[i][5]) sh.getRange(i + 1, 6).setValue(stamp);
+  bust_('Strikes'); return { ok: true };
 }
 /** Admin: give a strike by hand (e.g. the admin took someone off late). Counts like any other: shown, and charged for that game. */
 function addStrike_(body) {

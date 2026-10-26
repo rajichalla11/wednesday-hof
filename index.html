@@ -634,6 +634,9 @@
   .bc-in { width: 100%; } textarea.bc-in { min-height: 70px; } .bc-acts { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .bc-acts small { font-size: 12px; color: var(--fg-3); }
   .lc-home { display: block; margin: 8px auto 0; font-size: 12.5px; } .lc-home.me-go { font-size: 13.5px; margin-top: 10px; }
   .fx-gate-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; } .fx-gate-in { width: 120px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; } .fx-gate-row small { font-size: 12px; color: var(--fg-3); }
+  .sk-pop { text-align: center; } .sk-marks { font-size: 30px; font-weight: 800; letter-spacing: 6px; color: #ff6b5e; margin: 4px 0 8px; } .sk-marks i { font-style: normal; opacity: .2; }
+  .sk-body { font-size: 15px; line-height: 1.5; color: var(--fg-2); margin: 12px 0; } .sk-count { display: inline-block; padding: 6px 14px; border-radius: 999px; background: color-mix(in srgb, #ff6b5e 14%, transparent); color: #ff6b5e; font-size: 13px; margin-bottom: 10px; }
+  .sk-note { font-size: 12.5px; color: var(--fg-3); margin: 6px 0 18px; }
   .lc-go { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--gold) !important; border-color: var(--gold) !important; color: #1a1408 !important; font-weight: 800; box-shadow: 0 6px 22px -8px color-mix(in srgb, var(--gold) 70%, transparent); }
   .me-go + .lc-go, .lc-go { margin-top: 8px; } .mx-acts .lc-go { margin-top: 0; } .lc-go svg { width: 18px; height: 18px; flex: none; fill: none; stroke: #1a1408; stroke-width: 2; stroke-linecap: round; }
   .lc-strip { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px; padding: 10px 14px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--gold) 70%, transparent); background: color-mix(in srgb, var(--gold) 8%, transparent); color: var(--fg-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
@@ -2335,7 +2338,7 @@ async function renderYou() {
   if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'plx-body', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'bc-body', 'seen-body', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
-  paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
+  strikePop(v); paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
   if (v.isAdmin) renderAdmin(me);
   if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else maybeProfilePop(me);
 }
@@ -2595,6 +2598,24 @@ async function setPushPref(k, on) {
   const s2 = document.getElementById('nt-st'); if (s2) { s2.textContent = res.ok ? 'Saved' : 'Could not save'; setTimeout(() => { if (s2.isConnected) s2.textContent = ''; }, 1500); }
 }
 async function testPush(btn) { btn.disabled = true; btn.textContent = 'Sending…'; const res = await api(null, { action: 'pushTest', t: TOKEN }).catch(() => ({})); btn.textContent = res && res.sent ? 'Sent · check your phone' : 'Not sent'; setTimeout(() => { if (btn.isConnected) { btn.disabled = false; btn.textContent = 'Send me a test'; } }, 4000); }
+/* A strike the player hasn't been told about: a pop-up once (acknowledged on the server, so not again on any device) */
+function strikePop(v) {
+  const fresh = ((v && v.strikes) || []).filter(x => !x.seen); if (!fresh.length || document.getElementById('sk-overlay')) return;
+  const total = Math.min(3, (v.strikes || []).length), fee = fresh[0].fee || 350;
+  const ov = document.createElement('div'); ov.className = 'overlay open'; ov.id = 'sk-overlay';
+  ov.innerHTML = `<div class="sheet app-sheet app-pop sk-pop"><div class="sk-marks">${'✕'.repeat(total)}<i>${'✕'.repeat(3 - total)}</i></div>
+    <div class="pp-title">You got a strike</div>
+    <p class="sk-body">${fresh.map(x => `You came off <b>${esc(dayOf({ date: x.date }))}</b> within 36 hours of kick-off.`).join('<br>')} That counts as a strike${fresh.length > 1 ? ' each' : ''}, and you've been charged <b>KES ${fee.toLocaleString('en')}</b> for ${fresh.length > 1 ? 'those games' : 'the game'}.</p>
+    <div class="sk-count">Strikes · <b>${total} of 3</b></div>
+    <p class="sk-note">Pulling out early (more than 36 hours before) is always free. Someone on standby takes your spot.</p>
+    <button class="btn app-go" onclick="ackStrikePop()">Got it</button></div>`;
+  document.body.appendChild(ov); document.body.style.overflow = 'hidden';
+}
+function ackStrikePop() {
+  const ov = document.getElementById('sk-overlay'); if (ov) ov.remove(); document.body.style.overflow = '';
+  (VOTER && VOTER.strikes || []).forEach(x => x.seen = true); try { writeCache('w910_me', VOTER); } catch (_) {}
+  api(null, { action: 'ackStrikes', t: TOKEN }).catch(() => {});
+}
 /* Notifications can't be on without the phone's Allow, so: where it's already allowed, switch on quietly; in the installed
    app, ask straight away (a tap first, because iPhone only shows Allow after one); ask again after 3 days if they said not now. */
 async function pushAuto() {
