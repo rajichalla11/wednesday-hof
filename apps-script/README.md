@@ -264,3 +264,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v52 · Strike pop-up
 - `me.strikes` = the player's uncleared strikes {date, ts, seen, fee}; Strikes column F `seen`. `ackStrikes` marks them seen after the pop-up.
+
+## v53 · Strike notification
+- `pushStrikes_`: each uncleared, unseen strike sends the player a push (kind `strike`) once (PushLog `strike|name|date`). Runs on a late drop-out, on `addStrike`, and on every `pushTick`. `pushStrikes` (admin) sends any outstanding now.

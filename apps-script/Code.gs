@@ -175,6 +175,7 @@ function doPost(e) {
     if (body.action === 'pushConfig') return json_(pushConfig_(body));
     if (body.action === 'pushTest') return json_(pushTest_(body));
     if (body.action === 'pushBroadcast') return json_(pushBroadcast_(body));
+    if (body.action === 'pushStrikes') return json_(pushStrikesNow_(body));
     if (body.action === 'linkCode') return json_(linkCode_(body));
     if (body.action === 'linkRedeem') return json_(linkRedeem_(body));
     if (body.action === 'renameSignup') return json_(renameSignup_(body));
@@ -713,7 +714,7 @@ function withdraw_(body) {
   } finally { lock.releaseLock(); }
   bust_('Signups'); if (done && strike) bust_('Strikes'); if (done) syncSheetSafe_(date);
   if (done) { try { notifyPromoted_(date, before); } catch (e) { console.error(e); }
-    if (strike) pushSafe_([adminName_()], 'latedrop', 'Late drop-out: ' + strike, 'Pulled out of ' + dayLabel_(date) + ' inside 36 hours · strike ' + Math.min(3, (strikesPublic_()[strike] || []).length) + ' of 3.', '/#admin'); }
+    if (strike) { pushStrikes_(); pushSafe_([adminName_()], 'latedrop', 'Late drop-out: ' + strike, 'Pulled out of ' + dayLabel_(date) + ' inside 36 hours · strike ' + Math.min(3, (strikesPublic_()[strike] || []).length) + ' of 3.', '/#admin'); } }
   return done ? { ok: true, fixtures: fixturesPublic_(), strikes: strikesPublic_(), strike: strike || '' } : { ok: false, error: 'Not on that list.' };
 }
 /* ───────── fill the attendance sheet from sign-ups ─────────
@@ -982,6 +983,7 @@ function pushTick() {
       pushSafe_(gameNames_(g), 'gameday', 'Game tonight · ' + koLabel_(g), gate ? 'Gate code ' + gate + '. See you on the pitch.' : 'See you on the pitch.', '/#home');
     });
   });
+  try { pushStrikes_(); } catch (e) { console.error('pushStrikes_ ' + e); }
   const L = lastGame_();
   if (L) { const ko = kickoff_(L).getTime(), closes = closes_(L.date); if (now >= ko + 3600000 && now < closes) pushOnce_('rate|' + L.date, function () {
     pushSafe_(gameNames_(L), 'rate', 'Rate the game', 'How did everyone play? Pick your man of the match. Voting closes at 11am.', '/#home'); }); }
@@ -1005,6 +1007,11 @@ function pushBroadcast_(body) {
   const title = String(body.title || '').slice(0, 60).trim(), text = String(body.body || '').slice(0, 200).trim();
   if (!title) return { ok: false, error: 'Add a title.' };
   return { ok: true, sent: pushTo_(people, 'news', title, text, String(body.url || '/#home')), phones: rows.length, people: people };
+}
+/** Admin: send any strike notifications that haven't gone out yet (they also go out on the 15-minute tick). */
+function pushStrikesNow_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  pushStrikes_(); return { ok: true };
 }
 function pushTest_(body) {
   const me = voterName_(body.t); if (!me) return { ok: false };
@@ -1059,7 +1066,20 @@ function addStrike_(body) {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? String(body.date) : ''; if (!date) return { ok: false, error: 'Which game?' };
   const p = players_().filter(function (x) { return x.name.toLowerCase() === String(body.name || '').toLowerCase(); })[0]; if (!p) return { ok: false, error: 'Unknown player.' };
   strikeSheet_().appendRow(["'" + date, "'" + new Date().toISOString(), p.name, me + ' (by hand)', '']); bust_('Strikes');
-  return { ok: true, strikes: strikesPublic_(), sync: syncSheetSafe_(date) };
+  const sync = syncSheetSafe_(date); try { pushStrikes_(); } catch (e) { console.error(e); }
+  return { ok: true, strikes: strikesPublic_(), sync: sync };
+}
+/** Tell each player about a strike they haven't seen yet, once per strike (PushLog), also from pushTick as a catch-up. */
+function pushStrikes_() {
+  if (!props_().getProperty('push_secret') || !ss_().getSheetByName('Strikes')) return;
+  const all = strikesPublic_();
+  tab_('Strikes').forEach(function (r) {
+    if (!r[2] || r[4] || r[5]) return;
+    const name = String(r[2]), date = String(r[0]).replace(/^'/, '').slice(0, 10), n = Math.min(3, (all[name] || []).length);
+    pushOnce_('strike|' + name + '|' + date, function () {
+      pushSafe_([name], 'strike', 'You got a strike', 'You came off ' + dayLabel_(date) + ' inside 36 hours of kick-off, so you\'ve been charged KES ' + SHEET_FEE + '. Strike ' + n + ' of 3.', '/#home');
+    });
+  });
 }
 /** Admin: clear someone's strikes (all of them) */
 function clearStrikes_(body) {
