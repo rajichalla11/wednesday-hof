@@ -636,6 +636,7 @@
   .fx-gate-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; } .fx-gate-in { width: 120px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; } .fx-gate-row small { font-size: 12px; color: var(--fg-3); }
   .sk-pop { text-align: center; } .sk-marks { font-size: 30px; font-weight: 800; letter-spacing: 6px; color: #ff6b5e; margin: 4px 0 8px; } .sk-marks i { font-style: normal; opacity: .2; }
   .sk-body { font-size: 15px; line-height: 1.5; color: var(--fg-2); margin: 12px 0; } .sk-count { display: inline-block; padding: 6px 14px; border-radius: 999px; background: color-mix(in srgb, #ff6b5e 14%, transparent); color: #ff6b5e; font-size: 13px; margin-bottom: 10px; }
+  .rp-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 18px; } .rp-row { display: grid; justify-items: center; gap: 2px; padding: 10px 6px; border: 1px solid var(--line-2); border-radius: 12px; } .rp-row b { font-size: 24px; } .rp-row small { font-size: 12px; color: var(--fg-3); } .rp-row.up { border-color: color-mix(in srgb, #3ecf8e 45%, transparent); } .rp-row.up small { color: #3ecf8e; font-weight: 700; } .rp-row.down small { color: #ff6b5e; font-weight: 700; }
   .sk-note { font-size: 12.5px; color: var(--fg-3); margin: 6px 0 18px; }
   .lc-go { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--gold) !important; border-color: var(--gold) !important; color: #1a1408 !important; font-weight: 800; box-shadow: 0 6px 22px -8px color-mix(in srgb, var(--gold) 70%, transparent); }
   .me-go + .lc-go, .lc-go { margin-top: 8px; } .mx-acts .lc-go { margin-top: 0; } .lc-go svg { width: 18px; height: 18px; flex: none; fill: none; stroke: #1a1408; stroke-width: 2; stroke-linecap: round; }
@@ -2338,7 +2339,7 @@ async function renderYou() {
   if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'plx-body', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'bc-body', 'seen-body', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
-  strikePop(v); paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
+  strikePop(v); ratePop(me, r); paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
   if (v.isAdmin) renderAdmin(me);
   if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else maybeProfilePop(me);
 }
@@ -2611,6 +2612,36 @@ function strikePop(v) {
     <button class="btn app-go" onclick="ackStrikePop()">Got it</button></div>`;
   document.body.appendChild(ov); document.body.style.overflow = 'hidden';
 }
+/* The player's six numbers moved since they last looked (remembered on this device): a pop-up with what changed, once.
+   While their own numbers are still locked behind rating teammates, it says they moved and points to the ballot instead. */
+function ratePop(me, r) {
+  if (!me || !r || !r.stats || r.hidden || !RATINGS || !RATINGS.ok || document.getElementById('rp-overlay')) return;
+  const key = 'w910_rs_' + me.name.toLowerCase(), now = STAT_KEYS.reduce((o, k) => (o[k] = r.stats[k], o), {});
+  let was = null; try { was = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) {}
+  const save = () => { try { localStorage.setItem(key, JSON.stringify({ s: now, n: r.n || 0 })); } catch (_) {} };
+  if (!was || !was.s) return save();   // first look on this device: nothing to compare with yet
+  const moved = STAT_KEYS.filter(k => was.s[k] != null && was.s[k] !== now[k]); if (!moved.length) return;
+  const locked = selfLocked(me);
+  if (locked) { try { if (sessionStorage.getItem('w910_rp')) return; sessionStorage.setItem('w910_rp', '1'); } catch (_) {} }
+  let tries = 0;
+  const go = () => { if (document.querySelector('.overlay.open')) { if (++tries < 40) setTimeout(go, 3000); return; }   // after any other pop-up
+    if (document.getElementById('rp-overlay')) return;
+    const nv = Math.max(0, (r.n || 0) - (was.n || 0)), need = selfNeed() - selfRated();
+    const ov = document.createElement('div'); ov.className = 'overlay open'; ov.id = 'rp-overlay';
+    ov.innerHTML = `<div class="sheet app-sheet app-pop rp-pop"><div class="label" style="color:var(--gold)">Ratings update</div>
+      <div class="pp-title">Your card has moved</div>
+      ${locked ? `<p class="sk-body">Teammates' votes have changed your numbers. Rate <b>${need} more teammate${need === 1 ? '' : 's'}</b> to see them.</p>
+        <button class="btn app-go" onclick="closeRatePop(); openBallot()">Rate teammates</button><button class="btn link app-later" onclick="closeRatePop()">Later</button>`
+      : `<p class="sk-body">${nv ? `${nv} new teammate vote${nv === 1 ? '' : 's'} since you last looked.` : 'Your numbers changed since you last looked.'}</p>
+        <div class="rp-list">${STAT_KEYS.map(k => { const d = now[k] - (was.s[k] ?? now[k]); return `<div class="rp-row${d > 0 ? ' up' : d < 0 ? ' down' : ''}"><span class="label">${k}</span><b class="num">${now[k]}</b><small>${d > 0 ? '▲ ' + d : d < 0 ? '▼ ' + -d : '–'}</small></div>`; }).join('')}</div>
+        <button class="btn app-go" onclick="closeRatePop(true)">Nice</button>`}</div>`;
+    ov.onclick = e => { if (e.target === ov) closeRatePop(!locked); };
+    document.body.appendChild(ov); document.body.style.overflow = 'hidden';
+    ov._save = save;
+  };
+  setTimeout(go, 800);
+}
+function closeRatePop(seen) { const ov = document.getElementById('rp-overlay'); if (!ov) return; if (seen && ov._save) ov._save(); ov.remove(); document.body.style.overflow = ''; }
 function ackStrikePop() {
   const ov = document.getElementById('sk-overlay'); if (ov) ov.remove(); document.body.style.overflow = '';
   (VOTER && VOTER.strikes || []).forEach(x => x.seen = true); try { writeCache('w910_me', VOTER); } catch (_) {}
