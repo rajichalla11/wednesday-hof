@@ -180,6 +180,7 @@ function doPost(e) {
     if (body.action === 'renameSignup') return json_(renameSignup_(body));
     if (body.action === 'sheetAdopt') return json_(sheetAdopt_(body));
     if (body.action === 'adminPlayer') return json_(adminPlayer_(body));
+    if (body.action === 'setGate') return json_(setGate_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -222,7 +223,7 @@ function me_(token) {
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
 }
 
 /* ───────── top-ups ─────────
@@ -666,7 +667,7 @@ function signupsByDate_() {
 function fixturesPublic_() {
   const now = Date.now(), su = signupsByDate_();
   return allGames_().filter(function (g) { return kickoff_(g).getTime() + 3600000 > now; }).sort(function (a, b) { return kickoff_(a).getTime() - kickoff_(b).getTime(); })
-    .map(function (g) { return { date: g.date, time: g.time, size: g.size || 6, slots: 2 * (g.size || 6), teams: !!g.teams, signups: (su[g.date] || []).map(function (x) { return { name: x.name, kind: x.kind, by: x.by }; }) }; });
+    .map(function (g) { return { date: g.date, time: g.time, size: g.size || 6, slots: 2 * (g.size || 6), teams: !!g.teams, hasGate: !!gateFor_(g.date), signups: (su[g.date] || []).map(function (x) { return { name: x.name, kind: x.kind, by: x.by }; }) }; });
 }
 function signupSheet_() { const sh = sheet_('Signups'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'ts', 'name', 'kind', 'by']); return sh; }
 function signup_(body) {
@@ -975,7 +976,7 @@ function pushTick() {
   allGames_().forEach(function (g) {
     const left = kickoff_(g).getTime() - now;
     if (g.date === today && left > 0 && left <= 2.25 * 3600000) pushOnce_('gameday|' + g.date, function () {
-      const cur = gameInfo_(), gate = cur.date === g.date && cur.gate ? String(cur.gate) : '';
+      const gate = gateFor_(g.date);
       pushSafe_(gameNames_(g), 'gameday', 'Game tonight · ' + koLabel_(g), gate ? 'Gate code ' + gate + '. See you on the pitch.' : 'See you on the pitch.', '/#home');
     });
   });
@@ -1230,6 +1231,16 @@ function motmAuto_(date) {
   const avg = function (k) { return Math.round(10 * by[k].sum / by[k].n) / 10; }, best = Math.max.apply(null, tied.map(avg));
   return tied.filter(function (k) { return avg(k) === best; });
 }
+/** Gate code for one game: per-date setting gate_<date>, else the game-day settings' code if it's that game. */
+function gateFor_(date) { const s = settings_(), g = String(s['gate_' + date] || '').trim(); if (g) return g; const cur = gameInfo_(); return cur.date === date ? cur.gate : ''; }
+function setGate_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? String(body.date) : ''; if (!date) return { ok: false, error: 'Which game?' };
+  const gate = String(body.gate || '').replace(/\s+/g, '').toUpperCase().slice(0, 20);
+  setSetting_('gate_' + date, gate);
+  if (gameInfo_().date === date) setSetting_('gate_code', gate);
+  return { ok: true, gate: gate, fixtures: fixturesPublic_() };
+}
 function setSetting_(key, value) {
   const sh = sheet_('Settings'), data = sh.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) if (String(data[i][0]) === key) { sh.getRange(i + 1, 2).setValue(value); bust_('Settings'); return; }
@@ -1317,7 +1328,7 @@ function gamePublic_(g) {
   const ratings = {}; Object.keys(by).forEach(function (k) { ratings[k] = { avg: Math.round(10 * by[k].sum / by[k].n) / 10, n: by[k].n, motm: by[k].motm }; });
   (g.teams ? g.teams.black.concat(g.teams.white) : []).concat(g.list || []).forEach(function (n) { if (!sq[n.toLowerCase()]) sq[n.toLowerCase()] = n; });
   const closes = closes_(g.date), final = Date.now() >= closes;
-  return { date: g.date, time: g.time, squad: Object.keys(sq).map(function (k) { return sq[k]; }), teams: g.teams, score: g.score, ratings: ratings, raters: Object.keys(raters).length, hasGate: !!g.gate,
+  return { date: g.date, time: g.time, squad: Object.keys(sq).map(function (k) { return sq[k]; }), teams: g.teams, score: g.score, ratings: ratings, raters: Object.keys(raters).length, hasGate: !!gateFor_(g.date),
            closes: new Date(closes).toISOString(), final: final, motm: motmFor_(g.date), motmPicked: !!motmOverride_(g.date), list: g.list || [], standby: g.standby || [], size: g.size || 6 };
 }
 /** Man of the match winners across every game: most MOTM votes on the night (at least 2), ties share it. */

@@ -255,3 +255,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v49 · Player inspector
 - `adminPlayer` (admin) {name}: claim, visits, devices, ratings given (named) and received, match votes, sign-ups, strikes, notifications, profile, two-footed claims, self-ratings, top-ups. `admin` also returns `pushPeople` (phones with notifications per player).
+
+## v50 · Gate code per game
+- `setGate` (admin) {date, gate}: stored as Settings `gate_<date>` (and `gate_code` too when it's the game-day game). `gateFor_(date)` is used by `fixtures[].hasGate`, `me.gates` (date → code for signed-in players) and the game-day notification.

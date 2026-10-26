@@ -632,6 +632,7 @@
   .bc { display: grid; gap: 10px; } .bc-n { font-size: 13.5px; color: var(--fg-2); } .bc-n b { font-size: 20px; color: var(--fg); margin-right: 4px; } .bc-n small { display: block; margin-top: 4px; font-size: 12px; color: var(--fg-3); }
   .bc-in { width: 100%; } textarea.bc-in { min-height: 70px; } .bc-acts { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .bc-acts small { font-size: 12px; color: var(--fg-3); }
   .lc-home { display: block; margin: 8px auto 0; font-size: 12.5px; } .lc-home.me-go { font-size: 13.5px; margin-top: 10px; }
+  .fx-gate-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; } .fx-gate-in { width: 120px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; } .fx-gate-row small { font-size: 12px; color: var(--fg-3); }
   .lc-go { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--gold) !important; border-color: var(--gold) !important; color: #1a1408 !important; font-weight: 800; box-shadow: 0 6px 22px -8px color-mix(in srgb, var(--gold) 70%, transparent); }
   .me-go + .lc-go, .lc-go { margin-top: 8px; } .mx-acts .lc-go { margin-top: 0; } .lc-go svg { width: 18px; height: 18px; flex: none; fill: none; stroke: #1a1408; stroke-width: 2; stroke-linecap: round; }
   .lc-strip { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px; padding: 10px 14px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--gold) 70%, transparent); background: color-mix(in srgb, var(--gold) 8%, transparent); color: var(--fg-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
@@ -3461,7 +3462,7 @@ function renderNextLine(fx, me) {
   const pos = f => me ? f.signups.findIndex(x => x.kind === 'player' && x.name.toLowerCase() === me.toLowerCase()) : -1;
   const f = fx.find(x => pos(x) >= 0); if (!f) { el.innerHTML = ''; return; }
   const i = pos(f), inn = i < f.slots, ko = koOf(f), now = Date.now(), today = f.date === todayNbo();
-  const vg = VOTER && VOTER.game && VOTER.game.date === f.date ? VOTER.game : null;
+  const vgc = (VOTER && VOTER.gates && VOTER.gates[f.date]) || (VOTER && VOTER.game && VOTER.game.date === f.date && VOTER.game.gate) || '', vg = vgc ? { gate: vgc } : null;
   el.innerHTML = `<div class="nx" role="button" onclick="fxOpen('${f.date}')">
     <div class="nx-l"><span class="label">Your next game</span><b>${today ? 'Tonight' : esc(fxDay(f.date))} ${esc(skDate(f.date))} · ${fmtKo(f)}</b><small>${now < ko ? `${today ? 'Kick-off in' : 'In'} ${fmtLeft(ko - now)}` : 'Playing now'}</small></div>
     <span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${i + 1}` : `Standby · ${ordN(i - f.slots)}`}</span>
@@ -3490,13 +3491,13 @@ function renderFixtures() {
     const stat = T ? `<span class="fx-tag">Teams out</span>` : left > 0 ? `<span class="fx-stat">${left} spot${left === 1 ? '' : 's'} left</span>` : `<span class="fx-stat full">Full · ${nSb ? `${nSb} on standby` : 'join standby'}</span>`;
     const primary = pos >= 0 ? `<span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${pos + 1}` : `Standby · ${ordN(sb)}`}</span>`
       : `<button class="btn fx-go" onclick="${TOKEN ? `fxIn('${f.date}', this)` : 'openClaim()'}">${left > 0 ? "I'm in" : 'Join standby'}</button>`;
-    const vg = VOTER && VOTER.game && VOTER.game.date === f.date && VOTER.game.gate ? VOTER.game : null;
+    const gateCode = (VOTER && VOTER.gates && VOTER.gates[f.date]) || (VOTER && VOTER.game && VOTER.game.date === f.date && VOTER.game.gate) || '', vg = gateCode ? { gate: gateCode } : null;
     const body = !open ? '' : `<div class="fx-body">
       ${T ? `<div class="fx-teams"><div><div class="label"><i class="gd-shirt"></i>Black</div>${(T.black || []).map(n => chip(n)).join('')}</div><div><div class="label"><i class="gd-shirt w"></i>White</div>${(T.white || []).map(n => chip(n)).join('')}</div></div>
           ${sbRows.length ? `<div class="label">Standby</div><div class="gd-chips">${sbRows.map((x, i) => chip(x.name, `<i>${i + 1}</i>`)).join('')}</div>` : ''}`
         : f.signups.length ? `<div class="fx-grid">${f.signups.slice(0, f.slots).map((x, i) => cell(x, i, false)).join('')}${Array.from({ length: Math.max(0, left) }, (_, i) => `<div class="fx-cell open"><span class="fx-n">${nIn + i + 1}</span><span class="fx-name">Open spot</span></div>`).join('')}</div>
           ${nSb ? `<div class="label" style="margin:4px 0 0">Standby · in order</div><div class="fx-grid sb">${sbRows.map((x, i) => cell(x, i, true)).join('')}</div>` : ''}` : `<div class="fx-empty">Nobody yet. Be first.</div>`}
-      ${vg ? `<button class="gd-gate" onclick="copyGate(this)"><span><span class="label">Gate code</span><b>${esc(vg.gate)}</b></span><small>Tap to copy</small></button>` : ''}
+      ${vg && (f.date === todayNbo() || admin) ? `<button class="gd-gate" onclick="copyGate(this)"><span><span class="label">Gate code${f.date === todayNbo() ? ' · tonight' : ''}</span><b>${esc(vg.gate)}</b></span><small>Tap to copy</small></button>` : ''}
       <div class="fx-btns">
         ${pos >= 0 ? `<button class="btn ghost" onclick="fxOut('${f.date}', '', this)">I'm out</button>` : ''}
         ${T || nIn ? `<button class="btn ghost" onclick="openTeamMaker('${f.date}')">Team maker</button>` : ''}
@@ -3505,7 +3506,7 @@ function renderFixtures() {
       </div>
       ${admin && FX_ADD === f.date ? `<div class="fx-add"><div class="fx-add-row"><input id="fx-p-${f.date}" list="fx-names" placeholder="Add a player" autocomplete="off"><button class="btn" onclick="fxAddPlayer('${f.date}', this)">Add</button></div>
         <div class="fx-add-row"><input id="fx-g-${f.date}" placeholder="Or a guest's name (not on the site)" autocomplete="off"><button class="btn ghost" onclick="fxAddGuest('${f.date}', this)">Add guest</button></div></div>` : ''}
-      ${admin ? `<details class="fx-admin"><summary aria-label="Admin">⋯</summary><div class="fx-admin-in">${nSb && others.length ? `<select onchange="if (this.value) fxMove('${f.date}', this.value, this)"><option value="">Move standby to…</option>${others.map(o => `<option value="${o.date}">${esc(fxDay(o.date))} ${esc(o.date.slice(8))}</option>`).join('')}</select>` : ''}<button class="btn link" onclick="fxRemoveGame('${f.date}', ${f.signups.length}, this)">Remove game</button></div></details>` : ''}
+      ${admin ? `<details class="fx-admin"${FX_ADM_OPEN === f.date ? ' open' : ''}><summary aria-label="Admin">⋯</summary><div class="fx-gate-row"><span class="label">Gate code</span><input class="pf-in fx-gate-in" id="fx-gate-${f.date}" value="${esc(gateCode)}" placeholder="e.g. VK526" autocapitalize="characters" autocomplete="off"><button class="btn" onclick="fxSetGate('${f.date}', this)">Save</button><small id="fx-gate-st-${f.date}"></small></div><div class="fx-admin-in">${nSb && others.length ? `<select onchange="if (this.value) fxMove('${f.date}', this.value, this)"><option value="">Move standby to…</option>${others.map(o => `<option value="${o.date}">${esc(fxDay(o.date))} ${esc(o.date.slice(8))}</option>`).join('')}</select>` : ''}<button class="btn link" onclick="fxRemoveGame('${f.date}', ${f.signups.length}, this)">Remove game</button></div></details>` : ''}
     </div>`;
     return `<article class="fx${open ? ' open' : ''}${pos >= 0 ? ' mine' : ''}" id="fx-${f.date}">
       <button class="fx-head" onclick="fxToggle('${f.date}')" aria-expanded="${open}">
@@ -3569,6 +3570,15 @@ function fxAddGuest(date, btn) { const v = ((document.getElementById('fx-g-' + d
 function fxMove(from, to, sel) { fxCall({ action: 'moveStandby', from, to }, null, from); sel.value = ''; }
 function fxRemoveGame(date, n, btn) { if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.textContent = n ? `Remove game and its ${n} sign-ups?` : 'Tap again to remove'; return; } fxCall({ action: 'removeFixture', date, force: true }, btn, date); }
 function fxNewGame(btn) { const d = document.getElementById('fx-new-d').value; if (!d) return; fxCall({ action: 'addFixture', date: d, time: document.getElementById('fx-new-t').value, size: document.getElementById('fx-new-s').value }, btn, ''); }
+let FX_ADM_OPEN = '';
+async function fxSetGate(date, btn) {
+  const inp = document.getElementById('fx-gate-' + date), st = document.getElementById('fx-gate-st-' + date); FX_ADM_OPEN = date;
+  btn.disabled = true; btn.textContent = '…';
+  let res; try { res = await api(null, { action: 'setGate', t: TOKEN, date, gate: inp.value }); } catch (e) { res = { ok: false, error: e.message }; }
+  btn.disabled = false; btn.textContent = 'Save';
+  if (res.ok) { VOTER.gates = Object.assign({}, VOTER.gates, { [date]: res.gate }); if (!res.gate) delete VOTER.gates[date]; if (RATINGS && res.fixtures) RATINGS.fixtures = res.fixtures; renderFixtures(); const s2 = document.getElementById('fx-gate-st-' + date); if (s2) s2.textContent = res.gate ? 'Saved · players see it on game day' : 'Cleared'; }
+  else if (st) st.textContent = res.error || 'Could not save';
+}
 function fxCopy(date, btn) {
   const f = ((RATINGS && RATINGS.fixtures) || []).find(x => x.date === date); if (!f) return;
   const txt = fxWhatsApp(f), done = () => { btn.textContent = 'Copied · paste in WhatsApp'; setTimeout(() => btn.textContent = 'Copy for WhatsApp', 2000); };
