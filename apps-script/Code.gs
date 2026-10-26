@@ -1086,8 +1086,10 @@ function clearStrikes_(body) {
   const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
   const name = String(body.name || '').toLowerCase(); if (!name || !ss_().getSheetByName('Strikes')) return { ok: false, error: 'No strikes.' };
   const sh = strikeSheet_(), data = sh.getDataRange().getValues(), stamp = "'" + new Date().toISOString();
-  for (let i = 1; i < data.length; i++) if (String(data[i][2]).toLowerCase() === name && !data[i][4]) sh.getRange(i + 1, 5).setValue(stamp);
+  const dates = {};
+  for (let i = 1; i < data.length; i++) if (String(data[i][2]).toLowerCase() === name && !data[i][4]) { sh.getRange(i + 1, 5).setValue(stamp); dates[String(data[i][0]).replace(/^'/, '').slice(0, 10)] = 1; }
   bust_('Strikes');
+  Object.keys(dates).forEach(function (d) { syncSheetSafe_(d); });   // a cleared late drop is no longer charged for a game still to come
   return { ok: true, strikes: strikesPublic_() };
 }
 /** Admin: everything about one player, for the player inspector: claim, visits, profile, ratings given, match votes,

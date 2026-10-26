@@ -267,3 +267,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v53 · Strike notification
 - `pushStrikes_`: each uncleared, unseen strike sends the player a push (kind `strike`) once (PushLog `strike|name|date`), as soon as they have notifications on and until they have seen the pop-up. Runs on a late drop-out, on `addStrike`, and on every `pushTick`. `pushStrikes` (admin) sends any outstanding now.
+
+## v55 · Clearing strikes re-syncs the sheet
+- `clearStrikes` re-syncs each affected game that is still to come, so the late-drop charge comes off the sheet.
