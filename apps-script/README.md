@@ -258,3 +258,6 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v50 · Gate code per game
 - `setGate` (admin) {date, gate}: stored as Settings `gate_<date>` (and `gate_code` too when it's the game-day game). `gateFor_(date)` is used by `fixtures[].hasGate`, `me.gates` (date → code for signed-in players) and the game-day notification.
+
+## v51 · Strikes by hand
+- `addStrike` (admin) {name, date}: adds a strike (by "<admin> (by hand)") and re-syncs that game's sheet column (late drop-outs are charged).

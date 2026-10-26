@@ -181,6 +181,7 @@ function doPost(e) {
     if (body.action === 'sheetAdopt') return json_(sheetAdopt_(body));
     if (body.action === 'adminPlayer') return json_(adminPlayer_(body));
     if (body.action === 'setGate') return json_(setGate_(body));
+    if (body.action === 'addStrike') return json_(addStrike_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
@@ -1037,6 +1038,14 @@ function strikesPublic_() {
   const out = {}; if (!ss_().getSheetByName('Strikes')) return out;
   tab_('Strikes').forEach(function (r) { if (!r[2] || r[4]) return; const n = String(r[2]); (out[n] = out[n] || []).push(String(r[0]).slice(0, 10)); });
   return out;
+}
+/** Admin: give a strike by hand (e.g. the admin took someone off late). Counts like any other: shown, and charged for that game. */
+function addStrike_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? String(body.date) : ''; if (!date) return { ok: false, error: 'Which game?' };
+  const p = players_().filter(function (x) { return x.name.toLowerCase() === String(body.name || '').toLowerCase(); })[0]; if (!p) return { ok: false, error: 'Unknown player.' };
+  strikeSheet_().appendRow(["'" + date, "'" + new Date().toISOString(), p.name, me + ' (by hand)', '']); bust_('Strikes');
+  return { ok: true, strikes: strikesPublic_(), sync: syncSheetSafe_(date) };
 }
 /** Admin: clear someone's strikes (all of them) */
 function clearStrikes_(body) {

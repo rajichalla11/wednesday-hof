@@ -499,6 +499,7 @@
   .fx-warn { display: grid; gap: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid #ff6b5e; background: color-mix(in srgb, #ff6b5e 10%, transparent); font-size: 13.5px; line-height: 1.4; } .fx-warn b { color: #ff6b5e; font-size: 15px; }
   .fx-warn .btn:not(.ghost) { background: #ff6b5e; border-color: #ff6b5e; color: #1a0705; }
   .me-sk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--fg-3); } .me-sk .sk { margin-left: 0; }
+  .sk-add { margin-bottom: 10px; } .sk-add select { height: 40px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--fg); padding: 0 10px; font: inherit; font-size: 13px; } .sk-add small { font-size: 12px; color: var(--fg-3); }
   .sk-list { display: grid; gap: 8px; } .sk-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: 12px; } .sk-row small { flex: 1; color: var(--fg-3); font-size: 12px; } .sk-row .sk { margin-left: 0; }
   button.me-bal { border: 0; background: none; font: inherit; color: inherit; cursor: pointer; padding: 0; text-align: right; } button.me-bal span { display: inline-flex; align-items: center; gap: 6px; } button.me-bal .fx-chev { width: 7px; height: 7px; } button.me-bal.open .fx-chev { transform: rotate(-135deg) translate(-2px, -2px); }
   .bb[hidden] { display: none; } .bb { display: grid; gap: 8px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
@@ -2995,8 +2996,20 @@ async function removeTopup(ts, name, btn) {
 }
 function renderStrikesAdmin() {
   const el = document.getElementById('strikes-admin'); if (!el) return;
+  const ae = document.activeElement; if (ae && el.contains(ae) && /^(INPUT|SELECT)$/.test(ae.tagName)) return;   // don't wipe a name being typed
   const st = (RATINGS && RATINGS.strikes) || {}, names = Object.keys(st).sort((a, b) => st[b].length - st[a].length || a.localeCompare(b));
-  el.innerHTML = !names.length ? `<div class="empty">No strikes.</div>` : `<div class="sk-list">${names.map(n => `<div class="sk-row"><b>${esc(n)}</b>${strikeTag(n)}<small>${st[n].map(d => esc(dayOf({ date: d }))).join(' · ')}</small><button class="btn link" onclick="clearStrikes('${esc(n).replace(/'/g, "\\'")}', this)">Clear</button></div>`).join('')}</div>`;
+  const games = ((RATINGS && RATINGS.games) || []).map(g => g.date).concat(((RATINGS && RATINGS.fixtures) || []).map(f => f.date)).filter((d, k, a) => a.indexOf(d) === k).sort().reverse().slice(0, 8);
+  const form = `<div class="fx-add-row sk-add"><input class="pf-in" id="sk-n" list="fx-names" placeholder="Player"><select id="sk-d">${games.map(d => `<option value="${d}">${esc(dayOf({ date: d }))}</option>`).join('')}</select><button class="btn" onclick="addStrike(this)">Add a strike</button><small id="sk-st"></small></div>`;
+  el.innerHTML = form + (!names.length ? `<div class="empty">No strikes.</div>` : `<div class="sk-list">${names.map(n => `<div class="sk-row"><b>${esc(n)}</b>${strikeTag(n)}<small>${st[n].map(d => esc(dayOf({ date: d }))).join(' · ')}</small><button class="btn link" onclick="clearStrikes('${esc(n).replace(/'/g, "\\'")}', this)">Clear</button></div>`).join('')}</div>`);
+}
+async function addStrike(btn) {
+  const name = resolvePlayer((document.getElementById('sk-n').value || '').trim()), date = document.getElementById('sk-d').value, st = document.getElementById('sk-st');
+  if (!name) return; btn.disabled = true; btn.textContent = '…';
+  let res; try { res = await api(null, { action: 'addStrike', t: TOKEN, name, date }); } catch (e) { res = { ok: false, error: e.message }; }
+  btn.disabled = false; btn.textContent = 'Add a strike';
+  if (!res.ok) { if (st) st.textContent = res.error || 'Could not add'; return; }
+  if (RATINGS) RATINGS.strikes = res.strikes || RATINGS.strikes; renderStrikesAdmin(); renderGameday();
+  const s2 = document.getElementById('sk-st'); if (s2) s2.textContent = `${name} has a strike for ${dayOf({ date })}`;
 }
 async function clearStrikes(name, btn) {
   btn.disabled = true; btn.textContent = '…';
