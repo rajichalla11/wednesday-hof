@@ -1072,9 +1072,9 @@ function addStrike_(body) {
 /** Tell each player about a strike they haven't seen yet, once per strike (PushLog), also from pushTick as a catch-up. */
 function pushStrikes_() {
   if (!props_().getProperty('push_secret') || !ss_().getSheetByName('Strikes')) return;
-  const all = strikesPublic_();
+  const all = strikesPublic_(), subs = {}; pushRows_().forEach(function (r) { subs[String(r[1]).toLowerCase()] = 1; });
   tab_('Strikes').forEach(function (r) {
-    if (!r[2] || r[4] || r[5]) return;
+    if (!r[2] || r[4] || r[5] || !subs[String(r[2]).toLowerCase()]) return;   // wait until they have notifications on
     const name = String(r[2]), date = String(r[0]).replace(/^'/, '').slice(0, 10), n = Math.min(3, (all[name] || []).length);
     pushOnce_('strike|' + name + '|' + date, function () {
       pushSafe_([name], 'strike', 'You got a strike', 'You came off ' + dayLabel_(date) + ' inside 36 hours of kick-off, so you\'ve been charged KES ' + SHEET_FEE + '. Strike ' + n + ' of 3.', '/#home');
