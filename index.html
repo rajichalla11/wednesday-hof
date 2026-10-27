@@ -958,6 +958,12 @@
   .me-id { flex: 1; min-width: 0; } .me-id b { display: block; font-size: 18px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .me-id span { font-size: 12px; color: var(--fg-2); }
   .me-bal { text-align: right; } .me-bal b { display: block; font-size: 22px; font-weight: 700; font-variation-settings: 'wdth' 80; line-height: 1.05; } .me-bal span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; }
   .me-bal.neg b { color: var(--neg); }
+  .bal-wrap { margin: 12px 0 4px; } .bal-wrap .bb { margin-top: 10px; }
+  .bal-tile { --c: var(--fg-3); display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 13px 15px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--c) 45%, var(--line-2)); background: linear-gradient(100deg, color-mix(in srgb, var(--c) 16%, var(--surface)), var(--surface) 75%); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
+  .bal-tile.credit { --c: #3ecf8e; } .bal-tile.owe { --c: var(--neg); } .bal-tile.zero { --c: var(--gold); } .bal-tile:disabled { cursor: default; }
+  .bal-l { display: grid; gap: 3px; min-width: 0; } .bal-l .label { color: var(--c); } .bal-l small { font-size: 12.5px; color: var(--fg-2); line-height: 1.35; }
+  .bal-r { display: grid; justify-items: end; gap: 2px; flex: none; } .bal-r b { font-size: 26px; font-weight: 800; letter-spacing: -.02em; line-height: 1; font-variation-settings: 'wdth' 80; } .bal-tile.owe .bal-r b { color: var(--neg); }
+  .bal-r em { font-style: normal; font-size: 11px; color: var(--fg-3); display: inline-flex; align-items: center; gap: 5px; } .bal-r .fx-chev { width: 6px; height: 6px; } .bal-tile.open .bal-r .fx-chev { transform: rotate(-135deg) translate(-2px, -2px); }
   .me-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); padding-top: 12px; }
   .me-stats span { display: flex; flex-direction: column; gap: 2px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; } .me-stats b { font-size: 20px; color: var(--fg); letter-spacing: 0; font-weight: 700; font-variation-settings: 'wdth' 80; }
   .me-go { width: 100%; justify-content: center; position: relative; overflow: hidden; min-height: 44px; } .me-go + .me-go { margin-top: 8px; }
@@ -2289,6 +2295,7 @@ async function renderYou() {
       <div class="mx-id">
         <span class="label">#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span>
         <h2 class="mx-name">${esc(me.name)}${num ? ` <span>#${num}</span>` : ''}</h2>
+        ${balTileHtml(me, v, { known, bal, balStatus })}
         <p class="mx-note">${rateNote}</p>
         <div class="mile"><div class="l"><span>${me.count<100 ? 'To the century' : `Next milestone ${ms.next}`}</span><span>${ms.toGo} to go · ${esc(fmtEta(ms.eta))}</span></div><i style="--w:${ms.pct}%"></i></div>
         <div class="mx-acts">
@@ -2825,7 +2832,7 @@ function balBreakHtml(me, v) {
   const tu = (v && (H !== me ? v.potTopups : v.topups)) || { list: [] }, last = tu.list[0], d = ts => new Date(ts).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short', year: 'numeric' });
   const since = tu.since ? new Date(tu.since).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short' }) : '';
   const recent = up.slice().sort((a, b) => b.s.date - a.s.date).concat(games.slice(-8).reverse()).slice(0, 10);
-  return `<div class="bb" id="bal-break" hidden>
+  return `<div class="bb" hidden>
     <div class="bb-top">${last ? `<span class="label">Last top-up</span><b class="num">${kes(last.amount)}</b><small>${esc(d(last.ts))}</small>` : `<span class="label">Last top-up</span><small>${since ? `None since ${esc(since)}, when top-ups started being tracked` : 'Top-ups show here once you pay in'}</small>`}</div>
     ${tu.list.length > 1 ? `<div class="bb-tu">${tu.list.slice(1, 5).map(x => `<span>${kes(x.amount)} · ${esc(d(x.ts))}</span>`).join('')}</div>` : ''}
     ${multi ? `<div class="bb-pot">${pot.shared ? 'Shared pot' : 'Pot'} · ${pot.members.map(p => esc(p.name)).join(' & ')}</div>` : ''}
@@ -2843,6 +2850,19 @@ function balBreakHtml(me, v) {
     ${recent.length ? `<div class="label" style="margin-top:12px">Recent games</div><div class="bb-games">${recent.map(x => `<div class="bb-l"><span>${multi ? `<small class="bb-who">${esc(x.who.split(' ')[0])}</small> ` : ''}${esc(x.s && x.s.date ? x.s.date.toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short' }) : (x.s && x.s.label) || '')}${x.up ? ' <small>coming up</small>' : x.f >= 600 ? ' <small>with a +1</small>' : ''}</span><b class="num">${kes(x.f)}</b></div>`).join('')}</div>` : ''}
   </div>`;
 }
+/* The player's balance as its own tile (Home and the Me tab): green in credit, red owing, the last top-up; tap for the breakdown. */
+function balTileHtml(me, v, o) {
+  const bal = o.bal !== undefined ? o.bal : me.balance, pot = potOf(me), H = pot.holder || me;
+  const tu = (v && (H !== me ? v.potTopups : v.topups)) || { list: [] }, last = tu.list && tu.list[0];
+  const st = !o.known ? 'none' : bal < 0 ? 'owe' : bal > 0 ? 'credit' : 'zero';
+  const sub = !o.known ? 'Not on the sheet yet. Ask the admin.' : [pot.shared ? esc(o.balStatus) : bal < 0 ? 'Owing · time to top up the pot' : bal > 0 ? 'In credit' : 'Settled',
+    last ? `last top-up ${kes(last.amount)} on ${new Date(last.ts).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short' })}` : ''].filter(Boolean).join(' · ');
+  return `<div class="bal-wrap"><button class="bal-tile ${st}" onclick="toggleBal(this)" ${o.known ? '' : 'disabled'}>
+      <span class="bal-l"><span class="label">Your balance</span><small>${sub}</small></span>
+      <span class="bal-r"><b class="num">${o.known ? (bal < 0 ? '−' : '') + kes(Math.abs(bal)) : '—'}</b>${o.known ? '<em>Breakdown <i class="fx-chev"></i></em>' : ''}</span></button>
+    ${o.known ? balBreakHtml(me, v) : ''}</div>`;
+}
+function toggleBal(btn) { const b = btn.parentElement.querySelector('.bb'); if (!b) return; b.hidden = !b.hidden; btn.classList.toggle('open', !b.hidden); }
 /* The top of Home for a claimed player: who you are, your balance, and the one thing worth doing next. */
 function meStripHtml(me, v, o) {
   const bal = o.bal !== undefined ? o.bal : me.balance, neg = o.known && bal < 0, lastG = RATINGS && RATINGS.ok && RATINGS.last, now = Date.now();
@@ -2852,9 +2872,8 @@ function meStripHtml(me, v, o) {
   // the profile nudge shows alongside, whatever else is waiting, until it's complete
   const pd = profileDone(me), prof = pd.done < pd.total ? `<button class="btn me-go me-gold" onclick="openProfileEdit()">${nudgeLabel(me, pd)}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span></button>` : '';
   return `<div class="me-box">
-      <div class="me-top">${photo(me, 'avatar me-av')}<div class="me-id"><b>${esc(me.name)}</b><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]}</span></div>
-        <button class="me-bal${neg ? ' neg' : ''}" onclick="const b = document.getElementById('bal-break'); b.hidden = !b.hidden; this.classList.toggle('open', !b.hidden)" ${o.known ? '' : 'disabled'}><b class="num">${o.known ? kes(bal) : '—'}</b><span>${esc(o.balStatus)}${o.known ? ' <i class="fx-chev"></i>' : ''}</span></button></div>
-      ${o.known ? balBreakHtml(me, v) : ''}
+      <div class="me-top">${photo(me, 'avatar me-av')}<div class="me-id"><b>${esc(me.name)}</b><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]}</span></div></div>
+      ${balTileHtml(me, v, o)}
       ${strikesOf(me.name) ? `<div class="me-sk">${strikeTag(me.name)}<span>for dropping out late · ${Math.min(3, strikesOf(me.name))} of 3</span></div>` : ''}
       ${formStripHtml(me)}
       <div class="me-stats"><span><b class="num">${me.count}</b>games</span><span><b class="num">${me.currentStreak || 0}</b>in a row</span><span><b class="num">${me.gamesThisYear}</b>in ${THIS_YEAR}</span><span><b class="num">${o.ms.toGo}</b>to ${me.count < 100 ? '100' : o.ms.next}</span></div>
