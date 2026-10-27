@@ -3788,7 +3788,9 @@ function teamsToText(T) {
 function teamsPreviewHtml(T) {
   if (!T || !((T.black || []).length || (T.white || []).length)) return '';
   const known = n => ALL_PLAYERS.some(p => p.name === n);
-  const side = k => `<div class="gp-col"><b><i class="gd-shirt ${k === 'black' ? 'b' : 'w'}"></i>${k === 'black' ? 'Black' : 'White'} · ${(T[k] || []).length}</b>${(T[k] || []).map(previewChip).join('')}</div>`;
+  const both = (T.black || []).filter(n => (T.white || []).some(m => m.toLowerCase() === n.toLowerCase())).map(n => n.toLowerCase());
+  const chip = n => both.includes(n.toLowerCase()) ? `<span class="guest">${esc(n)} · on both teams</span>` : previewChip(n);
+  const side = k => `<div class="gp-col"><b><i class="gd-shirt ${k === 'black' ? 'b' : 'w'}"></i>${k === 'black' ? 'Black' : 'White'} · ${(T[k] || []).length}</b>${(T[k] || []).map(chip).join('')}</div>`;
   return side('black') + side('white');
 }
 /* Clears the form for next week: same weekday a week on, same kick-off, no gate code, lineup or score yet. Last night's game
