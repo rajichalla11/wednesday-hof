@@ -1765,8 +1765,12 @@ function netStart() { NET.n++; if (NET.n === 1) { clearTimeout(NET.t); NET.t = s
 function netEnd() { NET.n = Math.max(0, NET.n - 1); if (!NET.n) { clearTimeout(NET.t); document.body.classList.remove('net-busy'); } }
 async function api(params, body, attempt = 0) {
   if (attempt) return apiCall(params, body, attempt);
-  netStart(); try { return await apiCall(params, body, 0); } finally { netEnd(); }
+  const t0 = Date.now();
+  netStart(); try { const r = await apiCall(params, body, 0); if (r && r.ok && body && !BG_ACTIONS.test(body.action || '')) savedSince(t0); return r; } finally { netEnd(); }
 }
+/* After a save goes through, what was typed before it is no longer unsaved, so background redraws can run again. */
+const BG_ACTIONS = /^(me|results|admin|adminPlayer|hit|tap|checkin|pushSub|ackStrikes|ackNamed|linkCode|linkRedeem|pushTest)$/;
+function savedSince(t0) { document.querySelectorAll('[data-dirty]').forEach(x => { if (Number(x.dataset.dirty) <= t0 && x !== document.activeElement) delete x.dataset.dirty; }); }
 async function apiCall(params, body, attempt) {
   if (!VOTE_API) throw new Error('Ratings backend not configured');
   const res = body ? await fetch(VOTE_API, { method:'POST', body: JSON.stringify(body), headers: { 'Content-Type':'text/plain;charset=utf-8' }, redirect:'follow' })
@@ -1869,11 +1873,11 @@ function fetchMe() {
     const norm = v => JSON.stringify(v && v.ok ? Object.assign({}, v, { feedback: (v.feedback || []).slice().sort() }) : v);   // feedback comes back shuffled; order is not a change
     const before = norm(VOTER);
     ME_PROMISE = api({ action:'me', t: TOKEN }).catch(e => ({ ok:false, error: e.message })).then(v => {
-      ME_PROMISE = null; VOTER = v = viewAs(v); setTimeout(renderGameday, 0);
+      ME_PROMISE = null; VOTER = v = viewAs(v); setTimeout(() => bgRender('gameday', renderGameday), 0);
       if (!v.ok && /recognised/i.test(v.error || '') && TOKEN) { setTimeout(deadLink, 0); return v; }   // the claim was reset: forget it and let them pick their card again
       if (v.ok && v.name) { try { localStorage.setItem('w910_name', v.name); } catch (_) {} writeCache('w910_me', v); } else if (!/^Failed to fetch|NetworkError|Load failed/.test(v.error || '')) writeCache('w910_me', null);
-      if (before && before !== norm(v) && BOOTED && TOKEN && !YOU_WAITING) { renderYou(); renderBalances(); }
-      if (BOOTED && ALL_PLAYERS.length) renderPlayers();   // the viewer's own card may lock or unlock
+      if (before && before !== norm(v) && BOOTED && TOKEN && !YOU_WAITING) bgRender('you', () => { renderYou(); renderBalances(); });
+      if (BOOTED && ALL_PLAYERS.length) bgRender('players', renderPlayers);   // the viewer's own card may lock or unlock
       return v;
     });
   }
@@ -1891,11 +1895,11 @@ function fetchResults() {
   if (!RESULTS_PROMISE) {
     if (!RATINGS) { const c = readCache('w910_results'); if (c && c.ok) RATINGS = c; }
     const before = JSON.stringify(RATINGS), edge = edgeResults();
-    const src = edge ? edge.then(r => { if (r) setTimeout(() => { RATINGS_AT = 0; const was = JSON.stringify(RATINGS); fetchResults().then(() => { if (JSON.stringify(RATINGS) !== was && BOOTED) { renderPlayers(); renderGameday(); } }); }, 50); return r || api({ action:'results' }); }) : api({ action:'results' });
+    const src = edge ? edge.then(r => { if (r) setTimeout(() => { RATINGS_AT = 0; const was = JSON.stringify(RATINGS); fetchResults().then(() => { if (JSON.stringify(RATINGS) !== was && BOOTED) { bgRender('players', renderPlayers); bgRender('gameday', renderGameday); } }); }, 50); return r || api({ action:'results' }); }) : api({ action:'results' });
     RESULTS_PROMISE = src.catch(() => null).then(r => {
-      RESULTS_PROMISE = null; if (r) RATINGS = r; RATINGS_AT = Date.now(); markTakenTiles(); setTimeout(renderGameday, 0);
+      RESULTS_PROMISE = null; if (r) RATINGS = r; RATINGS_AT = Date.now(); markTakenTiles(); setTimeout(() => bgRender('gameday', renderGameday), 0);
       if (r && r.ok) writeCache('w910_results', r);
-      if (r && before && before !== JSON.stringify(r) && BOOTED && TOKEN && !YOU_WAITING) renderYou();
+      if (r && before && before !== JSON.stringify(r) && BOOTED && TOKEN && !YOU_WAITING) bgRender('you', renderYou);
       return RATINGS;
     });
   }
@@ -2340,7 +2344,8 @@ async function renderYou() {
   const aw = document.getElementById('admin-wrap');   // the admin's panels live on their own tab so Home stays short
   if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'plx-body', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'bc-body', 'seen-body', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
-        if (['seed-body', 'admin-body', 'named-body', 'games-admin'].some(id => sec.querySelector('#' + id))) { sec.classList.add('adm-fold', 'folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => sec.classList.toggle('folded'); } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
+        const fk = ['seed-body', 'admin-body', 'named-body', 'games-admin'].find(id => sec.querySelector('#' + id));
+        if (fk) { sec.classList.add('adm-fold'); if (!ADM_UNFOLD.has(fk)) sec.classList.add('folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => { sec.classList.toggle('folded'); ADM_UNFOLD[sec.classList.contains('folded') ? 'delete' : 'add'](fk); }; } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
   strikePop(v); ratePop(me, r); paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
   if (v.isAdmin) renderAdmin(me);
   if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else maybeProfilePop(me);
@@ -3139,6 +3144,20 @@ async function gaSave(date, btn) {
   st.textContent = 'Saved'; if (RATINGS && res.games) RATINGS.games = res.games;
   RATINGS_AT = 0; fetchResults().then(() => { renderGamesAdmin(); renderGameday(); renderPlayers(); const s2 = document.getElementById('ga-st-' + date); if (s2) s2.textContent = 'Saved'; });
 }
+/* Background redraws (fresh data arriving, the 30-second game-card tick, coming back to the app) wait while someone is
+   using the page: typing, a field with unsaved text, or a tap / key / scroll in the last few seconds. They run once it's idle.
+   Redraws that follow the person's own action (a save, a tap) aren't routed through here, so those stay instant. */
+const ADM_UNFOLD = new Set(), BG_WAIT = {};
+let LAST_TOUCH = 0;
+['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'].forEach(t => addEventListener(t, () => { LAST_TOUCH = Date.now(); }, { capture: true, passive: true }));
+document.addEventListener('input', e => { const t = e.target; if (t && t.matches && t.matches('textarea, input:not([type=range]):not([type=search]):not([type=checkbox]):not([type=radio]):not([type=file])')) t.dataset.dirty = Date.now(); }, true);
+function pageBusy() {
+  if (Date.now() - LAST_TOUCH < 3000) return true;
+  const a = document.activeElement; if (a && a.matches && a.matches('input, textarea, select, [contenteditable]') && a.type !== 'search') return true;
+  return [...document.querySelectorAll('[data-dirty]')].some(x => Date.now() - Number(x.dataset.dirty) < 600000 && !x.closest('.overlay:not(.open)'));   // unsaved text, for up to 10 minutes
+}
+function bgRender(key, fn) { if (pageBusy()) { BG_WAIT[key] = fn; return; } delete BG_WAIT[key]; fn(); }
+setInterval(() => { const ks = Object.keys(BG_WAIT); if (!ks.length || document.hidden || pageBusy()) return; ks.forEach(k => { const f = BG_WAIT[k]; delete BG_WAIT[k]; try { f(); } catch (e) { console.error(e); } }); }, 1500);
 let NAMED_FOR = '';
 function renderNamed(pick) {
   const a = window.__ADMIN, el = document.getElementById('named-body'); if (!a || !el) return;
@@ -3164,8 +3183,8 @@ function refreshAdmin(force) {
   if (!force && Date.now() - ADMIN_AT < 20000) return;
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()); if (me) renderAdmin(me);
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshAdmin(false); });
-addEventListener('pageshow', e => { if (e.persisted) refreshAdmin(true); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') bgRender('admin', () => refreshAdmin(false)); });
+addEventListener('pageshow', e => { if (e.persisted) bgRender('admin', () => refreshAdmin(true)); });
 async function renderAdmin(me) {
   ADMIN_AT = Date.now();
   const el = document.getElementById('admin-body'); if (!el) return;
@@ -3813,7 +3832,7 @@ async function saveGame(clear) {
   st.textContent = res.ok ? (clear ? 'Cleared' : 'Saved') : (res.error || 'Failed');
   if (res.ok) { VOTER = null; RATINGS_AT = 0; await Promise.all([fetchMe(), fetchResults()]); renderGameday(); }
 }
-setInterval(() => { if (!document.hidden) renderGameday(); }, 30000);
+setInterval(() => { if (!document.hidden) bgRender('gameday', renderGameday); }, 30000);
 
 /* ── keyboard ── */
 document.addEventListener('keydown', e => {
