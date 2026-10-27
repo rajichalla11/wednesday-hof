@@ -705,6 +705,7 @@
   .gp-f input:focus, .gp-score input:focus, .gp-ta:focus { outline: none; border-color: var(--fg-3); }
   .gp-gate input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; text-transform: uppercase; }
   .gp-ta { box-sizing: border-box; width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line-2); border-radius: 6px; color: var(--fg); font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; min-height: 150px; }
+  .gp-tb { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; } .gp-tb .gp-f span { display: flex; align-items: center; gap: 6px; } .gp-tt { min-height: 150px; font-family: inherit; font-size: 15px; }
   .ga-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; } .ga-preview:empty { display: none; }
   .gp-col { display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; min-width: 0; }
   .gp-col b { display: flex; align-items: center; gap: 6px; flex-basis: 100%; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-2); margin-bottom: 2px; }
@@ -2316,8 +2317,9 @@ async function renderYou() {
             <label class="gp-f"><span>Format</span><select id="ga-size" onchange="previewTeams()">${[5,6,7,8,9,10,11].map(n => `<option value="${n}" ${n === ((v.game && v.game.size) || 6) ? 'selected' : ''}>${n}-a-side</option>`).join('')}</select></label>
             <label class="gp-f gp-gate"><span>Gate code</span><input id="ga-gate" value="${esc((v.game && v.game.gate) || '')}" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. VK526"></label>
           </div></div>
-        <div class="gp-step"><div class="gp-h"><span class="gp-n">2</span>Lineup<small>Paste from WhatsApp as it is: the list of who's in, or the BLACK / WHITE teams once they're made. Names under "Standby" are standby.</small></div>
-          <textarea id="ga-teams" class="gp-ta" rows="8" spellcheck="false" placeholder="1. Priyam&#10;2. Rahul&#10;…&#10;Standby&#10;1. Krish&#10;&#10;or&#10;&#10;*BLACK        WHITE*&#10;Priyam.       Raj" oninput="previewTeams()">${esc(lineupToText(v.game))}</textarea>
+        <div class="gp-step"><div class="gp-h"><span class="gp-n">2</span>Lineup<small>Before teams are made, paste the list of who's in (names under "Standby" are standby). Once they're made, type each team in its own box, or paste the WhatsApp teams message and it fills them in.</small></div>
+          <textarea id="ga-teams" class="gp-ta" rows="6" spellcheck="false" placeholder="1. Priyam&#10;2. Rahul&#10;…&#10;Standby&#10;1. Krish" oninput="fillTeamBoxes('ga-teams', 'ga'); previewTeams()">${esc(lineupToText(v.game, true))}</textarea>
+          ${teamBoxesHtml('ga', v.game && v.game.teams, 'previewTeams()')}
           <div id="ga-preview" class="ga-preview">${lineupPreviewHtml(v.game, (v.game && v.game.size) || 6)}</div></div>
         <div class="gp-step"><div class="gp-h"><span class="gp-n">3</span>Result<small>After the game · leave empty until then</small></div>
           <div class="gp-score"><span class="gp-side"><i class="gd-shirt b"></i>Black</span><input id="ga-sb" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.black : ''}" placeholder="–" aria-label="Black goals"><span class="gp-dash">–</span><input id="ga-sw" inputmode="numeric" maxlength="2" value="${v.game && v.game.score ? v.game.score.white : ''}" placeholder="–" aria-label="White goals"><span class="gp-side"><i class="gd-shirt w"></i>White</span></div></div>
@@ -3117,16 +3119,18 @@ function renderGamesAdmin() {
           <label class="gp-f"><span>Kick-off</span><input type="time" id="ga-t-${g.date}" value="${esc(g.time || '21:00')}"></label>
           <label class="gp-f"><span>Format</span><select id="ga-s-${g.date}" onchange="gaPreview('${g.date}')">${[5,6,7,8,9,10,11].map(k => `<option value="${k}" ${k === (g.size || 6) ? 'selected' : ''}>${k}-a-side</option>`).join('')}</select></label>
         </div>
-        <label class="gp-f" style="margin-top:10px"><span>Teams or who played</span></label>
-        <textarea class="gp-ta" id="ga-x-${g.date}" rows="7" spellcheck="false" oninput="gaPreview('${g.date}')" placeholder="*BLACK        WHITE*&#10;Priyam.       Raj&#10;&#10;or a numbered list of who played">${esc(text)}</textarea>
+        <label class="gp-f" style="margin-top:10px"><span>Teams</span></label>
+        ${teamBoxesHtml('ga-' + g.date, hasT ? { black: g.black, white: g.white } : null, `gaPreview('${g.date}')`)}
+        <label class="gp-f" style="margin-top:10px"><span>No teams? Who played, or paste the WhatsApp teams message</span></label>
+        <textarea class="gp-ta" id="ga-x-${g.date}" rows="4" spellcheck="false" oninput="fillTeamBoxes('ga-x-${g.date}', 'ga-${g.date}'); gaPreview('${g.date}')" placeholder="1. Priyam&#10;2. Rahul&#10;…">${esc(hasT ? '' : text)}</textarea>
         <div class="ga-preview" id="ga-p-${g.date}">${lineupPreviewHtml(hasT ? { teams: { black: g.black, white: g.white } } : { list: g.list || [] }, g.size || 6)}</div>
         <div class="gp-score" style="margin-top:12px"><span class="gp-side"><i class="gd-shirt b"></i>Black</span><input id="ga-b-${g.date}" inputmode="numeric" maxlength="2" value="${g.b != null ? g.b : ''}" placeholder="–" aria-label="Black goals"><span class="gp-dash">–</span><input id="ga-w-${g.date}" inputmode="numeric" maxlength="2" value="${g.w != null ? g.w : ''}" placeholder="–" aria-label="White goals"><span class="gp-side"><i class="gd-shirt w"></i>White</span></div>
         <div class="gp-foot" style="margin-top:12px"><span class="muted" id="ga-st-${g.date}"></span><button class="btn" onclick="gaSave('${g.date}', this)">Save</button></div>
       </div></details>`; }).join('')}</div>`;
 }
-function gaPreview(date) { const size = Number(document.getElementById('ga-s-' + date).value) || 6, L = parseLineup(document.getElementById('ga-x-' + date).value, 99); document.getElementById('ga-p-' + date).innerHTML = lineupPreviewHtml(L.black.length || L.white.length ? { teams: { black: L.black, white: L.white } } : { list: L.list }, size); }
+function gaPreview(date) { const size = Number(document.getElementById('ga-s-' + date).value) || 6, L = lineupWithBoxes(document.getElementById('ga-x-' + date).value, 'ga-' + date, 99); document.getElementById('ga-p-' + date).innerHTML = lineupPreviewHtml(L.black.length || L.white.length ? { teams: { black: L.black, white: L.white } } : { list: L.list }, size); }
 async function gaSave(date, btn) {
-  const st = document.getElementById('ga-st-' + date), L = parseLineup(document.getElementById('ga-x-' + date).value, 99);   // no standby when fixing a game: everyone listed played
+  const st = document.getElementById('ga-st-' + date), L = lineupWithBoxes(document.getElementById('ga-x-' + date).value, 'ga-' + date, 99);   // no standby when fixing a game: everyone listed played
   btn.disabled = true; st.textContent = 'Saving…'; GA_OPEN = date;
   let res; try { res = await api(null, { action: 'editGame', t: TOKEN, date, time: document.getElementById('ga-t-' + date).value, size: document.getElementById('ga-s-' + date).value,
     teams: { black: L.black, white: L.white }, list: L.black.length || L.white.length ? [] : L.list, scoreBlack: document.getElementById('ga-b-' + date).value.trim(), scoreWhite: document.getElementById('ga-w-' + date).value.trim() }); } catch (e) { res = { ok: false, error: e.message }; }
@@ -3292,6 +3296,12 @@ function parseLineup(text, size) {
   const main = cut < 0 ? all : all.slice(0, cut), extra = cut < 0 ? [] : all.slice(cut + 1);
   const uniq = arr => arr.filter((n, i) => n && arr.findIndex(m => m.toLowerCase() === n.toLowerCase()) === i);
   const standby = uniq(extra.map(cleanName).filter(Boolean).map(resolvePlayer));
+  const head = re => main.findIndex(l => re.test(l) && l.replace(/[^a-z]/gi, '').length <= 12);
+  const bi = head(/^[^a-z]*(team\s*)?black\b/i), wi = head(/^[^a-z]*(team\s*)?white\b/i);
+  if (bi >= 0 && wi >= 0 && bi !== wi) {   // stacked: a Black heading with its names, then a White heading with its names
+    const seg = (from, to) => uniq(main.slice(from + 1, to).map(cleanName).filter(Boolean).map(resolvePlayer));
+    return { black: seg(bi, wi > bi ? wi : main.length), white: seg(wi, bi > wi ? bi : main.length), list: [], standby };
+  }
   if (main.some(l => /black/i.test(l) && /white/i.test(l))) { const t = parseTeams(main.join('\n')); return { black: t.black, white: t.white, list: [], standby }; }
   let list = uniq(main.map(cleanName).filter(Boolean).map(resolvePlayer));
   const spots = 2 * (size || 6);
@@ -3732,10 +3742,10 @@ async function saveMatch() {
   closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday();
 }
 function closeMatch() { document.getElementById('match-overlay').classList.remove('open'); document.body.style.overflow = ''; }
-function lineupToText(g) {
+function lineupToText(g, noTeams) {
   if (!g) return '';
   const sb = (g.standby || []).length ? `\n\nStandby\n${g.standby.map((n, i) => `${i + 1}. ${n}`).join('\n')}` : '';
-  if (g.teams && ((g.teams.black || []).length || (g.teams.white || []).length)) return teamsToText(g.teams) + sb;
+  if (g.teams && ((g.teams.black || []).length || (g.teams.white || []).length)) return noTeams ? sb.trim() : teamsToText(g.teams) + sb;
   return (g.list || []).length ? g.list.map((n, i) => `${i + 1}. ${n}`).join('\n') + sb : '';
 }
 /* Another player with the same first name (Karan / Karan N): flag it so the admin checks the right one was picked. */
@@ -3749,6 +3759,26 @@ function lineupPreviewHtml(L, size) {
   if (!(L.list || []).length) return sb;
   const spots = 2 * size, left = spots - L.list.length;
   return `<div class="gp-col gp-wide"><b>In · ${L.list.length} of ${spots}${left > 0 ? ` · ${left} spot${left === 1 ? '' : 's'} left` : ''}</b>${L.list.map(chip).join('')}</div>` + sb;
+}
+/* Black and White typed separately, one name per line: what's in these boxes is the teams, whatever the paste box says. */
+function teamBoxesHtml(pre, T, onInput) {
+  const box = (k, label) => `<label class="gp-f"><span><i class="gd-shirt ${k === 'bk' ? 'b' : 'w'}"></i>${label}</span><textarea id="${pre}-${k}" class="gp-ta gp-tt" rows="7" spellcheck="false" placeholder="One name per line" oninput="${onInput}">${esc(((T && T[k === 'bk' ? 'black' : 'white']) || []).join('\n'))}</textarea></label>`;
+  return `<div class="gp-tb">${box('bk', 'Black')}${box('wh', 'White')}</div>`;
+}
+function boxNames(id) {
+  const el = document.getElementById(id); if (!el) return [];
+  const out = el.value.split(/\r?\n/).map(l => cleanName(l.replace(/[*_~]/g, '').replace(/\u00a0/g, ' ').trim())).filter(Boolean).map(resolvePlayer);
+  return out.filter((n, i) => out.findIndex(m => m.toLowerCase() === n.toLowerCase()) === i);
+}
+function lineupWithBoxes(text, pre, size) {
+  const L = parseLineup(text, size), b = boxNames(pre + '-bk'), w = boxNames(pre + '-wh');
+  if (b.length || w.length) { L.black = b; L.white = w; L.list = []; }
+  return L;
+}
+/* A pasted WhatsApp teams message fills the two boxes; a plain list leaves them alone. */
+function fillTeamBoxes(srcId, pre) {
+  const L = parseLineup(document.getElementById(srcId).value, 99); if (!L.black.length && !L.white.length) return;
+  document.getElementById(pre + '-bk').value = L.black.join('\n'); document.getElementById(pre + '-wh').value = L.white.join('\n');
 }
 function teamsToText(T) {
   if (!T) return ''; const b = T.black || [], w = T.white || [], n = Math.max(b.length, w.length), rows = ['*BLACK            WHITE*'];
@@ -3767,14 +3797,14 @@ function nextGameForm() {
   const d = document.getElementById('ga-date'), base = d.dataset.loaded || d.value || todayNbo();
   const nx = new Date(`${base}T12:00:00+03:00`); nx.setUTCDate(nx.getUTCDate() + 7);
   d.value = new Intl.DateTimeFormat('en-CA', { timeZone: NBO }).format(nx);
-  ['ga-gate', 'ga-teams', 'ga-sb', 'ga-sw'].forEach(id => document.getElementById(id).value = ''); document.getElementById('ga-size').value = '6';
+  ['ga-gate', 'ga-teams', 'ga-bk', 'ga-wh', 'ga-sb', 'ga-sw'].forEach(id => document.getElementById(id).value = ''); document.getElementById('ga-size').value = '6';
   previewTeams(); document.getElementById('ga-teams').focus();
   const st = document.getElementById('gd-admin-st'); if (st) st.textContent = 'Paste the new lineup, then save';
 }
-function previewTeams() { const size = Number(document.getElementById('ga-size').value) || 6; document.getElementById('ga-preview').innerHTML = lineupPreviewHtml(parseLineup(document.getElementById('ga-teams').value, size), size); }
+function previewTeams() { const size = Number(document.getElementById('ga-size').value) || 6; document.getElementById('ga-preview').innerHTML = lineupPreviewHtml(lineupWithBoxes(document.getElementById('ga-teams').value, 'ga', size), size); }
 async function saveGame(clear) {
   const st = document.getElementById('gd-admin-st'); st.textContent = 'Saving…';
-  const size = Number(document.getElementById('ga-size').value) || 6, L = clear ? null : parseLineup(document.getElementById('ga-teams').value, size);
+  const size = Number(document.getElementById('ga-size').value) || 6, L = clear ? null : lineupWithBoxes(document.getElementById('ga-teams').value, 'ga', size);
   const body = clear ? { action:'setGame', t: TOKEN, date: '', time: '21:00', gate: '' } : { action:'setGame', t: TOKEN, date: document.getElementById('ga-date').value, time: document.getElementById('ga-time').value, gate: document.getElementById('ga-gate').value, size,
     teams: { black: L.black, white: L.white }, list: L.list, standby: L.standby, scoreBlack: document.getElementById('ga-sb').value.trim(), scoreWhite: document.getElementById('ga-sw').value.trim() };
   let res; try { res = await api(null, body); } catch (e) { res = { ok:false, error: e.message }; }
