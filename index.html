@@ -958,6 +958,9 @@
   .me-id { flex: 1; min-width: 0; } .me-id b { display: block; font-size: 18px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .me-id span { font-size: 12px; color: var(--fg-2); }
   .me-bal { text-align: right; } .me-bal b { display: block; font-size: 22px; font-weight: 700; font-variation-settings: 'wdth' 80; line-height: 1.05; } .me-bal span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; }
   .me-bal.neg b { color: var(--neg); }
+  .wn-list { display: grid; gap: 12px; margin: 16px 0 20px; text-align: left; } .wn-i { display: flex; gap: 12px; align-items: flex-start; } .wn-ic { font-size: 20px; line-height: 1.2; width: 26px; text-align: center; flex: none; }
+  .wn-i b { display: block; font-size: 15px; } .wn-i small { display: block; font-size: 13px; color: var(--fg-2); line-height: 1.45; margin-top: 2px; } .wn-i small b { display: inline; font-size: inherit; color: var(--fg); }
+  .wn-where { font-size: 12px; color: var(--fg-3); margin: 10px 0 0; }
   .new-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-left: 6px; vertical-align: 2px; }
   .tw-pitch { position: relative; display: grid; gap: 14px; padding: 18px 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, #3ecf8e 25%, var(--line-2)); background: repeating-linear-gradient(180deg, color-mix(in srgb, #3ecf8e 9%, var(--surface)) 0 44px, color-mix(in srgb, #3ecf8e 5%, var(--surface)) 44px 88px); overflow: hidden; }
   .tw-pitch::before { content: ''; position: absolute; left: 50%; top: 50%; width: 110px; height: 110px; transform: translate(-50%, -50%); border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent); border-radius: 50%; pointer-events: none; }
@@ -2390,7 +2393,7 @@ async function renderYou() {
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         const fk = ['seed-body', 'admin-body', 'named-body', 'games-admin'].find(id => sec.querySelector('#' + id));
         if (fk) { sec.classList.add('adm-fold'); if (!ADM_UNFOLD.has(fk)) sec.classList.add('folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => { sec.classList.toggle('folded'); ADM_UNFOLD[sec.classList.contains('folded') ? 'delete' : 'add'](fk); }; } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
-  strikePop(v); ratePop(me, r); paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
+  strikePop(v); ratePop(me, r); whatsNewPop(); paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
   if (v.isAdmin) renderAdmin(me);
   if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else maybeProfilePop(me);
 }
@@ -2693,6 +2696,32 @@ function ratePop(me, r) {
   setTimeout(go, 800);
 }
 function closeRatePop(seen) { const ov = document.getElementById('rp-overlay'); if (!ov) return; if (seen && ov._save) ov._save(); ov.remove(); document.body.style.overflow = ''; }
+/* What's new: one pop-up per release, shown the next time each player opens the site (remembered on the device). To announce
+   a new feature, add an entry at the top of WHATS_NEW with a new id; everyone sees it once. */
+const WHATS_NEW = [
+  { id: '2026-10-28-week', go: 'week', items: [
+    ['⭐', 'Team of the Week', d => d ? `The best-rated six from the last game, captained by the man of the match. This week: <b>${esc(d.captain)}</b>.` : 'The best-rated six from the last game, captained by the man of the match.'],
+    ['🔥', 'In form', (d, ins) => ins && ins[0] ? `Who's playing best over their last 3 games. Top right now: <b>${esc(ins[0].p.name)}</b>.` : "Who's playing best over their last 3 games."],
+    ['📊', 'Everyone\'s match ratings', () => 'Open any game to see how all 12 were rated. Tap a player for their card.'] ] },
+];
+function whatsNewPop() {
+  const w = WHATS_NEW[0]; if (!w || !TOKEN || !VOTER || !VOTER.ok || VOTER.pending || document.getElementById('wn-overlay')) return;
+  try { if (localStorage.getItem('w910_new') === w.id) return; } catch (_) { return; }
+  try { sessionStorage.setItem('w910_pp', '1'); } catch (_) {}   // one pop-up per visit is enough: the profile nudge waits for next time
+  let tries = 0;
+  const go = () => { if (document.querySelector('.overlay.open')) { if (++tries < 40) setTimeout(go, 3000); return; }
+    if (document.getElementById('wn-overlay')) return;
+    let d = null, ins = []; try { d = totwData(); ins = informData(); } catch (_) {}
+    const ov = document.createElement('div'); ov.className = 'overlay open'; ov.id = 'wn-overlay'; ov.onclick = e => { if (e.target === ov) closeWhatsNew(); };
+    ov.innerHTML = `<div class="sheet app-sheet app-pop wn-pop"><div class="label" style="color:var(--gold)">New on the site</div><div class="pp-title">Check out This week</div>
+      <div class="wn-list">${w.items.map(([ic, t, txt]) => `<div class="wn-i"><span class="wn-ic">${ic}</span><span><b>${t}</b><small>${txt(d, ins)}</small></span></div>`).join('')}</div>
+      <button class="btn app-go" onclick="closeWhatsNew(); showTab('${w.go}')">Take a look</button><button class="btn link app-later" onclick="closeWhatsNew()">Later</button>
+      <p class="wn-where">It lives in History → This week, and at the bottom of Home.</p></div>`;
+    document.body.appendChild(ov); document.body.style.overflow = 'hidden';
+  };
+  setTimeout(go, 1500);
+}
+function closeWhatsNew() { const ov = document.getElementById('wn-overlay'); if (ov) ov.remove(); document.body.style.overflow = ''; try { localStorage.setItem('w910_new', WHATS_NEW[0].id); } catch (_) {} }
 function ackStrikePop() {
   const ov = document.getElementById('sk-overlay'); if (ov) ov.remove(); document.body.style.overflow = '';
   (VOTER && VOTER.strikes || []).forEach(x => x.seen = true); try { writeCache('w910_me', VOTER); } catch (_) {}
