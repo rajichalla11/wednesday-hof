@@ -3821,10 +3821,9 @@ function totwData() {
   const g = games[0]; if (!g) return null;
   const pool = Object.keys(g.ratings || {}).filter(n => rtOk(g, n) && ALL_PLAYERS.some(p => p.name === n)).sort((a, b) => g.ratings[b].avg - g.ratings[a].avg);
   if (pool.length < 4) return null;
-  const pos = n => posClass((ALL_PLAYERS.find(p => p.name === n) || {}).position), lines = { attack: [], midfield: [], defense: [] }, used = new Set();
-  ['attack', 'midfield', 'defense'].forEach(k => pool.filter(n => pos(n) === k).slice(0, 2).forEach(n => { lines[k].push(n); used.add(n); }));
-  ['defense', 'midfield', 'attack'].forEach(k => { while (lines[k].length < 2) { const n = pool.find(x => !used.has(x)); if (!n) break; lines[k].push(n); used.add(n); } });   // short of a position: next best
-  const team = [...lines.attack, ...lines.midfield, ...lines.defense], motm = (g.motm || []).find(n => team.includes(n));
+  // the six best ratings, laid out on the pitch by each player's position (no position: midfield)
+  const team = pool.slice(0, 6), pos = n => { const k = posClass((ALL_PLAYERS.find(p => p.name === n) || {}).position); return k === 'other' ? 'midfield' : k; };
+  const lines = { attack: team.filter(n => pos(n) === 'attack'), midfield: team.filter(n => pos(n) === 'midfield'), defense: team.filter(n => pos(n) === 'defense') }, motm = (g.motm || []).find(n => team.includes(n));
   return { g, lines, captain: motm || team.slice().sort((a, b) => g.ratings[b].avg - g.ratings[a].avg)[0], soFar: !(g.motm || []).length && Date.now() < koOf(g) + 38 * 3600000 };
 }
 function informData() {
@@ -3842,7 +3841,7 @@ function renderWeek() {
     if (sub) sub.textContent = `${dayOf(d.g)}${d.soFar ? ' · so far, voting closes 11am' : ''} · captain is the man of the match`;
     const mini = n => { const p = ALL_PLAYERS.find(x => x.name === n), r = d.g.ratings[n].avg;
       return `<button class="tw-p${n === d.captain ? ' cap' : ''}" onclick="openPlayerByName('${esc(n).replace(/'/g, "\\'")}')">${p ? photo(p, 'avatar') : ''}${n === d.captain ? '<i class="tw-c">C</i>' : ''}<b>${esc(n.split(' ')[0])}</b><span class="num">${r.toFixed(1)}</span></button>`; };
-    t.innerHTML = `<div class="tw-pitch">${['attack', 'midfield', 'defense'].map(k => `<div class="tw-line"><span class="tw-k">${{ attack: 'ATT', midfield: 'MID', defense: 'DEF' }[k]}</span>${d.lines[k].map(mini).join('')}</div>`).join('')}</div>
+    t.innerHTML = `<div class="tw-pitch">${['attack', 'midfield', 'defense'].filter(k => d.lines[k].length).map(k => `<div class="tw-line"><span class="tw-k">${{ attack: 'ATT', midfield: 'MID', defense: 'DEF' }[k]}</span>${d.lines[k].map(mini).join('')}</div>`).join('')}</div>
       <div class="tw-foot"><button class="btn ghost" onclick="copyTotw(this)">Copy for WhatsApp</button><small>Positions from each player's profile · match ratings out of 10</small></div>`;
   }
   const ins = informData();
@@ -3855,7 +3854,7 @@ function renderWeek() {
 function copyTotw(btn) {
   const d = totwData(); if (!d) return;
   const line = k => d.lines[k].map(n => `${n} ${d.g.ratings[n].avg.toFixed(1)}${n === d.captain ? ' (C)' : ''}`).join(', ');
-  const txt = `⭐ Team of the Week · ${dayOf(d.g)}\nATT: ${line('attack')}\nMID: ${line('midfield')}\nDEF: ${line('defense')}\n\nwednesday910.vercel.app/#week`;
+  const txt = `⭐ Team of the Week · ${dayOf(d.g)}\n${[['attack', 'ATT'], ['midfield', 'MID'], ['defense', 'DEF']].filter(([k]) => d.lines[k].length).map(([k, l]) => `${l}: ${line(k)}`).join('\n')}\n\nwednesday910.vercel.app/#week`;
   navigator.clipboard.writeText(txt).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy for WhatsApp', 1800); }, () => {});
 }
 /* The teaser at the bottom of Home: two small tiles into This week. */
