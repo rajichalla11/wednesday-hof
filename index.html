@@ -960,6 +960,7 @@
   .me-bal.neg b { color: var(--neg); }
   .wn-list { display: grid; gap: 12px; margin: 16px 0 20px; text-align: left; } .wn-i { display: flex; gap: 12px; align-items: flex-start; } .wn-ic { font-size: 20px; line-height: 1.2; width: 26px; text-align: center; flex: none; }
   .wn-i b { display: block; font-size: 15px; } .wn-i small { display: block; font-size: 13px; color: var(--fg-2); line-height: 1.45; margin-top: 2px; } .wn-i small b { display: inline; font-size: inherit; color: var(--fg); }
+  .tw-k2 { font-size: 10px; color: var(--fg-3); } .if-k { font-size: 11.5px; color: var(--fg-3); white-space: nowrap; }
   .wn-where { font-size: 12px; color: var(--fg-3); margin: 10px 0 0; }
   .new-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-left: 6px; vertical-align: 2px; }
   .tw-pitch { position: relative; display: grid; gap: 14px; padding: 18px 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, #3ecf8e 25%, var(--line-2)); background: repeating-linear-gradient(180deg, color-mix(in srgb, #3ecf8e 9%, var(--surface)) 0 44px, color-mix(in srgb, #3ecf8e 5%, var(--surface)) 44px 88px); overflow: hidden; }
@@ -1117,11 +1118,10 @@
     <div class="stat"><b class="num" id="s-players">—</b><div class="label">Players</div></div>
   </div>
 
-  <div class="seg hist-seg" id="hist-seg"><button data-sub="week">This week<i class="new-dot"></i></button><button data-sub="records" class="on">Records</button><button data-sub="wall"><span class="long">Century Wall</span><span class="short">Wall</span></button><button data-sub="timeline">Season</button></div>
+  <div class="seg hist-seg" id="hist-seg"><button data-sub="week">In form<i class="new-dot"></i></button><button data-sub="records" class="on">Records</button><button data-sub="wall"><span class="long">Century Wall</span><span class="short">Wall</span></button><button data-sub="timeline">Season</button></div>
   <section class="hsec" id="panel-week">
-    <div class="sh"><h2>Team of the Week</h2><span id="totw-sub">The best-rated six from the last game</span></div>
+    <div class="sh"><h2>In-form team</h2><span id="totw-sub">Best average match rating over the last 4 games</span></div>
     <div id="totw"></div>
-    <div class="sh" style="margin-top:28px"><h2>In form</h2><span>Average match rating over each player's last 3 games</span></div>
     <div id="inform"></div>
   </section>
   <section class="hsec" id="panel-wall">
@@ -2699,9 +2699,9 @@ function closeRatePop(seen) { const ov = document.getElementById('rp-overlay'); 
 /* What's new: one pop-up per release, shown the next time each player opens the site (remembered on the device). To announce
    a new feature, add an entry at the top of WHATS_NEW with a new id; everyone sees it once. */
 const WHATS_NEW = [
-  { id: '2026-10-28-week', go: 'week', items: [
-    ['⭐', 'Team of the Week', d => d ? `The best-rated six from the last game, captained by the man of the match. This week: <b>${esc(d.captain)}</b>.` : 'The best-rated six from the last game, captained by the man of the match.'],
-    ['🔥', 'In form', (d, ins) => ins && ins[0] ? `Who's playing best over their last 3 games. Top right now: <b>${esc(ins[0].p.name)}</b>.` : "Who's playing best over their last 3 games."],
+  { id: '2026-10-28-inform', go: 'week', title: 'Meet the in-form team', items: [
+    ['🔥', 'In-form team', d => d ? `The six with the best match ratings over the last ${d.games.length} games, on a pitch. Captain right now: <b>${esc(d.captain)}</b>.` : 'The six with the best match ratings over the last 4 games, on a pitch.'],
+    ['📈', 'Knocking on the door', d => d && d.next[0] ? `Who's next in line. Closest right now: <b>${esc(d.next[0].n)}</b>.` : "Who's next in line for a spot."],
     ['📊', 'Everyone\'s match ratings', () => 'Open any game to see how all 12 were rated. Tap a player for their card.'] ] },
 ];
 function whatsNewPop() {
@@ -2711,12 +2711,12 @@ function whatsNewPop() {
   let tries = 0;
   const go = () => { if (document.querySelector('.overlay.open')) { if (++tries < 40) setTimeout(go, 3000); return; }
     if (document.getElementById('wn-overlay')) return;
-    let d = null, ins = []; try { d = totwData(); ins = informData(); } catch (_) {}
+    let d = null; try { d = informTeamData(); } catch (_) {}
     const ov = document.createElement('div'); ov.className = 'overlay open'; ov.id = 'wn-overlay'; ov.onclick = e => { if (e.target === ov) closeWhatsNew(); };
-    ov.innerHTML = `<div class="sheet app-sheet app-pop wn-pop"><div class="label" style="color:var(--gold)">New on the site</div><div class="pp-title">Check out This week</div>
-      <div class="wn-list">${w.items.map(([ic, t, txt]) => `<div class="wn-i"><span class="wn-ic">${ic}</span><span><b>${t}</b><small>${txt(d, ins)}</small></span></div>`).join('')}</div>
+    ov.innerHTML = `<div class="sheet app-sheet app-pop wn-pop"><div class="label" style="color:var(--gold)">New on the site</div><div class="pp-title">${w.title}</div>
+      <div class="wn-list">${w.items.map(([ic, t, txt]) => `<div class="wn-i"><span class="wn-ic">${ic}</span><span><b>${t}</b><small>${txt(d)}</small></span></div>`).join('')}</div>
       <button class="btn app-go" onclick="closeWhatsNew(); showTab('${w.go}')">Take a look</button><button class="btn link app-later" onclick="closeWhatsNew()">Later</button>
-      <p class="wn-where">It lives in History → This week, and at the bottom of Home.</p></div>`;
+      <p class="wn-where">It lives in History → In form, and at the bottom of Home.</p></div>`;
     document.body.appendChild(ov); document.body.style.overflow = 'hidden';
   };
   setTimeout(go, 1500);
@@ -3845,55 +3845,50 @@ function matchCardHtml(g, open, toggle) {
 /* ── This week (History → This week, teased at the bottom of Home): Team of the Week and In form, from match ratings.
    New features for keen users go here as more History sections, so Home and the core tabs stay as people know them. ── */
 const rtOk = (g, n) => g && g.ratings && g.ratings[n] && g.ratings[n].n >= 2 && (g.raters || 0) >= 3;
-function totwData() {
-  const games = ((RATINGS && RATINGS.ok && RATINGS.games) || []).filter(g => koOf(g) <= Date.now() && (g.raters || 0) >= 3).sort((a, b) => b.date.localeCompare(a.date));
-  const g = games[0]; if (!g) return null;
-  const pool = Object.keys(g.ratings || {}).filter(n => rtOk(g, n) && ALL_PLAYERS.some(p => p.name === n)).sort((a, b) => g.ratings[b].avg - g.ratings[a].avg);
-  if (pool.length < 4) return null;
-  // the six best ratings, laid out on the pitch by each player's position (no position: midfield)
-  const team = pool.slice(0, 6), pos = n => { const k = posClass((ALL_PLAYERS.find(p => p.name === n) || {}).position); return k === 'other' ? 'midfield' : k; };
-  const lines = { attack: team.filter(n => pos(n) === 'attack'), midfield: team.filter(n => pos(n) === 'midfield'), defense: team.filter(n => pos(n) === 'defense') }, motm = (g.motm || []).find(n => team.includes(n));
-  return { g, lines, captain: motm || team.slice().sort((a, b) => g.ratings[b].avg - g.ratings[a].avg)[0], soFar: !(g.motm || []).length && Date.now() < koOf(g) + 38 * 3600000 };
-}
-function informData() {
-  const cut = Date.now() - 21 * 86400000;
-  return ALL_PLAYERS.map(p => { const f = formFor(p, 3), r = f.filter(x => x.rt != null && x.n >= 2);
-      return r.length >= 2 && koOf(f[0].g) >= cut ? { p, f, avg: r.reduce((a, x) => a + x.rt, 0) / r.length } : null; })
-    .filter(Boolean).sort((a, b) => b.avg - a.avg).slice(0, 5);
+/* The in-form team: everyone's average match rating over the last 4 games (played in at least 2 of them, rated by 2+ each
+   time). The best six go on the pitch by position; the captain has the most man-of-the-match awards in those games. */
+const IF_GAMES = 4;
+function informTeamData() {
+  const games = ((RATINGS && RATINGS.ok && RATINGS.games) || []).filter(g => koOf(g) <= Date.now() && (g.raters || 0) >= 3).sort((a, b) => b.date.localeCompare(a.date)).slice(0, IF_GAMES);
+  if (!games.length) return null;
+  const by = {};
+  games.forEach(g => Object.keys(g.ratings || {}).forEach(n => { if (!rtOk(g, n) || !ALL_PLAYERS.some(p => p.name === n)) return;
+    const x = by[n] = by[n] || { n, sum: 0, k: 0, motm: 0, games: [] }; x.sum += g.ratings[n].avg; x.k++; if ((g.motm || []).includes(n)) x.motm++; x.games.push(g); }));
+  const ranked = Object.values(by).filter(x => x.k >= 2).map(x => Object.assign(x, { avg: x.sum / x.k })).sort((a, b) => b.avg - a.avg || b.k - a.k);
+  if (ranked.length < 4) return null;
+  const team = ranked.slice(0, 6), pos = n => { const k = posClass((ALL_PLAYERS.find(p => p.name === n) || {}).position); return k === 'other' ? 'midfield' : k; };
+  const lines = { attack: team.filter(x => pos(x.n) === 'attack'), midfield: team.filter(x => pos(x.n) === 'midfield'), defense: team.filter(x => pos(x.n) === 'defense') };
+  const captain = team.slice().sort((a, b) => b.motm - a.motm || b.avg - a.avg)[0].n;
+  return { games, team, lines, captain, next: ranked.slice(6, 11), from: games[games.length - 1], to: games[0] };
 }
 function renderWeek() {
   const t = document.getElementById('totw'), f = document.getElementById('inform'); if (!t || !f) return;
-  if (!RATINGS || !RATINGS.ok) { t.innerHTML = f.innerHTML = '<div class="loading">Loading…</div>'; return; }
-  const d = totwData(), sub = document.getElementById('totw-sub');
-  if (!d) t.innerHTML = `<div class="empty">Shows once three players have rated the last game.</div>`;
-  else {
-    if (sub) sub.textContent = `${dayOf(d.g)}${d.soFar ? ' · so far, voting closes 11am' : ''} · captain is the man of the match`;
-    const mini = n => { const p = ALL_PLAYERS.find(x => x.name === n), r = d.g.ratings[n].avg;
-      return `<button class="tw-p${n === d.captain ? ' cap' : ''}" onclick="openPlayerByName('${esc(n).replace(/'/g, "\\'")}')">${p ? photo(p, 'avatar') : ''}${n === d.captain ? '<i class="tw-c">C</i>' : ''}<b>${esc(n.split(' ')[0])}</b><span class="num">${r.toFixed(1)}</span></button>`; };
-    t.innerHTML = `<div class="tw-pitch">${['attack', 'midfield', 'defense'].filter(k => d.lines[k].length).map(k => `<div class="tw-line"><span class="tw-k">${{ attack: 'ATT', midfield: 'MID', defense: 'DEF' }[k]}</span>${d.lines[k].map(mini).join('')}</div>`).join('')}</div>
-      <div class="tw-foot"><button class="btn ghost" onclick="copyTotw(this)">Copy for WhatsApp</button><small>Positions from each player's profile · match ratings out of 10</small></div>`;
-  }
-  const ins = informData();
-  f.innerHTML = !ins.length ? `<div class="empty">Shows once players have two rated games in the last three weeks.</div>`
-    : `<div class="if-list">${ins.map((x, i) => `<button class="if-row" onclick="openPlayerByName('${esc(x.p.name).replace(/'/g, "\\'")}')"><span class="if-n">${i === 0 ? '🔥' : i + 1}</span>${photo(x.p, 'avatar')}<span class="if-name">${esc(x.p.name)}</span>
-        <span class="fg-strip">${x.f.slice().reverse().map(y => `<span class="fg-chip${y.motm ? ' motm' : ''}${y.res ? ' r' + y.res : ''}"><b>${y.rt == null ? '–' : y.rt.toFixed(1)}</b><i>${y.res || '·'}${y.motm ? ' ★' : ''}</i></span>`).join('')}</span>
-        <b class="num if-avg${i === 0 ? ' hi' : ''}">${x.avg.toFixed(1)}</b></button>`).join('')}</div>`;
-  renderExploreStrip(d, ins);
+  if (!RATINGS || !RATINGS.ok) { t.innerHTML = '<div class="loading">Loading…</div>'; f.innerHTML = ''; return; }
+  const d = informTeamData(), sub = document.getElementById('totw-sub');
+  if (!d) { t.innerHTML = `<div class="empty">Shows once a few players have played and been rated in two of the last ${IF_GAMES} games.</div>`; f.innerHTML = ''; renderExploreStrip(null); return; }
+  if (sub) sub.textContent = `Best average match rating over the last ${d.games.length} game${d.games.length === 1 ? '' : 's'} (${dayOf(d.from)} – ${dayOf(d.to)}) · played 2 or more`;
+  const mini = x => { const p = ALL_PLAYERS.find(y => y.name === x.n);
+    return `<button class="tw-p${x.n === d.captain ? ' cap' : ''}" onclick="openPlayerByName('${esc(x.n).replace(/'/g, "\\'")}')">${p ? photo(p, 'avatar') : ''}${x.n === d.captain ? '<i class="tw-c">C</i>' : ''}<b>${esc(x.n.split(' ')[0])}</b><span class="num">${x.avg.toFixed(1)}</span><small class="tw-k2">${x.k} game${x.k === 1 ? '' : 's'}${x.motm ? ` · ${x.motm}★` : ''}</small></button>`; };
+  t.innerHTML = `<div class="tw-pitch">${['attack', 'midfield', 'defense'].filter(k => d.lines[k].length).map(k => `<div class="tw-line"><span class="tw-k">${{ attack: 'ATT', midfield: 'MID', defense: 'DEF' }[k]}</span>${d.lines[k].map(mini).join('')}</div>`).join('')}</div>
+    <div class="tw-foot"><button class="btn ghost" onclick="copyTotw(this)">Copy for WhatsApp</button><small>Captain: most man of the match awards · positions from each player's profile</small></div>`;
+  f.innerHTML = d.next.length ? `<div class="label" style="margin:22px 2px 8px">Knocking on the door</div><div class="if-list">${d.next.map((x, i) => { const p = ALL_PLAYERS.find(y => y.name === x.n);
+      return `<button class="if-row" onclick="openPlayerByName('${esc(x.n).replace(/'/g, "\\'")}')"><span class="if-n">${i + 7}</span>${p ? photo(p, 'avatar') : ''}<span class="if-name">${esc(x.n)}</span><small class="if-k">${x.k} games${x.motm ? ` · ${x.motm}★` : ''}</small><b class="num if-avg">${x.avg.toFixed(1)}</b></button>`; }).join('')}</div>` : '';
+  renderExploreStrip(d);
 }
 function copyTotw(btn) {
-  const d = totwData(); if (!d) return;
-  const line = k => d.lines[k].map(n => `${n} ${d.g.ratings[n].avg.toFixed(1)}${n === d.captain ? ' (C)' : ''}`).join(', ');
-  const txt = `⭐ Team of the Week · ${dayOf(d.g)}\n${[['attack', 'ATT'], ['midfield', 'MID'], ['defense', 'DEF']].filter(([k]) => d.lines[k].length).map(([k, l]) => `${l}: ${line(k)}`).join('\n')}\n\nwednesday910.vercel.app/#week`;
+  const d = informTeamData(); if (!d) return;
+  const line = k => d.lines[k].map(x => `${x.n} ${x.avg.toFixed(1)}${x.n === d.captain ? ' (C)' : ''}`).join(', ');
+  const txt = `🔥 In-form team · last ${d.games.length} games\n${[['attack', 'ATT'], ['midfield', 'MID'], ['defense', 'DEF']].filter(([k]) => d.lines[k].length).map(([k, l]) => `${l}: ${line(k)}`).join('\n')}\n\nwednesday910.vercel.app/#week`;
   navigator.clipboard.writeText(txt).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy for WhatsApp', 1800); }, () => {});
 }
-/* The teaser at the bottom of Home: two small tiles into This week. */
-function renderExploreStrip(d, ins) {
+/* The teaser at the bottom of Home: one tile into History → In form. */
+function renderExploreStrip(d) {
   const el = document.getElementById('explore-strip'); if (!el) return;
-  if (!d && !ins.length) { el.innerHTML = ''; return; }
-  const top = ins[0];
-  el.innerHTML = `<div class="xp-h"><span class="label">This week</span><button class="btn link" onclick="showTab('week')">See all <i class="fx-chev"></i></button></div><div class="xp-row">
-    ${d ? `<button class="xp-tile" onclick="showTab('week')"><span class="label">Team of the Week</span><span class="xp-faces">${['attack', 'midfield', 'defense'].flatMap(k => d.lines[k]).slice(0, 6).map(n => { const p = ALL_PLAYERS.find(x => x.name === n); return p ? photo(p, 'avatar') : ''; }).join('')}</span><small>${esc(dayOf(d.g))} · captain <b>${esc(d.captain)}</b></small></button>` : ''}
-    ${top ? `<button class="xp-tile" onclick="showTab('week')"><span class="label">In form 🔥</span><span class="xp-top">${photo(top.p, 'avatar')}<b>${esc(top.p.name)}</b><em class="num">${top.avg.toFixed(1)}</em></span><small>last 3 games${ins[1] ? ` · then ${esc(ins[1].p.name)}` : ''}</small></button>` : ''}</div>`;
+  if (!d) { el.innerHTML = ''; return; }
+  const top = d.team[0];
+  el.innerHTML = `<div class="xp-h"><span class="label">In form</span><button class="btn link" onclick="showTab('week')">See the team <i class="fx-chev"></i></button></div><div class="xp-row">
+    <button class="xp-tile" onclick="showTab('week')"><span class="label">In-form team 🔥</span><span class="xp-faces">${d.team.map(x => { const p = ALL_PLAYERS.find(y => y.name === x.n); return p ? photo(p, 'avatar') : ''; }).join('')}</span><small>last ${d.games.length} games · captain <b>${esc(d.captain)}</b></small></button>
+    <button class="xp-tile" onclick="showTab('week')"><span class="label">Top of the form</span><span class="xp-top">${(() => { const p = ALL_PLAYERS.find(y => y.name === top.n); return p ? photo(p, 'avatar') : ''; })()}<b>${esc(top.n)}</b><em class="num">${top.avg.toFixed(1)}</em></span><small>${top.k} games${top.motm ? ` · ${top.motm}× man of the match` : ''}</small></button></div>`;
 }
 /* ── Matches: every game in the Games tab, newest first ── */
 function renderMatches() {
