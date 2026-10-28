@@ -759,7 +759,9 @@
   @keyframes shine { to { left: 140%; } }
   .medal i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 10px; line-height: 1; font-weight: 800; color: #141416; background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.6), transparent 46%), conic-gradient(from 220deg, var(--m1), var(--m3) 70deg, var(--m2) 150deg, var(--m1) 220deg, var(--m3) 300deg, var(--m2) 360deg); box-shadow: inset 0 0 0 1px rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.28), 0 1px 3px rgba(0,0,0,.6); text-shadow: 0 1px 0 rgba(255,255,255,.35); }
   .medal.gold { --m1:#dcae3f; --m2:#7a5612; --m3:#fff2c2; --mt:#f0d78f; }
-  .medal.fire { --m1:#ff8a3d; --m2:#9a2e0b; --m3:#ffd6a8; --mt:#ffb37a; }
+  .fut-fire { position: absolute; top: 5px; right: 6px; width: 26px; height: 26px; display: grid; place-items: center; font-size: 15px; line-height: 1; border-radius: 50%; background: radial-gradient(circle at 50% 60%, #ff9a3d 0%, #c2410c 70%); box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 0 14px 2px rgba(255,120,40,.65); animation: futFire 2.4s ease-in-out infinite; cursor: help; }
+  @keyframes futFire { 0%, 100% { box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 0 10px 1px rgba(255,120,40,.5); } 50% { box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 0 18px 4px rgba(255,120,40,.8); } }
+  @media (prefers-reduced-motion: reduce) { .fut-fire { animation: none; } }
   .medal.plat { --m1:#cdd8e8; --m2:#66748c; --m3:#ffffff; --mt:#eaf1fb; }
   .medal.bronze { --m1:#c4855a; --m2:#643d22; --m3:#f4cdaa; --mt:#e0ab84; }
   .badges .medal { font-size: 11px; padding: 4px 12px 4px 4px; }
@@ -1557,8 +1559,7 @@ function inFormSet() {
   return IF_MEMO.set;
 }
 function badgesFor(p) {
-  const B = [], inf = inFormSet()[p.name];
-  if (inf) B.push({ i:'🔥', t:'In form', d:`In the in-form team: ${inf.avg.toFixed(1)} average over ${inf.k} of the last ${IF_MEMO.games} games`, rare:true, m:'fire' });
+  const B = [];
   if (isFounder(p)) B.push({ i:'⚑', t:'Founder', d:`Played the very first session, ${fmtSession(SESSIONS[0],false)}`, rare:true, m:'gold' });
   if (p.count>=200) B.push({ i:'★★', t:'Double century', rare:true, m:'gold' }); else if (p.count>=100) B.push({ i:'★', t:'Century member', rare:true, m:'gold' });
   for (const y of p.years) { if (y.y!==THIS_YEAR && y.total>=20 && y.got===y.total) B.push({ i:'♜', t:`Iron man ${y.y}`, d:`Every one of the ${y.total} sessions in ${y.y}`, rare:true, m:'gold' }); if (y.y===THIS_YEAR && y.total>=5 && y.got===y.total) B.push({ i:'◆', t:`Ever-present ${y.y}` }); }
@@ -1911,7 +1912,7 @@ function cardHtml(p, stats, opts = {}) {
         ${pos3 ? `<i class="fut-rule"></i><div class="fut-gp"><b>${pos3}</b></div>` : ''}
         <div class="fut-tier">${TIER_NAME[tier]}</div>
       </div>
-      <div class="fut-ph-wrap">${photo(p, 'fut-ph')}</div>
+      <div class="fut-ph-wrap">${photo(p, 'fut-ph')}${(() => { const inf = inFormSet()[p.name]; return inf ? `<span class="fut-fire" title="In form: ${inf.avg.toFixed(1)} average over ${inf.k} of the last ${IF_MEMO.games} games">🔥</span>` : ''; })()}</div>
     </div>
     <div class="fut-name">${esc(shortName)}</div>
     ${badges.length ? `<div class="fut-badges">${badges.slice(0, 2).map(b=>`<span class="medal ${b.m||''}" title="${esc(b.d||b.t)}" data-tip="${esc(b.d||b.t)}" data-tip-h="${esc(b.t)}"><i>${b.i}</i>${esc(b.t)}</span>`).join('')}</div>` : ''}
