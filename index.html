@@ -886,6 +886,10 @@
     .c-stat { padding-right: 6px; } .c-stat:nth-child(3n+2), .c-stat:nth-child(3n+3) { padding-left: 6px; }
     .overlay { padding: 0; align-items: stretch; }
     .sheet { max-width: none !important; max-height: none; height: 100vh; height: 100dvh; border-radius: 0; border: none; padding: 20px 16px 40px; }
+    /* the small pop-ups (what's new, strike, ratings, install, notifications, sign-in code) stay a centred card on phones */
+    .overlay:has(> .app-pop) { padding: 16px; align-items: center; }
+    .sheet.app-pop { height: auto; max-height: calc(100dvh - 32px); border-radius: 20px; border: 1px solid var(--line-2); padding: 26px 20px 20px; box-shadow: 0 24px 60px -20px rgba(0,0,0,.8); }
+    .app-pop .pp-title { font-size: 25px; line-height: 1.15; } .app-pop .app-go { min-height: 50px; }
     .d-grid, .b-grid { grid-template-columns: 1fr; gap: 22px; }
     .b-card { position: static; width: 180px; margin: 0 auto; }
     .bt-top { padding: 12px 56px 10px 16px; } .bt-body { padding: 20px 16px 0; }
