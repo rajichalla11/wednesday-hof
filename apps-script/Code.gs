@@ -275,8 +275,9 @@ function addMoney_(body) {
   const lock = LockService.getScriptLock(); if (!lock.tryLock(20000)) return { ok: false, error: 'Busy, try again.' };
   try {
     const wide = SpreadsheetApp.openById(MAIN_SHEET_ID).getSheetByName('Wednesday Group'); if (!wide) return { ok: false, error: 'Sheet tab not found.' };
-    const names = wide.getRange(4, 2, wide.getLastRow() - 3, 1).getValues().map(function (r) { const n = String(r[0] || '').trim().toLowerCase(); return ALIASES_[n] ? ALIASES_[n].toLowerCase() : n; });
-    const rows = []; names.forEach(function (n, i) { if (n === holder.toLowerCase()) rows.push(i + 4); });
+    const raw = wide.getRange(4, 2, wide.getLastRow() - 3, 1).getValues().map(function (r) { return String(r[0] || '').trim().toLowerCase(); });
+    let rows = []; raw.forEach(function (n, i) { if (n === holder.toLowerCase()) rows.push(i + 4); });   // their own row first (an old alias row like "RJ" isn't where new money goes)
+    if (!rows.length) raw.forEach(function (n, i) { if (ALIASES_[n] && ALIASES_[n].toLowerCase() === holder.toLowerCase()) rows.push(i + 4); });
     if (rows.length !== 1) return { ok: false, error: rows.length ? holder + ' is on the sheet more than once. Add it there by hand.' : holder + ' is not on the sheet.' };
     const row = rows[0], F = wide.getRange(row, 6), G = wide.getRange(row, 7), fF = F.getFormula(), vF = F.getValue(), fG = G.getFormula();
     const before = Number(String(vF).replace(/,/g, '')) || 0;
