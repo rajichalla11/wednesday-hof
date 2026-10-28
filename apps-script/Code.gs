@@ -185,6 +185,7 @@ function doPost(e) {
     if (body.action === 'addStrike') return json_(addStrike_(body));
     if (body.action === 'ackStrikes') return json_(ackStrikes_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
+    if (body.action === 'addMoney') return json_(addMoney_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
     if (body.action === 'removeFixture') return json_(removeFixture_(body));
@@ -235,13 +236,20 @@ function me_(token) {
    The first read only takes the snapshot, so nothing is invented for money paid before tracking began. */
 function topupWatch_(players) {
   const lock = LockService.getScriptLock(); if (!lock.tryLock(500)) return;
+  let told = [];
   try {
     const pr = props_(), prev = JSON.parse(pr.getProperty('paid_snap') || 'null'), now = {}, rows = [], ts = "'" + new Date().toISOString();
-    players.forEach(function (p) { now[p.name] = p.paid || 0; if (prev && now[p.name] > (prev[p.name] || 0) + 0.5) rows.push([ts, p.name, now[p.name] - (prev[p.name] || 0), now[p.name]]); });
-    if (rows.length) { const sh = sheet_('TopUps'); if (sh.getLastRow() === 0) sh.appendRow(['ts', 'name', 'amount', 'total']); sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows); bust_('TopUps'); }
-    pr.setProperty('paid_snap', JSON.stringify(now));
+    const skip = JSON.parse(pr.getProperty('paid_skip') || '{}');   // money the site already added and logged (Add money), waiting for the CSV to catch up
+    players.forEach(function (p) { now[p.name] = p.paid || 0; if (!prev) return;
+      let inc = now[p.name] - (prev[p.name] || 0); if (inc <= 0.5) return;
+      const sk = Math.min(inc, skip[p.name] || 0); inc -= sk; if (sk) { skip[p.name] -= sk; if (skip[p.name] < 0.5) delete skip[p.name]; }
+      if (inc > 0.5) rows.push([ts, p.name, inc, now[p.name], p]); });
+    if (rows.length) { const sh = sheet_('TopUps'); if (sh.getLastRow() === 0) sh.appendRow(['ts', 'name', 'amount', 'total']); sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows.map(function (r) { return r.slice(0, 4); })); bust_('TopUps'); }
+    pr.setProperty('paid_snap', JSON.stringify(now)); pr.setProperty('paid_skip', JSON.stringify(skip));
+    told = rows;
     if (!prev) pr.setProperty('paid_since', new Date().toISOString());
   } finally { lock.releaseLock(); }
+  told.forEach(function (r) { pushTopup_(r[1], r[2], r[4].bal, players); });
 }
 /* Brothers who share one pot: the second name's games come out of the first name's balance. Keep in step with SHARED_POTS in index.html. */
 const POTS_ = { 'dhruv': 'Rahul', 'tushar': 'Tanuj', 'meeral': 'Ajul', 'saurabh': 'Sid', 'uday': 'Ashish' };
@@ -249,6 +257,42 @@ function topupsFor_(name) {
   const n = String(name || '').toLowerCase(), list = ss_().getSheetByName('TopUps') ? tab_('TopUps').filter(function (r) { return String(r[1]).toLowerCase() === n; }).map(function (r) { return { ts: String(r[0]), amount: Number(r[2]) || 0 }; }) : [];
   list.sort(function (a, b) { return a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0; });
   return { since: props_().getProperty('paid_since') || '', list: list.slice(0, 10) };
+}
+/** Tell whoever shares this pot that money went in. */
+function pushTopup_(holder, amount, bal, list) {
+  const ps = list || players_();
+  const names = [holder].concat(Object.keys(POTS_).filter(function (k) { return POTS_[k].toLowerCase() === String(holder).toLowerCase(); }).map(function (k) { return ps.filter(function (p) { return p.name.toLowerCase() === k; }).map(function (p) { return p.name; })[0] || ''; }).filter(Boolean));
+  const b = Number(bal), now = isNaN(b) || bal === null || bal === '' ? '' : ' Balance now ' + (b < 0 ? '−' : '') + 'KES ' + Math.abs(Math.round(b)).toLocaleString('en') + '.';
+  pushSafe_(names, 'topup', 'KES ' + Math.round(amount).toLocaleString('en') + ' added to your balance', 'Thanks for topping up.' + now, '/#home');
+}
+/** Admin: add money to a player's balance from the site. Goes into their "Paid in" cell on the attendance sheet (the shared
+ *  pot's row for brothers), is logged as a top-up, and they get a notification. With dry, says what it would change. */
+function addMoney_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const amount = Math.round(Number(body.amount) || 0); if (amount <= 0 || amount > 200000) return { ok: false, error: 'Amount?' };
+  const ps = players_(), p = ps.filter(function (x) { return x.name.toLowerCase() === String(body.name || '').toLowerCase(); })[0]; if (!p) return { ok: false, error: 'Unknown player.' };
+  const holder = POTS_[p.name.toLowerCase()] || p.name;
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(20000)) return { ok: false, error: 'Busy, try again.' };
+  try {
+    const wide = SpreadsheetApp.openById(MAIN_SHEET_ID).getSheetByName('Wednesday Group'); if (!wide) return { ok: false, error: 'Sheet tab not found.' };
+    const names = wide.getRange(4, 2, wide.getLastRow() - 3, 1).getValues().map(function (r) { const n = String(r[0] || '').trim().toLowerCase(); return ALIASES_[n] ? ALIASES_[n].toLowerCase() : n; });
+    const rows = []; names.forEach(function (n, i) { if (n === holder.toLowerCase()) rows.push(i + 4); });
+    if (rows.length !== 1) return { ok: false, error: rows.length ? holder + ' is on the sheet more than once. Add it there by hand.' : holder + ' is not on the sheet.' };
+    const row = rows[0], F = wide.getRange(row, 6), G = wide.getRange(row, 7), fF = F.getFormula(), vF = F.getValue(), fG = G.getFormula();
+    const before = Number(String(vF).replace(/,/g, '')) || 0;
+    if (body.dry) return { ok: true, dry: true, holder: holder, row: row, paidFormula: fF, paidValue: vF, balanceFormula: fG, balanceValue: G.getValue() };
+    if (!fG) return { ok: false, error: "The balance cell for " + holder + " isn't a formula, so it wouldn't update. Add it on the sheet by hand." };
+    if (fF) F.setFormula(fF + '+' + amount); else if (vF === '' || !isNaN(Number(String(vF).replace(/,/g, '')))) F.setValue(before + amount); else return { ok: false, error: 'The paid-in cell for ' + holder + ' has text in it. Add it on the sheet by hand.' };
+    SpreadsheetApp.flush();
+    const bal = G.getValue();
+    const pr = props_(), skip = JSON.parse(pr.getProperty('paid_skip') || '{}'); skip[holder] = (skip[holder] || 0) + amount; pr.setProperty('paid_skip', JSON.stringify(skip));
+    const sh = sheet_('TopUps'); if (sh.getLastRow() === 0) sh.appendRow(['ts', 'name', 'amount', 'total']);
+    sh.appendRow(["'" + new Date().toISOString(), holder, amount, before + amount]); bust_('TopUps');
+    cache_().remove('players');
+    var out = { ok: true, holder: holder, paid: before + amount, balance: bal, list: topupsAll_() };
+  } finally { lock.releaseLock(); }
+  pushTopup_(holder, amount, out.balance, ps);
+  return out;
 }
 /** Admin: log a top-up by hand (one that was paid before tracking started, or missed). Doesn't touch the attendance sheet. */
 function addTopup_(body) {
@@ -898,7 +942,7 @@ function footVote_(body) {
    Timed ones are checked by pushTick (every 15 min trigger, and opportunistically when results are rebuilt); PushLog
    makes sure each is sent once. */
 const PUSH_URL = 'https://wednesday910.vercel.app/api/push';
-const PUSH_KINDS = ['promoted', 'gameday', 'rate', 'newgame', 'balance', 'claims', 'latedrop'];
+const PUSH_KINDS = ['promoted', 'gameday', 'rate', 'newgame', 'balance', 'topup', 'claims', 'latedrop', 'copy'];
 function pushSheet_() { const sh = sheet_('Push'); if (sh.getLastRow() === 0) sh.appendRow(['endpoint', 'name', 'p256dh', 'auth', 'prefs', 'created', 'ua']); return sh; }
 function pushRows_() { return ss_().getSheetByName('Push') ? tab_('Push').filter(function (r) { return r[0] && r[1]; }) : []; }
 function parsePrefs_(v) { try { const o = JSON.parse(String(v || '{}')); return o && typeof o === 'object' ? o : {}; } catch (_) { return {}; } }
@@ -938,21 +982,30 @@ function pushConfig_(body) {
   if (body.secret) props_().setProperty('push_secret', String(body.secret));
   return { ok: true, configured: !!props_().getProperty('push_secret') };
 }
-/** Send one notification to these players' phones (those who haven't switched this kind off). */
+/** Send one notification to these players' phones (those who haven't switched this kind off), and the admin a copy. */
 function pushTo_(names, kind, title, text, url) {
-  const secret = props_().getProperty('push_secret'); if (!secret || !names || !names.length) return 0;
+  const res = pushSend_(names, kind, title, text, url), admin = adminName_().toLowerCase();
+  const others = res.people.filter(function (n) { return n.toLowerCase() !== admin; });
+  if (others.length && kind !== 'test' && kind !== 'copy') {
+    try { pushSend_([adminName_()], 'copy', 'Sent: ' + title, 'To ' + others.join(', ') + ' · ' + text, '/#admin'); } catch (e) { console.error('copy ' + e); }
+  }
+  return res.sent;
+}
+function pushSend_(names, kind, title, text, url) {
+  const none = { sent: 0, people: [] }, secret = props_().getProperty('push_secret'); if (!secret || !names || !names.length) return none;
   const want = {}; names.forEach(function (n) { want[String(n).toLowerCase()] = 1; });
   const rows = pushRows_().filter(function (r) { return want[String(r[1]).toLowerCase()] && parsePrefs_(r[4])[kind] !== false; });
-  if (!rows.length) return 0;
+  if (!rows.length) return none;
+  const people = []; rows.forEach(function (r) { const n = String(r[1]); if (people.indexOf(n) < 0) people.push(n); });
   const messages = rows.map(function (r) { return { sub: { endpoint: String(r[0]), keys: { p256dh: String(r[2]), auth: String(r[3]) } }, title: title, body: text, url: url || '/', tag: kind }; });
   let res = null;
-  try { res = JSON.parse(UrlFetchApp.fetch(PUSH_URL, { method: 'post', contentType: 'application/json', payload: JSON.stringify({ secret: secret, messages: messages }), muteHttpExceptions: true }).getContentText()); } catch (e) { console.error('push ' + e); return 0; }
+  try { res = JSON.parse(UrlFetchApp.fetch(PUSH_URL, { method: 'post', contentType: 'application/json', payload: JSON.stringify({ secret: secret, messages: messages }), muteHttpExceptions: true }).getContentText()); } catch (e) { console.error('push ' + e); return none; }
   if (res && res.gone && res.gone.length) {   // phones that turned notifications off or uninstalled
     const sh = pushSheet_(), d = sh.getDataRange().getValues();
     for (let i = d.length - 1; i >= 1; i--) if (res.gone.indexOf(String(d[i][0])) >= 0) sh.deleteRow(i + 1);
     bust_('Push');
   }
-  return res && res.sent || 0;
+  return { sent: res && res.sent || 0, people: res && res.sent ? people : [] };
 }
 function pushSafe_(names, kind, title, text, url) { try { return pushTo_(names, kind, title, text, url); } catch (e) { console.error('pushTo_ ' + e); return 0; } }
 /** Run fn once for this key (PushLog), so timed notifications go out once. */
@@ -979,8 +1032,11 @@ function pushTick() {
   allGames_().forEach(function (g) {
     const left = kickoff_(g).getTime() - now;
     if (g.date === today && left > 0 && left <= 2.25 * 3600000) pushOnce_('gameday|' + g.date, function () {
-      const gate = gateFor_(g.date);
-      pushSafe_(gameNames_(g), 'gameday', 'Game tonight · ' + koLabel_(g), gate ? 'Gate code ' + gate + '. See you on the pitch.' : 'See you on the pitch.', '/#home');
+      const gate = gateFor_(g.date), tail = gate ? 'Gate code ' + gate + '. See you on the pitch.' : 'See you on the pitch.', T = g.teams || {};
+      if ((T.black || []).length || (T.white || []).length) {   // teams are in: tell each side their colour
+        if ((T.black || []).length) pushSafe_(T.black, 'gameday', "You're on Black tonight · " + koLabel_(g), 'Bring a black top. ' + tail, '/#home');
+        if ((T.white || []).length) pushSafe_(T.white, 'gameday', "You're on White tonight · " + koLabel_(g), 'Bring a white top. ' + tail, '/#home');
+      } else pushSafe_(gameNames_(g), 'gameday', 'Game tonight · ' + koLabel_(g), tail, '/#home');
     });
   });
   try { pushStrikes_(); } catch (e) { console.error('pushStrikes_ ' + e); }

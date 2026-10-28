@@ -958,6 +958,8 @@
   .me-id { flex: 1; min-width: 0; } .me-id b { display: block; font-size: 18px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .me-id span { font-size: 12px; color: var(--fg-2); }
   .me-bal { text-align: right; } .me-bal b { display: block; font-size: 22px; font-weight: 700; font-variation-settings: 'wdth' 80; line-height: 1.05; } .me-bal span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; }
   .me-bal.neg b { color: var(--neg); }
+  .am-row input:first-child { flex: 1; } .am-row #am-a { max-width: 120px; } .am-say { font-size: 13px; color: var(--fg-2); margin: 8px 2px 0; line-height: 1.45; } .am-say.err { color: var(--neg); } .am-say.ok { color: #3ecf8e; } .am-say b { color: var(--fg); }
+  .am-old { margin-top: 12px; } .am-old summary { cursor: pointer; font-size: 12.5px; color: var(--fg-3); } .am-old small { display: block; margin-top: 6px; font-size: 12px; }
   .bal-wrap { margin: 12px 0 4px; } .bal-wrap .bb { margin-top: 10px; }
   .bal-tile { --c: var(--fg-3); display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 13px 15px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--c) 45%, var(--line-2)); background: linear-gradient(100deg, color-mix(in srgb, var(--c) 16%, var(--surface)), var(--surface) 75%); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
   .bal-tile.credit { --c: #3ecf8e; } .bal-tile.owe { --c: var(--neg); } .bal-tile.zero { --c: var(--gold); } .bal-tile:disabled { cursor: default; }
@@ -2349,7 +2351,7 @@ async function renderYou() {
         <div class="gp-foot"><button class="btn link" onclick="saveGame(true)">Clear · no game</button><span class="muted" id="gd-admin-st"></span><button class="btn" onclick="saveGame(false)">Save game day</button></div>
       </div></section>
     <section><div class="sh"><h2>All games</h2><span>Fix the score, teams or who played for any game</span></div><div id="games-admin"></div></section>
-    <section><div class="sh"><h2>Top-ups</h2><span>New ones come from the sheet automatically · add older ones here</span></div><div id="topups-admin"></div></section>
+    <section><div class="sh"><h2>Add money</h2><span>Goes on the sheet as paid in · they get a notification</span></div><div id="topups-admin"></div></section>
     <section><div class="sh"><h2>Strikes</h2><span>Dropping out of a spot within 36 hours of kick-off</span></div><div id="strikes-admin"></div></section>
     <section><div class="sh"><h2>Man of the match</h2><span>The vote decides unless you pick someone</span></div><div id="motm-admin"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Send a notification</h2><span>To everyone who has notifications on</span></div><div id="bc-body"></div></section>
@@ -2586,8 +2588,8 @@ async function installApp() {
 }
 /* ── Push notifications: switched on per phone on the Me tab; the backend decides when, Vercel sends. ── */
 const VAPID_PUB = 'BNxrlDdeCF9eWPZCw6tX_SbL888RJFA53rLDGRLk_OF-Pn9bmwjd7qUNXWeOtkmEDVxpirHTM4hSzNU8IJh7Svo';
-const PUSH_LABELS = [['promoted', 'You move up from standby'], ['gameday', 'Game day, 2 hours before (with the gate code)'], ['rate', 'Rate the game after you play'], ['newgame', 'A new game opens for sign-ups'], ['balance', 'Your balance drops below zero']];
-const PUSH_ADMIN = [['claims', 'New claims to approve'], ['latedrop', 'Someone drops out late']];
+const PUSH_LABELS = [['promoted', 'You move up from standby'], ['gameday', 'Game day, 2 hours before (your team and the gate code)'], ['rate', 'Rate the game after you play'], ['newgame', 'A new game opens for sign-ups'], ['topup', 'Money added to your balance'], ['balance', 'Your balance drops below zero']];
+const PUSH_ADMIN = [['claims', 'New claims to approve'], ['latedrop', 'Someone drops out late'], ['copy', 'A copy of every notification that goes out']];
 const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 const b64u = s => { const p = '='.repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); };
 async function pushSubNow() { try { const reg = await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); } catch (_) { return null; } }
@@ -3068,9 +3070,45 @@ function renderSeen() {
 function renderTopupsAdmin() {
   const el = document.getElementById('topups-admin'), a = window.__ADMIN; if (!el || !a) return;
   const list = a.topups || [], d = ts => new Date(ts).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short', year: 'numeric' });
-  el.innerHTML = `<div class="fx-add-row"><input id="tu-n" list="fx-names" placeholder="Player" autocomplete="off"><input id="tu-a" type="number" inputmode="numeric" placeholder="KES" style="max-width:110px"><input id="tu-d" type="date" style="max-width:160px"><button class="btn" onclick="addTopup(this)">Add</button></div>
+  el.innerHTML = `<div class="fx-add-row am-row"><input id="am-n" list="fx-names" placeholder="Player" autocomplete="off" oninput="amCheck()"><input id="am-a" type="number" inputmode="numeric" placeholder="KES" oninput="amCheck()"><button class="btn" id="am-go" onclick="addMoney(this)">Add money</button></div>
+    <div class="am-say" id="am-say">Type a player and an amount. It's added to their paid-in on the sheet, their balance goes up, and they get a notification.</div>
+    <details class="am-old"><summary>Log an older top-up that's already on the sheet</summary>
+      <div class="fx-add-row" style="margin-top:8px"><input id="tu-n" list="fx-names" placeholder="Player" autocomplete="off"><input id="tu-a" type="number" inputmode="numeric" placeholder="KES" style="max-width:110px"><input id="tu-d" type="date" style="max-width:160px"><button class="btn ghost" onclick="addTopup(this)">Log it</button></div>
+      <small class="muted">Only shows as their last top-up. It doesn't change the sheet.</small></details>
     <div class="fx-note err" id="tu-err" hidden></div>
+    <div class="label" style="margin-top:14px">Recent top-ups</div>
     ${list.length ? `<div class="sk-list" style="margin-top:10px">${list.map(x => `<div class="sk-row"><b>${esc(x.name)}</b><span class="num">${kes(x.amount)}</span><small>${esc(d(x.ts))}${x.hand ? ' · added by hand' : ''}</small>${x.hand ? `<button class="btn link" onclick="removeTopup('${esc(x.ts)}', '${esc(x.name).replace(/'/g, "\\'")}', this)">Remove</button>` : ''}</div>`).join('')}</div>` : `<div class="empty" style="margin-top:10px">No top-ups logged yet.</div>`}`;
+}
+/* Brothers share one pot: money for Dhruv goes on Rahul's row (keep in step with POTS_ in Code.gs). */
+const POT_HOLDER = { dhruv: 'Rahul', tushar: 'Tanuj', meeral: 'Ajul', saurabh: 'Sid', uday: 'Ashish' };
+function amCheck() {
+  const say = document.getElementById('am-say'); if (!say) return;
+  const raw = document.getElementById('am-n').value.trim(), n = raw ? resolvePlayer(raw) : '', a = Math.round(Number(document.getElementById('am-a').value) || 0), p = ALL_PLAYERS.find(x => x.name === n);
+  if (!raw) { say.textContent = "Type a player and an amount. It's added to their paid-in on the sheet, their balance goes up, and they get a notification."; say.className = 'am-say'; return; }
+  if (!p) { say.textContent = `No player called “${raw}”.`; say.className = 'am-say err'; return; }
+  const h = POT_HOLDER[p.name.toLowerCase()], holder = h ? ALL_PLAYERS.find(x => x.name === h) || p : p, pot = potOf(p), bal = pot.entries.length ? pot.balance : holder.balance;
+  say.className = 'am-say';
+  say.innerHTML = `${h ? `Goes on <b>${esc(holder.name)}</b>'s row (shared pot with ${esc(p.name)}). ` : ''}${bal != null && !isNaN(bal) ? `Balance <b>${(bal < 0 ? '−' : '') + kes(bal)}</b>${a > 0 ? ` → <b>${(bal + a < 0 ? '−' : '') + kes(bal + a)}</b>` : ''}` : 'No balance on the sheet yet.'}`;
+}
+async function addMoney(btn) {
+  const raw = document.getElementById('am-n').value.trim(), name = resolvePlayer(raw), amount = Math.round(Number(document.getElementById('am-a').value) || 0), say = document.getElementById('am-say');
+  if (!ALL_PLAYERS.some(x => x.name === name) || amount <= 0) { say.textContent = !raw ? 'Which player?' : amount <= 0 ? 'How much?' : `No player called “${raw}”.`; say.className = 'am-say err'; return; }
+  if (!confirmTap(btn, `Add ${kes(amount)} to ${name}?`)) return;
+  btn.disabled = true; btn.textContent = 'Adding…';
+  let res; try { res = await api(null, { action: 'addMoney', t: TOKEN, name, amount }); } catch (e) { res = { ok: false, error: e.message }; }
+  btn.disabled = false; btn.textContent = 'Add money';
+  if (!res.ok) { say.textContent = res.error || 'Could not add it'; say.className = 'am-say err'; return; }
+  window.__ADMIN.topups = res.list; renderTopupsAdmin();
+  const s2 = document.getElementById('am-say'); s2.className = 'am-say ok';
+  s2.innerHTML = `Added <b>${kes(amount)}</b> to ${esc(res.holder)} on the sheet${typeof res.balance === 'number' ? ` · balance now <b>${(res.balance < 0 ? '−' : '') + kes(res.balance)}</b>` : ''}. They've been sent a notification.`;
+  RATINGS_AT = 0;
+}
+/* A second tap confirms: the button turns into "Tap again to add …" for a few seconds. */
+function confirmTap(btn, label) {
+  if (btn.dataset.armed) { delete btn.dataset.armed; return true; }
+  const was = btn.textContent; btn.dataset.armed = '1'; btn.textContent = label + ' Tap again';
+  setTimeout(() => { if (btn.dataset.armed) { delete btn.dataset.armed; btn.textContent = was; } }, 4000);
+  return false;
 }
 async function addTopup(btn) {
   const name = resolvePlayer(document.getElementById('tu-n').value.trim()), amount = document.getElementById('tu-a').value, date = document.getElementById('tu-d').value;

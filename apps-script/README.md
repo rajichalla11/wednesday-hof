@@ -270,3 +270,9 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 
 ## v55 · Clearing strikes re-syncs the sheet
 - `clearStrikes` re-syncs each affected game that is still to come, so the late-drop charge comes off the sheet.
+
+## v56 · Add money, team colours, copies, top-up pings
+- `addMoney` (admin) {name, amount, dry?}: adds to the player's (or shared pot holder's) "Paid in" cell on Wednesday Group (appends `+amount` to a formula, or adds to a number), logs it in TopUps, records it in `paid_skip` so `topupWatch_` doesn't log it again, and pushes `topup` to the pot. Refuses if the balance cell isn't a formula or the name is on the sheet twice.
+- `topupWatch_` also pushes `topup` for money added on the sheet by hand.
+- Game-day push: when teams are in, Black and White each get their colour with the gate code.
+- Every push also sends the admin a `copy` ("Sent: …", who it reached). Kinds: + `topup`, `copy`.
