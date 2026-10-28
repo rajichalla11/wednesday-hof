@@ -958,6 +958,22 @@
   .me-id { flex: 1; min-width: 0; } .me-id b { display: block; font-size: 18px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .me-id span { font-size: 12px; color: var(--fg-2); }
   .me-bal { text-align: right; } .me-bal b { display: block; font-size: 22px; font-weight: 700; font-variation-settings: 'wdth' 80; line-height: 1.05; } .me-bal span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); font-weight: 600; }
   .me-bal.neg b { color: var(--neg); }
+  .new-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-left: 6px; vertical-align: 2px; }
+  .tw-pitch { position: relative; display: grid; gap: 14px; padding: 18px 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, #3ecf8e 25%, var(--line-2)); background: repeating-linear-gradient(180deg, color-mix(in srgb, #3ecf8e 9%, var(--surface)) 0 44px, color-mix(in srgb, #3ecf8e 5%, var(--surface)) 44px 88px); overflow: hidden; }
+  .tw-pitch::before { content: ''; position: absolute; left: 50%; top: 50%; width: 110px; height: 110px; transform: translate(-50%, -50%); border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent); border-radius: 50%; pointer-events: none; }
+  .tw-line { position: relative; display: flex; justify-content: center; gap: 18px; } .tw-k { position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: 700; letter-spacing: .12em; color: var(--fg-3); }
+  .tw-p { position: relative; display: grid; justify-items: center; gap: 4px; width: 84px; padding: 8px 4px 7px; border-radius: 12px; border: 1px solid var(--line-2); background: color-mix(in srgb, var(--bg) 70%, transparent); font: inherit; color: var(--fg); cursor: pointer; }
+  .tw-p .avatar { width: 40px; height: 40px; font-size: 13px; } .tw-p b { font-size: 12.5px; max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .tw-p span { font-size: 12px; font-weight: 800; padding: 1px 7px; border-radius: 6px; background: color-mix(in srgb, var(--fg) 9%, transparent); }
+  .tw-p.cap { border-color: var(--gold); box-shadow: 0 0 18px -6px var(--gold); } .tw-p.cap span { background: var(--gold); color: #1a1408; } .tw-c { position: absolute; top: 5px; right: 6px; font-style: normal; font-size: 10px; font-weight: 800; width: 17px; height: 17px; display: grid; place-items: center; border-radius: 50%; background: var(--gold); color: #1a1408; }
+  .tw-foot { display: flex; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; } .tw-foot small { color: var(--fg-3); font-size: 12px; }
+  .if-list { display: grid; gap: 6px; } .if-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
+  .if-n { width: 20px; text-align: center; font-size: 13px; color: var(--fg-3); font-weight: 700; } .if-row .avatar { width: 30px; height: 30px; } .if-name { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .if-avg { font-size: 15px; padding: 3px 8px; border-radius: 7px; background: color-mix(in srgb, var(--fg) 8%, transparent); } .if-avg.hi { background: var(--gold); color: #1a1408; }
+  @media (max-width: 480px) { .if-row .fg-strip { display: none; } .tw-p { width: 74px; } .tw-line { gap: 10px; } }
+  .xp-h { display: flex; align-items: center; justify-content: space-between; margin: 22px 2px 8px; } .xp-h .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; } .xp-h .fx-chev { width: 6px; height: 6px; transform: rotate(-45deg); }
+  .xp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .xp-tile { display: grid; gap: 8px; align-content: start; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-2); background: linear-gradient(160deg, color-mix(in srgb, var(--gold) 9%, var(--surface)), var(--surface) 60%); font: inherit; color: var(--fg); text-align: left; cursor: pointer; min-width: 0; }
+  .xp-tile .label { color: var(--gold); } .xp-tile small { font-size: 12px; color: var(--fg-3); } .xp-tile small b { color: var(--fg-2); } .xp-faces { display: flex; } .xp-faces .avatar { width: 26px; height: 26px; margin-left: -6px; border: 2px solid var(--surface); } .xp-faces .avatar:first-child { margin-left: 0; }
+  .xp-top { display: flex; align-items: center; gap: 8px; min-width: 0; } .xp-top .avatar { width: 26px; height: 26px; } .xp-top b { flex: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .xp-top em { font-style: normal; font-weight: 800; padding: 1px 7px; border-radius: 6px; background: var(--gold); color: #1a1408; font-size: 13px; }
   .am-row input:first-child { flex: 1; } .am-row #am-a { max-width: 120px; } .am-say { font-size: 13px; color: var(--fg-2); margin: 8px 2px 0; line-height: 1.45; } .am-say.err { color: var(--neg); } .am-say.ok { color: #3ecf8e; } .am-say b { color: var(--fg); }
   .am-old { margin-top: 12px; } .am-old summary { cursor: pointer; font-size: 12.5px; color: var(--fg-3); } .am-old small { display: block; margin-top: 6px; font-size: 12px; }
   .bal-wrap { margin: 12px 0 4px; } .bal-wrap .bb { margin-top: 10px; }
@@ -1084,6 +1100,7 @@
     <div id="fixtures"></div>
     <div id="lastline"></div>
     <div id="you-body"></div>
+    <div id="explore-strip"></div>
   </section>
 
   <section class="panel" id="panel-history">
@@ -1097,7 +1114,13 @@
     <div class="stat"><b class="num" id="s-players">—</b><div class="label">Players</div></div>
   </div>
 
-  <div class="seg hist-seg" id="hist-seg"><button data-sub="records" class="on">Records</button><button data-sub="wall"><span class="long">Century Wall</span><span class="short">Wall</span></button><button data-sub="timeline">Season</button></div>
+  <div class="seg hist-seg" id="hist-seg"><button data-sub="week">This week<i class="new-dot"></i></button><button data-sub="records" class="on">Records</button><button data-sub="wall"><span class="long">Century Wall</span><span class="short">Wall</span></button><button data-sub="timeline">Season</button></div>
+  <section class="hsec" id="panel-week">
+    <div class="sh"><h2>Team of the Week</h2><span id="totw-sub">The best-rated six from the last game</span></div>
+    <div id="totw"></div>
+    <div class="sh" style="margin-top:28px"><h2>In form</h2><span>Average match rating over each player's last 3 games</span></div>
+    <div id="inform"></div>
+  </section>
   <section class="hsec" id="panel-wall">
     <div class="sh"><h2>Century Wall</h2><span>The night each member reached 100</span></div><div class="gate-screen"></div>
     <div class="grid" id="wall"></div>
@@ -3445,6 +3468,7 @@ function lastCardHtml(L, onclick, label) {
    the open games (one card each, tap to open), the last result in one line, then your card. */
 function renderGameday() {
   try { renderMatches(); } catch (e) { console.error(e); }
+  try { renderWeek(); } catch (e) { console.error(e); }
   try { if (VOTER && VOTER.isAdmin && !document.querySelector('#games-admin .ga[open]')) renderGamesAdmin(); } catch (e) { console.error(e); }
   try { if (VOTER && VOTER.isAdmin) { renderStrikesAdmin(); renderAdminTodo(); } } catch (e) { console.error(e); }
   try { renderFixtures(); } catch (e) { console.error(e); }
@@ -3789,6 +3813,60 @@ function matchCardHtml(g, open, toggle) {
     ${body}
   </article>`;
 }
+/* ── This week (History → This week, teased at the bottom of Home): Team of the Week and In form, from match ratings.
+   New features for keen users go here as more History sections, so Home and the core tabs stay as people know them. ── */
+const rtOk = (g, n) => g && g.ratings && g.ratings[n] && g.ratings[n].n >= 2 && (g.raters || 0) >= 3;
+function totwData() {
+  const games = ((RATINGS && RATINGS.ok && RATINGS.games) || []).filter(g => koOf(g) <= Date.now() && (g.raters || 0) >= 3).sort((a, b) => b.date.localeCompare(a.date));
+  const g = games[0]; if (!g) return null;
+  const pool = Object.keys(g.ratings || {}).filter(n => rtOk(g, n) && ALL_PLAYERS.some(p => p.name === n)).sort((a, b) => g.ratings[b].avg - g.ratings[a].avg);
+  if (pool.length < 4) return null;
+  const pos = n => posClass((ALL_PLAYERS.find(p => p.name === n) || {}).position), lines = { attack: [], midfield: [], defense: [] }, used = new Set();
+  ['attack', 'midfield', 'defense'].forEach(k => pool.filter(n => pos(n) === k).slice(0, 2).forEach(n => { lines[k].push(n); used.add(n); }));
+  ['defense', 'midfield', 'attack'].forEach(k => { while (lines[k].length < 2) { const n = pool.find(x => !used.has(x)); if (!n) break; lines[k].push(n); used.add(n); } });   // short of a position: next best
+  const team = [...lines.attack, ...lines.midfield, ...lines.defense], motm = (g.motm || []).find(n => team.includes(n));
+  return { g, lines, captain: motm || team.slice().sort((a, b) => g.ratings[b].avg - g.ratings[a].avg)[0], soFar: !(g.motm || []).length && Date.now() < koOf(g) + 38 * 3600000 };
+}
+function informData() {
+  const cut = Date.now() - 21 * 86400000;
+  return ALL_PLAYERS.map(p => { const f = formFor(p, 3), r = f.filter(x => x.rt != null && x.n >= 2);
+      return r.length >= 2 && koOf(f[0].g) >= cut ? { p, f, avg: r.reduce((a, x) => a + x.rt, 0) / r.length } : null; })
+    .filter(Boolean).sort((a, b) => b.avg - a.avg).slice(0, 5);
+}
+function renderWeek() {
+  const t = document.getElementById('totw'), f = document.getElementById('inform'); if (!t || !f) return;
+  if (!RATINGS || !RATINGS.ok) { t.innerHTML = f.innerHTML = '<div class="loading">Loading…</div>'; return; }
+  const d = totwData(), sub = document.getElementById('totw-sub');
+  if (!d) t.innerHTML = `<div class="empty">Shows once three players have rated the last game.</div>`;
+  else {
+    if (sub) sub.textContent = `${dayOf(d.g)}${d.soFar ? ' · so far, voting closes 11am' : ''} · captain is the man of the match`;
+    const mini = n => { const p = ALL_PLAYERS.find(x => x.name === n), r = d.g.ratings[n].avg;
+      return `<button class="tw-p${n === d.captain ? ' cap' : ''}" onclick="openPlayerByName('${esc(n).replace(/'/g, "\\'")}')">${p ? photo(p, 'avatar') : ''}${n === d.captain ? '<i class="tw-c">C</i>' : ''}<b>${esc(n.split(' ')[0])}</b><span class="num">${r.toFixed(1)}</span></button>`; };
+    t.innerHTML = `<div class="tw-pitch">${['attack', 'midfield', 'defense'].map(k => `<div class="tw-line"><span class="tw-k">${{ attack: 'ATT', midfield: 'MID', defense: 'DEF' }[k]}</span>${d.lines[k].map(mini).join('')}</div>`).join('')}</div>
+      <div class="tw-foot"><button class="btn ghost" onclick="copyTotw(this)">Copy for WhatsApp</button><small>Positions from each player's profile · match ratings out of 10</small></div>`;
+  }
+  const ins = informData();
+  f.innerHTML = !ins.length ? `<div class="empty">Shows once players have two rated games in the last three weeks.</div>`
+    : `<div class="if-list">${ins.map((x, i) => `<button class="if-row" onclick="openPlayerByName('${esc(x.p.name).replace(/'/g, "\\'")}')"><span class="if-n">${i === 0 ? '🔥' : i + 1}</span>${photo(x.p, 'avatar')}<span class="if-name">${esc(x.p.name)}</span>
+        <span class="fg-strip">${x.f.slice().reverse().map(y => `<span class="fg-chip${y.motm ? ' motm' : ''}${y.res ? ' r' + y.res : ''}"><b>${y.rt == null ? '–' : y.rt.toFixed(1)}</b><i>${y.res || '·'}${y.motm ? ' ★' : ''}</i></span>`).join('')}</span>
+        <b class="num if-avg${i === 0 ? ' hi' : ''}">${x.avg.toFixed(1)}</b></button>`).join('')}</div>`;
+  renderExploreStrip(d, ins);
+}
+function copyTotw(btn) {
+  const d = totwData(); if (!d) return;
+  const line = k => d.lines[k].map(n => `${n} ${d.g.ratings[n].avg.toFixed(1)}${n === d.captain ? ' (C)' : ''}`).join(', ');
+  const txt = `⭐ Team of the Week · ${dayOf(d.g)}\nATT: ${line('attack')}\nMID: ${line('midfield')}\nDEF: ${line('defense')}\n\nwednesday910.vercel.app/#week`;
+  navigator.clipboard.writeText(txt).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy for WhatsApp', 1800); }, () => {});
+}
+/* The teaser at the bottom of Home: two small tiles into This week. */
+function renderExploreStrip(d, ins) {
+  const el = document.getElementById('explore-strip'); if (!el) return;
+  if (!d && !ins.length) { el.innerHTML = ''; return; }
+  const top = ins[0];
+  el.innerHTML = `<div class="xp-h"><span class="label">This week</span><button class="btn link" onclick="showTab('week')">See all <i class="fx-chev"></i></button></div><div class="xp-row">
+    ${d ? `<button class="xp-tile" onclick="showTab('week')"><span class="label">Team of the Week</span><span class="xp-faces">${['attack', 'midfield', 'defense'].flatMap(k => d.lines[k]).slice(0, 6).map(n => { const p = ALL_PLAYERS.find(x => x.name === n); return p ? photo(p, 'avatar') : ''; }).join('')}</span><small>${esc(dayOf(d.g))} · captain <b>${esc(d.captain)}</b></small></button>` : ''}
+    ${top ? `<button class="xp-tile" onclick="showTab('week')"><span class="label">In form 🔥</span><span class="xp-top">${photo(top.p, 'avatar')}<b>${esc(top.p.name)}</b><em class="num">${top.avg.toFixed(1)}</em></span><small>last 3 games${ins[1] ? ` · then ${esc(ins[1].p.name)}` : ''}</small></button>` : ''}</div>`;
+}
 /* ── Matches: every game in the Games tab, newest first ── */
 function renderMatches() {
   const el = document.getElementById('matches'); if (!el) return;
@@ -3932,17 +4010,20 @@ document.addEventListener('keydown', e => {
 const TABS = ['home','hall','matches','history','me','admin'];
 /* Four tabs (plus Admin for the admin). Old links still work: #you and #balances open Home; #records, #wall and #timeline
    open History on that section. Every tab starts at the top: the game strip lives on Home, the Hall header on History. */
-const TAB_ALIAS = { in: 'home', signup: 'home', you: 'me', profile: 'me', balances: 'home', cards: 'hall', records: 'history', wall: 'history', timeline: 'history' };
+const TAB_ALIAS = { in: 'home', signup: 'home', you: 'me', profile: 'me', balances: 'home', cards: 'hall', records: 'history', wall: 'history', timeline: 'history', week: 'history' };
 let HIST_SUB = 'records';
+const HIST_SUBS = ['week', 'records', 'wall', 'timeline'];
+try { if (localStorage.getItem('w910_seen_week')) document.querySelector('#hist-seg .new-dot')?.remove(); } catch (_) {}
 function showHistory(sub) {
-  HIST_SUB = ['records', 'wall', 'timeline'].includes(sub) ? sub : 'records';
+  HIST_SUB = HIST_SUBS.includes(sub) ? sub : 'records';
+  if (HIST_SUB === 'week') { try { localStorage.setItem('w910_seen_week', '1'); } catch (_) {} document.querySelector('#hist-seg .new-dot')?.remove(); renderWeek(); }
   document.querySelectorAll('#hist-seg button').forEach(b => b.classList.toggle('on', b.dataset.sub === HIST_SUB));
   document.querySelectorAll('.hsec').forEach(h => h.classList.toggle('on', h.id === 'panel-' + HIST_SUB));
   if (HIST_SUB === 'timeline') { const w = document.getElementById('tl-wrap'); if (w) w.scrollLeft = w.scrollWidth; }
 }
 function showTab(name, updateHash = true) {
   const raw = name;
-  if (['records', 'wall', 'timeline'].includes(raw)) showHistory(raw);
+  if (HIST_SUBS.includes(raw)) showHistory(raw);
   name = TAB_ALIAS[name] || name;
   if (name === 'admin' && !(VOTER && VOTER.isAdmin)) name = 'home';
   if (!TABS.includes(name)) name = 'home';
