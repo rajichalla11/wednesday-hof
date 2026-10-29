@@ -277,6 +277,9 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 - Game-day push: when teams are in, Black and White each get their colour with the gate code.
 - Every push also sends the admin a `copy` ("Sent: …", who it reached). Kinds: + `topup`, `copy`.
 
+## v59 · Form boosts come and go
+Form lift = good games among the last 8 rated games, max +3, +1 each on the position's key stats (`FORM_SPAN`, `FORM_CAP`). A good game: rated in 3 of the last 4 averaging 7.5+, or MOTM with 2 of 4. It wears off as games drop out of the span, so nobody drifts to 99. The no-drop guard (`card_guard2`, internal, never mentioned on the site) now only covers vote swings, not the form lift. Push `form` only when the latest game added to someone's lift.
+
 ## v58 · Form boosts and no-drop cards
 Cards creep up for people who play often and play well: after each settled game (voting closed, 3+ raters) a player gets +1 on one stat if they were rated in 3 of the last 4 rated games averaging 7.5+, or were man of the match (and played 2 of the last 4). Points go round the stats that suit the position, max +4 per stat and +12 in all, and are never taken away (`formBoosts_`, constants `FORM_*`).
 No card's total ever goes down: if votes pull a stat down, the same points go onto the other stats, strongest first; that top-up is handed back as votes recover (`liftCards_`, script property `card_guard`). Changing a player's starting point resets their guard so the admin's change sticks. Results carry `up` (what was added per stat) and `form` ({n, at, last}). New push kind `form`: "Your card went up", once per earning game (latest only).

@@ -455,65 +455,72 @@ function aggregate_(rows, seeds) {
   return res;
 }
 
-/* Form boosts: cards creep up for people who play often and play well. After each settled game (voting closed, 3+ raters)
-   a player earns +1 on one stat if they were rated in 3 of the last 4 rated games and averaged FORM_AVG+ over those games,
-   or were man of the match that night (and played 2 of the last 4). Points are never taken away. They go round the stats
-   that suit the position, at most FORM_STAT_CAP per stat and FORM_CAP in all. */
-const FORM_AVG = 7.5, FORM_CAP = 12, FORM_STAT_CAP = 4;
+/* Form boosts: a small lift for people who play often and play well, that comes and goes with form. A settled game
+   (voting closed, 3+ raters) counts as a good one for a player if they were rated in 3 of the last 4 rated games and
+   averaged FORM_AVG+ over them, or were man of the match that night (and played 2 of the last 4). The lift is the number
+   of good games among the last FORM_SPAN rated games, up to FORM_CAP, each +1 on a stat that suits the position. Stop
+   playing or playing well and it wears off as those games drop out of the span, so nobody drifts towards 99. */
+const FORM_AVG = 7.5, FORM_CAP = 3, FORM_SPAN = 8;
 const FORM_ORDER = { attack: ['SHO', 'PAC', 'DRI'], midfield: ['PAS', 'DRI', 'PHY'], defense: ['DEF', 'PHY', 'PAS'], other: ['PAS', 'PHY', 'DRI'] };
 function formBoosts_(games, players) {
   const now = Date.now(), pos = {}; (players || []).forEach(function (p) { pos[p.name] = posClass_(p.position); });
   const rated = games.filter(function (g) { return (g.raters || 0) >= 3 && now >= closes_(g.date); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-  const ok = function (g, n) { return g.ratings[n] && g.ratings[n].n >= 2; }, out = {};
+  const ok = function (g, n) { return g.ratings[n] && g.ratings[n].n >= 2; }, good = {};   // name → indexes of good games
   rated.forEach(function (g, i) {
     const win = rated.slice(Math.max(0, i - 3), i + 1);
     Object.keys(g.ratings).forEach(function (n) {
       if (!ok(g, n)) return;
       const mine = win.filter(function (w) { return ok(w, n); }).map(function (w) { return w.ratings[n].avg; });
       const avg = mine.reduce(function (a, v) { return a + v; }, 0) / mine.length, motm = (g.motm || []).indexOf(n) >= 0;
-      if (!((mine.length >= 3 && avg >= FORM_AVG) || (motm && mine.length >= 2))) return;
-      const f = out[n] = out[n] || { n: 0, by: {}, at: '' }; if (f.n >= FORM_CAP) return;
-      const order = FORM_ORDER[pos[n] || 'other'], seq = order.concat(STATS.filter(function (k) { return order.indexOf(k) < 0; }));
-      const k = seq.filter(function (k) { return (f.by[k] || 0) < FORM_STAT_CAP; }).sort(function (a, b) { return (f.by[a] || 0) - (f.by[b] || 0) || seq.indexOf(a) - seq.indexOf(b); })[0];
-      if (!k) return;
-      f.by[k] = (f.by[k] || 0) + 1; f.n++; f.at = g.date; f.last = k;
+      if ((mine.length >= 3 && avg >= FORM_AVG) || (motm && mine.length >= 2)) (good[n] = good[n] || []).push(i);
     });
+  });
+  const L = rated.length - 1, lift = function (n, at) { return Math.min(FORM_CAP, good[n].filter(function (i) { return i <= at && i > at - FORM_SPAN; }).length); }, out = {};
+  Object.keys(good).forEach(function (n) {
+    const k = lift(n, L); if (!k) return;
+    const order = FORM_ORDER[pos[n] || 'other'], by = {}; order.slice(0, k).forEach(function (s) { by[s] = 1; });
+    const f = { n: k, by: by, at: rated[good[n][good[n].length - 1]].date };
+    if (good[n].indexOf(L) >= 0 && k > lift(n, L - 1)) { f.gain = rated[L].date; f.last = order[k - 1]; }   // the latest game added a point: worth a ping
+    out[n] = f;
   });
   return out;
 }
-/* Adds the form boosts to this window's cards, then makes sure no card's total goes down: if votes pull a stat down, the
-   same number of points goes onto the player's other stats (strongest first). That top-up is kept in the script property
-   card_guard and handed back as the votes recover, so ups and downs from single votes don't pile up. When the admin changes
-   a starting point the guard starts again for that player, so a deliberate change sticks. entry.up = what was added to each stat (form + top-up), entry.form = the form points. */
+/* Cards get the form lift on top. Underneath it, votes can't pull a card's total down: if they lower a stat, the same number
+   of points goes onto the player's other stats (strongest first), and that top-up is handed back as the votes recover, so
+   ups and downs from single votes don't pile up (script property card_guard2). Internal only: not mentioned on the site.
+   The form lift sits outside this, so it really does wear off. Changing a player's starting point resets their guard so
+   the admin's change sticks. entry.up = what was added to each stat (form + top-up), entry.form = the current form lift. */
 function liftCards_(agg, boosts, win) {
-  let guard = {}; try { guard = JSON.parse(props_().getProperty('card_guard') || '{}'); } catch (_) {}
-  const gp = guard.p || {}, next = {};   // kept across rating windows too: a new window's empty votes don't drop anyone, and the top-up is handed back as votes come in
+  let guard = {}; try { guard = JSON.parse(props_().getProperty('card_guard2') || '{}'); } catch (_) {}
+  const gp = guard.p || {}, next = {};
   Object.keys(agg).forEach(function (n) {
     const e = agg[n]; if (!e.stats) return;
-    const f = boosts[n], raw = {}; STATS.forEach(function (k) { raw[k] = Math.min(RMAX, e.stats[k] + (f ? f.by[k] || 0 : 0)); });
-    const h = (e.base ? STATS.map(function (k) { return e.base[k]; }).join('.') : '') + (e.fixed ? 'f' : '');   // the admin's starting point: change it and the card simply follows (no top-up)
-    const g = gp[n] && gp[n].h === h ? gp[n] : null, a = {}; STATS.forEach(function (k, i) { a[k] = g && g.a ? g.a[i] || 0 : 0; });
+    const f = boosts[n], raw = {}; STATS.forEach(function (k) { raw[k] = e.stats[k]; });
+    const h = (e.base ? STATS.map(function (k) { return e.base[k]; }).join('.') : '') + (e.fixed ? 'f' : '');
+    const g = gp[n] && gp[n].h === h ? gp[n] : null, a = {};
+    STATS.forEach(function (k, i) { a[k] = g && g.a ? g.a[i] || 0 : 0; });
     const fin = function () { const o = {}; STATS.forEach(function (k) { o[k] = Math.min(RMAX, raw[k] + a[k]); }); return o; };
     const sum = function (o) { return STATS.reduce(function (t, k) { return t + o[k]; }, 0); };
     let out = fin();
     if (g && g.s) {
       const last = {}; STATS.forEach(function (k, i) { last[k] = g.s[i]; });
       let diff = sum(out) - sum(last);
-      if (diff < 0) {   // a stat went down: top up the ones that didn't, strongest first
+      if (diff < 0) {
         const pick = STATS.filter(function (k) { return out[k] >= last[k]; }); const pool = (pick.length ? pick : STATS.slice()).sort(function (x, y) { return out[y] - out[x]; });
         for (let i = 0, guardN = 0; diff < 0 && guardN < 60; guardN++) { const k = pool[i++ % pool.length]; if (raw[k] + a[k] < RMAX) { a[k]++; diff++; } }
-      } else if (diff > 0) {   // votes recovered: hand back earlier top-ups first (largest first), never below the last total
+      } else if (diff > 0) {
         for (let guardN = 0; diff > 0 && guardN < 60; guardN++) { const k = STATS.filter(function (k) { return a[k] > 0; }).sort(function (x, y) { return a[y] - a[x]; })[0]; if (!k) break; a[k]--; diff--; }
       }
       out = fin();
     }
+    next[n] = { s: STATS.map(function (k) { return out[k]; }), a: STATS.map(function (k) { return a[k]; }), h: h };
+    if (f) STATS.forEach(function (k) { out[k] = Math.min(RMAX, out[k] + (f.by[k] || 0)); });
     const up = {}; STATS.forEach(function (k) { if (out[k] !== e.stats[k]) up[k] = out[k] - e.stats[k]; });
     e.stats = out; if (Object.keys(up).length) e.up = up;
-    if (f) e.form = { n: f.n, at: f.at, last: f.last };
-    next[n] = { s: STATS.map(function (k) { return out[k]; }), a: STATS.map(function (k) { return a[k]; }), h: h };
+    if (f) e.form = { n: f.n, at: f.at };
   });
   const js = JSON.stringify({ w: win, p: next });
-  if (js !== props_().getProperty('card_guard')) props_().setProperty('card_guard', js);
+  if (js !== props_().getProperty('card_guard2')) props_().setProperty('card_guard2', js);
 }
 
 /** A player's own view of themselves. Visible only to the admin (Settings → admin_name), as a starting point to adjust seeds. */
@@ -1191,12 +1198,12 @@ function addStrike_(body) {
   return { ok: true, strikes: strikesPublic_(), sync: sync };
 }
 /** Tell each player about a strike they haven't seen yet, once per strike (PushLog), also from pushTick as a catch-up. */
-/** Tells a player their card went up for form, once per game that earned it (only their latest point, so nobody gets a backlog). */
+/** Tells a player their card went up for form, when the latest game added to their lift (once per game). */
 function pushForm_() {
   const b = formBoosts_(gamesPublic_(), players_()), subs = {}; pushRows_().forEach(function (r) { subs[String(r[1]).toLowerCase()] = 1; });
   const NAMES = { PAC: 'pace', SHO: 'shooting', PAS: 'passing', DRI: 'dribbling', DEF: 'defending', PHY: 'physical' };
-  Object.keys(b).forEach(function (n) { const f = b[n]; if (!f.at || !subs[n.toLowerCase()]) return;
-    pushOnce_('form|' + n + '|' + f.at, function () { pushSafe_([n], 'form', 'Your card went up · +1 ' + f.last, 'Playing often and playing well: +1 ' + NAMES[f.last] + ' after ' + dayLabel_(f.at) + '. Keep it going.', '/#me'); }); });
+  Object.keys(b).forEach(function (n) { const f = b[n]; if (!f.gain || !subs[n.toLowerCase()]) return;
+    pushOnce_('form|' + n + '|' + f.gain, function () { pushSafe_([n], 'form', 'Your card went up · +1 ' + f.last, 'Playing often and playing well: +1 ' + NAMES[f.last] + ' after ' + dayLabel_(f.gain) + '. Keep it going to keep it.', '/#me'); }); });
 }
 function pushStrikes_() {
   if (!props_().getProperty('push_secret') || !ss_().getSheetByName('Strikes')) return;
