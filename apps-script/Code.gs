@@ -101,7 +101,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles', 'Push', 'PushLog'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles', 'Push', 'PushLog', 'Tweaks'].forEach(bust_); cache_().remove('players'); }
 
 /** One-off: strips what could link a ballot to a voter from data written before Version 20. Voters keep only a rough
  *  "rated" band (no last-vote time), ballot and check-in times become the day only, and ballot rows are shuffled so
@@ -186,6 +186,7 @@ function doPost(e) {
     if (body.action === 'ackStrikes') return json_(ackStrikes_(body));
     if (body.action === 'addTopup') return json_(addTopup_(body));
     if (body.action === 'addMoney') return json_(addMoney_(body));
+    if (body.action === 'tweak') return json_(tweak_(body));
     if (body.action === 'removeTopup') return json_(removeTopup_(body));
     if (body.action === 'addFixture') return json_(addFixture_(body));
     if (body.action === 'removeFixture') return json_(removeFixture_(body));
@@ -227,7 +228,7 @@ function me_(token) {
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), strikes: myStrikes_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), tweaks: isAdmin_(name) ? tweaks_() : undefined, voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), strikes: myStrikes_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
 }
 
 /* ───────── top-ups ─────────
@@ -410,6 +411,7 @@ function buildResults_() {
   const strip = function (agg) { Object.keys(agg).forEach(function (n) { delete agg[n].vote; delete agg[n].vw; if (hide.indexOf(n.toLowerCase()) >= 0) agg[n] = { n: agg[n].n, traits: agg[n].traits, hidden: true }; }); return agg; };
   const games = gamesPublic_(), cur = aggregate_(all.filter(function (r) { return r[0] === win; }), seeds);
   try { liftCards_(cur, formBoosts_(games, players_()), win); } catch (e) { console.error('liftCards_ ' + e); }
+  try { applyTweaks_(cur); } catch (e) { console.error('applyTweaks_ ' + e); }
   const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(cur), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
   out.game = gamePublic_(); out.motm = motmTally_(); out.games = games;
   const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_(); out.footReviews = footReviews_(); out.profiles = profiles_();
@@ -521,6 +523,40 @@ function liftCards_(agg, boosts, win) {
   });
   const js = JSON.stringify({ w: win, p: next });
   if (js !== props_().getProperty('card_guard2')) props_().setProperty('card_guard2', js);
+}
+
+/* Admin tweaks: the admin sets a card's numbers straight from the card. Stored as an offset per stat (Tweaks tab: name,
+   PAC..PHY) and added last, on top of votes, starting point and form, so the card shows exactly what was set and still
+   moves with votes and form from there. Admin only; never sent to players. */
+function tweaks_() {
+  const o = {}; if (!ss_().getSheetByName('Tweaks')) return o;
+  tab_('Tweaks').forEach(function (r) { const t = {}; let any = false; STATS.forEach(function (k, i) { const v = Number(r[1 + i]) || 0; if (v) { t[k] = v; any = true; } }); if (r[0] && any) o[String(r[0])] = t; });
+  return o;
+}
+function applyTweaks_(agg) {
+  const tw = tweaks_();
+  Object.keys(tw).forEach(function (n) { const e = agg[n]; if (!e || !e.stats) return;
+    STATS.forEach(function (k) { if (tw[n][k]) { e.stats[k] = Math.max(RMIN, Math.min(RMAX, e.stats[k] + tw[n][k])); e.up = e.up || {}; e.up[k] = (e.up[k] || 0) + tw[n][k]; } }); });
+}
+function tweak_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const name = String(body.name || ''), sh = sheet_('Tweaks'); if (sh.getLastRow() === 0) sh.appendRow(['name'].concat(STATS));
+  const lock = LockService.getScriptLock(); lock.waitLock(15000);
+  try {
+    const old = tweaks_()[name] || {}; let row;
+    if (body.reset) row = STATS.map(function () { return 0; });
+    else {
+      cache_().remove('results'); const cur = buildResults_().players[name];
+      if (!cur || !cur.stats) return { ok: false, error: 'This card has no numbers yet.' };
+      row = STATS.map(function (k) { const want = Math.max(RMIN, Math.min(RMAX, Math.round(Number((body.stats || {})[k])))); if (isNaN(want)) throw new Error('Missing ' + k); return want - (cur.stats[k] - (old[k] || 0)); });
+    }
+    const data = sh.getDataRange().getValues(); let at = -1;
+    for (let i = 1; i < data.length; i++) if (String(data[i][0]) === name) { at = i + 1; break; }
+    if (at > 0) sh.getRange(at, 2, 1, STATS.length).setValues([row]); else sh.appendRow([name].concat(row));
+    bust_('Tweaks'); cache_().remove('results');
+    const res = buildResults_(), p = res.players[name];
+    return { ok: true, stats: p && p.stats, tweak: tweaks_()[name] || null, results: res };
+  } finally { lock.releaseLock(); }
 }
 
 /** A player's own view of themselves. Visible only to the admin (Settings → admin_name), as a starting point to adjust seeds. */

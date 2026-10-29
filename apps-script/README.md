@@ -277,6 +277,9 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 - Game-day push: when teams are in, Black and White each get their colour with the gate code.
 - Every push also sends the admin a `copy` ("Sent: …", who it reached). Kinds: + `topup`, `copy`.
 
+## v60 · Admin tweaks from the card
+Action `tweak` (admin): `{name, stats}` sets a card's numbers exactly; stored as offsets per stat in the Tweaks tab (name, PAC..PHY) and added last in `buildResults_` (`applyTweaks_`), so the card still moves with votes and form afterwards. `{name, reset: true}` removes it. Returns the rebuilt results. `me` returns `tweaks` to the admin only.
+
 ## v59 · Form boosts come and go
 Form lift = good games among the last 8 rated games, max +3, +1 each on the position's key stats (`FORM_SPAN`, `FORM_CAP`). A good game: rated in 3 of the last 4 averaging 7.5+, or MOTM with 2 of 4. It wears off as games drop out of the span, so nobody drifts to 99. The no-drop guard (`card_guard2`, internal, never mentioned on the site) now only covers vote swings, not the form lift. Push `form` only when the latest game added to someone's lift.
 

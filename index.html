@@ -83,6 +83,17 @@
   .btn.ghost:hover { color: var(--fg); border-color: var(--fg-3); }
   .btn.link { background: none; color: var(--fg-3); padding: 0; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
   .empty { padding: 28px 16px; border: 1px dashed var(--line-2); border-radius: 8px; color: var(--fg-2); font-size: 13px; text-align: center; }
+  /* admin: set a card's numbers from the card */
+  .tw-view { display: grid; grid-template-columns: minmax(0, 240px) 1fr; gap: 22px; align-items: start; padding-top: 6px; }
+  .tw-card { max-width: 240px; margin: 0 auto; width: 100%; } .tw-card .card { cursor: default; }
+  .tw-rows { display: grid; gap: 8px; } .tw-head { font-size: 18px; font-weight: 700; } .tw-sub { font-size: 12.5px; color: var(--fg-3); margin: 2px 0 6px; }
+  .tw-row { display: grid; grid-template-columns: 1fr auto 46px auto; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .tw-row .k { font-size: 12px; font-weight: 700; letter-spacing: .06em; } .tw-row .k small { display: block; font-weight: 400; letter-spacing: 0; color: var(--fg-3); font-size: 11px; }
+  .tw-row b { text-align: center; font-size: 20px; font-variant-numeric: tabular-nums; } .tw-row b.ch { color: var(--gold); }
+  .tw-row button { width: 38px; height: 38px; border-radius: 9px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--fg); font-size: 18px; font-weight: 600; }
+  .tw-row button:active { transform: scale(.92); }
+  .tw-act { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; align-items: center; } .tw-act .st { font-size: 12px; color: var(--fg-3); }
+  @media (max-width: 720px) { .tw-view { grid-template-columns: 1fr; } .tw-card { max-width: 200px; } }
   /* Opening screen. Quick (about a second): floodlights snap on, the pitch draws, the crest lands, one line of context.
      Big (once per moment: game day, after a game, a form boost, a milestone): the crest bursts and your card is dealt in.
      Flash (back within the hour): just the crest while the page refreshes. A tap skips. Never outlasts the loading by much. */
@@ -1276,7 +1287,7 @@
 
 <div class="overlay" id="profile-overlay" onclick="closeProfile(event)">
   <div class="sheet dossier" id="profile">
-    <div class="controls"><button class="ctl" onclick="stepProfile(-1)" title="Previous (←)">‹</button><button class="ctl" onclick="stepProfile(1)" title="Next (→)">›</button><button class="ctl" onclick="closeProfileDirect()" title="Close (Esc)">✕</button></div>
+    <div class="controls"><button class="ctl" id="p-tweak-btn" onclick="openTweak()" title="Edit this card's numbers" hidden>✎</button><button class="ctl" onclick="stepProfile(-1)" title="Previous (←)">‹</button><button class="ctl" onclick="stepProfile(1)" title="Next (→)">›</button><button class="ctl" onclick="closeProfileDirect()" title="Close (Esc)">✕</button></div>
     <div id="p-body"></div>
   </div>
 </div>
@@ -1894,6 +1905,43 @@ function openProfile(p) {
   el.querySelector('.flip-front').onclick = e => { e.stopPropagation(); el.classList.toggle('go'); };
   el.querySelector('.flip-back').onclick = e => { if (e.target.closest('a, button, [data-tip]')) return; el.classList.remove('go'); };   // tap the back to see the front again
   setTimeout(() => el.classList.add('go'), wasOpen ? 60 : 320);   // show the front for a beat, then flip to the record
+  TW = null; paintTweakBtn();
+}
+/* Admin: tweak a card's numbers from the card. The site saves an offset per stat, so the card shows exactly these numbers
+   and still moves with votes and form from here. "Back to votes" removes the tweak. */
+let TW = null;
+function paintTweakBtn() { const b = document.getElementById('p-tweak-btn'); if (!b) return; const p = CURRENT_PLAYER, r = p && RATINGS && RATINGS.ok && RATINGS.players[p.name]; b.hidden = !(VOTER && VOTER.isAdmin && r && r.stats); }
+function openTweak() {
+  const p = CURRENT_PLAYER, r = p && RATINGS && RATINGS.players[p.name]; if (!p || !r || !r.stats) return;
+  TW = { p, was: Object.assign({}, r.stats), now: Object.assign({}, r.stats) };
+  const el = document.getElementById('p-body'); el.classList.remove('go');
+  const tw = (VOTER.tweaks || {})[p.name];
+  el.innerHTML = `<div class="tw-view"><div class="tw-card" id="tw-card"></div><div class="tw-rows">
+    <div><div class="tw-head">Edit ${esc(p.name)}'s card</div><div class="tw-sub">Set the numbers you want. They still move with votes and form from here.${tw ? ' This card has a tweak already.' : ''}</div></div>
+    ${STAT_KEYS.map(k => `<div class="tw-row"><span class="k">${k}<small>${STAT_NAMES[k]}</small></span><button type="button" onclick="twStep('${k}',-1)" aria-label="Lower ${STAT_NAMES[k]}">−</button><b id="tw-${k}">${TW.now[k]}</b><button type="button" onclick="twStep('${k}',1)" aria-label="Raise ${STAT_NAMES[k]}">+</button></div>`).join('')}
+    <div class="tw-act"><button class="btn" id="tw-save" onclick="twSave(this)">Save</button><button class="btn ghost" onclick="openProfile(TW.p)">Cancel</button>${tw ? `<button class="btn link" onclick="twReset(this)">Back to votes</button>` : ''}<span class="st" id="tw-st"></span></div></div></div>`;
+  twPaint();
+}
+function twPaint() { const c = document.getElementById('tw-card'); if (!c || !TW) return; const r = RATINGS.players[TW.p.name] || {};
+  c.innerHTML = cardHtml(TW.p, TW.now, { n: r.n });
+  STAT_KEYS.forEach(k => { const b = document.getElementById('tw-' + k); if (b) { b.textContent = TW.now[k]; b.classList.toggle('ch', TW.now[k] !== TW.was[k]); } }); }
+function twStep(k, d) { if (!TW) return; TW.now[k] = Math.max(40, Math.min(99, TW.now[k] + d)); twPaint(); }
+async function twSave(btn) {
+  if (!TW) return; const st = document.getElementById('tw-st'); btn.disabled = true; st.textContent = 'Saving…';
+  const res = await api(null, { action: 'tweak', t: TOKEN, name: TW.p.name, stats: TW.now });
+  btn.disabled = false; if (!res.ok) { st.textContent = res.error || 'Could not save.'; return; }
+  twDone(res);
+}
+async function twReset(btn) {
+  if (!TW) return; const st = document.getElementById('tw-st'); btn.disabled = true; st.textContent = 'Removing…';
+  const res = await api(null, { action: 'tweak', t: TOKEN, name: TW.p.name, reset: true });
+  btn.disabled = false; if (!res.ok) { st.textContent = res.error || 'Could not save.'; return; }
+  twDone(res);
+}
+function twDone(res) {
+  const p = TW.p; if (res.results && res.results.ok) { RATINGS = res.results; RATINGS_AT = Date.now(); writeCache('w910_results', RATINGS); }
+  VOTER.tweaks = VOTER.tweaks || {}; if (res.tweak) VOTER.tweaks[p.name] = res.tweak; else delete VOTER.tweaks[p.name];
+  TW = null; openProfile(p); bgRender('players', renderPlayers);
 }
 function stepProfile(dir) { const list = visibleList(); const i = list.indexOf(CURRENT_PLAYER); if (i < 0 || !list.length) return; openProfile(list[(i+dir+list.length)%list.length]); }
 function closeProfile(e) { if (e.target === document.getElementById('profile-overlay')) closeProfileDirect(); }
