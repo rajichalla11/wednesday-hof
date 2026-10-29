@@ -408,8 +408,10 @@ function buildResults_() {
   const seeds = seeds_();
   const hide = hiddenNames_();
   const strip = function (agg) { Object.keys(agg).forEach(function (n) { delete agg[n].vote; delete agg[n].vw; if (hide.indexOf(n.toLowerCase()) >= 0) agg[n] = { n: agg[n].n, traits: agg[n].traits, hidden: true }; }); return agg; };
-  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(aggregate_(all.filter(function (r) { return r[0] === win; }), seeds)), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
-  out.game = gamePublic_(); out.motm = motmTally_(); out.games = gamesPublic_();
+  const games = gamesPublic_(), cur = aggregate_(all.filter(function (r) { return r[0] === win; }), seeds);
+  try { liftCards_(cur, formBoosts_(games, players_()), win); } catch (e) { console.error('liftCards_ ' + e); }
+  const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(cur), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
+  out.game = gamePublic_(); out.motm = motmTally_(); out.games = games;
   const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_(); out.footReviews = footReviews_(); out.profiles = profiles_();
   out.ballots = tab_('Voters').filter(function (r) { return r[3] && String(r[5] || '') && String(r[5]) !== '0'; }).length;   // people who have voted (a voter can hold an older anonymous ballot and a newer named one, so ballot ids would count them twice)
   const js = JSON.stringify(out); cache_().put('results', js, 300); cache_().put('results_stale', js, 21600);
@@ -451,6 +453,67 @@ function aggregate_(rows, seeds) {
     res[t] = entry;
   });
   return res;
+}
+
+/* Form boosts: cards creep up for people who play often and play well. After each settled game (voting closed, 3+ raters)
+   a player earns +1 on one stat if they were rated in 3 of the last 4 rated games and averaged FORM_AVG+ over those games,
+   or were man of the match that night (and played 2 of the last 4). Points are never taken away. They go round the stats
+   that suit the position, at most FORM_STAT_CAP per stat and FORM_CAP in all. */
+const FORM_AVG = 7.5, FORM_CAP = 12, FORM_STAT_CAP = 4;
+const FORM_ORDER = { attack: ['SHO', 'PAC', 'DRI'], midfield: ['PAS', 'DRI', 'PHY'], defense: ['DEF', 'PHY', 'PAS'], other: ['PAS', 'PHY', 'DRI'] };
+function formBoosts_(games, players) {
+  const now = Date.now(), pos = {}; (players || []).forEach(function (p) { pos[p.name] = posClass_(p.position); });
+  const rated = games.filter(function (g) { return (g.raters || 0) >= 3 && now >= closes_(g.date); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  const ok = function (g, n) { return g.ratings[n] && g.ratings[n].n >= 2; }, out = {};
+  rated.forEach(function (g, i) {
+    const win = rated.slice(Math.max(0, i - 3), i + 1);
+    Object.keys(g.ratings).forEach(function (n) {
+      if (!ok(g, n)) return;
+      const mine = win.filter(function (w) { return ok(w, n); }).map(function (w) { return w.ratings[n].avg; });
+      const avg = mine.reduce(function (a, v) { return a + v; }, 0) / mine.length, motm = (g.motm || []).indexOf(n) >= 0;
+      if (!((mine.length >= 3 && avg >= FORM_AVG) || (motm && mine.length >= 2))) return;
+      const f = out[n] = out[n] || { n: 0, by: {}, at: '' }; if (f.n >= FORM_CAP) return;
+      const order = FORM_ORDER[pos[n] || 'other'], seq = order.concat(STATS.filter(function (k) { return order.indexOf(k) < 0; }));
+      const k = seq.filter(function (k) { return (f.by[k] || 0) < FORM_STAT_CAP; }).sort(function (a, b) { return (f.by[a] || 0) - (f.by[b] || 0) || seq.indexOf(a) - seq.indexOf(b); })[0];
+      if (!k) return;
+      f.by[k] = (f.by[k] || 0) + 1; f.n++; f.at = g.date; f.last = k;
+    });
+  });
+  return out;
+}
+/* Adds the form boosts to this window's cards, then makes sure no card's total goes down: if votes pull a stat down, the
+   same number of points goes onto the player's other stats (strongest first). That top-up is kept in the script property
+   card_guard and handed back as the votes recover, so ups and downs from single votes don't pile up. When the admin changes
+   a starting point the guard starts again for that player, so a deliberate change sticks. entry.up = what was added to each stat (form + top-up), entry.form = the form points. */
+function liftCards_(agg, boosts, win) {
+  let guard = {}; try { guard = JSON.parse(props_().getProperty('card_guard') || '{}'); } catch (_) {}
+  const gp = guard.p || {}, next = {};   // kept across rating windows too: a new window's empty votes don't drop anyone, and the top-up is handed back as votes come in
+  Object.keys(agg).forEach(function (n) {
+    const e = agg[n]; if (!e.stats) return;
+    const f = boosts[n], raw = {}; STATS.forEach(function (k) { raw[k] = Math.min(RMAX, e.stats[k] + (f ? f.by[k] || 0 : 0)); });
+    const h = (e.base ? STATS.map(function (k) { return e.base[k]; }).join('.') : '') + (e.fixed ? 'f' : '');   // the admin's starting point: change it and the card simply follows (no top-up)
+    const g = gp[n] && gp[n].h === h ? gp[n] : null, a = {}; STATS.forEach(function (k, i) { a[k] = g && g.a ? g.a[i] || 0 : 0; });
+    const fin = function () { const o = {}; STATS.forEach(function (k) { o[k] = Math.min(RMAX, raw[k] + a[k]); }); return o; };
+    const sum = function (o) { return STATS.reduce(function (t, k) { return t + o[k]; }, 0); };
+    let out = fin();
+    if (g && g.s) {
+      const last = {}; STATS.forEach(function (k, i) { last[k] = g.s[i]; });
+      let diff = sum(out) - sum(last);
+      if (diff < 0) {   // a stat went down: top up the ones that didn't, strongest first
+        const pick = STATS.filter(function (k) { return out[k] >= last[k]; }); const pool = (pick.length ? pick : STATS.slice()).sort(function (x, y) { return out[y] - out[x]; });
+        for (let i = 0, guardN = 0; diff < 0 && guardN < 60; guardN++) { const k = pool[i++ % pool.length]; if (raw[k] + a[k] < RMAX) { a[k]++; diff++; } }
+      } else if (diff > 0) {   // votes recovered: hand back earlier top-ups first (largest first), never below the last total
+        for (let guardN = 0; diff > 0 && guardN < 60; guardN++) { const k = STATS.filter(function (k) { return a[k] > 0; }).sort(function (x, y) { return a[y] - a[x]; })[0]; if (!k) break; a[k]--; diff--; }
+      }
+      out = fin();
+    }
+    const up = {}; STATS.forEach(function (k) { if (out[k] !== e.stats[k]) up[k] = out[k] - e.stats[k]; });
+    e.stats = out; if (Object.keys(up).length) e.up = up;
+    if (f) e.form = { n: f.n, at: f.at, last: f.last };
+    next[n] = { s: STATS.map(function (k) { return out[k]; }), a: STATS.map(function (k) { return a[k]; }), h: h };
+  });
+  const js = JSON.stringify({ w: win, p: next });
+  if (js !== props_().getProperty('card_guard')) props_().setProperty('card_guard', js);
 }
 
 /** A player's own view of themselves. Visible only to the admin (Settings → admin_name), as a starting point to adjust seeds. */
@@ -943,7 +1006,7 @@ function footVote_(body) {
    Timed ones are checked by pushTick (every 15 min trigger, and opportunistically when results are rebuilt); PushLog
    makes sure each is sent once. */
 const PUSH_URL = 'https://wednesday910.vercel.app/api/push';
-const PUSH_KINDS = ['promoted', 'gameday', 'rate', 'newgame', 'balance', 'topup', 'claims', 'latedrop', 'copy'];
+const PUSH_KINDS = ['promoted', 'gameday', 'rate', 'newgame', 'balance', 'topup', 'form', 'claims', 'latedrop', 'copy'];
 function pushSheet_() { const sh = sheet_('Push'); if (sh.getLastRow() === 0) sh.appendRow(['endpoint', 'name', 'p256dh', 'auth', 'prefs', 'created', 'ua']); return sh; }
 function pushRows_() { return ss_().getSheetByName('Push') ? tab_('Push').filter(function (r) { return r[0] && r[1]; }) : []; }
 function parsePrefs_(v) { try { const o = JSON.parse(String(v || '{}')); return o && typeof o === 'object' ? o : {}; } catch (_) { return {}; } }
@@ -1041,6 +1104,7 @@ function pushTick() {
     });
   });
   try { pushStrikes_(); } catch (e) { console.error('pushStrikes_ ' + e); }
+  try { pushForm_(); } catch (e) { console.error('pushForm_ ' + e); }
   const L = lastGame_();
   if (L) { const ko = kickoff_(L).getTime(), closes = closes_(L.date); if (now >= ko + 3600000 && now < closes) pushOnce_('rate|' + L.date, function () {
     pushSafe_(gameNames_(L), 'rate', 'Rate the game', 'How did everyone play? Pick your man of the match. Voting closes at 11am.', '/#home'); }); }
@@ -1127,6 +1191,13 @@ function addStrike_(body) {
   return { ok: true, strikes: strikesPublic_(), sync: sync };
 }
 /** Tell each player about a strike they haven't seen yet, once per strike (PushLog), also from pushTick as a catch-up. */
+/** Tells a player their card went up for form, once per game that earned it (only their latest point, so nobody gets a backlog). */
+function pushForm_() {
+  const b = formBoosts_(gamesPublic_(), players_()), subs = {}; pushRows_().forEach(function (r) { subs[String(r[1]).toLowerCase()] = 1; });
+  const NAMES = { PAC: 'pace', SHO: 'shooting', PAS: 'passing', DRI: 'dribbling', DEF: 'defending', PHY: 'physical' };
+  Object.keys(b).forEach(function (n) { const f = b[n]; if (!f.at || !subs[n.toLowerCase()]) return;
+    pushOnce_('form|' + n + '|' + f.at, function () { pushSafe_([n], 'form', 'Your card went up · +1 ' + f.last, 'Playing often and playing well: +1 ' + NAMES[f.last] + ' after ' + dayLabel_(f.at) + '. Keep it going.', '/#me'); }); });
+}
 function pushStrikes_() {
   if (!props_().getProperty('push_secret') || !ss_().getSheetByName('Strikes')) return;
   const all = strikesPublic_(), subs = {}; pushRows_().forEach(function (r) { subs[String(r[1]).toLowerCase()] = 1; });

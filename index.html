@@ -2628,7 +2628,7 @@ async function installApp() {
 }
 /* ── Push notifications: switched on per phone on the Me tab; the backend decides when, Vercel sends. ── */
 const VAPID_PUB = 'BNxrlDdeCF9eWPZCw6tX_SbL888RJFA53rLDGRLk_OF-Pn9bmwjd7qUNXWeOtkmEDVxpirHTM4hSzNU8IJh7Svo';
-const PUSH_LABELS = [['promoted', 'You move up from standby'], ['gameday', 'Game day, 2 hours before (your team and the gate code)'], ['rate', 'Rate the game after you play'], ['newgame', 'A new game opens for sign-ups'], ['topup', 'Money added to your balance'], ['balance', 'Your balance drops below zero']];
+const PUSH_LABELS = [['promoted', 'You move up from standby'], ['gameday', 'Game day, 2 hours before (your team and the gate code)'], ['rate', 'Rate the game after you play'], ['newgame', 'A new game opens for sign-ups'], ['topup', 'Money added to your balance'], ['form', 'Your card goes up for good form'], ['balance', 'Your balance drops below zero']];
 const PUSH_ADMIN = [['claims', 'New claims to approve'], ['latedrop', 'Someone drops out late'], ['copy', 'A copy of every notification that goes out']];
 const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 const b64u = s => { const p = '='.repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); };
@@ -2686,7 +2686,7 @@ function ratePop(me, r) {
   if (!me || !r || !r.stats || r.hidden || !RATINGS || !RATINGS.ok || document.getElementById('rp-overlay')) return;
   const key = 'w910_rs_' + me.name.toLowerCase(), now = STAT_KEYS.reduce((o, k) => (o[k] = r.stats[k], o), {});
   let was = null; try { was = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) {}
-  const save = () => { try { localStorage.setItem(key, JSON.stringify({ s: now, n: r.n || 0 })); } catch (_) {} };
+  const save = () => { try { localStorage.setItem(key, JSON.stringify({ s: now, n: r.n || 0, f: r.form ? r.form.n : 0 })); } catch (_) {} };
   if (!was || !was.s) return save();   // first look on this device: nothing to compare with yet
   const moved = STAT_KEYS.filter(k => was.s[k] != null && was.s[k] !== now[k]); if (!moved.length) return;
   const locked = selfLocked(me);
@@ -2701,6 +2701,7 @@ function ratePop(me, r) {
       ${locked ? `<p class="sk-body">Teammates' votes have changed your numbers. Rate <b>${need} more teammate${need === 1 ? '' : 's'}</b> to see them.</p>
         <button class="btn app-go" onclick="closeRatePop(); openBallot()">Rate teammates</button><button class="btn link app-later" onclick="closeRatePop()">Later</button>`
       : `<p class="sk-body">${nv ? `${nv} new teammate vote${nv === 1 ? '' : 's'} since you last looked.` : 'Your numbers changed since you last looked.'}</p>
+        ${r.form && r.form.n > (was.f || 0) ? `<p class="sk-body">📈 <b>+${r.form.n - (was.f || 0)} for form</b>: you've been playing often and playing well. Keep it going.</p>` : ''}
         <div class="rp-list">${STAT_KEYS.map(k => { const d = now[k] - (was.s[k] ?? now[k]); return `<div class="rp-row${d > 0 ? ' up' : d < 0 ? ' down' : ''}"><span class="label">${k}</span><b class="num">${now[k]}</b><small>${d > 0 ? '▲ ' + d : d < 0 ? '▼ ' + -d : '–'}</small></div>`; }).join('')}</div>
         <button class="btn app-go" onclick="closeRatePop(true)">Nice</button>`}</div>`;
     ov.onclick = e => { if (e.target === ov) closeRatePop(!locked); };
@@ -2713,11 +2714,16 @@ function closeRatePop(seen) { const ov = document.getElementById('rp-overlay'); 
 /* What's new: one pop-up per release, shown the next time each player opens the site (remembered on the device). To announce
    a new feature, add an entry at the top of WHATS_NEW with a new id; everyone sees it once. */
 const WHATS_NEW = [
+  { id: '2026-10-29-form', go: 'me', btn: 'See my card', where: 'Your card is on the Me tab. Turn on "Your card goes up" in notifications to hear about it.', title: 'Your card grows with form', items: [
+    ['📈', 'Play often, play well', () => { const f = myForm(); return `Average 7.5+ in match ratings over 3 of the last 4 games and you get <b>+1 on a stat</b> after each one.${f ? ` You've earned <b>+${f.n}</b> so far.` : ''}`; }],
+    ['⭐', 'Man of the match', () => '+1 too, as long as you played 2 of the last 4 games.'],
+    ['🛡️', 'No going backwards', () => "If votes pull one stat down, another goes up by the same. Your card's total never drops."] ] },
   { id: '2026-10-28-inform', go: 'week', title: 'Meet the in-form team', items: [
     ['🔥', 'In-form team', d => d ? `The six with the best match ratings over the last ${d.games.length} games, on a pitch. Captain right now: <b>${esc(d.captain)}</b>.` : 'The six with the best match ratings over the last 4 games, on a pitch.'],
     ['📈', 'Knocking on the door', d => d && d.next[0] ? `Who's next in line. Closest right now: <b>${esc(d.next[0].n)}</b>.` : "Who's next in line for a spot."],
     ['📊', 'Everyone\'s match ratings', () => 'Open any game to see how all 12 were rated. Tap a player for their card.'] ] },
 ];
+const myForm = () => { const n = VOTER && VOTER.name, r = n && RATINGS && RATINGS.ok && RATINGS.players[n]; return r && r.form && r.form.n ? r.form : null; };
 function whatsNewPop() {
   const w = WHATS_NEW[0]; if (!w || !TOKEN || !VOTER || !VOTER.ok || VOTER.pending || document.getElementById('wn-overlay')) return;
   try { if (localStorage.getItem('w910_new') === w.id) return; } catch (_) { return; }
@@ -2729,8 +2735,8 @@ function whatsNewPop() {
     const ov = document.createElement('div'); ov.className = 'overlay open'; ov.id = 'wn-overlay'; ov.onclick = e => { if (e.target === ov) closeWhatsNew(); };
     ov.innerHTML = `<div class="sheet app-sheet app-pop wn-pop"><div class="label" style="color:var(--gold)">New on the site</div><div class="pp-title">${w.title}</div>
       <div class="wn-list">${w.items.map(([ic, t, txt]) => `<div class="wn-i"><span class="wn-ic">${ic}</span><span><b>${t}</b><small>${txt(d)}</small></span></div>`).join('')}</div>
-      <button class="btn app-go" onclick="closeWhatsNew(); showTab('${w.go}')">Take a look</button><button class="btn link app-later" onclick="closeWhatsNew()">Later</button>
-      <p class="wn-where">It lives in History → In form, and at the bottom of Home.</p></div>`;
+      <button class="btn app-go" onclick="closeWhatsNew(); showTab('${w.go}')">${w.btn || 'Take a look'}</button><button class="btn link app-later" onclick="closeWhatsNew()">Later</button>
+      <p class="wn-where">${w.where || 'It lives in History → In form, and at the bottom of Home.'}</p></div>`;
     document.body.appendChild(ov); document.body.style.overflow = 'hidden';
   };
   setTimeout(go, 1500);
@@ -2994,11 +3000,13 @@ function renderSeedEditor(a) {
    starting point is edited, using the same blend as the backend. */
 function predictCard(name, seed, a) {
   const g = a.agg && a.agg[name], W = (RATINGS && RATINGS.priorWeight) || 3, out = {};
-  if (g && g.fixed) { STAT_KEYS.forEach(k => out[k] = Number(seed[k])); return out; }   // fixed card: shows the starting point as entered
+  const up = (RATINGS && RATINGS.ok && RATINGS.players[name] && RATINGS.players[name].up) || {}, lift = (k, v) => v == null ? v : Math.min(99, v + (up[k] || 0));   // form boosts and the no-drop top-up, as on the card
+  if (g && g.fixed) { STAT_KEYS.forEach(k => out[k] = lift(k, Number(seed[k]))); return out; }   // fixed card: shows the starting point as entered
   STAT_KEYS.forEach(k => {
     const has = g && g.vote && g.vw && g.vw[k] > 0;
     if (seed) out[k] = has ? Math.max(40, Math.min(99, Math.round((g.vote[k] * g.vw[k] + W * seed[k]) / (g.vw[k] + W)))) : seed[k];
     else out[k] = has && g.n >= 3 ? Math.max(40, Math.min(99, Math.round(g.vote[k]))) : null;
+    out[k] = lift(k, out[k]);
   });
   return out;
 }
