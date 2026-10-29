@@ -86,8 +86,8 @@
   /* Opening screen: the crest draws itself and breathes until the sheet, the ratings and your card are in. */
   #splash { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; transition: opacity .45s ease, visibility .45s; }
   #splash.out { opacity: 0; visibility: hidden; pointer-events: none; }
-  #splash svg { width: 128px; height: 148px; overflow: visible; animation: spBreathe 2.4s ease-in-out 1.6s infinite; filter: drop-shadow(0 0 18px rgba(227,192,98,.18)); }
-  #splash .sp-crest { fill: none; stroke: var(--gold); stroke-width: 3; stroke-linejoin: round; stroke-dasharray: 520; stroke-dashoffset: 520; animation: spDraw 1.3s cubic-bezier(.6,0,.3,1) .1s forwards; }
+  #splash svg { width: 140px; height: 161px; overflow: visible; animation: spBreathe 2.4s ease-in-out 1.6s infinite; filter: drop-shadow(0 0 18px rgba(227,192,98,.18)); }
+  #splash .sp-crest { fill: none; stroke: var(--gold); stroke-width: 3; stroke-linejoin: round; stroke-dasharray: 560; stroke-dashoffset: 560; animation: spDraw 1.3s cubic-bezier(.6,0,.3,1) .1s forwards; }
   #splash .sp-in { fill: none; stroke: var(--gold); stroke-width: 1; opacity: 0; animation: spFade .6s ease 1s forwards; }
   #splash .sp-num { fill: var(--gold); font: 800 46px/1 var(--font); letter-spacing: -1px; opacity: 0; animation: spRise .6s cubic-bezier(.2,.8,.2,1) .7s forwards; }
   #splash .sp-wed { fill: var(--gold); font: 700 11px/1 var(--font); letter-spacing: .3em; opacity: 0; animation: spFade .5s ease 1.1s forwards; }
@@ -1116,7 +1116,7 @@
   <path class="sp-star" d="M80 38l2.4 5.2 5.6.6-4.2 3.8 1.2 5.6L80 50.4l-5 2.8 1.2-5.6-4.2-3.8 5.6-.6z"/>
   <text class="sp-num" x="80" y="104" text-anchor="middle">9–10</text>
   <text class="sp-wed" x="83" y="132" text-anchor="middle">WED</text>
-  <rect class="sp-shine" x="0" y="0" width="60" height="184" clip-path="url(#spClip)"/>
+  <g clip-path="url(#spClip)"><rect class="sp-shine" x="50" y="0" width="60" height="184"/></g>
 </svg><div class="sp-dots"><i></i><i></i><i></i></div></div>
 <script>
 /* The opening screen stays until the page has what it needs (sheet, ratings, your card), at least ~1.4 s so the crest
