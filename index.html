@@ -3271,6 +3271,7 @@ const plxWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLoc
 function renderLift() {
   const el = document.getElementById('lift-body'), a = window.__ADMIN; if (!el || !a) return;
   if (!a.rises) { el.innerHTML = '<div class="empty">Needs the latest backend.</div>'; return; }
+  if (a.rises.pending) { el.innerHTML = '<div class="empty">Working out when each card last went up. Check back in a few minutes.</div>'; return; }
   const DAY = 86400000, now = Date.now(), cut = now - 14 * DAY, last = a.rises.last || {};
   const days = iso => Math.floor((now - new Date(iso + 'T12:00:00+03:00')) / DAY);
   const rows = ALL_PLAYERS.map(p => { const r = RATINGS && RATINGS.ok && RATINGS.players[p.name]; if (!r || !r.stats || r.hidden) return null;

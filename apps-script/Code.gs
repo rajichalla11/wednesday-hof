@@ -554,7 +554,7 @@ function tweak_(body) {
     for (let i = 1; i < data.length; i++) if (String(data[i][0]) === name) { at = i + 1; break; }
     const raised = row.reduce(function (t, v) { return t + v; }, 0) > STATS.reduce(function (t, k) { return t + (old[k] || 0); }, 0), when = raised ? "'" + new Date().toISOString() : (at > 0 ? data[at - 1][STATS.length + 1] : '');
     if (at > 0) sh.getRange(at, 2, 1, STATS.length + 1).setValues([row.concat([when])]); else sh.appendRow([name].concat(row, [when]));
-    bust_('Tweaks'); cache_().remove('results'); cache_().remove('card_rises');
+    bust_('Tweaks'); cache_().remove('results'); cache_().remove('card_rises_fresh');
     const res = buildResults_(), p = res.players[name];
     return { ok: true, stats: p && p.stats, tweak: tweaks_()[name] || null, results: res };
   } finally { lock.releaseLock(); }
@@ -562,10 +562,10 @@ function tweak_(body) {
 
 /* When each card last went up: the card totals are worked out again for every day of the last RISE_DAYS (votes as they
    stood that day, by their 'updated' time; starting points; form as it was), plus the days the admin raised a card by hand.
-   Admin only, cached for an hour. { since: first day looked at, last: { name: 'yyyy-mm-dd' } } (no entry = no rise seen). */
+   Admin only; worked out by the 15-min pushTick trigger every ~45 min and kept 6 h, so the admin tab never waits for it. { since: first day looked at, last: { name: 'yyyy-mm-dd' } } (no entry = no rise seen). */
 const RISE_DAYS = 60;
 function cardRises_() {
-  const c = cache_(), hit = c.get('card_rises'); if (hit) return JSON.parse(hit);
+  const c = cache_();
   const win = props_().getProperty('window'), votes = tab_('Votes').filter(function (r) { return r[0] === win; }), seeds = seeds_(), games = gamesPublic_(), players = players_();
   const day = function (t) { return Utilities.formatDate(new Date(t), 'Africa/Nairobi', 'yyyy-MM-dd'); }, last = {}, prev = {};
   const start = Date.now() - RISE_DAYS * 86400000;
@@ -577,7 +577,7 @@ function cardRises_() {
       if (n in prev && tot > prev[n]) last[n] = day(at); prev[n] = tot; });
   }
   if (ss_().getSheetByName('Tweaks')) tab_('Tweaks').forEach(function (r) { const w = String(r[STATS.length + 1] || '').replace(/^'/, ''); if (!w) return; const d = day(w); if (!last[r[0]] || last[r[0]] < d) last[r[0]] = d; });
-  const out = { since: day(start), last: last }; c.put('card_rises', JSON.stringify(out), 3600); return out;
+  const out = { since: day(start), last: last, at: new Date().toISOString() }; c.put('card_rises', JSON.stringify(out), 21600); c.put('card_rises_fresh', '1', 2700); return out;
 }
 
 /** A player's own view of themselves. Visible only to the admin (Settings → admin_name), as a starting point to adjust seeds. */
@@ -613,7 +613,7 @@ function admin_(token) {
   const now = Date.now(), motmGames = ss_().getSheetByName('Games') ? tab_('Games').map(function (r) { return String(r[0]).slice(0, 10); }).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) && kickoff_({ date: d, time: '00:00' }).getTime() <= now; })
     .sort().reverse().slice(0, 6).map(function (d) { const r = tab_('Games').filter(function (x) { return String(x[0]).slice(0, 10) === d; })[0], split = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
       return { date: d, players: split(r[1]).concat(split(r[2]), split(r[6])), score: r[3] === '' || r[4] === '' ? null : { black: Number(r[3]), white: Number(r[4]) }, votes: motmVotes_(d), auto: motmAuto_(d), override: motmOverride_(d) }; }) : [];
-  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed, motmGames: motmGames, topups: topupsAll_(), rises: cardRises_(),
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed, motmGames: motmGames, topups: topupsAll_(), rises: (function () { const h = cache_().get('card_rises'); return h ? JSON.parse(h) : { pending: true }; })(),
     pushPeople: pushRows_().reduce(function (o, r) { const n = String(r[1]); o[n] = (o[n] || 0) + 1; return o; }, {}) };
 }
 
@@ -1154,7 +1154,8 @@ function notifyPromoted_(date, before) {
   if (up.length) pushSafe_(up, 'promoted', "You're in for " + dayLabel_(date), 'Someone dropped out, so you moved up from standby. Kick-off ' + koLabel_(g) + '.', '/#home');
 }
 /** Timed notifications: game day (2 h before), rate the game (after), balance below zero (daytime only). */
-function pushTick() {
+function pushTick(e) {
+  if (e) try { if (!cache_().get('card_rises_fresh')) cardRises_(); } catch (err) { console.error('cardRises_ ' + err); }   // the 15-min trigger only (it passes an event): slow, so never inside a player's request
   if (!props_().getProperty('push_secret') || !pushRows_().length) return;
   const now = Date.now(), today = Utilities.formatDate(new Date(), 'Africa/Nairobi', 'yyyy-MM-dd'), hour = Number(Utilities.formatDate(new Date(), 'Africa/Nairobi', 'H'));
   allGames_().forEach(function (g) {
