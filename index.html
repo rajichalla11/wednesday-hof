@@ -2911,9 +2911,14 @@ function splashFor() {
       else if (inList) picks.push([1, `${ko} · <b>You're in</b>`, 'gd|' + fx.date]);
       else picks.push([5, left ? `${ko} · <b>${left} spot${left === 1 ? '' : 's'} left</b>` : `${ko} · Full`, '']); }
     const L = (R.games || []).filter(g => g.b != null && g.w != null && koOf(g) < now && now - koOf(g) < 40 * 3600000).sort((a, b) => b.date.localeCompare(a.date))[0];
-    if (L) { const played = me && (has(L.black, me.name) || has(L.white, me.name) || has(L.list, me.name)), motm = (L.motm || [])[0];
-      const line = me && has(L.motm, me.name) ? `${L.b}–${L.w} · <b>You were man of the match</b>` : `${L.b}–${L.w}${motm ? ` · Man of the match: <b>${esc(motm)}</b>` : ''}`;
-      picks.push([played ? 2 : 6, line, played ? 'ag|' + L.date : '']); }
+    if (L && me) { const side = has(L.black, me.name) ? 'b' : has(L.white, me.name) ? 'w' : '';   // only for people who played, from their side
+      if (side) { const us = side === 'b' ? L.b : L.w, them = side === 'b' ? L.w : L.b;
+        const line = has(L.motm, me.name) ? `${us}–${them} · <b>You were man of the match</b>` : us > them ? `<b>You won ${us}–${them}</b>` : us < them ? `Lost ${us}–${them} · <b>next one's yours</b>` : `<b>Drew ${us}–${them}</b>`;
+        picks.push([2, line, 'ag|' + L.date]); } }
+    const nx = (R.fixtures || []).find(f => f.date > today);
+    if (nx) { const day = new Date(nx.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }), left = Math.max(0, (nx.slots || 12) - (nx.signups || []).length);
+      const mine = me && has((nx.signups || []).slice(0, nx.slots).map(x => x.name), me.name);
+      picks.push([7, mine ? `${day} ${hr(nx.time)} · <b>You're in</b>` : left ? `${day} ${hr(nx.time)} · <b>${left} spot${left === 1 ? '' : 's'} left</b>` : `${day} ${hr(nx.time)} · Full`, '']); }
     const f = me && R.players && R.players[me.name] && R.players[me.name].form;
     if (f && f.n) picks.push([3, `<b>+${f.n} form boost</b> · keep it going`, `fm|${f.at}|${f.n}`]);
     if (me && ((me.count + 1) % 50 === 0) && (R.fixtures || []).some(x => has((x.signups || []).map(s => s.name), me.name))) picks.push([4, `Your <b>${ordinal(me.count + 1)} game</b> is next`, 'ms|' + (me.count + 1)]);
