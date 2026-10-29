@@ -2716,8 +2716,7 @@ function closeRatePop(seen) { const ov = document.getElementById('rp-overlay'); 
 const WHATS_NEW = [
   { id: '2026-10-29-form', go: 'me', btn: 'See my card', where: 'Your card is on the Me tab. Turn on "Your card goes up" in notifications to hear about it.', title: 'Your card grows with form', items: [
     ['📈', 'Play often, play well', () => { const f = myForm(); return `Average 7.5+ in match ratings over 3 of the last 4 games and you get <b>+1 on a stat</b> after each one.${f ? ` You've earned <b>+${f.n}</b> so far.` : ''}`; }],
-    ['⭐', 'Man of the match', () => '+1 too, as long as you played 2 of the last 4 games.'],
-    ['🛡️', 'No going backwards', () => "If votes pull one stat down, another goes up by the same. Your card's total never drops."] ] },
+    ['⭐', 'Man of the match', () => '+1 too, as long as you played 2 of the last 4 games.'] ] },
   { id: '2026-10-28-inform', go: 'week', title: 'Meet the in-form team', items: [
     ['🔥', 'In-form team', d => d ? `The six with the best match ratings over the last ${d.games.length} games, on a pitch. Captain right now: <b>${esc(d.captain)}</b>.` : 'The six with the best match ratings over the last 4 games, on a pitch.'],
     ['📈', 'Knocking on the door', d => d && d.next[0] ? `Who's next in line. Closest right now: <b>${esc(d.next[0].n)}</b>.` : "Who's next in line for a spot."],
