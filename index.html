@@ -83,6 +83,25 @@
   .btn.ghost:hover { color: var(--fg); border-color: var(--fg-3); }
   .btn.link { background: none; color: var(--fg-3); padding: 0; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
   .empty { padding: 28px 16px; border: 1px dashed var(--line-2); border-radius: 8px; color: var(--fg-2); font-size: 13px; text-align: center; }
+  /* Opening screen: the crest draws itself and breathes until the sheet, the ratings and your card are in. */
+  #splash { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; transition: opacity .45s ease, visibility .45s; }
+  #splash.out { opacity: 0; visibility: hidden; pointer-events: none; }
+  #splash svg { width: 128px; height: 148px; overflow: visible; animation: spBreathe 2.4s ease-in-out 1.6s infinite; filter: drop-shadow(0 0 18px rgba(227,192,98,.18)); }
+  #splash .sp-crest { fill: none; stroke: var(--gold); stroke-width: 3; stroke-linejoin: round; stroke-dasharray: 520; stroke-dashoffset: 520; animation: spDraw 1.3s cubic-bezier(.6,0,.3,1) .1s forwards; }
+  #splash .sp-in { fill: none; stroke: var(--gold); stroke-width: 1; opacity: 0; animation: spFade .6s ease 1s forwards; }
+  #splash .sp-num { fill: var(--gold); font: 800 46px/1 var(--font); letter-spacing: -1px; opacity: 0; animation: spRise .6s cubic-bezier(.2,.8,.2,1) .7s forwards; }
+  #splash .sp-wed { fill: var(--gold); font: 700 11px/1 var(--font); letter-spacing: .3em; opacity: 0; animation: spFade .5s ease 1.1s forwards; }
+  #splash .sp-star { fill: var(--gold); transform-origin: 80px 46px; transform: scale(0); animation: spPop .5s cubic-bezier(.3,1.6,.5,1) 1.2s forwards; }
+  #splash .sp-shine { fill: url(#spShine); opacity: 0; animation: spShine 2.4s ease-in-out 1.6s infinite; }
+  #splash .sp-dots { display: flex; gap: 6px; opacity: 0; animation: spFade .4s ease 1.4s forwards; }
+  #splash .sp-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: .25; animation: spDot 1.2s ease-in-out infinite; }
+  #splash .sp-dots i:nth-child(2) { animation-delay: .2s; } #splash .sp-dots i:nth-child(3) { animation-delay: .4s; }
+  @keyframes spDraw { to { stroke-dashoffset: 0; } } @keyframes spFade { to { opacity: 1; } }
+  @keyframes spRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes spPop { to { transform: scale(1); } } @keyframes spBreathe { 50% { transform: scale(1.04); } }
+  @keyframes spShine { 0% { opacity: 0; transform: translateX(-120px); } 40% { opacity: .9; } 70%, 100% { opacity: 0; transform: translateX(120px); } }
+  @keyframes spDot { 50% { opacity: 1; transform: translateY(-3px); } }
+  @media (prefers-reduced-motion: reduce) { #splash * { animation-duration: .01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; } }
   .loading { padding: 32px 0; color: var(--fg-3); font-size: 12.5px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .loading::before { content: ''; width: 14px; height: 14px; flex: none; border-radius: 50%; border: 2px solid var(--line-2); border-top-color: var(--gold); animation: spin .8s linear infinite; }
   .loading::after { content: 'This can take a few seconds'; flex-basis: 100%; padding-left: 24px; font-size: 11.5px; color: var(--fg-3); opacity: 0; animation: slowNote .4s ease 3s forwards; }
@@ -1089,6 +1108,24 @@
 </style>
 </head>
 <body>
+<div id="splash" aria-label="Loading"><svg viewBox="0 0 160 184" aria-hidden="true">
+  <defs><linearGradient id="spShine" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <clipPath id="spClip"><path d="M14 10 H146 V128 L80 174 L14 128 Z"/></clipPath></defs>
+  <path class="sp-crest" d="M14 10 H146 V128 L80 174 L14 128 Z"/>
+  <path class="sp-in" d="M22 18 H138 V124 L80 164 L22 124 Z"/>
+  <path class="sp-star" d="M80 38l2.4 5.2 5.6.6-4.2 3.8 1.2 5.6L80 50.4l-5 2.8 1.2-5.6-4.2-3.8 5.6-.6z"/>
+  <text class="sp-num" x="80" y="104" text-anchor="middle">9–10</text>
+  <text class="sp-wed" x="83" y="132" text-anchor="middle">WED</text>
+  <rect class="sp-shine" x="0" y="0" width="60" height="184" clip-path="url(#spClip)"/>
+</svg><div class="sp-dots"><i></i><i></i><i></i></div></div>
+<script>
+/* The opening screen stays until the page has what it needs (sheet, ratings, your card), at least ~1.4 s so the crest
+   finishes drawing, and never more than 12 s. */
+(function () { const t0 = Date.now(); let done = false;
+  window.splashDone = function () { if (done) return; done = true; const el = document.getElementById('splash'); if (!el) return;
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 600); }, Math.max(0, 1400 - (Date.now() - t0))); };
+  setTimeout(window.splashDone, 12000); })();
+</script>
 <div class="wrap">
   <nav class="top">
     <div class="wordmark">Wednesday 9–10<span>Hall of Fame</span></div>
@@ -1445,7 +1482,12 @@ function build(text) {
     render();
 }
 /* Paint straight away from the last copy of the sheet on this device, then fetch the live sheet and repaint only if it changed. */
+let SHEET_READY; const SHEET_DONE = new Promise(r => SHEET_READY = r);
 async function load() {
+  Promise.all([SHEET_DONE, VOTE_API ? fetchResults() : null, VOTE_API && TOKEN ? fetchMe() : null]).catch(() => {}).then(() => requestAnimationFrame(() => setTimeout(window.splashDone, 60)));
+  try { await loadSheet(); } finally { SHEET_READY(); }
+}
+async function loadSheet() {
   let cached = null; try { cached = localStorage.getItem('w910_csv'); } catch (_) {}
   if (cached) { try { build(cached); } catch (e) { console.error(e); cached = null; } }
   if (!cached) netStart();   // first visit: show the loading bar while the sheet comes in
