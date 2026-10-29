@@ -111,13 +111,13 @@
   #splash .sp-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: .25; animation: spDot 1.2s ease-in-out infinite; }
   #splash .sp-dots i:nth-child(2) { animation-delay: .2s; } #splash .sp-dots i:nth-child(3) { animation-delay: .4s; }
   /* big: the crest bursts, a flare rings out and the card is dealt in */
-  #splash .sp-card { position: absolute; width: min(220px, 60vw); left: 50%; top: 50%; transform: translate(-50%, -50%); perspective: 900px; pointer-events: none; display: none; }
+  #splash .sp-card { position: relative; width: min(240px, 62vw); perspective: 900px; pointer-events: none; display: none; }
   #splash .sp-card > div { opacity: 0; transform-origin: 50% 60%; }
   #splash .sp-card .card { cursor: default; box-shadow: 0 30px 60px -20px rgba(0,0,0,.9), 0 0 50px -10px rgba(227,192,98,.35); }
   #splash .sp-flare { position: absolute; left: 50%; top: 50%; width: 260px; height: 260px; margin: -130px 0 0 -130px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,240,200,.55), rgba(227,192,98,.25) 40%, transparent 70%); opacity: 0; transform: scale(.2); pointer-events: none; }
   #splash .sp-ring { position: absolute; left: 50%; top: 50%; width: 200px; height: 200px; margin: -100px 0 0 -100px; border-radius: 50%; border: 2px solid var(--gold); opacity: 0; pointer-events: none; }
-  #splash.sp-big .sp-stage { width: min(220px, 60vw); height: calc(min(220px, 60vw) * 1.42); }
-  #splash.sp-big .sp-crestwrap { width: 150px; height: 172px; inset: auto; animation: spLand .7s cubic-bezier(.2,1.35,.35,1) .08s both, spBurst .42s cubic-bezier(.5,0,.9,.4) 1.05s forwards; }
+  #splash.sp-big .sp-stage { width: auto; height: auto; min-width: 150px; min-height: 172px; }
+  #splash.sp-big .sp-crestwrap { width: 150px; height: 172px; inset: auto; left: 50%; top: 50%; margin: -86px 0 0 -75px; z-index: 2; animation: spLand .7s cubic-bezier(.2,1.35,.35,1) .08s both, spBurst .42s cubic-bezier(.5,0,.9,.4) 1.05s forwards; }
   #splash.sp-big .sp-card { display: block; }
   #splash.sp-big .sp-card > div { animation: spDeal .85s cubic-bezier(.16,1.25,.3,1) 1.3s forwards; }
   #splash.sp-big .sp-flare { animation: spFlare 1s cubic-bezier(.2,.8,.2,1) 1.25s forwards; }
