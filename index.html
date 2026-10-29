@@ -1090,8 +1090,8 @@
     nav.top { flex-direction: row; align-items: center; padding: 12px 0 10px; }
     /* the bar lives straight under <body> on phones (moved there by script): inside the sticky top bar, iPhone drops it while scrolling */
     body > .tabs { position: fixed; z-index: 60; left: 14px; right: 14px; bottom: calc(10px + env(safe-area-inset-bottom)); margin: 0 auto; max-width: 440px; padding: 5px; gap: 0; justify-content: space-between;
-      border-radius: 22px; background: rgba(16,16,18,.82); -webkit-backdrop-filter: blur(20px) saturate(150%); backdrop-filter: blur(20px) saturate(150%);
-      border: 1px solid rgba(255,255,255,.07); box-shadow: 0 12px 32px -8px rgba(0,0,0,.7); overflow: visible; transform: translateZ(0); -webkit-transform: translateZ(0); will-change: transform; }
+      border-radius: 22px; background: #141416; border: 1px solid rgba(255,255,255,.08); box-shadow: 0 12px 32px -8px rgba(0,0,0,.8), 0 -1px 0 rgba(0,0,0,.4); overflow: visible;
+      transform: translate3d(0, var(--vv-shift, 0px), 0); }   /* solid, no backdrop blur: iPhone clips blurred fixed bars when the scroll turns around */
     body > .tabs .tab { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px 7px; min-height: 0; font-size: 10px; font-weight: 600; letter-spacing: .02em; border-radius: 17px; color: var(--fg-3); background: none; transition: color .25s ease; }
     body > .tabs .tab svg { display: block; width: 21px; height: 21px; transition: transform .35s cubic-bezier(.3,1.6,.5,1); }
     body > .tabs .tab.active { color: var(--gold); background: none; }
@@ -4263,6 +4263,9 @@ function moveTabInd(jump) {
 }
 PHONE.addEventListener ? PHONE.addEventListener('change', placeTabs) : PHONE.addListener(placeTabs);
 addEventListener('resize', () => moveTabInd(true));
+/* Safari's toolbar sliding in and out changes the visible area before the page catches up; keep the bar glued to what you can see. */
+if (window.visualViewport) { const vv = visualViewport, glue = () => { const gap = Math.max(0, innerHeight - vv.height - vv.offsetTop); TABS_EL.style.setProperty('--vv-shift', gap > 1 && gap < 200 ? -gap + 'px' : '0px'); };
+  vv.addEventListener('resize', glue); vv.addEventListener('scroll', glue); }
 new MutationObserver(() => moveTabInd(false)).observe(TABS_EL, { subtree: true, attributes: true, attributeFilter: ['class', 'hidden'] });
 placeTabs();
 window.addEventListener('hashchange', () => { if (captureToken()) { if (ALL_PLAYERS.length) { PENDING_VOTE = false; VOTER = null; renderYou().then(() => showTab('home', false)); } return; } showTab(location.hash.slice(1) || 'home', false); });
