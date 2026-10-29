@@ -2922,6 +2922,9 @@ function splashFor() {
   else if (SESSIONS.length) picks.push([9, `<b>${ALL_PLAYERS.length}</b> players · <b>${SESSIONS.length}</b> sessions`, '']);
   picks.sort((a, b) => a[0] - b[0]);
   const fresh = picks.find(p => p[2] && !seen.includes(p[2])), line = (fresh || picks[0] || [0, ''])[1];
+  const demo = new URLSearchParams(location.search).get('splash');   // ?splash=quick|big|flash previews a version (nothing is marked as seen)
+  if (demo === 'flash' || demo === 'quick') return splashMode(demo, line);
+  if (demo === 'big') { const p = me || ALL_PLAYERS[0], r = p && R && R.players && R.players[p.name]; return p ? splashMode('big', (picks.find(x => x[2]) || picks[0] || [0, ''])[1], cardHtml(p, (r && r.stats) || null, { n: r ? r.n : 0 })) : splashMode('quick', line); }
   if (fresh && me && !selfLocked(me)) {
     try { localStorage.setItem('w910_sp', JSON.stringify(seen.concat(fresh[2]).slice(-40))); } catch (_) {}
     const r = R && R.players && R.players[me.name];
