@@ -277,6 +277,9 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 - Game-day push: when teams are in, Black and White each get their colour with the gate code.
 - Every push also sends the admin a `copy` ("Sent: …", who it reached). Kinds: + `topup`, `copy`.
 
+## v61 · When cards last went up
+`admin` returns `rises` ({since, last: {name: date}}) from `cardRises_`: card totals rebuilt for each of the last 60 days (votes by their `updated` time, starting points, form as of that day) plus admin tweaks that raised a card (Tweaks column H = when). Cached an hour. Feeds Admin → Players → Due a lift.
+
 ## v60 · Admin tweaks from the card
 Action `tweak` (admin): `{name, stats}` sets a card's numbers exactly; stored as offsets per stat in the Tweaks tab (name, PAC..PHY) and added last in `buildResults_` (`applyTweaks_`), so the card still moves with votes and form afterwards. `{name, reset: true}` removes it. Returns the rebuilt results. `me` returns `tweaks` to the admin only.
 

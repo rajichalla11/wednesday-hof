@@ -83,6 +83,10 @@
   .btn.ghost:hover { color: var(--fg); border-color: var(--fg-3); }
   .btn.link { background: none; color: var(--fg-3); padding: 0; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
   .empty { padding: 28px 16px; border: 1px dashed var(--line-2); border-radius: 8px; color: var(--fg-2); font-size: 13px; text-align: center; }
+  .lift-list { display: grid; gap: 6px; }
+  .lift-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 8px 12px 8px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--fg); font: inherit; cursor: pointer; }
+  .lift-row:hover { border-color: var(--line-2); } .lift-ph { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); font-size: 13px; } .lift-ph img { width: 100%; height: 100%; object-fit: cover; }
+  .lift-n b { display: block; font-size: 14px; } .lift-n small { color: var(--fg-3); font-size: 11.5px; } .lift-d { font-size: 12px; color: var(--gold); text-align: right; }
   /* admin: set a card's numbers from the card */
   .tw-view { display: grid; grid-template-columns: minmax(0, 240px) 1fr; gap: 22px; align-items: start; padding-top: 6px; }
   .tw-card { max-width: 240px; margin: 0 auto; width: 100%; } .tw-card .card { cursor: default; }
@@ -2549,12 +2553,13 @@ async function renderYou() {
     <section><div class="sh"><h2>Who's been on</h2><span>Most recent first · one entry per visit</span></div><div id="seen-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Site activity</h2><span>One count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Who voted what</h2><span>Votes from 14 Oct on</span></div><div id="named-body"><div class="loading">Loading…</div></div></section>
+    <section><div class="sh"><h2>Due a lift</h2><span>Played 2+ games in the last 2 weeks, card hasn't gone up in 2 weeks · tap to open the card, then ✎</span></div><div id="lift-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Players</h2><span>Tap a player for everything they've done</span></div><div id="plx-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Claims waiting <span id="pending-n" class="muted"></span></h2><span>Approve so they can rate, see their balance and add a photo</span></div><div id="pending-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Starting points</h2><span>The suggested level voters see · saves as you type</span></div><div id="seed-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Self-ratings</h2><span>How players rated themselves</span></div><div id="admin-body"><div class="loading">Loading…</div></div></section>` : ''}`;
   const aw = document.getElementById('admin-wrap');   // the admin's panels live on their own tab so Home stays short
-  if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'plx-body', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'bc-body', 'seen-body', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
+  if (aw) { aw.innerHTML = v.isAdmin ? adminShellHtml() : ''; if (v.isAdmin) { const ORDER = ['ga-teams', 'games-admin', 'motm-admin', 'lift-body', 'plx-body', 'pending-body', 'strikes-admin', 'seed-body', 'admin-body', 'topups-admin', 'bc-body', 'seen-body', 'activity-body', 'named-body'], rank = sec => { const i = ORDER.findIndex(id => sec.querySelector('#' + id)); return i < 0 ? 99 : i; };
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         const fk = ['seed-body', 'admin-body', 'named-body', 'games-admin'].find(id => sec.querySelector('#' + id));
         if (fk) { sec.classList.add('adm-fold'); if (!ADM_UNFOLD.has(fk)) sec.classList.add('folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => { sec.classList.toggle('folded'); ADM_UNFOLD[sec.classList.contains('folded') ? 'delete' : 'add'](fk); }; } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
@@ -3261,6 +3266,22 @@ let ADMIN_AT = 0;
 let PLX_F = 'all', PLX_Q = '';
 const plxAgo = iso => { if (!iso) return ''; const d = (Date.now() - new Date(iso)) / 60000; return d < 1 ? 'just now' : d < 60 ? `${Math.round(d)} min ago` : d < 1440 ? `${Math.round(d / 60)} h ago` : d < 2880 ? 'yesterday' : `${Math.round(d / 1440)} days ago`; };
 const plxWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-GB', { timeZone: NBO, weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); };
+/* Due a lift: regulars (2+ games in the last 14 days) whose card total hasn't gone up for 14 days or more. When each card
+   last rose comes from the backend (a.rises: worked out day by day over the last 60 days, plus the admin's own raises). */
+function renderLift() {
+  const el = document.getElementById('lift-body'), a = window.__ADMIN; if (!el || !a) return;
+  if (!a.rises) { el.innerHTML = '<div class="empty">Needs the latest backend.</div>'; return; }
+  const DAY = 86400000, now = Date.now(), cut = now - 14 * DAY, last = a.rises.last || {};
+  const days = iso => Math.floor((now - new Date(iso + 'T12:00:00+03:00')) / DAY);
+  const rows = ALL_PLAYERS.map(p => { const r = RATINGS && RATINGS.ok && RATINGS.players[p.name]; if (!r || !r.stats || r.hidden) return null;
+      const n = SESSIONS.reduce((t, s, i) => t + (s.date && s.date.getTime() >= cut && p.attendance[i] ? 1 : 0), 0); if (n < 2) return null;
+      const lr = last[p.name], ago = lr ? days(lr) : null; if (ago !== null && ago < 14) return null;
+      return { p, n, ago, ovr: Math.round(STAT_KEYS.reduce((t, k) => t + r.stats[k], 0) / 6) }; }).filter(Boolean)
+    .sort((x, y) => (y.ago === null ? 1e9 : y.ago) - (x.ago === null ? 1e9 : x.ago) || y.n - x.n);
+  el.innerHTML = rows.length ? `<div class="lift-list">${rows.map(x => `<button class="lift-row" onclick="openProfile(ALL_PLAYERS[${ALL_PLAYERS.indexOf(x.p)}])">${photo(x.p, 'lift-ph')}<span class="lift-n"><b>${esc(x.p.name)}</b><small>${x.n} games in 2 weeks · average ${x.ovr}</small></span><span class="lift-d">${x.ago === null ? `No rise since ${fmtDayShort(a.rises.since)}` : `Last rise ${x.ago} days ago`}</span></button>`).join('')}</div>`
+    : '<div class="empty">Everyone who has played twice in the last two weeks has gone up recently.</div>';
+}
+const fmtDayShort = iso => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 function renderPlx() {
   const el = document.getElementById('plx-body'), a = window.__ADMIN; if (!el || !a) return;
   const seen = {}; ((a.activity && a.activity.names) || []).forEach(n => seen[n.name.toLowerCase()] = n);
@@ -3548,7 +3569,7 @@ async function renderAdmin(me) {
     return;
   }
   window.__ADMIN = a;
-  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin, renderTopupsAdmin, renderAdminTodo, renderSeen, renderBroadcast, renderPlx].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
+  [() => renderSeedEditor(a), renderNamed, renderMotmAdmin, renderGamesAdmin, renderTopupsAdmin, renderAdminTodo, renderSeen, renderBroadcast, renderPlx, renderLift].forEach(f => { try { f(); } catch (e) { console.error(e); } });   // one panel failing must not blank the others
   const ab = document.getElementById('activity-body');
   if (ab) { const x = a.activity; if (!x) ab.innerHTML = `<div class="empty">No visits recorded yet.</div>`; else {
     const seenNames = new Set(x.names.map(n => n.name.toLowerCase()));

@@ -464,8 +464,8 @@ function aggregate_(rows, seeds) {
    playing or playing well and it wears off as those games drop out of the span, so nobody drifts towards 99. */
 const FORM_AVG = 7.5, FORM_CAP = 3, FORM_SPAN = 8;
 const FORM_ORDER = { attack: ['SHO', 'PAC', 'DRI'], midfield: ['PAS', 'DRI', 'PHY'], defense: ['DEF', 'PHY', 'PAS'], other: ['PAS', 'PHY', 'DRI'] };
-function formBoosts_(games, players) {
-  const now = Date.now(), pos = {}; (players || []).forEach(function (p) { pos[p.name] = posClass_(p.position); });
+function formBoosts_(games, players, at) {
+  const now = at || Date.now(), pos = {}; (players || []).forEach(function (p) { pos[p.name] = posClass_(p.position); });
   const rated = games.filter(function (g) { return (g.raters || 0) >= 3 && now >= closes_(g.date); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
   const ok = function (g, n) { return g.ratings[n] && g.ratings[n].n >= 2; }, good = {};   // name → indexes of good games
   rated.forEach(function (g, i) {
@@ -552,11 +552,32 @@ function tweak_(body) {
     }
     const data = sh.getDataRange().getValues(); let at = -1;
     for (let i = 1; i < data.length; i++) if (String(data[i][0]) === name) { at = i + 1; break; }
-    if (at > 0) sh.getRange(at, 2, 1, STATS.length).setValues([row]); else sh.appendRow([name].concat(row));
-    bust_('Tweaks'); cache_().remove('results');
+    const raised = row.reduce(function (t, v) { return t + v; }, 0) > STATS.reduce(function (t, k) { return t + (old[k] || 0); }, 0), when = raised ? "'" + new Date().toISOString() : (at > 0 ? data[at - 1][STATS.length + 1] : '');
+    if (at > 0) sh.getRange(at, 2, 1, STATS.length + 1).setValues([row.concat([when])]); else sh.appendRow([name].concat(row, [when]));
+    bust_('Tweaks'); cache_().remove('results'); cache_().remove('card_rises');
     const res = buildResults_(), p = res.players[name];
     return { ok: true, stats: p && p.stats, tweak: tweaks_()[name] || null, results: res };
   } finally { lock.releaseLock(); }
+}
+
+/* When each card last went up: the card totals are worked out again for every day of the last RISE_DAYS (votes as they
+   stood that day, by their 'updated' time; starting points; form as it was), plus the days the admin raised a card by hand.
+   Admin only, cached for an hour. { since: first day looked at, last: { name: 'yyyy-mm-dd' } } (no entry = no rise seen). */
+const RISE_DAYS = 60;
+function cardRises_() {
+  const c = cache_(), hit = c.get('card_rises'); if (hit) return JSON.parse(hit);
+  const win = props_().getProperty('window'), votes = tab_('Votes').filter(function (r) { return r[0] === win; }), seeds = seeds_(), games = gamesPublic_(), players = players_();
+  const day = function (t) { return Utilities.formatDate(new Date(t), 'Africa/Nairobi', 'yyyy-MM-dd'); }, last = {}, prev = {};
+  const start = Date.now() - RISE_DAYS * 86400000;
+  for (let d = 0; d <= RISE_DAYS; d++) {
+    const at = start + d * 86400000, rows = votes.filter(function (r) { const u = new Date(r[4 + STATS.length + 1]).getTime(); return !u || u <= at; });
+    const agg = aggregate_(rows, seeds), fb = formBoosts_(games, players, at);
+    Object.keys(agg).forEach(function (n) { const e = agg[n]; if (!e.stats) return;
+      const tot = STATS.reduce(function (t, k) { return t + e.stats[k] + (fb[n] ? fb[n].by[k] || 0 : 0); }, 0);
+      if (n in prev && tot > prev[n]) last[n] = day(at); prev[n] = tot; });
+  }
+  if (ss_().getSheetByName('Tweaks')) tab_('Tweaks').forEach(function (r) { const w = String(r[STATS.length + 1] || '').replace(/^'/, ''); if (!w) return; const d = day(w); if (!last[r[0]] || last[r[0]] < d) last[r[0]] = d; });
+  const out = { since: day(start), last: last }; c.put('card_rises', JSON.stringify(out), 3600); return out;
 }
 
 /** A player's own view of themselves. Visible only to the admin (Settings → admin_name), as a starting point to adjust seeds. */
@@ -592,7 +613,7 @@ function admin_(token) {
   const now = Date.now(), motmGames = ss_().getSheetByName('Games') ? tab_('Games').map(function (r) { return String(r[0]).slice(0, 10); }).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) && kickoff_({ date: d, time: '00:00' }).getTime() <= now; })
     .sort().reverse().slice(0, 6).map(function (d) { const r = tab_('Games').filter(function (x) { return String(x[0]).slice(0, 10) === d; })[0], split = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
       return { date: d, players: split(r[1]).concat(split(r[2]), split(r[6])), score: r[3] === '' || r[4] === '' ? null : { black: Number(r[3]), white: Number(r[4]) }, votes: motmVotes_(d), auto: motmAuto_(d), override: motmOverride_(d) }; }) : [];
-  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed, motmGames: motmGames, topups: topupsAll_(),
+  return { ok: true, window: win, selfRatings: selfRatings, seeds: seeds_(), traits: TRAITS, pending: pending, activity: activity_(), claims: claims, agg: agg, named: named, anon: anon, matchNamed: matchNamed, motmGames: motmGames, topups: topupsAll_(), rises: cardRises_(),
     pushPeople: pushRows_().reduce(function (o, r) { const n = String(r[1]); o[n] = (o[n] || 0) + 1; return o; }, {}) };
 }
 
