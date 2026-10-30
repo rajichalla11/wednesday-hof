@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
   const gone = [], failed = [];
   await Promise.all(msgs.map(async m => {
     try {
-      await webpush.sendNotification(m.sub, JSON.stringify({ title: m.title, body: m.body, url: m.url || '/', tag: m.tag || '' }), { TTL: m.ttl || 6 * 3600, urgency: 'high' });
+      await webpush.sendNotification(m.sub, JSON.stringify({ title: m.title, body: m.body, url: m.url || '/', tag: m.tag || '', icon: m.icon || '', image: m.image || '' }), { TTL: m.ttl || 6 * 3600, urgency: 'high' });
     } catch (e) { if (e.statusCode === 404 || e.statusCode === 410) gone.push(m.sub && m.sub.endpoint); else failed.push(String(e.statusCode || e.message)); }
   }));
   res.status(200).json({ ok: true, sent: msgs.length - gone.length - failed.length, gone, failed });

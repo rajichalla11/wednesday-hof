@@ -277,6 +277,9 @@ Replaces the copy-pasted WhatsApp list. The admin opens games ("+ Open a game fo
 - Game-day push: when teams are in, Black and White each get their colour with the gate code.
 - Every push also sends the admin a `copy` ("Sent: …", who it reached). Kinds: + `topup`, `copy`.
 
+## v63 · Notifications to chosen people, with photos
+`pushBroadcast` takes `to` (names; empty = everyone), `url`, `icon` ('photo' = each person's own photo as the thumbnail, 'crest' = app icon) and `image` (https link, big picture). `pushSend_`/`pushTo_` take `opts` {icon, image}; every notification now carries the person's photo as its icon when they have one. Needs the Vercel /api/push that forwards icon and image; the service worker shows them, with a white crest badge (icons/badge-96.png). iPhone ignores icon and image.
+
 ## v61 · When cards last went up
 `admin` returns `rises` ({since, last: {name: date}}) from `cardRises_`: card totals rebuilt for each of the last 60 days (votes by their `updated` time, starting points, form as of that day) plus admin tweaks that raised a card (Tweaks column H = when). Cached an hour. Feeds Admin → Players → Due a lift.
 

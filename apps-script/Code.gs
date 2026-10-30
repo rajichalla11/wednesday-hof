@@ -1111,21 +1111,27 @@ function pushConfig_(body) {
   return { ok: true, configured: !!props_().getProperty('push_secret') };
 }
 /** Send one notification to these players' phones (those who haven't switched this kind off), and the admin a copy. */
-function pushTo_(names, kind, title, text, url) {
-  const res = pushSend_(names, kind, title, text, url), admin = adminName_().toLowerCase();
+function pushTo_(names, kind, title, text, url, opts) {
+  const res = pushSend_(names, kind, title, text, url, opts), admin = adminName_().toLowerCase();
   const others = res.people.filter(function (n) { return n.toLowerCase() !== admin; });
   if (others.length && kind !== 'test' && kind !== 'copy') {
     try { pushSend_([adminName_()], 'copy', 'Sent: ' + title, 'To ' + others.join(', ') + ' · ' + text, '/#admin'); } catch (e) { console.error('copy ' + e); }
   }
   return res.sent;
 }
-function pushSend_(names, kind, title, text, url) {
+/* opts.icon: 'photo' (default: each person's own photo as the thumbnail, where they have one) or 'crest' (the app icon);
+   opts.image: a big picture under the text. Both show on Android and computers; iPhone always shows the app icon only. */
+function pushSend_(names, kind, title, text, url, opts) {
+  opts = opts || {};
   const none = { sent: 0, people: [] }, secret = props_().getProperty('push_secret'); if (!secret || !names || !names.length) return none;
   const want = {}; names.forEach(function (n) { want[String(n).toLowerCase()] = 1; });
   const rows = pushRows_().filter(function (r) { return want[String(r[1]).toLowerCase()] && parsePrefs_(r[4])[kind] !== false; });
   if (!rows.length) return none;
   const people = []; rows.forEach(function (r) { const n = String(r[1]); if (people.indexOf(n) < 0) people.push(n); });
-  const messages = rows.map(function (r) { return { sub: { endpoint: String(r[0]), keys: { p256dh: String(r[2]), auth: String(r[3]) } }, title: title, body: text, url: url || '/', tag: kind }; });
+  const ph = opts.icon === 'crest' ? {} : photos_(), image = /^https:\/\//.test(String(opts.image || '')) ? String(opts.image) : '';
+  const messages = rows.map(function (r) { const id = ph[String(r[1])];
+    return { sub: { endpoint: String(r[0]), keys: { p256dh: String(r[2]), auth: String(r[3]) } }, title: title, body: text, url: url || '/', tag: kind,
+             icon: id ? 'https://lh3.googleusercontent.com/d/' + id + '=w192-h192-c' : '', image: image }; });
   let res = null;
   try { res = JSON.parse(UrlFetchApp.fetch(PUSH_URL, { method: 'post', contentType: 'application/json', payload: JSON.stringify({ secret: secret, messages: messages }), muteHttpExceptions: true }).getContentText()); } catch (e) { console.error('push ' + e); return none; }
   if (res && res.gone && res.gone.length) {   // phones that turned notifications off or uninstalled
@@ -1188,11 +1194,14 @@ function setupPushTrigger() {
 /** Admin: send a notification to everyone with notifications on (or just count them first with dry). */
 function pushBroadcast_(body) {
   const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
-  const rows = pushRows_(), people = []; rows.forEach(function (r) { const n = String(r[1]); if (people.indexOf(n) < 0) people.push(n); });
-  if (body.dry) return { ok: true, phones: rows.length, people: people };
+  const all = pushRows_(), people = [], phones = {}; all.forEach(function (r) { const n = String(r[1]); if (people.indexOf(n) < 0) people.push(n); phones[n] = (phones[n] || 0) + 1; });
+  if (body.dry) return { ok: true, phones: all.length, people: people, perPerson: phones };
+  const to = Array.isArray(body.to) && body.to.length ? people.filter(function (n) { return body.to.some(function (x) { return String(x).toLowerCase() === n.toLowerCase(); }); }) : people;   // chosen people, or everyone
+  if (!to.length) return { ok: false, error: 'Pick who to send it to.' };
   const title = String(body.title || '').slice(0, 60).trim(), text = String(body.body || '').slice(0, 200).trim();
   if (!title) return { ok: false, error: 'Add a title.' };
-  return { ok: true, sent: pushTo_(people, 'news', title, text, String(body.url || '/#home')), phones: rows.length, people: people };
+  const n = to.reduce(function (t, x) { return t + (phones[x] || 0); }, 0);
+  return { ok: true, sent: pushTo_(to, 'news', title, text, String(body.url || '/#home'), { icon: body.icon === 'crest' ? 'crest' : 'photo', image: body.image }), phones: n, people: to };
 }
 /** Admin: send any strike notifications that haven't gone out yet (they also go out on the 15-minute tick). */
 function pushStrikesNow_(body) {

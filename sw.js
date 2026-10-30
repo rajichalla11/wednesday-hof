@@ -1,6 +1,6 @@
 /* Wednesday 9–10 service worker: makes the site installable as an app. Pages always come from the network first (so updates
    show straight away) and fall back to the last copy when offline. Data calls (the sheet, the backend, /api) are left alone. */
-const CACHE = 'w910-v6';
+const CACHE = 'w910-v7';
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll([new Request('/', { cache: 'reload' }), '/icons/icon-192.png', '/icons/apple-touch-icon.png']).catch(() => {}))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
@@ -27,7 +27,11 @@ self.addEventListener('fetch', e => {
 /* Push notifications (sent by the backend through /api/push): show them, and open the right page when tapped. */
 self.addEventListener('push', e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch (_) { d = { title: 'Wednesday 9–10', body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'Wednesday 9–10', { body: d.body || '', icon: '/icons/icon-192.png', badge: '/icons/favicon-32.png', tag: d.tag || undefined, data: { url: d.url || '/' } }));
+  // icon: the person's own photo when the backend sends one (Android, computers; iPhone shows the app icon); image: a big
+  // picture under the text; badge: the white crest in the Android status bar.
+  const o = { body: d.body || '', icon: d.icon || '/icons/icon-192.png', badge: '/icons/badge-96.png', tag: d.tag || undefined, renotify: !!d.tag, vibrate: [70, 40, 70], timestamp: Date.now(), data: { url: d.url || '/' } };
+  if (d.image) o.image = d.image;
+  e.waitUntil(self.registration.showNotification(d.title || 'Wednesday 9–10', o));
 });
 self.addEventListener('notificationclick', e => {
   e.notification.close(); const url = (e.notification.data && e.notification.data.url) || '/';

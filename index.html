@@ -720,6 +720,19 @@
   .mx-link { padding: 8px 0 10px; border-bottom: 1px solid var(--line); } .mx-link summary { cursor: pointer; font-size: 12.5px; color: var(--fg-3); } .mx-link code { display: block; margin-top: 8px; font-size: 11.5px; word-break: break-all; color: var(--fg-2); }
   #panel-me .ntf { margin-top: 30px; } #panel-me .self-wrap { margin-top: 30px; }
   @media (max-width: 720px) { .mx-hero { grid-template-columns: 1fr; gap: 18px; } .mx-card { max-width: 250px; margin: 0 auto; width: 100%; } .mx-id { text-align: center; align-items: center; } .mx-acts { justify-content: center; } .mx-id .mile { width: 100%; text-align: left; } .mx-name { font-size: 28px; } }
+  .bc-seg { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--bg); width: fit-content; }
+  .bc-seg button { padding: 7px 12px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--fg-2); } .bc-seg button.on { background: var(--surface-3); color: var(--fg); } .bc-seg button small { color: var(--gold); margin-left: 4px; }
+  .bc-seg.sm button { padding: 6px 10px; font-size: 12px; }
+  .bc-people { display: flex; flex-wrap: wrap; gap: 6px; max-height: 210px; overflow-y: auto; }
+  .bc-p { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 12.5px; color: var(--fg-2); } .bc-p .avatar { width: 24px; height: 24px; }
+  .bc-p.on { border-color: var(--gold); color: var(--fg); background: rgba(227,192,98,.1); }
+  .bc-emo { display: flex; gap: 4px; flex-wrap: wrap; } .bc-emo button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); font-size: 17px; }
+  .bc-opts { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: end; } .bc-opts label { display: grid; gap: 5px; } .bc-opts .wide { grid-column: 1 / -1; } .bc-opts small { font-weight: 400; color: var(--fg-3); letter-spacing: 0; text-transform: none; }
+  .np { max-width: 380px; padding: 12px 14px; border-radius: 18px; background: rgba(40,40,44,.92); box-shadow: 0 10px 30px -10px rgba(0,0,0,.7); border: 1px solid rgba(255,255,255,.08); }
+  .np-top { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--fg-3); } .np-app { width: 16px; height: 16px; border-radius: 4px; } .np-top span:first-of-type { color: var(--fg-2); font-weight: 600; }
+  .np-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin-top: 6px; } .np-txt b { display: block; font-size: 14px; } .np-txt span { display: block; font-size: 13px; color: var(--fg-2); margin-top: 1px; white-space: pre-wrap; }
+  .np-ic { width: 40px; height: 40px; border-radius: 9px; object-fit: cover; } .np-img { display: block; width: 100%; max-height: 190px; object-fit: cover; border-radius: 12px; margin-top: 10px; }
+  .bc-note { display: block; font-size: 11.5px; color: var(--fg-3); margin-top: 6px; max-width: 420px; }
   .bc { display: grid; gap: 10px; } .bc-n { font-size: 13.5px; color: var(--fg-2); } .bc-n b { font-size: 20px; color: var(--fg); margin-right: 4px; } .bc-n small { display: block; margin-top: 4px; font-size: 12px; color: var(--fg-3); }
   .bc-in { width: 100%; } textarea.bc-in { min-height: 70px; } .bc-acts { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .bc-acts small { font-size: 12px; color: var(--fg-3); }
   .lc-home { display: block; margin: 8px auto 0; font-size: 12.5px; } .lc-home.me-go { font-size: 13.5px; margin-top: 10px; }
@@ -2556,7 +2569,7 @@ async function renderYou() {
     <section><div class="sh"><h2>Add money</h2><span>Goes on the sheet as paid in · they get a notification</span></div><div id="topups-admin"></div></section>
     <section><div class="sh"><h2>Strikes</h2><span>Dropping out of a spot within 36 hours of kick-off</span></div><div id="strikes-admin"></div></section>
     <section><div class="sh"><h2>Man of the match</h2><span>The vote decides unless you pick someone</span></div><div id="motm-admin"><div class="loading">Loading…</div></div></section>
-    <section><div class="sh"><h2>Send a notification</h2><span>To everyone who has notifications on</span></div><div id="bc-body"></div></section>
+    <section><div class="sh"><h2>Send a notification</h2><span>To everyone, or just the people you pick</span></div><div id="bc-body"></div></section>
     <section><div class="sh"><h2>Who's been on</h2><span>Most recent first · one entry per visit</span></div><div id="seen-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Site activity</h2><span>One count per device per visit</span></div><div id="activity-body"><div class="loading">Loading…</div></div></section>
     <section><div class="sh"><h2>Who voted what</h2><span>Votes from 14 Oct on</span></div><div id="named-body"><div class="loading">Loading…</div></div></section>
@@ -3349,21 +3362,58 @@ async function openPlx(name) {
 }
 function closePlx() { const ov = document.getElementById('plx-overlay'); if (ov) ov.classList.remove('open'); document.body.style.overflow = ''; }
 /* Admin: one notification to everyone who has them on. Counts first, then a confirm tap before it goes. */
+/* Send a notification: to everyone or to people you pick, with their own photo (or the crest) as the thumbnail and an
+   optional big picture. A live preview shows roughly how it lands; iPhone always shows the app icon and no picture. */
+let BC = { mode: 'all', pick: new Set(), icon: 'photo', c: null };
 async function renderBroadcast() {
   const el = document.getElementById('bc-body'); if (!el) return;
   el.innerHTML = `<div class="loading">Counting phones…</div>`;
   const c = await api(null, { action: 'pushBroadcast', t: TOKEN, dry: true }).catch(() => ({ ok: false }));
   if (!c.ok) { el.innerHTML = `<div class="empty">Couldn't count. <button class="btn link" onclick="renderBroadcast()">Try again</button></div>`; return; }
-  el.innerHTML = `<div class="bc"><div class="bc-n"><b class="num">${c.phones}</b> phone${c.phones === 1 ? '' : 's'} · ${c.people.length} ${c.people.length === 1 ? 'person' : 'people'}${c.people.length ? `<small>${c.people.map(esc).join(', ')}</small>` : ''}</div>
-    <input class="pf-in bc-in" id="bc-t" maxlength="60" placeholder="Title" value="Welcome to the 9–10 app">
-    <textarea class="b-comment bc-in" id="bc-b" maxlength="200" placeholder="Message">Notifications are working. You'll get a ping when you move up from standby, on game day, and to rate the game.</textarea>
-    <div class="bc-acts"><button class="btn" onclick="sendBroadcast(this)" ${c.phones ? '' : 'disabled'}>Send to ${c.phones} phone${c.phones === 1 ? '' : 's'}</button><small id="bc-st"></small></div></div>`;
+  BC.c = c; BC.pick = new Set([...BC.pick].filter(n => c.people.includes(n)));
+  const av = n => { const p = ALL_PLAYERS.find(q => q.name === n); return p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">?</span></span>'; };
+  const EMO = ['⚽', '🔥', '⭐', '🏆', '💰', '📣', '⏰', '🧤'];
+  el.innerHTML = `<div class="bc">
+    <div class="bc-seg" role="tablist"><button class="${BC.mode === 'all' ? 'on' : ''}" onclick="BC.mode='all'; bcPaint()">Everyone <small>${c.people.length}</small></button><button class="${BC.mode === 'pick' ? 'on' : ''}" onclick="BC.mode='pick'; bcPaint()">Pick people <small id="bc-pn">${BC.pick.size || ''}</small></button></div>
+    <div class="bc-people" id="bc-people" ${BC.mode === 'pick' ? '' : 'hidden'}>${c.people.slice().sort().map(n => `<button type="button" class="bc-p${BC.pick.has(n) ? ' on' : ''}" data-n="${esc(n)}" onclick="bcToggle(this)">${av(n)}<span>${esc(n)}</span></button>`).join('')}</div>
+    <div class="bc-emo">${EMO.map(e => `<button type="button" onclick="bcEmoji('${e}')">${e}</button>`).join('')}</div>
+    <input class="pf-in bc-in" id="bc-t" maxlength="60" placeholder="Title" value="" oninput="bcPaint()">
+    <textarea class="b-comment bc-in" id="bc-b" maxlength="200" placeholder="Message" oninput="bcPaint()"></textarea>
+    <div class="bc-opts">
+      <label><span class="label">Opens</span><select class="pf-in" id="bc-u"><option value="/#home">Home</option><option value="/#me">Me</option><option value="/#matches">Matches</option><option value="/#history">History</option><option value="/#hall">Players</option></select></label>
+      <label><span class="label">Thumbnail</span><span class="bc-seg sm"><button type="button" class="${BC.icon === 'photo' ? 'on' : ''}" onclick="BC.icon='photo'; bcPaint()">Their photo</button><button type="button" class="${BC.icon === 'crest' ? 'on' : ''}" onclick="BC.icon='crest'; bcPaint()">9–10 crest</button></span></label>
+      <label class="wide"><span class="label">Big picture <small>optional · Android and computers</small></span><input class="pf-in" id="bc-i" placeholder="Paste an image link (https://…)" oninput="bcPaint()"></label>
+    </div>
+    <div class="label" style="margin-top:4px">Preview</div><div id="bc-prev"></div>
+    <div class="bc-acts"><button class="btn" id="bc-send" onclick="sendBroadcast(this)">Send</button><small id="bc-st"></small></div></div>`;
+  bcPaint();
+}
+function bcToggle(b) { const n = b.dataset.n; if (BC.pick.has(n)) BC.pick.delete(n); else BC.pick.add(n); b.classList.toggle('on', BC.pick.has(n)); bcPaint(); }
+function bcEmoji(e) { const t = document.getElementById('bc-t'); if (!t) return; t.value = (e + ' ' + t.value.replace(/^\S+\s/, m => /\p{Extended_Pictographic}/u.test(m) ? '' : m)).slice(0, 60); t.focus(); bcPaint(); }
+function bcTargets() { const c = BC.c || { people: [], perPerson: {} }; return BC.mode === 'all' ? c.people : [...BC.pick]; }
+function bcPaint() {
+  const c = BC.c; if (!c) return;
+  document.querySelectorAll('#bc-body .bc > .bc-seg button').forEach((b, i) => b.classList.toggle('on', (i === 0) === (BC.mode === 'all')));
+  document.querySelectorAll('#bc-body .bc-opts .bc-seg button').forEach((b, i) => b.classList.toggle('on', (i === 0) === (BC.icon === 'photo')));
+  const pp = document.getElementById('bc-people'); if (pp) pp.hidden = BC.mode !== 'pick';
+  const pn = document.getElementById('bc-pn'); if (pn) pn.textContent = BC.pick.size || '';
+  const to = bcTargets(), phones = to.reduce((t, n) => t + ((c.perPerson || {})[n] || 1), 0);
+  const t = (document.getElementById('bc-t') || {}).value || '', b = (document.getElementById('bc-b') || {}).value || '', img = ((document.getElementById('bc-i') || {}).value || '').trim();
+  const who = to[0] && ALL_PLAYERS.find(p => p.name === to[0]), src = BC.icon === 'photo' && who && photoSrc(who);
+  const prev = document.getElementById('bc-prev');
+  if (prev) prev.innerHTML = `<div class="np"><div class="np-top"><img class="np-app" src="/icons/icon-192.png" alt=""><span>9–10</span><span class="np-dot">·</span><span>now</span></div>
+    <div class="np-row"><div class="np-txt"><b>${esc(t || 'Title')}</b><span>${esc(b || 'Your message')}</span></div>${src ? `<img class="np-ic" src="${esc(src)}" alt="">` : `<img class="np-ic" src="/icons/icon-192.png" alt="">`}</div>
+    ${/^https:\/\//.test(img) ? `<img class="np-img" src="${esc(img)}" alt="" onerror="this.remove()">` : ''}</div>
+    <small class="bc-note">${to.length ? `Goes to ${to.length === c.people.length ? 'everyone' : esc(to.slice(0, 4).join(', ')) + (to.length > 4 ? ` +${to.length - 4}` : '')}${BC.icon === 'photo' && to.length > 1 ? ', each with their own photo' : ''}.` : 'Pick at least one person.'} iPhone shows the 9–10 icon and no big picture; emojis in the title show everywhere.</small>`;
+  const send = document.getElementById('bc-send'); if (send && send.dataset.armed !== '1') { send.disabled = !to.length || !t.trim(); send.textContent = `Send to ${to.length === c.people.length ? 'everyone' : to.length + (to.length === 1 ? ' person' : ' people')} · ${phones} phone${phones === 1 ? '' : 's'}`; }
 }
 async function sendBroadcast(btn) {
-  if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.textContent = 'Tap again to send'; setTimeout(() => { if (btn.isConnected && btn.dataset.armed === '1') { btn.dataset.armed = ''; renderBroadcast(); } }, 5000); return; }
+  if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.textContent = 'Tap again to send'; setTimeout(() => { if (btn.isConnected && btn.dataset.armed === '1') { btn.dataset.armed = ''; bcPaint(); } }, 5000); return; }
   btn.disabled = true; btn.textContent = 'Sending…';
-  const res = await api(null, { action: 'pushBroadcast', t: TOKEN, title: document.getElementById('bc-t').value, body: document.getElementById('bc-b').value }).catch(e => ({ ok: false, error: e.message }));
-  const st = document.getElementById('bc-st'); btn.textContent = res.ok ? `Sent to ${res.sent} of ${res.phones}` : 'Not sent'; if (st) st.textContent = res.ok ? (res.sent < res.phones ? 'Some phones had turned notifications off and were removed.' : 'Delivered to every phone.') : (res.error || '');
+  const res = await api(null, { action: 'pushBroadcast', t: TOKEN, to: BC.mode === 'all' ? [] : [...BC.pick], title: document.getElementById('bc-t').value, body: document.getElementById('bc-b').value,
+    url: document.getElementById('bc-u').value, icon: BC.icon, image: document.getElementById('bc-i').value.trim() }).catch(e => ({ ok: false, error: e.message }));
+  btn.dataset.armed = ''; const st = document.getElementById('bc-st'); btn.textContent = res.ok ? `Sent to ${res.sent} of ${res.phones} phones` : 'Not sent';
+  if (st) st.textContent = res.ok ? (res.sent < res.phones ? 'Some phones had turned notifications off and were removed.' : 'Delivered.') : (res.error || '');
 }
 /* Who's been on: people by their latest visit, or every visit, newest first */
 let SEEN_MODE = 'people';
