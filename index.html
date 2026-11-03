@@ -1158,6 +1158,29 @@
   .card.fut.icon { --edge: #a7894a; --ink: #1d1810; --ink2: rgba(29,24,16,.58); --face: linear-gradient(162deg, #ffffff 0%, #fbf6ea 26%, #efe4cb 52%, #fffaf0 72%, #e3d2a8 100%); }
   .card.fut.icon .fut-face { background: radial-gradient(90% 55% at 70% 8%, rgba(255,255,255,.8), transparent 60%), conic-gradient(from 210deg at 85% 0%, rgba(255,214,231,.35), rgba(214,240,255,.35), rgba(230,255,217,.3), rgba(255,243,196,.4), rgba(255,214,231,.35)), repeating-linear-gradient(128deg, rgba(196,160,80,.10) 0 2px, transparent 2px 10px), var(--face); }
   .card.fut.icon .fut-ovr, .card.fut.icon .fut-tier, .card.fut.icon .fut-st.top b { color: #8a6a1f; }
+  /* ── In-form team edition: obsidian face lit by embers from below, gold frame and numbers, a flame ribbon on top ── */
+  .card.fut.inform { --ink: #f7ead0; --ink2: rgba(247,234,208,.6); background: linear-gradient(160deg, #ffe08a 0%, #b87a1e 30%, #ffd36b 52%, #8a4f10 78%, #f2b84b 100%); }
+  .card.fut.inform .fut-face { background:
+      radial-gradient(120% 60% at 50% 112%, rgba(255,98,0,.62), rgba(255,98,0,0) 58%),
+      radial-gradient(70% 40% at 85% -4%, rgba(255,196,96,.22), transparent 62%),
+      repeating-linear-gradient(128deg, rgba(255,190,110,.05) 0 2px, transparent 2px 10px),
+      linear-gradient(168deg, #231a14 0%, #0f0c0a 46%, #1b0f07 100%); }
+  .card.fut.inform .fut-face::after { content: ''; position: absolute; inset: 0; background: radial-gradient(90% 38% at 50% 104%, rgba(255,150,40,.55), transparent 70%); mix-blend-mode: screen; animation: ifEmber 3.4s ease-in-out infinite; }
+  @keyframes ifEmber { 0%, 100% { opacity: .55; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3%); } }
+  .card.fut.inform .fut-ovr, .card.fut.inform .fut-gp b, .card.fut.inform .fut-st.top b { color: #ffcf6b; }
+  .card.fut.inform .fut-pos, .card.fut.inform .fut-name, .card.fut.inform .fut-st b { color: var(--ink); }
+  .card.fut.inform .fut-ph { background: rgba(255,255,255,.05); }
+  .card.fut.inform .fut-name { border-bottom-color: rgba(255,207,107,.35); } .card.fut.inform .fut-vr, .card.fut.inform .fut-rule { background: rgba(255,207,107,.35); }
+  .card.fut.inform .fut-traits span { border-color: rgba(255,207,107,.45); color: #ffdf9a; }
+  .card.fut.inform .fut-foot .up { color: #7ee08f; } .card.fut.inform .fut-foot .down { color: #ff8a80; }
+  .fut-tier-if { color: #ff9a3c !important; }
+  .fut-if { position: absolute !important; top: 0; left: 50%; transform: translateX(-50%); z-index: 4 !important; display: flex; align-items: center; gap: 4px; padding: 3px 10px 4px 8px; border-radius: 0 0 9px 9px;
+    background: linear-gradient(90deg, #ff6a00, #ffb23e 55%, #ff8a1f); color: #1c0d02; font-size: 7.5px; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 4px 12px -2px rgba(255,106,0,.6); }
+  .fut-if svg { width: 10px; height: 10px; fill: currentColor; }
+  .card.fut.inform::after { background: linear-gradient(110deg, transparent 35%, rgba(255,214,140,.5) 49%, transparent 63%); background-size: 260% 100%; animation: ifSheen 4.5s ease-in-out 1s infinite; }
+  @keyframes ifSheen { 0% { background-position: 130% 0; } 35%, 100% { background-position: -30% 0; } }
+  @media (max-width: 480px) { .fut-if { font-size: 6.5px; padding: 2px 8px 3px 6px; letter-spacing: .12em; } .fut-if svg { width: 8px; height: 8px; } }
+  @media (prefers-reduced-motion: reduce) { .card.fut.inform .fut-face::after, .card.fut.inform::after { animation: none; } }
   .fut-top { display: grid; grid-template-columns: 30% 1fr; align-items: start; padding: 20px 10px 0 14px; min-height: 0; }
   .fut-l { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 6px; min-width: 0; overflow: hidden; }
   .fut-ovr { font-size: 40px; font-weight: 800; line-height: .9; letter-spacing: -.03em; font-variation-settings: 'wdth' 78; }
@@ -1693,7 +1716,7 @@ function computeRecords(players, sessions) {
 /* The in-form team, worked out once per ratings refresh: name → { avg, k } for the six (🔥 badge on their cards). */
 let IF_MEMO = { at: null, set: {} };
 function inFormSet() {
-  if (IF_MEMO.at !== RATINGS || !ALL_PLAYERS.length) { let d = null; try { d = informTeamData(); } catch (_) {} const set = {}; (d ? d.team : []).forEach(x => set[x.n] = x); IF_MEMO = { at: RATINGS, set, games: d ? d.games.length : 0 }; }
+  if (IF_MEMO.at !== RATINGS || !ALL_PLAYERS.length) { let d = null; try { d = informTeamData(); } catch (_) {} const set = {}; (d ? d.team : []).forEach(x => set[x.n] = x); IF_MEMO = { at: RATINGS, set, games: d ? d.games.length : 0, captain: d ? d.captain : '' }; }
   return IF_MEMO.set;
 }
 function badgesFor(p) {
@@ -2078,15 +2101,17 @@ function cardHtml(p, stats, opts = {}) {
   const pos3 = ({ attack: 'ATT', midfield: 'MID', defense: 'DEF' })[posClass(p.position)] || '';
   const shortName = (() => { const w = p.name.split(' '); return w.length > 1 && p.name.length > 12 ? `${w[0]} ${w[1][0]}.` : p.name; })();
   const col = (keys) => keys.map(k => `<div class="fut-st${rated && k === top ? ' top' : ''}" title="${STAT_NAMES[k]}: ${STAT_GUIDE[k]}"><b class="num">${rated ? stats[k] : '–'}</b><span>${k}</span></div>`).join('');
-  return `<div class="card fut ${tier}${foil?' foil':''}${rated?'':' unrated'}" data-pi="${ALL_PLAYERS.indexOf(p)}">
-    <div class="fut-face"></div>
+  // In-form team: a special edition of the card (dark, ember-lit, gold) with a ribbon; the captain's says so
+  const inf = inFormSet()[p.name], cap = inf && IF_MEMO.captain === p.name;
+  return `<div class="card fut ${tier}${foil?' foil':''}${rated?'':' unrated'}${inf ? ' inform' : ''}" data-pi="${ALL_PLAYERS.indexOf(p)}">
+    <div class="fut-face"></div>${inf ? `<div class="fut-if" title="In-form team: ${inf.avg.toFixed(1)} average over ${inf.k} of the last ${IF_MEMO.games} games"><svg viewBox="0 0 24 24"><path d="M12 2.5c.6 3.2 3.9 5.3 3.9 9.4a3.9 3.9 0 0 1-1 2.7c.2-1.9-.8-3.3-2.2-4.2.2 2.1-1.4 3-2 4.4-.4.9-.3 2 .3 2.9-2.6-.4-4.4-2.6-4.4-5.3 0-3.3 2.4-4.9 3.6-7.4.3 1.5 1 2.4 1.9 2.9-.4-2.4.6-4.1-.1-5.4z"/></svg>${cap ? 'In-form captain' : 'In-form team'}</div>` : ''}
     <div class="fut-top">
       <div class="fut-l">
         <div class="fut-ovr num">${p.count}</div>
         <div class="fut-pos">GP</div>
         ${pos3 ? `<i class="fut-rule"></i><div class="fut-gp"><b>${pos3}</b></div>` : ''}
-        <div class="fut-tier">${TIER_NAME[tier]}</div>
-        ${(() => { const inf = inFormSet()[p.name]; return inf ? `<div class="fut-form" title="In form: ${inf.avg.toFixed(1)} average over ${inf.k} of the last ${IF_MEMO.games} games"><svg viewBox="0 0 24 24"><path d="M12 2.5c.6 3.2 3.9 5.3 3.9 9.4a3.9 3.9 0 0 1-1 2.7c.2-1.9-.8-3.3-2.2-4.2.2 2.1-1.4 3-2 4.4-.4.9-.3 2 .3 2.9-2.6-.4-4.4-2.6-4.4-5.3 0-3.3 2.4-4.9 3.6-7.4.3 1.5 1 2.4 1.9 2.9-.4-2.4.6-4.1-.1-5.4z"/></svg><span>Form</span></div>` : ''; })()}
+        ${inf ? '' : `<div class="fut-tier">${TIER_NAME[tier]}</div>`}
+        ${inf ? `<div class="fut-tier fut-tier-if">In form</div>` : ''}
       </div>
       <div class="fut-ph-wrap">${photo(p, 'fut-ph')}</div>
     </div>
