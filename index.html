@@ -139,6 +139,20 @@
   #splash.sp-big .sp-ring { animation: spRing .9s cubic-bezier(.1,.7,.3,1) 1.3s forwards; }
   #splash.sp-big .sp-card .card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.28) 50%, transparent 65%); transform: translateX(-120%); animation: spSheen .9s cubic-bezier(.5,0,.3,1) 2s forwards; pointer-events: none; z-index: 5; }
   #splash.sp-big .sp-line { animation-delay: 1.75s; }
+  /* in-form showcase: the big version, set alight: embers rise, the flare burns orange, the card's ribbon drops in last */
+  #splash.sp-inform { background: radial-gradient(120% 55% at 50% 118%, rgba(255,90,0,.32), transparent 62%), #08080A; }
+  #splash.sp-inform .sp-lights i { background: radial-gradient(closest-side, rgba(255,190,110,.16), rgba(255,106,0,.06) 45%, transparent 72%); }
+  #splash.sp-inform .sp-flare { background: radial-gradient(closest-side, rgba(255,214,150,.8), rgba(255,106,0,.4) 42%, transparent 70%); }
+  #splash.sp-inform .sp-ring { border-color: #ff8a1f; box-shadow: 0 0 24px rgba(255,120,30,.6); }
+  #splash.sp-inform .sp-card .card { box-shadow: 0 30px 60px -20px #000, 0 0 80px -4px rgba(255,106,0,.6); }
+  #splash.sp-inform .sp-card > div { animation: spDeal .9s cubic-bezier(.16,1.25,.3,1) 1.3s forwards, spGlow 2.4s ease-in-out 2.4s infinite; }
+  #splash.sp-inform .fut-if { animation: spRibbon .6s cubic-bezier(.3,1.7,.5,1) 2.3s both; }
+  #splash.sp-inform .sp-line { animation-delay: 2.55s; font-size: 16px; }
+  #splash .sp-embers { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  #splash .sp-embers i { position: absolute; bottom: -10px; left: var(--x); width: var(--s); height: var(--s); border-radius: 50%; background: radial-gradient(circle, #fff3c4, #ffb23e 45%, #ff6a00 70%, transparent 72%); box-shadow: 0 0 8px rgba(255,140,30,.9); opacity: 0; animation: spEmber var(--t) cubic-bezier(.3,.6,.4,1) var(--d) infinite; }
+  @keyframes spEmber { 0% { opacity: 0; transform: translate(0, 0) scale(1); } 12% { opacity: 1; } 80% { opacity: .7; } 100% { opacity: 0; transform: translate(var(--w), -92vh) scale(.4); } }
+  @keyframes spRibbon { from { transform: translate(-50%, -120%); } to { transform: translate(-50%, 0); } }
+  @keyframes spGlow { 50% { filter: drop-shadow(0 0 18px rgba(255,130,30,.55)); } }
   /* flash: back within the hour, the crest is simply there */
   #splash.sp-flash .sp-lights, #splash.sp-flash .sp-pitch, #splash.sp-flash .sp-line, #splash.sp-flash .sp-dots { display: none; }
   #splash.sp-flash .sp-crestwrap, #splash.sp-flash .sp-crestwrap * { animation-duration: .01s !important; animation-delay: 0s !important; }
@@ -1229,16 +1243,18 @@
 <script>
 /* The opening screen (see the CSS above). It ends once splashReady() says the page has what it needs, but not before its
    own animation has played (quick ~1.1 s, big ~2.9 s, flash ~0.45 s), never after 12 s, and at once after a tap if ready. */
-(function () { const HTML = document.getElementById('splash').outerHTML, MIN = { quick: 1150, big: 2900, flash: 450 };
+(function () { const HTML = document.getElementById('splash').outerHTML, MIN = { quick: 1150, big: 2900, inform: 3900, flash: 450 };
   let t0 = Date.now(), mode = 'quick', ready = false, skip = false, done = false, cap = 0, wait = 0;
   const finish = () => { if (done) return; done = true; clearTimeout(cap); clearTimeout(wait); const el = document.getElementById('splash'); if (!el) return;
+    if (window.splashAfter) { const f = window.splashAfter; window.splashAfter = null; try { f(); } catch (_) {} }
     el.classList.add('out'); document.body.classList.remove('sp-enter'); void document.body.offsetWidth; document.body.classList.add('sp-enter');
     setTimeout(() => { if (done && el.isConnected) el.remove(); document.body.classList.remove('sp-enter'); }, 700); };
   const check = () => { if (done || !ready) return; const left = skip ? 0 : MIN[mode] - (Date.now() - t0); clearTimeout(wait); if (left <= 0) finish(); else wait = setTimeout(check, left); };
   const idle = () => setTimeout(() => { const c = document.querySelector('#splash .sp-crestwrap'); if (c && !done && mode === 'quick') c.classList.add('idle'); }, 1200);
   window.splashReady = () => { ready = true; check(); };
   window.splashSkip = () => { skip = true; check(); };
-  window.splashMode = (m, line, card) => { const el = document.getElementById('splash'); if (!el || done) return; mode = m; el.classList.toggle('sp-big', m === 'big'); el.classList.toggle('sp-flash', m === 'flash');
+  window.splashMode = (m, line, card) => { const el = document.getElementById('splash'); if (!el || done) return; mode = m; el.classList.toggle('sp-big', m === 'big' || m === 'inform'); el.classList.toggle('sp-inform', m === 'inform'); el.classList.toggle('sp-flash', m === 'flash');
+    if (m === 'inform' && !el.querySelector('.sp-embers')) el.insertAdjacentHTML('afterbegin', '<div class="sp-embers">' + Array.from({ length: 26 }, () => `<i style="--x:${(Math.random() * 100).toFixed(1)}%;--d:${(1 + Math.random() * 2.4).toFixed(2)}s;--t:${(2.2 + Math.random() * 2).toFixed(2)}s;--s:${(2 + Math.random() * 4).toFixed(1)}px;--w:${(Math.random() * 60 - 30).toFixed(0)}px"></i>`).join('') + '</div>');
     if (line) el.querySelector('.sp-line').innerHTML = line; if (card) el.querySelector('.sp-card').innerHTML = '<div>' + card + '</div>'; check(); };
   window.showSplash = m => { const old = document.getElementById('splash'); if (old) old.remove(); document.body.insertAdjacentHTML('afterbegin', HTML);
     t0 = Date.now(); mode = 'quick'; ready = skip = done = false; clearTimeout(cap); cap = setTimeout(finish, 12000); if (m) window.splashMode(m); idle(); };
@@ -3030,7 +3046,17 @@ function splashFor() {
   else if (SESSIONS.length) picks.push([9, `<b>${ALL_PLAYERS.length}</b> players · <b>${SESSIONS.length}</b> sessions`, '']);
   picks.sort((a, b) => a[0] - b[0]);
   const fresh = picks.find(p => p[2] && !seen.includes(p[2])), line = (fresh || picks[0] || [0, ''])[1];
-  const demo = new URLSearchParams(location.search).get('splash');   // ?splash=quick|big|flash previews a version (nothing is marked as seen)
+  const demo = new URLSearchParams(location.search).get('splash');   // ?splash=quick|big|inform|flash previews a version (nothing is marked as seen)
+  /* Joining the in-form team (or becoming its captain): their new card is shown off once, then they land on the Me tab with it. */
+  const inf = me && R && inFormSet()[me.name], role = inf ? (IF_MEMO.captain === me.name ? 'c' : 'm') : '';
+  let was = null; try { was = localStorage.getItem('w910_ifrole'); localStorage.setItem('w910_ifrole', role); } catch (_) {}
+  if (demo === 'inform' || (!demo && role && role !== was && !(was === 'c' && role === 'm'))) {
+    const p = me || ALL_PLAYERS.find(x => inFormSet()[x.name]) || ALL_PLAYERS[0], r = p && R && R.players && R.players[p.name], c = p && IF_MEMO.captain === p.name;
+    splashMode('inform', c ? `🔥 <b>You're the in-form captain</b>` : `🔥 You're in the <b>in-form team</b>`, cardHtml(p, (r && r.stats) || null, { n: r ? r.n : 0 }));
+    window.splashAfter = () => showTab('me');
+    setTimeout(() => { try { navigator.vibrate && navigator.vibrate([18, 60, 30]); } catch (_) {} }, 2150);
+    return;
+  }
   if (demo === 'flash' || demo === 'quick') return splashMode(demo, line);
   if (demo === 'big') { const p = me || ALL_PLAYERS[0], r = p && R && R.players && R.players[p.name]; return p ? splashMode('big', (picks.find(x => x[2]) || picks[0] || [0, ''])[1], cardHtml(p, (r && r.stats) || null, { n: r ? r.n : 0 })) : splashMode('quick', line); }
   if (fresh && me && !selfLocked(me)) {
