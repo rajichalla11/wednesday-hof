@@ -1116,7 +1116,19 @@
   .tw-line { position: relative; display: flex; justify-content: center; gap: 18px; } .tw-k { position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: 700; letter-spacing: .12em; color: var(--fg-3); }
   .tw-p { position: relative; display: grid; justify-items: center; gap: 4px; width: 84px; padding: 8px 4px 7px; border-radius: 12px; border: 1px solid var(--line-2); background: color-mix(in srgb, var(--bg) 70%, transparent); font: inherit; color: var(--fg); cursor: pointer; }
   .tw-p .avatar { width: 40px; height: 40px; font-size: 13px; } .tw-p b { font-size: 12.5px; max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .tw-p span { font-size: 12px; font-weight: 800; padding: 1px 7px; border-radius: 6px; background: color-mix(in srgb, var(--fg) 9%, transparent); }
-  .tw-p.cap { border-color: var(--gold); box-shadow: 0 0 18px -6px var(--gold); } .tw-p.cap span { background: var(--gold); color: #1a1408; } .tw-c { position: absolute; top: 5px; right: 6px; font-style: normal; font-size: 10px; font-weight: 800; width: 17px; height: 17px; display: grid; place-items: center; border-radius: 50%; background: var(--gold); color: #1a1408; }
+  .tw-p.cap { border-color: var(--gold); box-shadow: 0 0 18px -6px var(--gold); } .tw-p.cap span { background: var(--gold); color: #1a1408; }
+  /* pitch tiles in the in-form card edition: obsidian lit by embers, gold frame, gold numbers; the captain glows orange */
+  .tw-p { overflow: hidden; border: 1.5px solid transparent; color: #f7ead0;
+    background: radial-gradient(120% 55% at 50% 118%, rgba(255,98,0,.55), transparent 60%) padding-box, linear-gradient(168deg, #231a14, #0f0c0a 50%, #1b0f07) padding-box,
+      linear-gradient(160deg, #ffe08a, #b87a1e 30%, #ffd36b 52%, #8a4f10 78%, #f2b84b) border-box; box-shadow: 0 8px 20px -10px rgba(0,0,0,.8); }
+  .tw-p::after { content: ''; position: absolute; inset: 0; background: radial-gradient(90% 40% at 50% 108%, rgba(255,150,40,.5), transparent 70%); mix-blend-mode: screen; animation: ifEmber 3.4s ease-in-out infinite; pointer-events: none; }
+  .tw-p > * { position: relative; z-index: 1; }
+  .tw-p .avatar { box-shadow: 0 0 0 2px #e3b34f; }
+  .tw-p span { color: #ffcf6b; background: rgba(255,170,60,.14); }
+  .tw-p small { color: rgba(247,234,208,.6) !important; }
+  .tw-p.cap { box-shadow: 0 0 22px -4px rgba(255,106,0,.75); }
+  .tw-p.cap span { background: linear-gradient(90deg, #ff6a00, #ffb23e); color: #1c0d02; }
+  .tw-p .tw-c { position: absolute; z-index: 2; background: linear-gradient(90deg, #ff6a00, #ffb23e); color: #1c0d02; } .tw-c { position: absolute; top: 5px; right: 6px; font-style: normal; font-size: 10px; font-weight: 800; width: 17px; height: 17px; display: grid; place-items: center; border-radius: 50%; background: var(--gold); color: #1a1408; }
   .tw-foot { display: flex; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; } .tw-foot small { color: var(--fg-3); font-size: 12px; }
   .if-list { display: grid; gap: 6px; } .if-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
   .if-n { width: 20px; text-align: center; font-size: 13px; color: var(--fg-3); font-weight: 700; } .if-row .avatar { width: 30px; height: 30px; } .if-name { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
