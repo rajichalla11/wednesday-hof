@@ -87,6 +87,42 @@
   .lift-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 8px 12px 8px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--fg); font: inherit; cursor: pointer; }
   .lift-row:hover { border-color: var(--line-2); } .lift-ph { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); font-size: 13px; } .lift-ph img { width: 100%; height: 100%; object-fit: cover; }
   .lift-n b { display: block; font-size: 14px; } .lift-n small { color: var(--fg-3); font-size: 11.5px; } .lift-d { font-size: 12px; color: var(--gold); text-align: right; }
+  /* ── History: records as trophy cards in swipeable rows, the wall as gold plaques, the season as a story ── */
+  .rc-sec { margin-top: 18px; } .rc-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; } .rc-h b { font-size: 19px; font-weight: 800; letter-spacing: -.01em; } .rc-h span { font-size: 12px; color: var(--fg-3); }
+  .rc-rail { display: grid; grid-auto-flow: column; grid-auto-columns: min(78%, 290px); gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 10px; margin: 0 -2px; scrollbar-width: none; }
+  .rc-rail::-webkit-scrollbar { display: none; }
+  .rc { --a: #e3c062; --b: #6b4f17; position: relative; overflow: hidden; scroll-snap-align: start; display: flex; flex-direction: column; text-align: left; gap: 6px; min-height: 250px; padding: 16px; border-radius: 18px; color: var(--fg); font: inherit;
+    border: 1px solid color-mix(in srgb, var(--a) 35%, transparent); background: radial-gradient(120% 70% at 100% 0%, color-mix(in srgb, var(--a) 26%, transparent), transparent 60%), linear-gradient(165deg, color-mix(in srgb, var(--b) 55%, #121214), #0f0f11 70%); cursor: pointer; transition: transform .2s var(--ease); }
+  .rc:active { transform: scale(.98); }
+  .rc::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(128deg, rgba(255,255,255,.035) 0 2px, transparent 2px 12px); pointer-events: none; }
+  .rc-sec.character .rc { --a: #b48cff; --b: #3b2766; } .rc-sec.alltime .rc { --a: #d8dde6; --b: #3a414d; }
+  .rc-top { display: flex; align-items: center; gap: 8px; } .rc-ic { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--a) 18%, transparent); font-size: 15px; flex: none; } .rc-ic.big { width: 44px; height: 44px; font-size: 22px; }
+  .rc-l { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--a); }
+  .rc-v { font-size: 58px; font-weight: 800; line-height: .95; letter-spacing: -.03em; margin-top: 8px; font-variation-settings: 'wdth' 80; color: #fff; }
+  .rc-s { font-size: 13.5px; color: var(--fg-2); line-height: 1.35; }
+  .rc-who { margin-top: auto; display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); } .rc-who b { display: block; font-size: 15px; } .rc-who small { display: block; font-size: 11.5px; color: var(--fg-3); }
+  .rc-ph { width: 46px; height: 46px; border-radius: 50%; flex: none; box-shadow: 0 0 0 2px var(--a); } .rc-ph img { width: 100%; height: 100%; object-fit: cover; }
+  .rc-faces { display: flex; flex: none; } .rc-faces .avatar { width: 32px; height: 32px; margin-left: -9px; box-shadow: 0 0 0 2px #121214; } .rc-faces .avatar:first-child { margin-left: 0; }
+  @media (min-width: 900px) { .rc-rail { grid-auto-flow: row; grid-template-columns: repeat(3, 1fr); grid-auto-columns: auto; overflow: visible; } }
+  .plq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .plq { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 18px 12px 14px; border-radius: 16px; font: inherit; color: var(--fg); cursor: pointer;
+    background: radial-gradient(90% 60% at 50% 0%, rgba(255,226,140,.18), transparent 70%), linear-gradient(170deg, #2a2213, #121110 75%); border: 1px solid rgba(227,192,98,.45); box-shadow: inset 0 1px 0 rgba(255,236,180,.15); }
+  .plq-no { position: absolute; top: 10px; left: 12px; font-size: 11px; font-weight: 800; letter-spacing: .1em; color: var(--gold); }
+  .plq-ph { width: 76px; height: 76px; border-radius: 50%; box-shadow: 0 0 0 3px #e3c062, 0 8px 24px -6px rgba(227,192,98,.5); margin-bottom: 6px; } .plq-ph img { width: 100%; height: 100%; object-fit: cover; } .plq-ph .fb { font-size: 24px; }
+  .plq-n { font-size: 15px; } .plq-d { font-size: 11.5px; color: var(--fg-2); } .plq-now { font-size: 11px; color: var(--fg-3); } .plq-now b { color: var(--gold); font-size: 13px; }
+  #wall-next { display: grid; gap: 8px; margin-top: 18px; } .nx-h { margin-bottom: 2px; }
+  .nx { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 12px; padding: 8px 14px 8px 8px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
+  .nx-r { position: relative; width: 52px; height: 52px; display: grid; place-items: center; } .nx-r .avatar { width: 38px; height: 38px; } .nx-r .ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke: var(--line-2); stroke-width: 3; } .ring circle.on { stroke: var(--gold); stroke-linecap: round; }
+  .nx-t b { display: block; font-size: 14.5px; } .nx-t small { font-size: 11.5px; color: var(--fg-3); } .nx-go { text-align: right; font-size: 10.5px; color: var(--fg-3); line-height: 1.1; } .nx-go b { display: block; font-size: 22px; color: var(--fg); }
+  .mo-h { display: flex; align-items: baseline; justify-content: space-between; margin: 26px 0 6px; } .mo-h b { font-size: 19px; font-weight: 800; } .mo-h span { font-size: 12px; color: var(--fg-3); }
+  .mo-list { display: grid; gap: 6px; } .mo-m { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); margin: 12px 0 2px; }
+  .mo { display: grid; grid-template-columns: 30px 34px 1fr; align-items: center; gap: 10px; padding: 9px 12px 9px 9px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font: inherit; color: var(--fg-2); text-align: left; cursor: pointer; }
+  .mo-ic { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); font-size: 15px; } .mo .avatar { width: 34px; height: 34px; }
+  .mo-t { font-size: 13.5px; line-height: 1.3; } .mo-t b { color: var(--fg); } .mo-t small { display: block; font-size: 11px; color: var(--fg-3); margin-top: 1px; }
+  .mo.century { border-color: rgba(227,192,98,.5); background: linear-gradient(100deg, rgba(227,192,98,.12), var(--surface) 60%); } .mo.century .mo-ic { background: rgba(227,192,98,.2); }
+  .mo.milestone .mo-ic { background: rgba(180,140,255,.16); } .mo.debut .mo-ic { background: rgba(63,185,107,.15); }
+  .mo-more { margin-top: 10px; width: 100%; }
   /* admin: set a card's numbers from the card */
   .tw-view { display: grid; grid-template-columns: minmax(0, 240px) 1fr; gap: 22px; align-items: start; padding-top: 6px; }
   .tw-card { max-width: 240px; margin: 0 auto; width: 100%; } .tw-card .card { cursor: default; }
@@ -1304,21 +1340,22 @@
   </section>
   <section class="hsec" id="panel-wall">
     <div class="sh"><h2>Century Wall</h2><span>The night each member reached 100</span></div><div class="gate-screen"></div>
-    <div class="grid" id="wall"></div>
+    <div id="wall"></div>
     <div class="chips" id="wall-next"></div>
     <p class="foot-note" id="wall-note"></p>
   </section>
 
   <section class="hsec" id="panel-records">
-    <div class="sh"><h2>Records</h2><span>Computed from the sheet · ties shown as ties</span></div><div class="gate-screen"></div>
-    <div class="grid" id="records"></div>
+    <div class="sh"><h2>Records</h2><span>Who holds what · swipe each row · tap a record for the player</span></div><div class="gate-screen"></div>
+    <div id="records"></div>
   </section>
 
   <section class="hsec" id="panel-timeline">
     <div class="sh"><h2>Season</h2><span id="tl-sub"></span></div><div class="gate-screen"></div>
     <div class="stats four" id="tl-summary"></div>
     <div class="tl-wrap" id="tl-wrap" style="margin-top:14px"><div class="tl-track" id="tl-track"></div></div>
-    <div class="tl-axis"><span id="tl-first"></span><span>Tap a night to see who played · dot marks a century</span><span id="tl-last"></span></div>
+    <div class="tl-axis"><span id="tl-first"></span><span>Each bar is one night: taller = more players · tap one to see who played</span><span id="tl-last"></span></div>
+    <div id="tl-moments"></div>
   </section>
 
   </section>
@@ -1833,32 +1870,43 @@ const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XI
 function renderWall() {
   const wall = document.getElementById('wall'), nextEl = document.getElementById('wall-next'), note = document.getElementById('wall-note');
   const inducted = ALL_PLAYERS.filter(p=>p.count>=100 && p.centuryIdx>=0).sort((a,b)=>a.centuryIdx-b.centuryIdx || b.count-a.count);
-
-  wall.innerHTML = inducted.length ? inducted.map((p,k) => { const s = SESSIONS[p.centuryIdx], others = s.players.filter(x=>x!==p), shown = others.slice(0,5).map(x=>x.name.split(' ')[0]), more = others.length-shown.length;
-    return `<div class="box" data-i="${p.centuryIdx}"><span class="roman">${ROMAN[k]||k+1}</span><div class="holder" style="margin-top:0">${photo(p,'avatar')}<div><b>${esc(p.name)}</b><span>100th appearance</span></div></div>
-      <div class="date">${esc(fmtSession(s,false))}${s.date ? ` <span class="dim" style="font-weight:400">· ${DAY_FULL[s.date.getDay()]}</span>` : ''}</div>
-      <div class="with">On the pitch with <b>${others.length}</b> others: ${shown.map(esc).join(', ')}${more>0 ? ` <b>+${more}</b>` : ''}</div></div>`; }).join('')
-    : `<div class="empty" style="grid-column:1/-1">No one has reached 100 yet.</div>`;
-  wall.querySelectorAll('.box').forEach(el => el.onclick = () => openSession(+el.dataset.i));
-  const next = ALL_PLAYERS.filter(p=>p.count<100 && p.count>=40).sort((a,b)=>b.count-a.count).slice(0,4);
-  nextEl.innerHTML = next.length ? `<span class="label" style="align-self:center;margin-right:6px">Next on the wall</span>` + next.map(p => { const ms = milestoneFor(p); return `<span class="chip" data-pi="${ALL_PLAYERS.indexOf(p)}">${photo(p,'avatar')}${esc(p.name)} <b>${ms.toGo} to go</b> <small>${esc(fmtEta(ms.eta))}</small></span>`; }).join('') : '';
-  nextEl.querySelectorAll('.chip').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
+  // gold plaques, in the order they got there: photo, the night of their 100th, where they are now
+  wall.innerHTML = inducted.length ? `<div class="plq-grid">${inducted.map((p,k) => { const s = SESSIONS[p.centuryIdx];
+    return `<button class="plq" data-pi="${ALL_PLAYERS.indexOf(p)}"><span class="plq-no">${ROMAN[k]||k+1}</span>${photo(p,'plq-ph')}<b class="plq-n">${esc(p.name)}</b>
+      <span class="plq-d">100th game · ${esc(fmtSession(s,false))}</span><span class="plq-now"><b class="num">${p.count}</b> games now</span></button>`; }).join('')}</div>`
+    : `<div class="empty">No one has reached 100 yet.</div>`;
+  wall.querySelectorAll('.plq').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
+  // next in: a ring that fills towards 100
+  const next = ALL_PLAYERS.filter(p=>p.count<100 && p.count>=40).sort((a,b)=>b.count-a.count).slice(0,5);
+  const ring = v => { const c = 2 * Math.PI * 22; return `<svg class="ring" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22"/><circle class="on" cx="26" cy="26" r="22" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - v / 100)).toFixed(1)}"/></svg>`; };
+  nextEl.innerHTML = next.length ? `<div class="label nx-h">Next on the wall</div>${next.map(p => { const ms = milestoneFor(p); return `<button class="nx" data-pi="${ALL_PLAYERS.indexOf(p)}"><span class="nx-r">${ring(p.count)}${photo(p,'avatar')}</span><span class="nx-t"><b>${esc(p.name)}</b><small>${p.count} of 100 · ${esc(fmtEta(ms.eta))}</small></span><span class="nx-go"><b class="num">${ms.toGo}</b>to go</span></button>`; }).join('')}` : '';
+  nextEl.querySelectorAll('.nx').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
   note.textContent = inducted.some(p=>p.offset>0) ? `Appearances logged before this sheet began (${fmtSession(SESSIONS[0],false)}) are counted as a player's earliest games.` : '';
 }
 
 /* ── records ── */
+/* Each record is a trophy card: what it is in plain words, the number big, and who holds it (photo, or faces when tied).
+   Three swipeable rows: this season, characters, all-time. */
+const REC_ICON = { streak:'🔥', year:'📅', iron:'🛡️', ystreak:'⚡', breakout:'🚀', comeback:'🔄', month:'🗓️', newcomer:'✨', debut:'🌱', boomerang:'🪃', wed:'🌙', 'pos-attack':'⚽', 'pos-midfield':'🎯', 'pos-defense':'🧱', night:'🏟️', founders:'🏛️' };
+function recSentence(r) {
+  const v = r.value;
+  return ({ streak: `${v} games in a row without missing one`, year: `${v} games in one calendar year`, iron: `${v} of the ${THIS_YEAR} nights so far`, ystreak: `${v} games in a row this year`,
+    breakout: `${String(v).replace('+', '')} more games than the year before`, comeback: `Missed ${v} nights in a row, then came back`, month: `${v} games in a single month`,
+    newcomer: `${v} games since a first night this year`, debut: `${v} games in a first year`, boomerang: `Back the very next night ${v} times after missing one`,
+    wed: `${v} of all their games on a Wednesday`, night: `${v} players on one night, the most ever`, founders: `${v} players were there at the very first session` }[r.key])
+    || (r.key.startsWith('pos-') ? `${v} games, the most by any ${r.key === 'pos-defense' ? 'defender' : r.key === 'pos-attack' ? 'attacker' : 'midfielder'}` : `${v} ${r.unit || ''}`);
+}
 function renderRecords() {
   const el = document.getElementById('records');
-  const TITLES = { season:`This season · ${THIS_YEAR}`, character:'Character', alltime:'All-time' };
-  let lastSection = null;
-  el.innerHTML = RECORDS.map(r => {
-    const header = r.section !== lastSection ? `<div class="group">${TITLES[r.section]}</div>` : ''; lastSection = r.section;
-    const names = r.holders.map(p=>p.name);
-    const who = r.session ? fmtSession(r.session,false) : names.length === 1 ? names[0] : names.slice(0,3).join(', ') + (names.length>3 ? ` +${names.length-3}` : '');
-    const single = r.holders.length === 1;
-    return `${header}<div class="box"><div class="label">${esc(r.label)}</div><div class="big num">${r.value}${r.unit ? `<small>${esc(r.unit)}</small>` : ''}</div>
-      <div class="holder">${single ? photo(r.p,'avatar') : ''}<div><b>${esc(who)}${!single && !r.session && names.length>1 && names.length<=3 ? ' <span class="dim">tied</span>' : ''}</b><span>${esc(r.detail)}</span></div></div></div>`; }).join('');
-  el.querySelectorAll('.box').forEach((d,i) => { const r = RECORDS[i]; d.onclick = () => r.session ? openSession(SESSIONS.indexOf(r.session)) : r.key==='founders' ? openSession(0) : r.p ? openProfile(r.p) : null; });
+  const SEC = { season: [`This season`, `${THIS_YEAR} so far`], character: ['Characters', 'The quirks'], alltime: ['All-time', 'Since the first night'] };
+  const bySec = {}; RECORDS.forEach((r, i) => (bySec[r.section] = bySec[r.section] || []).push([r, i]));
+  el.innerHTML = Object.keys(SEC).filter(k => bySec[k]).map(k => `<div class="rc-sec ${k}"><div class="rc-h"><b>${SEC[k][0]}</b><span>${SEC[k][1]} · ${bySec[k].length}</span></div>
+    <div class="rc-rail">${bySec[k].map(([r, i]) => { const h = r.holders, one = h.length === 1, who = r.session ? fmtSession(r.session, false) : h.length ? (one ? h[0].name : h.length <= 3 ? h.map(p => p.name.split(' ')[0]).join(', ') : `${h.slice(0, 2).map(p => p.name.split(' ')[0]).join(', ')} +${h.length - 2}`) : '';
+      const faces = r.session ? `<span class="rc-ic big">🏟️</span>` : one ? photo(h[0], 'rc-ph') : `<span class="rc-faces">${h.slice(0, 4).map(p => photo(p, 'avatar')).join('')}</span>`;
+      return `<button class="rc" data-i="${i}"><span class="rc-top"><span class="rc-ic">${REC_ICON[r.key] || '🏆'}</span><span class="rc-l">${esc(r.label)}</span></span>
+        <span class="rc-v num">${r.value}</span><span class="rc-s">${esc(recSentence(r))}</span>
+        <span class="rc-who">${faces}<span><b>${esc(who)}</b>${!one && !r.session && h.length > 1 ? `<small>${r.key === 'founders' ? 'founders' : 'tied'}</small>` : r.detail ? `<small>${esc(r.detail)}</small>` : ''}</span></span></button>`; }).join('')}</div></div>`).join('');
+  el.querySelectorAll('.rc').forEach(d => { const r = RECORDS[+d.dataset.i]; d.onclick = () => r.session ? openSession(SESSIONS.indexOf(r.session)) : r.key === 'founders' ? openSession(0) : r.p ? openProfile(r.p) : null; });
 }
 
 /* ── timeline ── */
@@ -1888,6 +1936,25 @@ function renderTimeline() {
   wrap.onpointermove = e => { if (!down) return; const dx = e.clientX - down.x; if (Math.abs(dx) > 4) { wrap.classList.add('dragging'); wrap.dataset.dragged = '1'; wrap.scrollLeft = down.sl - dx; } };
   wrap.onpointerup = wrap.onpointercancel = wrap.onpointerleave = () => { down = null; wrap.classList.remove('dragging'); setTimeout(()=>delete wrap.dataset.dragged, 0); };
   wrap.scrollLeft = wrap.scrollWidth;
+  renderMoments();
+}
+/* The season as a story: every debut, milestone and century this year, newest first, grouped by month, in plain words. */
+let MOMENTS_ALL = false;
+function renderMoments() {
+  const el = document.getElementById('tl-moments'); if (!el) return;
+  const items = []; SESSIONS.forEach((s, i) => { if (s.year !== THIS_YEAR) return; s.moments.forEach(m => items.push({ s, i, m })); if (s.busyRank === 1) items.push({ s, i, m: { kind: 'night' } }); });
+  items.reverse();
+  const shown = MOMENTS_ALL ? items : items.slice(0, 14);
+  const txt = ({ m, s }) => m.kind === 'debut' ? [`🌱`, `<b>${esc(m.p.name)}</b> played a first game`]
+    : m.kind === 'century' ? [`🏆`, `<b>${esc(m.p.name)}</b> reached <b>100 games</b> and joined the Century Wall`]
+    : m.kind === 'milestone' ? [`⭐`, `<b>${esc(m.p.name)}</b> reached <b>${m.m} games</b>`]
+    : [`🏟️`, `<b>${s.turnout} players</b>, the biggest night ever`];
+  let month = '';
+  el.innerHTML = items.length ? `<div class="mo-h"><b>Moments of ${THIS_YEAR}</b><span>${items.length} so far</span></div><div class="mo-list">${shown.map(x => { const [ic, t] = txt(x), mk = x.s.date ? `${MONTH_LABELS[x.s.date.getMonth()]} ${x.s.date.getFullYear()}` : '';
+      const head = mk !== month ? (month = mk, `<div class="mo-m">${esc(mk)}</div>`) : '';
+      return `${head}<button class="mo ${x.m.kind}" data-i="${x.i}"><span class="mo-ic">${ic}</span>${x.m.p ? photo(x.m.p, 'avatar') : '<span></span>'}<span class="mo-t">${t}<small>${esc(fmtSession(x.s))}</small></span></button>`; }).join('')}</div>
+    ${items.length > shown.length ? `<button class="btn ghost mo-more" onclick="MOMENTS_ALL = true; renderMoments()">Show all ${items.length}</button>` : ''}` : '';
+  el.querySelectorAll('.mo').forEach(b => b.onclick = () => openSession(+b.dataset.i));
 }
 
 /* ── balances ── */
