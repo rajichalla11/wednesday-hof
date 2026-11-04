@@ -110,11 +110,11 @@
   .plq-no { position: absolute; top: 10px; left: 12px; font-size: 11px; font-weight: 800; letter-spacing: .1em; color: var(--gold); }
   .plq-ph { width: 76px; height: 76px; border-radius: 50%; box-shadow: 0 0 0 3px #e3c062, 0 8px 24px -6px rgba(227,192,98,.5); margin-bottom: 6px; } .plq-ph img { width: 100%; height: 100%; object-fit: cover; } .plq-ph .fb { font-size: 24px; }
   .plq-n { font-size: 15px; } .plq-d { font-size: 11.5px; color: var(--fg-2); } .plq-now { font-size: 11px; color: var(--fg-3); } .plq-now b { color: var(--gold); font-size: 13px; }
-  #wall-next { display: grid; gap: 8px; margin-top: 18px; } .nx-h { margin-bottom: 2px; }
-  .nx { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 12px; padding: 8px 14px 8px 8px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
-  .nx-r { position: relative; width: 52px; height: 52px; display: grid; place-items: center; } .nx-r .avatar { width: 38px; height: 38px; } .nx-r .ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+  #wall-next { display: grid; gap: 8px; margin-top: 18px; } .wnx-h { margin-bottom: 2px; }
+  .wnx { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 12px; padding: 8px 14px 8px 8px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
+  .wnx-r { position: relative; width: 52px; height: 52px; display: grid; place-items: center; } .wnx-r .avatar { width: 38px; height: 38px; } .wnx-r .ring { position: absolute; inset: 0; transform: rotate(-90deg); }
   .ring circle { fill: none; stroke: var(--line-2); stroke-width: 3; } .ring circle.on { stroke: var(--gold); stroke-linecap: round; }
-  .nx-t b { display: block; font-size: 14.5px; } .nx-t small { font-size: 11.5px; color: var(--fg-3); } .nx-go { text-align: right; font-size: 10.5px; color: var(--fg-3); line-height: 1.1; } .nx-go b { display: block; font-size: 22px; color: var(--fg); }
+  .wnx-t b { display: block; font-size: 14.5px; } .wnx-t small { font-size: 11.5px; color: var(--fg-3); } .wnx-go { text-align: right; font-size: 10.5px; color: var(--fg-3); line-height: 1.1; } .wnx-go b { display: block; font-size: 22px; color: var(--fg); }
   .mo-h { display: flex; align-items: baseline; justify-content: space-between; margin: 26px 0 6px; } .mo-h b { font-size: 19px; font-weight: 800; } .mo-h span { font-size: 12px; color: var(--fg-3); }
   .mo-list { display: grid; gap: 6px; } .mo-m { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); margin: 12px 0 2px; }
   .mo { display: grid; grid-template-columns: 30px 34px 1fr; align-items: center; gap: 10px; padding: 9px 12px 9px 9px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font: inherit; color: var(--fg-2); text-align: left; cursor: pointer; }
@@ -1879,8 +1879,8 @@ function renderWall() {
   // next in: a ring that fills towards 100
   const next = ALL_PLAYERS.filter(p=>p.count<100 && p.count>=40).sort((a,b)=>b.count-a.count).slice(0,5);
   const ring = v => { const c = 2 * Math.PI * 22; return `<svg class="ring" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22"/><circle class="on" cx="26" cy="26" r="22" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - v / 100)).toFixed(1)}"/></svg>`; };
-  nextEl.innerHTML = next.length ? `<div class="label nx-h">Next on the wall</div>${next.map(p => { const ms = milestoneFor(p); return `<button class="nx" data-pi="${ALL_PLAYERS.indexOf(p)}"><span class="nx-r">${ring(p.count)}${photo(p,'avatar')}</span><span class="nx-t"><b>${esc(p.name)}</b><small>${p.count} of 100 · ${esc(fmtEta(ms.eta))}</small></span><span class="nx-go"><b class="num">${ms.toGo}</b>to go</span></button>`; }).join('')}` : '';
-  nextEl.querySelectorAll('.nx').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
+  nextEl.innerHTML = next.length ? `<div class="label wnx-h">Next on the wall</div>${next.map(p => { const ms = milestoneFor(p); return `<button class="wnx" data-pi="${ALL_PLAYERS.indexOf(p)}"><span class="wnx-r">${ring(p.count)}${photo(p,'avatar')}</span><span class="wnx-t"><b>${esc(p.name)}</b><small>${p.count} of 100 · ${esc(fmtEta(ms.eta))}</small></span><span class="wnx-go"><b class="num">${ms.toGo}</b>to go</span></button>`; }).join('')}` : '';
+  nextEl.querySelectorAll('.wnx').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
   note.textContent = inducted.some(p=>p.offset>0) ? `Appearances logged before this sheet began (${fmtSession(SESSIONS[0],false)}) are counted as a player's earliest games.` : '';
 }
 
@@ -1890,7 +1890,7 @@ function renderWall() {
 const REC_ICON = { streak:'🔥', year:'📅', iron:'🛡️', ystreak:'⚡', breakout:'🚀', comeback:'🔄', month:'🗓️', newcomer:'✨', debut:'🌱', boomerang:'🪃', wed:'🌙', 'pos-attack':'⚽', 'pos-midfield':'🎯', 'pos-defense':'🧱', night:'🏟️', founders:'🏛️' };
 function recSentence(r) {
   const v = r.value;
-  return ({ streak: `${v} games in a row without missing one`, year: `${v} games in one calendar year`, iron: `${v} of the ${THIS_YEAR} nights so far`, ystreak: `${v} games in a row this year`,
+  return ({ streak: `${v} games in a row without missing one`, year: `${v} games in one calendar year`, iron: `${v} ${r.unit} nights in ${THIS_YEAR}`, ystreak: `${v} games in a row this year`,
     breakout: `${String(v).replace('+', '')} more games than the year before`, comeback: `Missed ${v} nights in a row, then came back`, month: `${v} games in a single month`,
     newcomer: `${v} games since a first night this year`, debut: `${v} games in a first year`, boomerang: `Back the very next night ${v} times after missing one`,
     wed: `${v} of all their games on a Wednesday`, night: `${v} players on one night, the most ever`, founders: `${v} players were there at the very first session` }[r.key])
