@@ -801,7 +801,9 @@ function gamesPublic_() {
 }
 function kickoff_(g) { return new Date(g.date + 'T' + (g.time || '21:00') + ':00+03:00'); }
 /** Match voting closes at 11:00 Nairobi time the morning after the game. */
-function closes_(date) { return new Date(date + 'T11:00:00+03:00').getTime() + 86400000; }
+const CLOSE_LATE_ = { '2026-11-04': '2026-11-05T14:00:00+03:00' };   // one-off: voting for a game kept open past 11am the next morning
+function closes_(date) { return CLOSE_LATE_[date] ? new Date(CLOSE_LATE_[date]).getTime() : new Date(date + 'T11:00:00+03:00').getTime() + 86400000; }
+function closeLabel_(date) { return Utilities.formatDate(new Date(closes_(date)), 'Africa/Nairobi', 'h:mma').replace(':00', '').toLowerCase(); }
 /** The most recent game that has kicked off: the one in Settings if it has, otherwise the latest row of the Games tab. */
 /** Every game: the Settings one (game being set up, with gate code) plus each row of the Games tab, with sign-ups applied. */
 function allGames_() {
@@ -1590,7 +1592,7 @@ function matchRate_(body) {
   if (!name) return { ok: false, error: 'This link isn’t recognised.' };
   const g = lastGame_();
   if (!g) return { ok: false, error: nextGame_() ? 'Match ratings open at kick-off.' : 'No game set.' };
-  if (Date.now() >= closes_(g.date)) return { ok: false, error: 'Voting for this game closed at 11am.' };
+  if (Date.now() >= closes_(g.date)) return { ok: false, error: 'Voting for this game closed at ' + closeLabel_(g.date) + '.' };
   const names = {}; players_().forEach(function (p) { names[p.name.toLowerCase()] = p.name; });
   const out_ = {}; tab_('Strikes').forEach(function (r) { if (String(r[0]).slice(0, 10) === g.date && r[2] && !r[4]) out_[String(r[2]).toLowerCase()] = 1; });   // dropped out late: didn't play, so can't be rated
   const ratings = body.ratings || {}, motm = String(body.motm || '').toLowerCase(), b = id3_(body.t), rows = [];

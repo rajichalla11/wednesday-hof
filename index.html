@@ -3913,6 +3913,7 @@ function recordFor(p) {
     const mine = side === 'b' ? gm.b : gm.w, theirs = side === 'b' ? gm.w : gm.b; if (mine > theirs) r.w++; else if (mine < theirs) r.l++; else r.d++; });
   return r.w + r.d + r.l ? r : null;
 }
+const closeLbl = g => { const t = g && g.closes ? new Date(g.closes) : null; return t ? new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Nairobi', hour: 'numeric', minute: '2-digit', hour12: true }).format(t).replace(':00', '').replace(/\s/g, '').toLowerCase() : '11am'; };
 function gameSquad(g) {
   const names = new Set((g.squad || []).map(n => n.toLowerCase()));
   if (g.teams) [...(g.teams.black || []), ...(g.teams.white || [])].forEach(n => names.add(n.toLowerCase()));
@@ -3980,7 +3981,7 @@ function paintGame(el, view, open, toggleFn) {
   const fmtTag = g.size && g.size !== 6 ? ` · ${g.size}-a-side` : '';
   const head = ph === 'pre' ? [today ? 'Game day' : 'Next game', `Kick-off ${fmtKo(g)} · ${dayLbl}${fmtTag}`, fmtLeft(ko - now), 'to kick-off']
     : ph === 'live' ? ['Playing now', `${fmtKo(g)} kick-off · ${dayLbl}`, fmtLeft(ko + 3600000 - now), 'left']
-    : ph === 'post' ? ['Full time', `${today ? 'Tonight' : dayLbl} · voting closes 11am`, String(g.raters || 0), g.raters === 1 ? 'player has rated' : 'players have rated']
+    : ph === 'post' ? ['Full time', `${today ? 'Tonight' : dayLbl} · voting closes ${closeLbl(g)}`, String(g.raters || 0), g.raters === 1 ? 'player has rated' : 'players have rated']
     : ['Full time', `${dayLbl} · voting closed`, String(g.raters || 0), g.raters === 1 ? 'player rated' : 'players rated'];
   const gate = ph === 'post' || ph === 'final' ? '' : !g.hasGate ? '' : mine && mine.gate
     ? `<button class="gd-gate" onclick="copyGate(this)"><span><span class="label">Gate code${today ? ' · tonight' : ''}</span><b>${esc(mine.gate)}</b></span><small>Tap to copy</small></button>`
@@ -4016,7 +4017,7 @@ function paintGame(el, view, open, toggleFn) {
   const motm = g.motm || [], isMotm = k => motm.includes(k);
   const motmSec = isPost && motm.length ? sec('', '', `<div class="gd-motm">${motm.map(k => { const p = ALL_PLAYERS.find(x => x.name === k); return `${p ? photo(p, 'avatar') : ''}<span><span class="label">${ph === 'final' || g.motmPicked ? 'Man of the match' : 'Man of the match so far'}</span><b>${esc(k)}</b></span>`; }).join('')}<i>★</i></div>`) : '';
   const nRated = Object.keys((myLast && myLast.ratings) || {}).length;
-  const actionSec = checkBtn ? `<div class="gd-sec gd-actions"><span class="n">${nRated ? `You rated ${nRated} player${nRated === 1 ? '' : 's'}. You can change it until 11am.` : `Rate how everyone played${today ? ' tonight' : ''}, and pick your man of the match.`}</span>${checkBtn}</div>` : '';
+  const actionSec = checkBtn ? `<div class="gd-sec gd-actions"><span class="n">${nRated ? `You rated ${nRated} player${nRated === 1 ? '' : 's'}. You can change it until ${closeLbl(g)}.` : `Rate how everyone played${today ? ' tonight' : ''}, and pick your man of the match.`}</span>${checkBtn}</div>` : '';
   const boardSec = '';   // ratings now sit beside every player in the lineup
   const foot = '';
   el.dataset.phase = ph; el.hidden = false;
@@ -4370,7 +4371,7 @@ function paintMatch() {
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()), n = Object.keys(MATCH.ratings).length;
   const others = ALL_PLAYERS.filter(p => p !== me && !MATCH.list.includes(p)).sort((a, b) => a.name.localeCompare(b.name));
   const tn = MATCH.g.date === todayNbo();
-  document.getElementById('m-body').innerHTML = `<div class="label">${tn ? 'Tonight' : esc(dayOf(MATCH.g))} · voting closes 11am</div>
+  document.getElementById('m-body').innerHTML = `<div class="label">${tn ? 'Tonight' : esc(dayOf(MATCH.g))} · voting closes ${closeLbl(MATCH.g)}</div>
     <div class="b-title" style="margin-top:8px">${tn ? 'Rate tonight' : 'Rate the game'}</div>
     <div class="b-copy">Out of 10 for how they played ${tn ? 'tonight' : 'that night'}, not in general. Tap the star for your man of the match.</div>
     ${MATCH.list.map((p, i) => { const v = MATCH.ratings[p.name], sd = MATCH.side(p), prevSd = i ? MATCH.side(MATCH.list[i - 1]) : null; return `${sd && sd !== prevSd ? `<div class="label" style="margin-top:16px">${sd === MATCH.mySide ? 'Your team' : 'Opposition'} · ${sd === 'black' ? 'Black' : 'White'}</div>` : ''}<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="Man of the match">★</button>
