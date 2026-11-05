@@ -30,7 +30,7 @@ const SESSION_START_COL = 8;
 const SEED_BY_POS = { attack:[72,74,64,70,52,64], midfield:[68,64,74,70,64,66], defense:[66,54,64,58,74,72], other:[65,65,65,65,65,65] };
 function posClass_(pos) { const p = String(pos || '').toLowerCase(); return p.indexOf('attack') >= 0 ? 'attack' : (p.indexOf('defen') >= 0) ? 'defense' : p.indexOf('mid') >= 0 ? 'midfield' : 'other'; }
 /* Sheet rows that are the same person: alias (lower case) → the name used everywhere. Keep in step with ALIASES in index.html. */
-const ALIASES_ = { 'rj': 'Rahul', 'sahil m.': 'Sahil M', 'veer': 'Vali' };
+const ALIASES_ = { 'rj': 'Rahul', 'sahil m.': 'Sahil M', 'veer': 'Vali', 'ayush': 'Aayush' };
 const SKIP = ['', 'player', 'games played', 'amount paid', 'balance', 'owing from previous sessions', '+1s', 'krish p', 'images', 'postion', 'position', 'preferred foot'];
 
 /* ───────── admin: run these from the editor ───────── */
@@ -898,6 +898,14 @@ function withdraw_(body) {
    What was written is remembered in the script property sheet_<date>, so a column made by hand for the same date is never
    touched (no double charge), and only rows this code wrote are ever changed. */
 const SHEET_FEE = 350, SHEET_NOTE = 'from site sign-ups';
+/** Sheet date headings compared loosely: "4 Nov 2026" (as Sheets shows a parsed date) and "04 Nov 2026" are the same night. */
+function normLabel_(x) { return String(x || '').trim().replace(/^0(?=\d)/, '').toLowerCase(); }
+/** name (lower case) -> sheet headings of nights they dropped out of late (strike not cleared). */
+function strikeNights_() {
+  const out = {}; if (!ss_().getSheetByName('Strikes')) return out;
+  tab_('Strikes').forEach(function (r) { if (!r[2] || r[4]) return; const n = String(r[2]).toLowerCase(), k = ALIASES_[n] ? ALIASES_[n].toLowerCase() : n; (out[k] = out[k] || []).push(normLabel_(sheetLabel_(String(r[0]).slice(0, 10)))); });
+  return out;
+}
 function sheetLabel_(date) { return Utilities.formatDate(new Date(date + 'T12:00:00+03:00'), 'Africa/Nairobi', 'dd MMM yyyy'); }
 function sheetCharges_(g) {
   const slots = 2 * (g.size || 6), su = signupsByDate_()[g.date] || [];
@@ -950,7 +958,7 @@ function syncSheet_(date, dry) {
     });
     // Game Log: replace this code's rows for the date
     const data = log.getDataRange().getDisplayValues();
-    for (let i = data.length - 1; i >= 1; i--) if (String(data[i][0]).trim() === label && String(data[i][3]).indexOf(SHEET_NOTE) >= 0) log.deleteRow(i + 1);
+    for (let i = data.length - 1; i >= 1; i--) if (normLabel_(data[i][0]) === normLabel_(label) && String(data[i][3]).indexOf(SHEET_NOTE) >= 0) log.deleteRow(i + 1);   // Sheets shows "04 Nov 2026" as "4 Nov 2026"
     if (c.list.length) log.getRange(log.getLastRow() + 1, 1, c.list.length, 4).setValues(c.list.map(function (x) { return [label, x.name, SHEET_FEE, x.note]; }));
     pr.setProperty(key, JSON.stringify({ col: label, rows: rows, at: new Date().toISOString(), n: c.list.length }));
     return { ok: true, charged: c.list.length, label: label };
@@ -1363,6 +1371,50 @@ function renameSignup_(body) {
   } catch (e) { console.error(e); }
   return { ok: true, renamed: renamed, dropped: dropped, sync: sync, removedRow: removedRow, fixtures: fixturesPublic_() };
 }
+/** Editor only, run once (5 Nov 2026): undo what charging late drop-outs as "played" caused, and fold the stray "Ayush" into Aayush.
+ *  - match ratings given to someone for a night they dropped out of late are removed, and their check-in for that night is set to out
+ *  - "Ayush" ratings / check-ins become Aayush (dropped where that ballot or night already has Aayush)
+ *  - in Wednesday Group the Ayush row's charges move onto Aayush's row and the empty Ayush row is deleted
+ *  - Game Log: the duplicate site rows (the old date mismatch) are removed, keeping one of each. Returns what it did. */
+function repairStrikeNights() {
+  const done = { ratingsDropped: 0, ratingsMoved: 0, checkinsOut: 0, checkinsMoved: 0, cellsMoved: 0, rowDeleted: false, logDupes: 0, logRenamed: 0 };
+  const out = {}; tab_('Strikes').forEach(function (r) { if (r[2] && !r[4]) out[String(r[0]).slice(0, 10) + '|' + String(r[2]).toLowerCase()] = 1; });
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const mv = sheet_('MatchVotes'), md = mv.getDataRange().getValues(), has = {};
+    md.forEach(function (r) { has[String(r[0]).slice(0, 10) + '|' + r[1] + '|' + String(r[2]).toLowerCase()] = 1; });
+    for (let i = md.length - 1; i >= 1; i--) { const d = String(md[i][0]).slice(0, 10), t = String(md[i][2]);
+      if (out[d + '|' + t.toLowerCase()]) { mv.deleteRow(i + 1); done.ratingsDropped++; continue; }
+      if (t.toLowerCase() === 'ayush') { if (has[d + '|' + md[i][1] + '|aayush']) { mv.deleteRow(i + 1); done.ratingsDropped++; } else { mv.getRange(i + 1, 3).setValue('Aayush'); has[d + '|' + md[i][1] + '|aayush'] = 1; done.ratingsMoved++; } } }
+    const ck = sheet_('Checkins'), cd = ck.getDataRange().getValues(), cin = {};
+    cd.forEach(function (r) { cin[String(r[0]).slice(0, 10) + '|' + String(r[1]).toLowerCase()] = 1; });
+    for (let i = cd.length - 1; i >= 1; i--) { const d = String(cd[i][0]).slice(0, 10), n = String(cd[i][1]);
+      if (out[d + '|' + n.toLowerCase()] && String(cd[i][2]) !== 'out') { ck.getRange(i + 1, 3).setValue('out'); done.checkinsOut++; }
+      else if (n.toLowerCase() === 'ayush') { if (cin[d + '|aayush']) ck.deleteRow(i + 1); else { ck.getRange(i + 1, 2).setValue('Aayush'); cin[d + '|aayush'] = 1; } done.checkinsMoved++; } }
+  } finally { lock.releaseLock(); }
+  const ss = SpreadsheetApp.openById(MAIN_SHEET_ID), wide = ss.getSheetByName('Wednesday Group'), log = ss.getSheetByName('Game Log');
+  const last = wide.getLastRow(), w = wide.getLastColumn(), vals = wide.getRange(4, 1, last - 3, w).getValues();
+  const ai = vals.findIndex(function (r) { return String(r[1]).trim().toLowerCase() === 'aayush'; }), yi = vals.findIndex(function (r) { return String(r[1]).trim().toLowerCase() === 'ayush'; });
+  if (ai >= 0 && yi >= 0) {
+    const ar = 4 + ai, yr = 4 + yi;
+    for (let c = 8; c < w; c++) { const v = vals[yi][c]; if (v === '' || v === null) continue; if (vals[ai][c] === '' || vals[ai][c] === null) wide.getRange(ar, c + 1).setValue(v); wide.getRange(yr, c + 1).clearContent(); done.cellsMoved++; }
+    if (!(Number(vals[yi][5]) || 0)) { wide.deleteRow(yr); done.rowDeleted = true; }
+    const pr = props_(), all = pr.getProperties();
+    Object.keys(all).forEach(function (k) { if (k.indexOf('sheet_') !== 0) return; const st = JSON.parse(all[k] || 'null'); if (!st || !st.rows) return;
+      Object.keys(st.rows).forEach(function (n) { if (st.rows[n] === yr) st.rows[n] = ar; else if (done.rowDeleted && st.rows[n] > yr) st.rows[n]--; }); pr.setProperty(k, JSON.stringify(st)); });
+  }
+  SpreadsheetApp.flush();
+  const W = wide.getRange(3, 1, wide.getLastRow() - 2, wide.getLastColumn()).getValues(), charged = {};   // heading -> who the column charges now
+  for (let c = 8; c < W[0].length; c++) { const lb = normLabel_(W[0][c] instanceof Date ? Utilities.formatDate(W[0][c], 'Africa/Nairobi', 'd MMM yyyy') : W[0][c]); if (!lb) continue; const set = charged[lb] = charged[lb] || {};
+    for (let r = 1; r < W.length; r++) if (W[r][1] && Number(W[r][c])) set[String(W[r][1]).trim().toLowerCase()] = 1; }
+  const ld = log.getDataRange().getDisplayValues(), seen = {};
+  for (let i = 1; i < ld.length; i++) { if (String(ld[i][1]).trim().toLowerCase() === 'ayush') { log.getRange(i + 1, 2).setValue('Aayush'); ld[i][1] = 'Aayush'; done.logRenamed++; } }
+  for (let i = ld.length - 1; i >= 1; i--) { if (String(ld[i][3]).indexOf(SHEET_NOTE) < 0) continue; const k = normLabel_(ld[i][0]) + '|' + String(ld[i][1]).trim().toLowerCase();
+    const set = charged[normLabel_(ld[i][0])], nm = String(ld[i][1]).trim().toLowerCase();
+    if (seen[k] || (set && !set[nm])) { log.deleteRow(i + 1); done.logDupes++; } else seen[k] = 1; }
+  clearCaches();
+  console.log(JSON.stringify(done)); return done;
+}
 /** Admin: open a game for sign-ups (a Games row with no lineup yet), or remove one that has no sign-ups. */
 function addFixture_(body) {
   const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
@@ -1540,10 +1592,11 @@ function matchRate_(body) {
   if (!g) return { ok: false, error: nextGame_() ? 'Match ratings open at kick-off.' : 'No game set.' };
   if (Date.now() >= closes_(g.date)) return { ok: false, error: 'Voting for this game closed at 11am.' };
   const names = {}; players_().forEach(function (p) { names[p.name.toLowerCase()] = p.name; });
+  const out_ = {}; tab_('Strikes').forEach(function (r) { if (String(r[0]).slice(0, 10) === g.date && r[2] && !r[4]) out_[String(r[2]).toLowerCase()] = 1; });   // dropped out late: didn't play, so can't be rated
   const ratings = body.ratings || {}, motm = String(body.motm || '').toLowerCase(), b = id3_(body.t), rows = [];
   Object.keys(ratings).forEach(function (k) {
     const who = names[k.toLowerCase()], v = Math.round(Number(ratings[k]) * 2) / 2;
-    if (!who || who.toLowerCase() === name.toLowerCase() || isNaN(v) || v < 1 || v > 10) return;
+    if (!who || who.toLowerCase() === name.toLowerCase() || out_[who.toLowerCase()] || isNaN(v) || v < 1 || v > 10) return;
     rows.push([g.date, b, who, v, who.toLowerCase() === motm ? 1 : 0, today_(), name]);
   });
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
@@ -1682,13 +1735,14 @@ function players_() {
   const NON = ['balance', 'owing from previous sessions', 'images', 'amount paid', 'preferred foot', 'position', 'postion'];
   const cols = [];
   for (let i = SESSION_START_COL; i < rows[hdr].length; i++) { const h = (rows[hdr][i] || '').trim(); if (h && NON.indexOf(h.toLowerCase()) < 0) cols.push(i); }
-  const seen = {}, out = [];
+  const seen = {}, out = [], sk = strikeNights_(), labels = cols.map(function (i) { return normLabel_(rows[hdr][i]); });
   rows.slice(hdr + 1).forEach(function (r) {
-    const raw = (r[1] || '').trim(), count = parseInt((r[0] || '').replace(/,/g, ''), 10);
+    const raw = (r[1] || '').trim(); let count = parseInt((r[0] || '').replace(/,/g, ''), 10);
     if (!raw || isNaN(count) || count <= 0) return;
     const name = ALIASES_[raw.toLowerCase()] || raw, n = name.toLowerCase();   // rows that are the same person fold into one (attendance OR'd, counts added)
     if (SKIP.indexOf(n) >= 0 || /^\d/.test(n) || n.length < 2) return;
     const att = cols.map(function (i) { const v = parseFloat((r[i] || '').replace(/,/g, '')); return (!isNaN(v) && v > 0) ? 1 : 0; });
+    (sk[n] || []).forEach(function (lb) { const k = labels.indexOf(lb); if (k >= 0 && att[k]) { att[k] = 0; count--; } });   // charged for dropping out late, but didn't play
     const paid = parseFloat((r[5] || '').replace(/,/g, '')) || 0, balRaw = parseFloat((r[6] || '').replace(/,/g, '')), bal = isNaN(balRaw) ? null : balRaw;
     if (seen[n]) { const m = seen[n]; m.att = m.att.map(function (v, i) { return v | att[i]; }); m.count += count; m.paid += paid; if (bal !== null) m.bal = (m.bal || 0) + bal; return; }   // same name twice = one person
     const p = { name: name, count: count, position: (r[2] || '').trim(), att: att, paid: paid, bal: bal }; seen[n] = p; out.push(p);

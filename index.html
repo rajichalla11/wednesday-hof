@@ -1457,7 +1457,7 @@ const SHEET_ID = '1UUcM5qxOEA-Ykr-gIG4WSHDlzpoi0TJAaRh-8HgYRaI';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 const SESSION_START_COL = 8;
 /* Rows in the sheet that are the same person: alias (lower case) → the name shown on the site. Counts, attendance and balance are combined. */
-const ALIASES = { 'rj': 'Rahul', 'sahil m.': 'Sahil M', 'veer': 'Vali' };
+const ALIASES = { 'rj': 'Rahul', 'sahil m.': 'Sahil M', 'veer': 'Vali', 'ayush': 'Aayush' };
 /* Founders are whoever played the very first session, plus anyone listed here (lower case) who was there but not marked on the sheet. */
 const FOUNDERS = new Set(['raj']);
 const isFounder = p => p.attendance[0] === 1 || FOUNDERS.has(p.name.toLowerCase());
@@ -1596,6 +1596,7 @@ function fmtSession(s, withDay = true) {
 }
 
 /* ── load ── */
+let SK_USED = '';
 function build(text) {
     const rows = parseCSV(text);
     let headerRow = null, headerIdx = -1;
@@ -1652,6 +1653,11 @@ function build(text) {
     for (let i = 0; i < players.length; i++) {   // the same name on two rows is one person (e.g. a second Nirav row added by mistake)
       for (let j = players.length - 1; j > i; j--) if (players[j].name.toLowerCase() === players[i].name.toLowerCase()) mergeInto(players[i], players[j]);
     }
+    /* A late drop-out is charged in that night's column like everyone who played, but they didn't play: take them off that night. */
+    const SK = (RATINGS && RATINGS.ok && RATINGS.strikes) || ((readCache('w910_results') || {}).strikes) || {}, skBy = {};
+    Object.keys(SK).forEach(n => skBy[n.toLowerCase()] = SK[n]); SK_USED = JSON.stringify(SK);
+    const sDay = sessionCols.map(s => s.date ? new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Nairobi' }).format(s.date) : '');
+    for (const p of players) for (const d of (skBy[p.name.toLowerCase()] || [])) { const i = sDay.indexOf(d); if (i >= 0 && p.attendance[i]) { p.attendance[i] = 0; p.count = Math.max(0, p.count - 1); } }
     for (const p of players) {
       p.firstIdx = p.attendance.findIndex(v=>v===1); p.lastIdx = -1; for (let i=p.attendance.length-1;i>=0;i--) if (p.attendance[i]) { p.lastIdx = i; break; }
       Object.assign(p, calcStreaks(p.attendance));
@@ -2254,6 +2260,7 @@ function fetchResults() {
     RESULTS_PROMISE = src.catch(() => null).then(r => {
       RESULTS_PROMISE = null; if (r) RATINGS = r; RATINGS_AT = Date.now(); markTakenTiles(); setTimeout(() => bgRender('gameday', renderGameday), 0);
       if (r && r.ok) writeCache('w910_results', r);
+      if (r && r.ok && JSON.stringify(r.strikes || {}) !== SK_USED) { const c = (() => { try { return localStorage.getItem('w910_csv'); } catch (_) { return null; } })(); if (c) try { build(c); } catch (e) { console.error(e); } }   // strikes changed who played
       if (r && before && before !== JSON.stringify(r) && BOOTED && TOKEN && !YOU_WAITING) bgRender('you', renderYou);
       return RATINGS;
     });
