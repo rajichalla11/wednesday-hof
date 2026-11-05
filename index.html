@@ -1134,6 +1134,27 @@
   .if-n { width: 20px; text-align: center; font-size: 13px; color: var(--fg-3); font-weight: 700; } .if-row .avatar { width: 30px; height: 30px; } .if-name { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .if-avg { font-size: 15px; padding: 3px 8px; border-radius: 7px; background: color-mix(in srgb, var(--fg) 8%, transparent); } .if-avg.hi { background: var(--gold); color: #1a1408; }
   @media (max-width: 480px) { .if-row .fg-strip { display: none; } .tw-p { width: 66px; } .tw-p .avatar { width: 34px; height: 34px; } .tw-line { gap: 7px; } .tw-pitch { padding: 16px 8px; } .tw-k { display: none; } }
+  /* History → Stats */
+  #panel-stats .stats { margin-bottom: 12px; }
+  .st-card { border: 1px solid var(--line-2); background: var(--surface); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+  .st-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; } .st-h small { font-size: 12px; color: var(--fg-3); }
+  .st-bw { display: flex; justify-content: space-between; font-weight: 600; } .st-bw span { display: inline-flex; align-items: center; gap: 7px; } .st-bw b { font-size: 26px; }
+  .st-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 10px 0 14px; background: var(--surface-3); }
+  .st-bar i.b { background: #3a3a40; } .st-bar i.d { background: var(--fg-3); } .st-bar i.w { background: #e9e9e4; }
+  .st-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .st-facts div { display: grid; gap: 3px; min-width: 0; } .st-facts b { font-size: 15px; } .st-facts small { font-size: 12px; color: var(--fg-3); }
+  .st-you { background: linear-gradient(160deg, color-mix(in srgb, var(--gold) 9%, var(--surface)), var(--surface) 60%); } .st-you .st-h .label { color: var(--gold); }
+  .st-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; } .st-grid div { display: grid; gap: 4px; } .st-grid b { font-size: 20px; line-height: 1; white-space: nowrap; }
+  .st-mate { margin-top: 12px; font-size: 13px; color: var(--fg-2); } .st-mate b { color: var(--fg); }
+  .st-pick { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 22px -2px 6px; padding: 2px; } .st-pick::-webkit-scrollbar { display: none; }
+  .st-pick button { flex: none; font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); color: var(--fg-2); cursor: pointer; white-space: nowrap; }
+  .st-pick button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .st-note { font-size: 12px; color: var(--fg-3); margin: 0 2px 10px; }
+  .st-who { flex: 1; min-width: 0; display: grid; gap: 1px; } .st-who small { font-size: 11.5px; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .st-row.me { border-color: color-mix(in srgb, var(--gold) 55%, var(--line-2)); } .st-duo { cursor: default; } .st-duo .xp-faces .avatar { width: 28px; height: 28px; }
+  .st-gap { text-align: center; color: var(--fg-3); font-size: 12px; line-height: 1; } .st-more { margin-top: 8px; font-size: 12.5px; }
+  .st-lock { text-align: center; display: grid; gap: 10px; justify-items: center; } .st-lock p { font-size: 13px; color: var(--fg-2); margin: 0; }
+  @media (max-width: 480px) { .st-grid { grid-template-columns: repeat(3, 1fr); row-gap: 14px; } .st-facts b { font-size: 14px; } }
   .xp-h { display: flex; align-items: center; justify-content: space-between; margin: 22px 2px 8px; } .xp-h .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; } .xp-h .fx-chev { width: 6px; height: 6px; transform: rotate(-45deg); }
   .xp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .xp-tile { display: grid; gap: 8px; align-content: start; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-2); background: linear-gradient(160deg, color-mix(in srgb, var(--gold) 9%, var(--surface)), var(--surface) 60%); font: inherit; color: var(--fg); text-align: left; cursor: pointer; min-width: 0; }
   .xp-tile .label { color: var(--gold); } .xp-tile small { font-size: 12px; color: var(--fg-3); } .xp-tile small b { color: var(--fg-2); } .xp-faces { display: flex; } .xp-faces .avatar { width: 26px; height: 26px; margin-left: -6px; border: 2px solid var(--surface); } .xp-faces .avatar:first-child { margin-left: 0; }
@@ -1344,11 +1365,15 @@
     <div class="stat"><b class="num" id="s-players">—</b><div class="label">Players</div></div>
   </div>
 
-  <div class="seg hist-seg" id="hist-seg"><button data-sub="week">In form<i class="new-dot"></i></button><button data-sub="records" class="on">Records</button><button data-sub="wall"><span class="long">Century Wall</span><span class="short">Wall</span></button><button data-sub="timeline">Season</button></div>
+  <div class="seg hist-seg" id="hist-seg"><button data-sub="week">In form</button><button data-sub="stats">Stats<i class="new-dot"></i></button><button data-sub="records" class="on">Records</button><button data-sub="wall"><span class="long">Century Wall</span><span class="short">Wall</span></button><button data-sub="timeline">Season</button></div>
   <section class="hsec" id="panel-week">
     <div class="sh"><h2>In-form team</h2><span id="totw-sub">Best average match rating over the last 4 games</span></div>
     <div id="totw"></div>
     <div id="inform"></div>
+  </section>
+  <section class="hsec" id="panel-stats">
+    <div class="sh"><h2>Stats</h2><span id="st-sub">Every game with a score and teams</span></div>
+    <div id="st-body"></div>
   </section>
   <section class="hsec" id="panel-wall">
     <div class="sh"><h2>Century Wall</h2><span>The night each member reached 100</span></div><div class="gate-screen"></div>
@@ -3947,6 +3972,7 @@ function lastCardHtml(L, onclick, label) {
 function renderGameday() {
   try { renderMatches(); } catch (e) { console.error(e); }
   try { renderWeek(); } catch (e) { console.error(e); }
+  try { renderStats(); } catch (e) { console.error(e); }
   try { if (VOTER && VOTER.isAdmin && !document.querySelector('#games-admin .ga[open]')) renderGamesAdmin(); } catch (e) { console.error(e); }
   try { if (VOTER && VOTER.isAdmin) { renderStrikesAdmin(); renderAdminTodo(); } } catch (e) { console.error(e); }
   try { renderFixtures(); } catch (e) { console.error(e); }
@@ -4330,6 +4356,115 @@ function copyTotw(btn) {
   const txt = `🔥 In-form team · last ${d.games.length} games\n${[['attack', 'ATT'], ['midfield', 'MID'], ['defense', 'DEF']].filter(([k]) => d.lines[k].length).map(([k, l]) => `${l}: ${line(k)}`).join('\n')}\n\nwednesday910.vercel.app/#week`;
   navigator.clipboard.writeText(txt).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy for WhatsApp', 1800); }, () => {});
 }
+/* ── History → Stats: everything we can count from games with a score and both teams ── */
+const ST_MIN = 3;
+let ST_BOARD = 'win', ST_ALL = false;
+function statsData() {
+  const games = ((RATINGS && RATINGS.ok && RATINGS.games) || []).filter(g => koOf(g) <= Date.now() && g.b !== '' && g.b != null && g.w !== '' && g.w != null && !isNaN(+g.b) && !isNaN(+g.w)
+    && (g.black || []).length && (g.white || []).length).sort((a, b) => a.date.localeCompare(b.date));
+  if (!games.length) return null;
+  const known = n => ALL_PLAYERS.some(p => p.name === n), P = {}, pairs = {}, sh = { b: 0, w: 0, d: 0 };
+  let goals = 0, big = null, high = null, tight = null;
+  games.forEach(g => {
+    const b = +g.b, w = +g.w; goals += b + w; sh[b > w ? 'b' : w > b ? 'w' : 'd']++;
+    if (!big || Math.abs(b - w) > Math.abs(+big.b - +big.w)) big = g;
+    if (!high || b + w > +high.b + +high.w) high = g;
+    if (!tight || Math.abs(b - w) <= Math.abs(+tight.b - +tight.w)) tight = g;
+    [['black', b, w], ['white', w, b]].forEach(([k, f, a]) => {
+      const side = g[k].filter(known), res = f > a ? 'w' : f < a ? 'l' : 'd';
+      side.forEach(n => {
+        const x = P[n] = P[n] || { n, gp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, motm: 0, rs: 0, rk: 0, run: [] };
+        x.gp++; x[res]++; x.gf += f; x.ga += a; x.run.push(res);
+        if ((g.motm || []).includes(n)) x.motm++;
+        if (rtOk(g, n)) { x.rs += g.ratings[n].avg; x.rk++; }
+      });
+      for (let i = 0; i < side.length; i++) for (let j = i + 1; j < side.length; j++) {
+        const [p1, p2] = [side[i], side[j]].sort(), key = p1 + '|' + p2, x = pairs[key] = pairs[key] || { a: p1, b: p2, gp: 0, w: 0, d: 0, l: 0 };
+        x.gp++; x[res]++;
+      }
+    });
+  });
+  const ps = Object.values(P).map(x => {
+    let unb = 0; for (let i = x.run.length - 1; i >= 0 && x.run[i] !== 'l'; i--) unb++;
+    let best = 0, cur = 0; x.run.forEach(r => { cur = r === 'w' ? cur + 1 : 0; best = Math.max(best, cur); });
+    return Object.assign(x, { gd: x.gf - x.ga, wr: x.w / x.gp, avg: x.rk ? x.rs / x.rk : 0, unb, wrun: best });
+  });
+  return { games, ps, pairs: Object.values(pairs), sh, goals, big, high: high === big ? null : high, tight };
+}
+const stSigned = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
+const stRec = x => `${x.w}W ${x.d}D ${x.l}L`;
+const ST_BOARDS = [
+  { k: 'win', t: 'Win rate', note: `${ST_MIN}+ games`, rows: d => d.ps.filter(x => x.gp >= ST_MIN).sort((a, b) => b.wr - a.wr || b.gp - a.gp || b.gd - a.gd), val: x => Math.round(x.wr * 100) + '%', sub: x => `${stRec(x)} · ${x.gp} games` },
+  { k: 'pm', t: 'Plus / minus', note: 'Goal difference with them on the pitch', rows: d => d.ps.slice().sort((a, b) => b.gd - a.gd || b.gp - a.gp), val: x => stSigned(x.gd), sub: x => `${x.gf} for · ${x.ga} against · ${x.gp} games` },
+  { k: 'rating', t: 'Match rating', gated: true, note: `Average of their nightly ratings · ${ST_MIN}+ rated games`, rows: d => d.ps.filter(x => x.rk >= ST_MIN).sort((a, b) => b.avg - a.avg || b.rk - a.rk), val: x => x.avg.toFixed(1), sub: x => `${x.rk} rated games` },
+  { k: 'motm', t: 'Man of the match', note: 'Awards since the vote started', rows: d => d.ps.filter(x => x.motm).sort((a, b) => b.motm - a.motm || a.gp - b.gp), val: x => x.motm + '★', sub: x => `in ${x.gp} game${x.gp === 1 ? '' : 's'}` },
+  { k: 'def', t: 'Fewest conceded', note: `Goals let in per game while playing · ${ST_MIN}+ games`, rows: d => d.ps.filter(x => x.gp >= ST_MIN).sort((a, b) => a.ga / a.gp - b.ga / b.gp || b.gp - a.gp), val: x => (x.ga / x.gp).toFixed(1), sub: x => `${x.ga} in ${x.gp} games` },
+  { k: 'run', t: 'Unbeaten', note: 'Current run of games without a loss', rows: d => d.ps.filter(x => x.unb >= 2).sort((a, b) => b.unb - a.unb || b.wrun - a.wrun), val: x => x.unb, sub: x => `best winning run ${x.wrun}` },
+];
+function stMeName() {
+  if (!VOTER || !VOTER.ok || !VOTER.name) return null;
+  const p = ALL_PLAYERS.find(x => x.name.toLowerCase() === VOTER.name.toLowerCase()); return p ? p.name : null;
+}
+const stJs = n => esc(n).replace(/'/g, "\\'");
+function stRow(x, i, B, me) {
+  const p = ALL_PLAYERS.find(y => y.name === x.n);
+  return `<button class="if-row st-row${x.n === me ? ' me' : ''}" onclick="openPlayerByName('${stJs(x.n)}')"><span class="if-n">${i + 1}</span>${p ? photo(p, 'avatar') : ''}<span class="st-who"><span class="if-name">${esc(x.n)}</span><small>${B.sub(x)}</small></span><b class="num if-avg${i === 0 ? ' hi' : ''}">${B.val(x)}</b></button>`;
+}
+function renderStats() {
+  const el = document.getElementById('st-body'); if (!el) return;
+  if (!RATINGS || !RATINGS.ok || !ALL_PLAYERS.length) { el.innerHTML = '<div class="loading">Loading…</div>'; return; }
+  const d = statsData(), sub = document.getElementById('st-sub');
+  if (!d) { el.innerHTML = '<div class="empty">Shows once a game has a score and both teams.</div>'; return; }
+  if (sub) sub.textContent = `${d.games.length} game${d.games.length === 1 ? '' : 's'} with a score and teams · ${dayOf(d.games[0])} – ${dayOf(d.games[d.games.length - 1])}`;
+  const locked = gateLocked(), me = stMeName(), M = me && d.ps.find(x => x.n === me);
+  const tot = d.sh.b + d.sh.w + d.sh.d, pct = k => tot ? d.sh[k] / tot * 100 : 0;
+  const score = g => +g.b === +g.w ? `Draw ${g.b}–${g.w}` : `${+g.b > +g.w ? 'Black' : 'White'} ${Math.max(+g.b, +g.w)}–${Math.min(+g.b, +g.w)}`;
+  let h = `<div class="stats four">
+      <div class="stat"><b class="num">${d.games.length}</b><div class="label">Games</div></div>
+      <div class="stat"><b class="num">${d.goals}</b><div class="label">Goals</div></div>
+      <div class="stat"><b class="num">${(d.goals / d.games.length).toFixed(1)}</b><div class="label">Goals a game</div></div>
+      <div class="stat"><b class="num">${d.ps.length}</b><div class="label">Players</div></div></div>`;
+  h += `<div class="st-card"><div class="st-h"><span class="label">Black v White</span><small>${d.sh.d ? `${d.sh.d} draw${d.sh.d === 1 ? '' : 's'}` : 'no draws'}</small></div>
+    <div class="st-bw"><span><i class="gd-shirt b"></i>Black <b class="num">${d.sh.b}</b></span><span><b class="num">${d.sh.w}</b> White<i class="gd-shirt w"></i></span></div>
+    <div class="st-bar"><i class="b" style="width:${pct('b')}%"></i><i class="d" style="width:${pct('d')}%"></i><i class="w" style="width:${pct('w')}%"></i></div>
+    <div class="st-facts"><div><span class="label">Biggest win</span><b>${score(d.big)}</b><small>${esc(dayOf(d.big))}</small></div>${d.high ? `<div><span class="label">Most goals</span><b>${+d.high.b + +d.high.w} goals</b><small>${score(d.high)} · ${esc(dayOf(d.high))}</small></div>` : `<div><span class="label">Tightest game</span><b>${score(d.tight)}</b><small>${esc(dayOf(d.tight))}</small></div>`}</div></div>`;
+  if (M) {
+    const mates = d.pairs.filter(x => (x.a === me || x.b === me) && x.gp >= 2).map(x => Object.assign({ o: x.a === me ? x.b : x.a }, x)).sort((a, b) => b.w / b.gp - a.w / a.gp || b.gp - a.gp);
+    const bm = mates[0], wrRank = ST_BOARDS[0].rows(d).findIndex(x => x.n === me);
+    h += `<div class="st-card st-you"><div class="st-h"><span class="label">Your numbers</span><small>${M.gp} game${M.gp === 1 ? '' : 's'}${wrRank >= 0 ? ` · ${ordinal(wrRank + 1)} on win rate` : ''}</small></div>
+      <div class="st-grid">
+        <div><b class="num">${Math.round(M.wr * 100)}%</b><span class="label">Won</span></div>
+        <div><b class="num">${M.w}-${M.d}-${M.l}</b><span class="label">W-D-L</span></div>
+        <div><b class="num">${stSigned(M.gd)}</b><span class="label">Plus / minus</span></div>
+        <div><b class="num">${locked ? '–' : M.rk ? M.avg.toFixed(1) : '–'}</b><span class="label">Avg rating</span></div>
+        <div><b class="num">${M.motm}</b><span class="label">MOTM</span></div>
+        <div><b class="num">${M.unb}</b><span class="label">Unbeaten</span></div></div>
+      ${bm ? `<div class="st-mate">Best with <b>${esc(bm.o)}</b> · won ${bm.w} of ${bm.gp} together</div>` : ''}</div>`;
+  }
+  const B = ST_BOARDS.find(b => b.k === ST_BOARD) || ST_BOARDS[0];
+  h += `<div class="st-pick">${ST_BOARDS.map(b => `<button class="${b.k === B.k ? 'on' : ''}" onclick="ST_BOARD='${b.k}';ST_ALL=false;renderStats()">${b.t}</button>`).join('')}</div>
+    <div class="st-note">${B.note}</div>`;
+  if (B.gated && locked) h += `<div class="st-card st-lock"><span class="label">Locked</span><p>${esc(gateLine())}.</p>${gateAction()}</div>`;
+  else {
+    const rows = B.rows(d), shown = ST_ALL ? rows : rows.slice(0, 8), mi = me ? rows.findIndex(x => x.n === me) : -1;
+    h += rows.length ? `<div class="if-list">${shown.map((x, i) => stRow(x, i, B, me)).join('')}${!ST_ALL && mi >= 8 ? `<div class="st-gap">···</div>${stRow(rows[mi], mi, B, me)}` : ''}</div>
+      ${rows.length > 8 ? `<button class="btn link st-more" onclick="ST_ALL=!ST_ALL;renderStats()">${ST_ALL ? 'Show top 8' : `Show all ${rows.length}`}</button>` : ''}` : '<div class="empty">Nobody yet.</div>';
+  }
+  const duos = d.pairs.filter(x => x.gp >= ST_MIN && x.w / x.gp >= .5).sort((a, b) => b.w / b.gp - a.w / a.gp || b.gp - a.gp).slice(0, 5);
+  if (duos.length) h += `<div class="label" style="margin:26px 2px 8px">Best partnerships · ${ST_MIN}+ games on the same team</div><div class="if-list">${duos.map((x, i) => {
+    const pa = ALL_PLAYERS.find(y => y.name === x.a), pb = ALL_PLAYERS.find(y => y.name === x.b);
+    return `<div class="if-row st-row st-duo${x.a === me || x.b === me ? ' me' : ''}"><span class="if-n">${i + 1}</span><span class="xp-faces">${pa ? photo(pa, 'avatar') : ''}${pb ? photo(pb, 'avatar') : ''}</span><span class="st-who"><span class="if-name">${esc(x.a.split(' ')[0])} & ${esc(x.b.split(' ')[0])}</span><small>${stRec(x)} together</small></span><b class="num if-avg${i === 0 ? ' hi' : ''}">${Math.round(x.w / x.gp * 100)}%</b></div>`; }).join('')}</div>`;
+  h += `<div class="tw-foot" style="margin-top:16px"><button class="btn ghost" onclick="copyStats(this)">Copy for WhatsApp</button><small>Only games with a score and both teams count. Guests aren't listed.</small></div>`;
+  el.innerHTML = h;
+}
+function copyStats(btn) {
+  const d = statsData(); if (!d) return;
+  const B = ST_BOARDS.find(b => b.k === ST_BOARD) || ST_BOARDS[0];
+  if (B.gated && gateLocked()) return;
+  const rows = B.rows(d).slice(0, 5);
+  const txt = `📊 ${B.t} · ${d.games.length} games\n${rows.map((x, i) => `${i + 1}. ${x.n} ${B.val(x)} (${B.sub(x)})`).join('\n')}\n\nBlack ${d.sh.b} · White ${d.sh.w}${d.sh.d ? ` · ${d.sh.d} drawn` : ''}\n\nwednesday910.vercel.app/#stats`;
+  navigator.clipboard.writeText(txt).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy for WhatsApp', 1800); }, () => {});
+}
 /* The teaser at the bottom of Home: one tile into History → In form. */
 function renderExploreStrip(d) {
   const el = document.getElementById('explore-strip'); if (!el) return;
@@ -4482,13 +4617,14 @@ document.addEventListener('keydown', e => {
 const TABS = ['home','hall','matches','history','me','admin'];
 /* Four tabs (plus Admin for the admin). Old links still work: #you and #balances open Home; #records, #wall and #timeline
    open History on that section. Every tab starts at the top: the game strip lives on Home, the Hall header on History. */
-const TAB_ALIAS = { in: 'home', signup: 'home', you: 'me', profile: 'me', balances: 'home', cards: 'hall', records: 'history', wall: 'history', timeline: 'history', week: 'history' };
+const TAB_ALIAS = { stats: 'history', in: 'home', signup: 'home', you: 'me', profile: 'me', balances: 'home', cards: 'hall', records: 'history', wall: 'history', timeline: 'history', week: 'history' };
 let HIST_SUB = 'records';
-const HIST_SUBS = ['week', 'records', 'wall', 'timeline'];
-try { if (localStorage.getItem('w910_seen_week')) document.querySelector('#hist-seg .new-dot')?.remove(); } catch (_) {}
+const HIST_SUBS = ['week', 'stats', 'records', 'wall', 'timeline'];
+try { if (localStorage.getItem('w910_seen_stats')) document.querySelector('#hist-seg .new-dot')?.remove(); } catch (_) {}
 function showHistory(sub) {
   HIST_SUB = HIST_SUBS.includes(sub) ? sub : 'records';
-  if (HIST_SUB === 'week') { try { localStorage.setItem('w910_seen_week', '1'); } catch (_) {} document.querySelector('#hist-seg .new-dot')?.remove(); renderWeek(); }
+  if (HIST_SUB === 'week') renderWeek();
+  if (HIST_SUB === 'stats') { try { localStorage.setItem('w910_seen_stats', '1'); } catch (_) {} document.querySelector('#hist-seg .new-dot')?.remove(); renderStats(); }
   document.querySelectorAll('#hist-seg button').forEach(b => b.classList.toggle('on', b.dataset.sub === HIST_SUB));
   document.querySelectorAll('.hsec').forEach(h => h.classList.toggle('on', h.id === 'panel-' + HIST_SUB));
   if (HIST_SUB === 'timeline') { const w = document.getElementById('tl-wrap'); if (w) w.scrollLeft = w.scrollWidth; }
