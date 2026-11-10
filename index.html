@@ -610,7 +610,7 @@
   .fx { gap: 10px; padding: 0; overflow: hidden; } .fx > :not(.fx-head):not(.fx-bar) { margin: 0 16px; } .fx > :last-child { margin-bottom: 14px; }
   .fx.mine { border-color: color-mix(in srgb, var(--gold) 45%, var(--line-2)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 12%, transparent), 0 10px 30px -18px color-mix(in srgb, var(--gold) 60%, transparent); }
   .fx, .ll, .mc, .gd { background: linear-gradient(180deg, color-mix(in srgb, var(--fg) 3.5%, var(--surface)) 0%, var(--surface) 70%); }
-  .fx-rel { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-left: 8px; padding: 3px 8px; border-radius: 999px; vertical-align: 2px; background: color-mix(in srgb, var(--fg) 9%, transparent); color: var(--fg-2); }
+  .fx-rel { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-right: 8px; padding: 3px 8px; border-radius: 999px; vertical-align: 1px; background: color-mix(in srgb, var(--fg) 9%, transparent); color: var(--fg-2); }
   .fx-rel.now { background: var(--gold); color: #1a1408; }
   .fx-who { display: flex; align-items: center; gap: 10px; min-width: 0; } .fx-faces .avatar { width: 26px; height: 26px; } .fx-more { display: inline-grid; place-items: center; font-size: 10px; font-weight: 700; background: var(--surface-3, #2a2a2e); color: var(--fg-2); }
   .ll-sb .ll-in { gap: 8px; } .ll-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
@@ -622,12 +622,12 @@
   .mc-p b.rt, .gd-pl b.rt { margin-left: auto; min-width: 34px; text-align: center; padding: 2px 6px; border-radius: 6px; font-size: 13px; background: color-mix(in srgb, var(--fg) 7%, transparent); color: var(--fg); } .mc-p b.rt.hi, .gd-pl b.rt.hi { background: var(--gold); color: #1a1408; } .mc-p b.rt.none, .gd-pl b.rt.none { background: none; color: var(--fg-3); }
   .gd-pl-n { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .gd-star { font-style: normal; color: var(--gold); } .gd-rtnote { margin-top: 10px; font-size: 12px; } .gd-one { display: grid; }
   .fx-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
-  .fx-when { flex: 1; min-width: 0; } .fx-when b { display: block; font-size: 17px; font-weight: 800; white-space: nowrap; } .fx-when span { font-size: 12.5px; color: var(--fg-3); }
+  .fx-when { flex: 1; min-width: 0; display: grid; gap: 5px; } .fx-when b { display: block; font-size: 18px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .fx-when span { font-size: 12.5px; color: var(--fg-3); }
   .fx-chev { width: 9px; height: 9px; flex: none; border-right: 2px solid var(--fg-3); border-bottom: 2px solid var(--fg-3); transform: rotate(45deg) translate(-2px, -2px); transition: transform .2s; }
   .fx.open .fx-chev, .ll.open .fx-chev { transform: rotate(-135deg) translate(-2px, -2px); }
   .fx > .fx-bar { margin: 0 16px; }
   .fx-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; }
-  .fx-stat { font-size: 13.5px; font-weight: 600; color: var(--fg-2); } .fx-stat.full { color: var(--gold); }
+  .fx-stat { font-size: 12px; font-weight: 600; color: var(--fg-2); white-space: nowrap; } .fx-stat.full { color: var(--gold); } .fx-count { gap: 5px; flex: none; } .fx-count .fx-tag { font-size: 10px; padding: 4px 8px; }
   .fx-tag { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; background: var(--fg); color: var(--bg); }
   .fx-go { min-height: 40px; padding: 0 22px; }
   .fx-body .fx-list li { padding: 6px 12px; } .fx-body { display: grid; gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
@@ -821,9 +821,12 @@
   .seen-live { display: inline-block; width: 7px; height: 7px; flex: none; border-radius: 50%; background: #3ecf6e; box-shadow: 0 0 0 3px color-mix(in srgb, #3ecf6e 25%, transparent); }
   .seen-r { display: flex; flex-direction: column; align-items: flex-end; text-align: right; } .seen-r b { font-size: 13px; }
   /* Your next game */
-  .nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0 12px; border-radius: 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
-  .nx-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .nx-l .label { color: color-mix(in srgb, var(--bg) 60%, transparent); } .nx-l b { font-size: 18px; font-weight: 800; } .nx-l small { font-size: 12.5px; color: color-mix(in srgb, var(--bg) 70%, transparent); }
-  .nx .gd-st.in { background: var(--bg); color: var(--fg); border-color: var(--bg); } .nx .gd-st.sb { background: var(--bg); }
+  .nx { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px 14px; padding: 16px 16px 12px; margin: 14px 0 14px; border-radius: 18px; cursor: pointer; color: var(--fg); border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--line-2));
+    background: radial-gradient(130% 100% at 100% 0%, color-mix(in srgb, var(--gold) 20%, transparent), transparent 62%), var(--surface); box-shadow: 0 14px 34px -22px color-mix(in srgb, var(--gold) 70%, transparent); }
+  .nx-l { min-width: 0; display: flex; flex-direction: column; gap: 4px; } .nx-l .label { color: var(--gold); } .nx-l b { font-size: 21px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .nx-l small { font-size: 12.5px; color: var(--fg-2); }
+  .nx-r { display: grid; justify-items: end; gap: 4px; } .nx-r b { font-size: 26px; line-height: 1; white-space: nowrap; } .nx-r .label { font-size: 9.5px; }
+  .nx-f { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--gold) 16%, var(--line)); font-size: 12.5px; color: var(--fg-2); } .nx-f .fx-chev { margin-left: auto; transform: rotate(-45deg); }
+  .nx .nx-gate { grid-column: 1 / -1; } .gd-st { white-space: nowrap; }
   .nx-gate, .fx-body .gd-gate { width: 100%; margin: 0; }
   /* Last game, one line */
   .ll { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 16px; margin: 4px 0 14px; border: 1px solid var(--line-2); border-radius: 14px; background: var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
@@ -1223,6 +1226,7 @@
   .me-go.me-gold .me-prog i { background: #1a1408; }
   .me-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(0,0,0,.18); } .me-prog i { display: block; height: 100%; background: currentColor; opacity: .45; }
   .me-cta { gap: 8px; } .me-cta-t { font-size: 24px; font-weight: 800; letter-spacing: -.02em; } .me-cta p { color: var(--fg-2); font-size: 13.5px; line-height: 1.5; margin: 0 0 6px; } .me-cta small { color: var(--fg-3); font-size: 12px; text-align: center; }
+  .me-box .lc-go.me-code { background: transparent !important; color: var(--gold) !important; border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--line-2)) !important; box-shadow: none; font-weight: 700; font-size: 13.5px; min-height: 44px; } .me-box .lc-go.me-code svg { stroke: var(--gold); }
   .me-form { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: var(--fg); cursor: pointer; text-align: left; }
   .me-form .label { flex: none; } .fg-go { margin-left: auto; color: var(--fg-3); font-size: 18px; }
   .fg-strip { display: flex; gap: 6px; }
@@ -3386,7 +3390,7 @@ function toggleBal(btn) { const b = btn.parentElement.querySelector('.bb'); if (
 function meStripHtml(me, v, o) {
   const bal = o.bal !== undefined ? o.bal : me.balance, neg = o.known && bal < 0, lastG = RATINGS && RATINGS.ok && RATINGS.last, now = Date.now();
   const need = gateNeed(), rated = Math.min(selfRated(), need);
-  const next = gateLocked() ? `<button class="btn me-go" onclick="openBallot()">Rate ${need - rated} more teammate${need - rated === 1 ? '' : 's'} to unlock ratings<span class="me-prog"><i style="width:${need ? rated / need * 100 : 0}%"></i></span></button>`
+  const next = gateLocked() ? `<button class="btn me-go" onclick="openBallot()">Rate ${need - rated} more to unlock ratings<span class="me-prog"><i style="width:${need ? rated / need * 100 : 0}%"></i></span></button>`
     : v.open && o.done < o.queue.length ? `<button class="btn me-go" onclick="openBallot()">Rate your teammates · ${o.done} of ${o.queue.length} done<span class="me-prog"><i style="width:${o.queue.length ? o.done / o.queue.length * 100 : 0}%"></i></span></button>` : '';
   // the profile nudge shows alongside, whatever else is waiting, until it's complete
   const pd = profileDone(me), prof = pd.done < pd.total ? `<button class="btn me-go me-gold" onclick="openProfileEdit()">${nudgeLabel(me, pd)}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span></button>` : '';
@@ -3397,7 +3401,7 @@ function meStripHtml(me, v, o) {
       ${formStripHtml(me)}
       <div class="me-stats"><span><b class="num">${me.count}</b>games</span><span><b class="num">${me.currentStreak || 0}</b>in a row</span><span><b class="num">${me.gamesThisYear}</b>in ${THIS_YEAR}</span><span><b class="num">${o.ms.toGo}</b>to ${me.count < 100 ? '100' : o.ms.next}</span></div>
       ${next}${prof}
-      ${!isStandalone() ? `<button class="btn me-go lc-go" onclick="openCodeSheet()"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>Get a sign-in code for the app</button>` : ''}
+      ${!isStandalone() ? `<button class="btn me-go lc-go me-code" onclick="openCodeSheet()"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>Get a sign-in code for the app</button>` : ''}
       <button class="me-more" onclick="showTab('me')">Your card, profile and more <i class="fx-chev"></i></button>
     </div>`;
 }
@@ -4213,8 +4217,9 @@ function renderNextLine(fx, me) {
   const i = pos(f), inn = i < f.slots, ko = koOf(f), now = Date.now(), today = f.date === todayNbo();
   const vgc = (VOTER && VOTER.gates && VOTER.gates[f.date]) || (VOTER && VOTER.game && VOTER.game.date === f.date && VOTER.game.gate) || '', vg = vgc ? { gate: vgc } : null;
   el.innerHTML = `<div class="nx" role="button" onclick="fxOpen('${f.date}')">
-    <div class="nx-l"><span class="label">Your next game</span><b>${today ? 'Tonight' : esc(fxDay(f.date))} ${esc(skDate(f.date))} · ${fmtKo(f)}</b><small>${now < ko ? `${today ? 'Kick-off in' : 'In'} ${fmtLeft(ko - now)}` : 'Playing now'}</small></div>
-    <span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${i + 1}` : `Standby · ${ordN(i - f.slots)}`}</span>
+    <div class="nx-l"><span class="label">Your next game</span><b>${today ? 'Tonight' : esc(dayOf(f))} · ${fmtKo(f)}</b><small>${today ? esc(dayOf(f)) + ' · ' : ''}${fxSpan(f)} · ${f.size}-a-side</small></div>
+    <div class="nx-r">${now < ko ? `<b class="num">${fmtLeft(ko - now)}</b><span class="label">to kick-off</span>` : '<b class="num">Live</b><span class="label">playing now</span>'}</div>
+    <div class="nx-f"><span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${i + 1}` : `Standby · ${ordN(i - f.slots)}`}</span><span>${Math.min(f.signups.length, f.slots)} of ${f.slots} in</span><i class="fx-chev"></i></div>
     ${today && vg && vg.gate ? `<button class="gd-gate nx-gate" onclick="event.stopPropagation(); copyGate(this)"><span><span class="label">Gate</span><b>${esc(vg.gate)}</b></span><small>Tap to copy</small></button>` : ''}
   </div>`;
 }
@@ -4259,10 +4264,10 @@ function renderFixtures() {
     </div>`;
     return `<article class="fx${open ? ' open' : ''}${pos >= 0 ? ' mine' : ''}" id="fx-${f.date}">
       <button class="fx-head" onclick="fxToggle('${f.date}')" aria-expanded="${open}">
-        <span class="fx-when"><b>${esc(fxDay(f.date))} ${esc(dayOf(f).replace(/^\w+\s/, ''))}${fxRel(f.date) ? `<em class="fx-rel${f.date === todayNbo() ? ' now' : ''}">${fxRel(f.date)}</em>` : ''}</b><span>${fxSpan(f)} · ${f.size}-a-side</span></span>
-        <span class="fx-count num"><span class="t"><b>${nIn}</b>/${f.slots}</span></span><i class="fx-chev"></i></button>
+        <span class="fx-when"><b>${esc(fxDay(f.date))} ${esc(dayOf(f).replace(/^\w+\s/, ''))}</b><span>${fxRel(f.date) ? `<em class="fx-rel${f.date === todayNbo() ? ' now' : ''}">${fxRel(f.date)}</em>` : ''}${fxSpan(f)} · ${f.size}-a-side</span></span>
+        <span class="fx-count"><span class="t num"><b>${nIn}</b>/${f.slots}</span>${stat}</span><i class="fx-chev"></i></button>
       <div class="fx-bar"><i style="width:${f.slots ? nIn / f.slots * 100 : 0}%"></i></div>
-      <div class="fx-row"><span class="fx-who">${fxFaces(f)}${stat}</span>${primary}</div>
+      <div class="fx-row"><span class="fx-who">${fxFaces(f)}</span>${primary}</div>
       ${promoted ? `<div class="fx-note">You're in now. Someone dropped out.</div>` : ''}
       ${FX_MSG[f.date] ? `<div class="fx-note err">${esc(FX_MSG[f.date])}</div>` : ''}
       ${FX_WARN && FX_WARN.date === f.date ? (() => { const who = FX_WARN.name || me, self = !FX_WARN.name || mine(FX_WARN.name), k = strikesOf(who), nx = Math.min(3, k + 1);
