@@ -1226,6 +1226,23 @@
   #cards-legend { display: block; margin-top: 22px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font-size: 12px; color: var(--fg-3); }
   .pl-lg-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 18px; margin: 12px 0 14px; } .pl-lg-stats div { display: flex; gap: 10px; align-items: baseline; } .pl-lg-stats b { flex: none; width: 30px; color: var(--fg); font-size: 12.5px; } .pl-lg-stats span { color: var(--fg-2); line-height: 1.4; }
   .pl-lg-tiers { display: flex; flex-wrap: wrap; gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--line); } .pl-lg-tiers span { display: inline-flex; align-items: center; gap: 7px; color: var(--fg-2); } #cards-legend p { margin: 12px 0 0; line-height: 1.5; } #cards-legend .pl-dot { margin: 0; border-radius: 50%; }
+  /* Matches: summary strip, month dividers, one-row footer; Me: actions grid and framed account list */
+  .mt-sum { display: flex; align-items: center; gap: 16px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--surface); font: inherit; color: var(--fg-3); text-align: left; cursor: pointer; font-size: 9.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+  .mt-sum > span { display: grid; gap: 3px; } .mt-sum b { font-size: 19px; color: var(--fg); letter-spacing: 0; line-height: 1; } .mt-sum .mt-bw { display: flex; align-items: center; gap: 7px; } .mt-bw em { font-style: normal; color: var(--fg-3); font-size: 14px; }
+  .mt-go { margin-left: auto; font-style: normal; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; letter-spacing: 0; text-transform: none; color: var(--fg-2); } .mt-go .fx-chev { width: 6px; height: 6px; transform: rotate(-45deg); }
+  .mt-month { display: flex; align-items: center; gap: 10px; margin: 8px 2px -2px; } .mt-month i { flex: 1; height: 1px; background: var(--line); }
+  .mt-list .mc { margin-bottom: 0; }
+  .mc-res.you { background: color-mix(in srgb, var(--fg) 10%, transparent); color: var(--fg); } .mc-res.you.won { background: rgba(63,185,107,.16); color: #4cc77a; } .mc-res.you.lost { background: rgba(229,83,75,.14); color: #ef6b63; }
+  .mc-score .mid b { font-weight: 800; } .mc-score .mid b.lost { color: var(--fg-3); } .mc-score .side.mine::after { content: 'You'; font-size: 9px; letter-spacing: .08em; padding: 2px 5px; border-radius: 4px; background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); } .mc-score .side.w.mine::after { order: -1; }
+  .mc-ft { display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 16px; border-top: 1px solid var(--line); min-height: 54px; }
+  .mc-mm { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; } .mc-mm .avatar, .mc-mm .gd-last-star { width: 32px; height: 32px; flex: none; } .mc-mm .avatar { box-shadow: 0 0 0 2px var(--gold); }
+  .mc-mm span { display: grid; gap: 2px; min-width: 0; } .mc-mm small { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); } .mc-mm b { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mc-mm.none { font-size: 12.5px; color: var(--fg-3); }
+  .mc-ft .mc-more { width: auto; flex: none; margin-left: auto; padding: 7px 12px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 12.5px; }
+  .mx-acts { display: grid; grid-template-columns: 1fr 1fr; } .mx-acts .btn { justify-content: center; white-space: nowrap; } .mx-acts .mx-main { grid-column: 1 / -1; min-height: 48px; font-size: 14.5px; } .mx-acts .lc-go { margin-top: 0; }
+  .mx-id .bal-wrap, .mx-id .mile, .mx-id .mx-acts { align-self: stretch; width: 100%; max-width: none; }
+  .mx-id .mile { margin: 0; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: 12px; background: var(--surface); }
+  .mx-list { border: 1px solid var(--line-2); border-radius: 14px; background: var(--surface); padding: 2px 14px; } .mx-list .mx-row { padding: 12px 0; } .mx-list > :last-child { border-bottom: 0; } .mx-list .mx-row .btn { flex: none; white-space: nowrap; } .mx-list .mx-row > span { min-width: 0; line-height: 1.35; }
+  .mx-list .lc-show:empty { display: none; } .mx-link summary { list-style: none; } .mx-link summary::-webkit-details-marker { display: none; } .mx-link summary::after { content: ' ↓'; } .mx-link[open] summary::after { content: ' ↑'; }
   .xp-h { display: flex; align-items: center; justify-content: space-between; margin: 22px 2px 8px; } .xp-h .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; } .xp-h .fx-chev { width: 6px; height: 6px; transform: rotate(-45deg); }
   .xp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .xp-tile { display: grid; gap: 8px; align-content: start; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-2); background: linear-gradient(160deg, color-mix(in srgb, var(--gold) 9%, var(--surface)), var(--surface) 60%); font: inherit; color: var(--fg); text-align: left; cursor: pointer; min-width: 0; }
   .xp-tile .label { color: var(--gold); } .xp-tile small { font-size: 12px; color: var(--fg-3); } .xp-tile small b { color: var(--fg-2); } .xp-faces { display: flex; } .xp-faces .avatar { width: 26px; height: 26px; margin-left: -6px; border: 2px solid var(--surface); } .xp-faces .avatar:first-child { margin-left: 0; }
@@ -1246,7 +1263,7 @@
   .me-go.me-gold .me-prog i { background: #1a1408; }
   .me-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(0,0,0,.18); } .me-prog i { display: block; height: 100%; background: currentColor; opacity: .45; }
   .me-cta { gap: 8px; } .me-cta-t { font-size: 24px; font-weight: 800; letter-spacing: -.02em; } .me-cta p { color: var(--fg-2); font-size: 13.5px; line-height: 1.5; margin: 0 0 6px; } .me-cta small { color: var(--fg-3); font-size: 12px; text-align: center; }
-  .me-box .lc-go.me-code { background: transparent !important; color: var(--gold) !important; border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--line-2)) !important; box-shadow: none; font-weight: 700; font-size: 13.5px; min-height: 44px; } .me-box .lc-go.me-code svg { stroke: var(--gold); }
+  .lc-go.me-code { background: transparent !important; color: var(--gold) !important; border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--line-2)) !important; box-shadow: none; font-weight: 700; font-size: 13.5px; min-height: 44px; } .lc-go.me-code svg { stroke: var(--gold); }
   .me-form { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: var(--fg); cursor: pointer; text-align: left; }
   .me-form .label { flex: none; } .fg-go { margin-left: auto; color: var(--fg-3); font-size: 18px; }
   .fg-strip { display: flex; gap: 6px; }
@@ -2745,13 +2762,13 @@ async function renderYou() {
       <div class="mx-id">
         <span class="label">#${me.rank} all-time · ${TIER_NAME[tierOf(me)]} card${isRecordHolder(me) ? ' · record holder' : ''}</span>
         <h2 class="mx-name">${esc(me.name)}${num ? ` <span>#${num}</span>` : ''}</h2>
+        <p class="mx-note">${rateNote}${v.open ? '' : ` Rating window${v.window ? ' ' + esc(v.window) : ''} is closed.`}</p>
         ${balTileHtml(me, v, { known, bal, balStatus })}
-        <p class="mx-note">${rateNote}</p>
         <div class="mile"><div class="l"><span>${me.count<100 ? 'To the century' : `Next milestone ${ms.next}`}</span><span>${ms.toGo} to go · ${esc(fmtEta(ms.eta))}</span></div><i style="--w:${ms.pct}%"></i></div>
         <div class="mx-acts">
-          ${v.open ? `<button class="btn" onclick="openBallot()">${done ? `Rate teammates · ${done} of ${queue.length}` : 'Rate your teammates'}</button>` : `<span class="muted" style="font-size:12px">Rating window ${esc(v.window)} is closed.</span>`}
+          ${v.open ? `<button class="btn mx-main" onclick="openBallot()">${done ? `Rate teammates · ${done} of ${queue.length}` : 'Rate your teammates'}</button>` : ''}
           <button class="btn ghost" onclick="document.getElementById('photo-file').click()">${photoSrc(me) ? 'Change photo' : 'Add a photo'}</button>
-          <button class="btn lc-me lc-go" onclick="openCodeSheet()"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>Sign-in code for the app</button>
+          <button class="btn lc-me lc-go me-code" onclick="openCodeSheet()"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>App sign-in code</button>
         </div>
         <input type="file" id="photo-file" accept="image/*" hidden onchange="uploadPhoto(this)"><span class="muted" id="photo-msg" style="font-size:12px"></span>
       </div>
@@ -2773,14 +2790,14 @@ async function renderYou() {
         </div>
       </div>
     </details>
-    <div class="mx-sec mx-acct"><div class="sh"><h2>Account</h2></div>
+    <div class="mx-sec mx-acct"><div class="sh"><h2>Account</h2></div><div class="mx-list">
       <div class="mx-row"><span>Sign in on another device or the installed app</span><button class="btn" onclick="openCodeSheet()">Get a code</button></div>
       <div class="lc-show" id="lc-show"></div>
       <div class="mx-row"><span>Or send yourself your link</span><button class="btn ghost" onclick="copyLink(this)">Copy my link</button></div>
       <details class="mx-link"><summary>Show my link · keep it to yourself</summary><code id="mylink">${esc(myLink())}</code></details>
       ${hasPhoto ? `<div class="mx-row"><span>Your photo</span><button class="btn link" onclick="removePhoto()">Remove photo</button></div>` : ''}
       <div class="mx-row"><span>Not you on this phone?</span><button class="btn link" data-label="Not ${first}? Not me" onclick="releaseClaim(this)">Not ${first}? Not me</button></div>
-    </div>
+    </div></div>
     ${v.isAdmin ? `<section><div class="sh"><h2>Game day</h2><span>The current game: kick-off, lineup, gate code, score</span></div>
       <div class="gp">
         <div class="gp-step"><div class="gp-h"><span class="gp-n">1</span>When${v.game && v.game.date && koOf(v.game) < Date.now() ? `<button class="btn link gp-next" onclick="nextGameForm()">Set up the next game →</button>` : ''}</div>
@@ -4377,7 +4394,7 @@ function matchCardHtml(g, open, toggle) {
   const won = side => !sc || sc.black === sc.white ? '' : (sc[side] > sc[side === 'black' ? 'white' : 'black'] ? ' won' : ' lost');
   const res = !sc ? 'No score' : sc.black === sc.white ? 'Draw' : `${sc.black > sc.white ? 'Black' : 'White'} won`;
   const hasTeams = (g.black || []).length || (g.white || []).length, played = hasTeams ? g.black.length + g.white.length : (g.list || []).length;
-  const me = VOTER && VOTER.ok ? VOTER.name : '', hasRt = (g.raters || 0) >= 3, rt = n => hasRt && r[n] && r[n].n >= 2 ? r[n].avg : null;
+  const me = VOTER && VOTER.ok ? VOTER.name : '', mySide = me && (g.black || []).includes(me) ? 'black' : me && (g.white || []).includes(me) ? 'white' : '', hasRt = (g.raters || 0) >= 3, rt = n => hasRt && r[n] && r[n].n >= 2 ? r[n].avg : null;
   const best = Object.keys(r).filter(n => rt(n) != null).sort((x, y) => r[y].avg - r[x].avg)[0];
   const pl = n => { const p = ALL_PLAYERS.find(x => x.name === n), v = rt(n);
     return `<div class="mc-p${motm.includes(n) ? ' motm' : ''}${n === me ? ' me' : ''}${p ? ' tap' : ''}"${p ? ` onclick="openPlayerByName('${esc(n).replace(/'/g, "\\'")}')"` : ''}>${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span class="mc-n">${esc(n)}${motm.includes(n) ? ' <i>★</i>' : ''}</span>${hasRt ? `<b class="num rt${n === best ? ' hi' : ''}${v == null ? ' none' : ''}">${v != null ? v.toFixed(1) : '–'}</b>` : ''}</div>`; };
@@ -4391,11 +4408,11 @@ function matchCardHtml(g, open, toggle) {
   return `<article class="mc${open ? ' open' : ''}" id="mc-${g.date}">
     <button class="mc-head" onclick="${toggle}">
       <span class="mc-when"><b>${esc(dayOf(g))}</b><small>${fmtKo(g)} · ${g.size || 6}-a-side${played ? ` · ${played} played` : ''}</small></span>
-      <span class="mc-res${sc ? '' : ' none'}">${res}</span></button>
-    <div class="mc-score"><span class="side${won('black')}"><i class="gd-shirt"></i>Black</span><span class="mid num">${sc ? `${sc.black}<i>–</i>${sc.white}` : '–'}</span><span class="side w${won('white')}">White<i class="gd-shirt w"></i></span></div>
-    ${motm.length ? `<div class="mc-motm">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span class="label">Man of the match</span><b>${esc(motm.join(', '))}</b><i>★</i></div>`
-      : `<div class="mc-motm none">${pending ? 'Man of the match is decided at 11am the morning after.' : 'No man of the match.'}</div>`}
-    ${played ? `<button class="mc-more" onclick="${toggle}">${open ? 'Hide' : hasTeams ? 'Teams & ratings' : 'Who played'} <i class="fx-chev"></i></button>` : ''}
+      ${sc && mySide ? `<span class="mc-res you${won(mySide) || ' drew'}">You ${won(mySide) === ' won' ? 'won' : won(mySide) === ' lost' ? 'lost' : 'drew'}</span>` : `<span class="mc-res none">${res}</span>`}</button>
+    <div class="mc-score"><span class="side${won('black')}${mySide === 'black' ? ' mine' : ''}"><i class="gd-shirt"></i>Black</span><span class="mid num">${sc ? `<b class="${won('black').trim()}">${sc.black}</b><i>–</i><b class="${won('white').trim()}">${sc.white}</b>` : '–'}</span><span class="side w${won('white')}${mySide === 'white' ? ' mine' : ''}">White<i class="gd-shirt w"></i></span></div>
+    <div class="mc-ft">${motm.length ? `<div class="mc-mm">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span><small>Man of the match</small><b>${esc(motm.join(', '))}</b></span></div>`
+      : `<div class="mc-mm none">${pending ? 'Man of the match is decided the morning after.' : 'No man of the match.'}</div>`}
+    ${played ? `<button class="mc-more" onclick="${toggle}">${open ? 'Hide' : hasTeams ? 'Teams' : 'Who played'} <i class="fx-chev"></i></button>` : ''}</div>
     ${body}
   </article>`;
 }
@@ -4587,7 +4604,11 @@ function renderMatches() {
   const now = Date.now(), games = (RATINGS.games || []).filter(g => koOf(g) <= now).sort((a, b) => b.date.localeCompare(a.date));
   const n = document.getElementById('tab-n-matches'); if (n) n.textContent = games.length || '';
   if (!games.length) { el.innerHTML = `<div class="empty">No games yet.</div>`; return; }
-  el.innerHTML = games.map(g => matchCardHtml(g, !!MT_OPEN[g.date], `mtToggle('${g.date}')`)).join('');
+  let sum = ''; try { const d = statsData(), me = stMeName(), M = d && me ? d.ps.find(x => x.n === me) : null;
+    if (d) sum = `<button class="mt-sum" onclick="showTab('stats')"><span><b class="num">${d.games.length}</b>games</span><span class="mt-bw"><i class="gd-shirt"></i><b class="num">${d.sh.b}</b><em>–</em><b class="num">${d.sh.w}</b><i class="gd-shirt w"></i></span>${M ? `<span><b class="num">${M.w}-${M.d}-${M.l}</b>your W-D-L</span>` : `<span><b class="num">${(d.goals / d.games.length).toFixed(1)}</b>goals a game</span>`}<em class="mt-go">Stats <i class="fx-chev"></i></em></button>`; } catch (_) {}
+  let mon = '';
+  el.innerHTML = sum + games.map(g => { const m = new Date(`${g.date}T12:00:00+03:00`).toLocaleDateString('en-GB', { timeZone: NBO, month: 'long', year: 'numeric' }), hd = m !== mon ? `<div class="mt-month"><span class="label">${m}</span><i></i></div>` : ''; mon = m;
+    return hd + matchCardHtml(g, !!MT_OPEN[g.date], `mtToggle('${g.date}')`); }).join('');
 }
 function copyGate(btn) { const code = btn.querySelector('b').textContent, small = btn.querySelector('small'); const done = () => { small.textContent = 'Copied'; setTimeout(() => small.textContent = 'Tap to copy', 1500); }; if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(done); else done(); }
 async function toggleIn(isIn) {
