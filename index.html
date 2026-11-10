@@ -1206,6 +1206,26 @@
   @media (max-width: 380px) { .sx-side b { font-size: 50px; } .sx-grid b { font-size: 19px; } }
   @media (min-width: 721px) { .sx-lead { grid-template-columns: repeat(6, 1fr); } .sx-duos { margin: 0; padding: 0; flex-wrap: wrap; overflow: visible; } }
   @media (prefers-reduced-motion: reduce) { .sx-col i { animation: none; } }
+  /* Players: sticky search + chip filters, status line, tier headers */
+  .pl-bar { position: sticky; top: var(--pl-top, 56px); z-index: 20; margin: 0 -16px; padding: 12px 16px 8px; background: color-mix(in srgb, var(--bg) 88%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+  .pl-bar .pl-tools { margin: 0 0 10px; }
+  .pl-chips { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px 2px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 28px), transparent); } .pl-chips::-webkit-scrollbar { display: none; }
+  .pl-chips button { flex: none; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); color: var(--fg-2); cursor: pointer; white-space: nowrap; }
+  .pl-chips button em { font-style: normal; font-size: 11px; font-weight: 600; color: var(--fg-3); font-variant-numeric: tabular-nums; } .pl-chips button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); } .pl-chips button.on em { color: color-mix(in srgb, var(--bg) 60%, transparent); }
+  .pl-chips button[hidden] { display: none; } .pl-sep { flex: none; width: 1px; height: 18px; background: var(--line-2); margin: 0 2px; }
+  .pl-dot { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--fg-3); } .pl-dot.t-bronze { background: var(--bronze); } .pl-dot.t-silver { background: var(--silver); } .pl-dot.t-gold { background: var(--gold); } .pl-dot.t-icon { background: var(--icon); box-shadow: 0 0 0 1px var(--gold); }
+  .pl-info { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 0; padding: 10px 10px 10px 14px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--surface); min-height: 54px; }
+  .pl-win { display: inline-flex; align-items: center; gap: 9px; font-size: 13px; color: var(--fg-2); min-width: 0; } .pl-win b { color: var(--fg); display: block; font-size: 14px; } .pl-win small { font-size: 12px; color: var(--fg-3); } .pl-win > i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--fg-3); } .pl-win.on > i { background: #3fb96b; box-shadow: 0 0 0 4px rgba(63,185,107,.16); }
+  .pl-info .btn { flex: none; white-space: nowrap; }
+  .pl-how { margin: 8px 2px 16px; } .pl-how summary { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; font-size: 12.5px; font-weight: 600; color: var(--fg-3); } .pl-how summary::-webkit-details-marker { display: none; }
+  .pl-how .fx-chev { width: 6px; height: 6px; } .pl-how[open] .fx-chev { transform: rotate(-135deg) translate(-2px, -2px); } .pl-how p { font-size: 13px; line-height: 1.55; color: var(--fg-2); margin: 8px 0 0; max-width: 64ch; }
+  @media (max-width: 720px) { .pl-bar { top: 42px; } }
+  .group.pl-g { display: flex; align-items: center; gap: 8px; margin-top: 14px; letter-spacing: .06em; } .pl-g b { color: var(--fg); font-size: 12px; font-weight: 700; } .pl-g small { font-size: 11px; text-transform: none; letter-spacing: 0; font-weight: 500; } .pl-g span { flex: 1; height: 1px; background: var(--line); } .pl-g em { font-style: normal; font-size: 12px; color: var(--fg-2); }
+  .pl-rk { width: 20px; flex: none; text-align: center; font-size: 12px; color: var(--fg-3); } .pl-n b { display: flex !important; align-items: center; gap: 7px; } .pl-n b .pl-dot { width: 6px; height: 6px; } .pl-n b em { font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+  .pl-row.me { box-shadow: none; background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 10%, transparent), transparent 70%); }
+  #cards-legend { display: block; margin-top: 22px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font-size: 12px; color: var(--fg-3); }
+  .pl-lg-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 18px; margin: 12px 0 14px; } .pl-lg-stats div { display: flex; gap: 10px; align-items: baseline; } .pl-lg-stats b { flex: none; width: 30px; color: var(--fg); font-size: 12.5px; } .pl-lg-stats span { color: var(--fg-2); line-height: 1.4; }
+  .pl-lg-tiers { display: flex; flex-wrap: wrap; gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--line); } .pl-lg-tiers span { display: inline-flex; align-items: center; gap: 7px; color: var(--fg-2); } #cards-legend p { margin: 12px 0 0; line-height: 1.5; } #cards-legend .pl-dot { margin: 0; border-radius: 50%; }
   .xp-h { display: flex; align-items: center; justify-content: space-between; margin: 22px 2px 8px; } .xp-h .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; } .xp-h .fx-chev { width: 6px; height: 6px; transform: rotate(-45deg); }
   .xp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .xp-tile { display: grid; gap: 8px; align-content: start; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-2); background: linear-gradient(160deg, color-mix(in srgb, var(--gold) 9%, var(--surface)), var(--surface) 60%); font: inherit; color: var(--fg); text-align: left; cursor: pointer; min-width: 0; }
   .xp-tile .label { color: var(--gold); } .xp-tile small { font-size: 12px; color: var(--fg-3); } .xp-tile small b { color: var(--fg-2); } .xp-faces { display: flex; } .xp-faces .avatar { width: 26px; height: 26px; margin-left: -6px; border: 2px solid var(--surface); } .xp-faces .avatar:first-child { margin-left: 0; }
@@ -1451,12 +1471,14 @@
 
   <section class="panel" id="panel-hall">
   
+    <div class="pl-bar">
     <div class="pl-tools">
       <div class="pl-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input id="pl-q" type="search" placeholder="Search players" autocomplete="off" autocapitalize="words" oninput="PLAYER_Q = this.value.trim().toLowerCase(); renderPlayers()"></div>
       <div class="seg pl-view" id="pl-view"><button class="on" data-view="cards" aria-label="Cards">Cards</button><button data-view="list" aria-label="List">List</button></div>
     </div>
-    <div class="seg pl-filter" id="posfilter">
-      <button class="on" data-filter="">All</button><button data-filter="last">Last game</button><button data-filter="attack">Attack</button><button data-filter="midfield">Midfield</button><button data-filter="defense">Defense</button><button data-filter="other">Other</button>
+    <div class="pl-chips" id="posfilter">
+      <button class="on" data-filter="">All<em></em></button><button data-filter="last">Last game<em></em></button><i class="pl-sep"></i><button data-filter="attack">Attack<em></em></button><button data-filter="midfield">Midfield<em></em></button><button data-filter="defense">Defense<em></em></button><button data-filter="other">Other<em></em></button><i class="pl-sep"></i><button data-filter="icon"><i class="pl-dot t-icon"></i>Icon<em></em></button><button data-filter="gold"><i class="pl-dot t-gold"></i>Gold<em></em></button><button data-filter="silver"><i class="pl-dot t-silver"></i>Silver<em></em></button><button data-filter="bronze"><i class="pl-dot t-bronze"></i>Bronze<em></em></button>
+    </div>
     </div>
     <div id="cards-intro"></div>
     <div class="cards" id="cards-grid"><div class="loading">Loading…</div></div>
@@ -1914,27 +1936,30 @@ function render() {
 document.querySelectorAll('#pl-view button').forEach(b => b.onclick = () => { PLAYER_VIEW = b.dataset.view; try { localStorage.setItem('w910_plview', PLAYER_VIEW); } catch (_) {} renderPlayers(); });
 document.querySelectorAll('#posfilter button').forEach(b => b.onclick = () => { ACTIVE_FILTER = b.dataset.filter; document.querySelectorAll('#posfilter button').forEach(x=>x.classList.toggle('on', x===b)); renderPlayers(); });
 
+const PL_TIERS = ['icon', 'gold', 'silver', 'bronze'];
 function renderPlayers() {
   const grid = document.getElementById('cards-grid');
   const L = RATINGS && RATINGS.ok && RATINGS.last, lastSet = new Set(L ? [...((L.teams && L.teams.black) || []), ...((L.teams && L.teams.white) || []), ...(L.list || []), ...(L.squad || [])].map(n => n.toLowerCase()) : []);
-  const base = ALL_PLAYERS.filter(p => (!ACTIVE_FILTER || (ACTIVE_FILTER === 'last' ? lastSet.has(p.name.toLowerCase()) : posClass(p.position) === ACTIVE_FILTER)) && (!PLAYER_Q || p.name.toLowerCase().includes(PLAYER_Q)));
+  const fits = (p, f) => !f || (f === 'last' ? lastSet.has(p.name.toLowerCase()) : PL_TIERS.includes(f) ? tierOf(p) === f : posClass(p.position) === f);
+  const found = ALL_PLAYERS.filter(p => !PLAYER_Q || p.name.toLowerCase().includes(PLAYER_Q)), base = found.filter(p => fits(p, ACTIVE_FILTER));
+  document.querySelectorAll('#posfilter button').forEach(b => { const n = found.filter(p => fits(p, b.dataset.filter)).length, em = b.querySelector('em'); if (em) em.textContent = n; b.hidden = !n && b.dataset.filter !== '' && b.dataset.filter !== ACTIVE_FILTER; });
   document.querySelectorAll('#pl-view button').forEach(b => b.classList.toggle('on', b.dataset.view === PLAYER_VIEW));
   grid.classList.toggle('as-list', PLAYER_VIEW === 'list');
   if (PLAYER_VIEW === 'list') {
     const locked = gateLocked(), me = VOTER && VOTER.ok ? VOTER.name : '';
-    const rows = base.slice().sort((a, b) => b.count - a.count).map(p => { const st = null;
-      return `<button class="pl-row${p.name === me ? ' me' : ''}" data-pi="${ALL_PLAYERS.indexOf(p)}">${photo(p, 'avatar')}<span class="pl-n"><b>${esc(p.name)}</b><small>${esc([posName(p), p.gamesThisYear ? `${p.gamesThisYear} in ${THIS_YEAR}` : `not seen in ${THIS_YEAR}`].filter(Boolean).join(' · '))}</small></span><span class="pl-c num">${p.count}<small>games</small></span></button>`; }).join('');
+    const rows = base.slice().sort((a, b) => b.count - a.count).map((p, i) => { const st = null;
+      return `<button class="pl-row${p.name === me ? ' me' : ''}" data-pi="${ALL_PLAYERS.indexOf(p)}"><span class="pl-rk num">${i + 1}</span>${photo(p, 'avatar')}<span class="pl-n"><b>${esc(p.name)}<i class="pl-dot t-${tierOf(p)}"></i>${p.name === me ? '<em>You</em>' : ''}</b><small>${esc([posName(p), p.gamesThisYear ? `${p.gamesThisYear} in ${THIS_YEAR}` : `not seen in ${THIS_YEAR}`].filter(Boolean).join(' · '))}</small></span><span class="pl-c num">${p.count}<small>games</small></span></button>`; }).join('');
     grid.innerHTML = rows || `<div class="empty">No player matches “${esc(PLAYER_Q)}”.</div>`;
     paintGate();
     grid.querySelectorAll('.pl-row').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
     return;
   }
-  const groups = [['icon','Icon · 100+'],['gold','Gold · 50+'],['silver','Silver · 20+'],['bronze','Bronze']];
+  const groups = [['icon','Icon','100+ games'],['gold','Gold','50+ games'],['silver','Silver','20+ games'],['bronze','Bronze','under 20']];
   let html = '';
-  for (const [tier, title] of groups) {
+  for (const [tier, title, rule] of groups) {
     const list = base.filter(p => tierOf(p) === tier).sort(activeFirst);
     if (!list.length) continue;
-    html += `<div class="group">${title} · ${list.length}</div>`;
+    html += `<div class="group pl-g"><i class="pl-dot t-${tier}"></i><b>${title}</b><small>${rule}</small><span></span><em class="num">${list.length}</em></div>`;
     let divided = false;
     for (let i = 0; i < list.length; i++) { const p = list[i];
       if (!divided && !p.gamesThisYear && i > 0) { divided = true; html += `<div class="divider" style="grid-column:1/-1;margin:4px 0 0">Not seen in ${THIS_YEAR}</div>`; }
@@ -2354,8 +2379,12 @@ async function renderCards() {
   if (!(RATINGS && Date.now() - RATINGS_AT < 5000)) await fetchResults();   // a repaint within 5 s (cached sheet, then live sheet) reuses the same answer
   const ok = RATINGS && RATINGS.ok;
   const rated = ok ? ALL_PLAYERS.filter(p => RATINGS.players[p.name] && RATINGS.players[p.name].stats).length : 0;
-  intro.innerHTML = `<p class="muted" style="font-size:13px;max-width:64ch;margin-bottom:14px">The number is appearances and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from a set starting point and move with votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} is ${RATINGS.open ? 'open' : 'closed'} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} · ${rated} of ${ALL_PLAYERS.length} rated.` : ' Ratings are offline right now.'}</p>${ok ? (TOKEN ? (VOTER && VOTER.pending ? `<p class="muted" style="font-size:12px;margin-bottom:18px">Your claim is waiting for approval. The ballot opens once it's approved.</p>` : `<button class="btn" style="margin-bottom:18px" onclick="openBallot()">Rate your teammates</button>`) : `<button class="btn" style="margin-bottom:18px" onclick="openClaim()">Find your card</button>`) : ''}`;
-  legend.innerHTML = `<span style="flex-basis:100%">${STAT_KEYS.map(k=>`<b style="color:var(--fg-2)">${k}</b> ${STAT_GUIDE[k].toLowerCase().replace(/ · /g, ', ')}`).join(' &nbsp;·&nbsp; ')}</span><span><i style="background:var(--bronze)"></i>Bronze</span><span><i style="background:var(--silver)"></i>Silver · 20+</span><span><i style="background:var(--gold)"></i>Gold · 50+</span><span><i style="background:var(--icon)"></i>Icon · 100+</span><span>Tinted border · holds a record</span><span>Medals · gold for founders and iron men, platinum for record holders</span>`;
+  intro.innerHTML = `<div class="pl-info"><span class="pl-win${ok && RATINGS.open ? ' on' : ''}"><i></i><span>${ok ? `<b>Ratings ${RATINGS.open ? 'open' : 'closed'}</b><small>${rated} of ${ALL_PLAYERS.length} players rated</small>` : 'Ratings are offline right now'}</span></span>${ok ? (TOKEN ? (VOTER && VOTER.pending ? '' : `<button class="btn" onclick="openBallot()">Rate teammates</button>`) : `<button class="btn" onclick="openClaim()">Find your card</button>`) : ''}</div>
+    ${ok && TOKEN && VOTER && VOTER.pending ? `<p class="muted" style="font-size:12px;margin:8px 2px 0">Your claim is waiting for approval. The ballot opens once it's approved.</p>` : ''}
+    <details class="pl-how"><summary>How cards work<i class="fx-chev"></i></summary><p>The big number is appearances, and the card is earned by turning up: Silver at 20, Gold at 50, Icon at 100. The six stats start from a set starting point and move with votes from teammates who have played with you.${ok ? ` Window ${esc(RATINGS.window)} · ${RATINGS.ballots} ballot${RATINGS.ballots===1?'':'s'} so far.` : ''}</p></details>`;
+  legend.innerHTML = `<div class="pl-lg-h label">Reading a card</div><div class="pl-lg-stats">${STAT_KEYS.map(k => `<div><b class="num">${k}</b><span>${STAT_GUIDE[k].toLowerCase().replace(/ · /g, ', ')}</span></div>`).join('')}</div>
+    <div class="pl-lg-tiers"><span><i class="pl-dot t-bronze"></i>Bronze</span><span><i class="pl-dot t-silver"></i>Silver · 20+</span><span><i class="pl-dot t-gold"></i>Gold · 50+</span><span><i class="pl-dot t-icon"></i>Icon · 100+</span></div>
+    <p>A tinted border means the player holds a record. Medals are gold for founders and iron men, platinum for record holders.</p>`;
   renderPlayers();
 }
 
