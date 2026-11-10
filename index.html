@@ -1135,26 +1135,74 @@
   .if-avg { font-size: 15px; padding: 3px 8px; border-radius: 7px; background: color-mix(in srgb, var(--fg) 8%, transparent); } .if-avg.hi { background: var(--gold); color: #1a1408; }
   @media (max-width: 480px) { .if-row .fg-strip { display: none; } .tw-p { width: 66px; } .tw-p .avatar { width: 34px; height: 34px; } .tw-line { gap: 7px; } .tw-pitch { padding: 16px 8px; } .tw-k { display: none; } }
   /* History → Stats */
-  #panel-stats .stats { margin-bottom: 12px; }
-  .st-card { border: 1px solid var(--line-2); background: var(--surface); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
-  .st-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; } .st-h small { font-size: 12px; color: var(--fg-3); }
-  .st-bw { display: flex; justify-content: space-between; font-weight: 600; } .st-bw span { display: inline-flex; align-items: center; gap: 7px; } .st-bw b { font-size: 26px; }
-  .st-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 10px 0 14px; background: var(--surface-3); }
-  .st-bar i.b { background: #3a3a40; } .st-bar i.d { background: var(--fg-3); } .st-bar i.w { background: #e9e9e4; }
-  .st-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
-  .st-facts div { display: grid; gap: 3px; min-width: 0; } .st-facts b { font-size: 15px; } .st-facts small { font-size: 12px; color: var(--fg-3); }
-  .st-you { background: linear-gradient(160deg, color-mix(in srgb, var(--gold) 9%, var(--surface)), var(--surface) 60%); } .st-you .st-h .label { color: var(--gold); }
-  .st-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; } .st-grid div { display: grid; gap: 4px; } .st-grid b { font-size: 20px; line-height: 1; white-space: nowrap; }
-  .st-mate { margin-top: 12px; font-size: 13px; color: var(--fg-2); } .st-mate b { color: var(--fg); }
-  .st-pick { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 22px -2px 6px; padding: 2px; } .st-pick::-webkit-scrollbar { display: none; }
-  .st-pick button { flex: none; font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); color: var(--fg-2); cursor: pointer; white-space: nowrap; }
-  .st-pick button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-  .st-note { font-size: 12px; color: var(--fg-3); margin: 0 2px 10px; }
-  .st-who { flex: 1; min-width: 0; display: grid; gap: 1px; } .st-who small { font-size: 11.5px; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .st-row.me { border-color: color-mix(in srgb, var(--gold) 55%, var(--line-2)); } .st-duo { cursor: default; } .st-duo .xp-faces .avatar { width: 28px; height: 28px; }
-  .st-gap { text-align: center; color: var(--fg-3); font-size: 12px; line-height: 1; } .st-more { margin-top: 8px; font-size: 12.5px; }
-  .st-lock { text-align: center; display: grid; gap: 10px; justify-items: center; } .st-lock p { font-size: 13px; color: var(--fg-2); margin: 0; }
-  @media (max-width: 480px) { .st-grid { grid-template-columns: repeat(3, 1fr); row-gap: 14px; } .st-facts b { font-size: 14px; } }
+  #sx-body { --sx-w: #3fb96b; --sx-l: #e5534b; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; } #sx-body > div:empty { display: none; }
+  #sx-body button { font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .sx-hero { border: 1px solid var(--line-2); border-radius: 18px; overflow: hidden; background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--fg) 6%, transparent), transparent 70%), var(--surface); }
+  .sx-sb { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding: 20px 20px 6px; }
+  .sx-side { display: grid; gap: 6px; } .sx-side.r { justify-items: end; text-align: right; } .sx-side .label { display: inline-flex; align-items: center; gap: 7px; }
+  .sx-side b { font-size: 60px; line-height: .9; color: var(--fg-2); } .sx-side.lead b { color: var(--fg); } .sx-side.lead .label { color: var(--fg); }
+  .sx-mid { display: grid; gap: 4px; justify-items: center; text-align: center; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--bg); } .sx-mid small { font-size: 11px; color: var(--fg-3); white-space: nowrap; }
+  .sx-chart { overflow-x: auto; scrollbar-width: none; padding: 10px 14px 4px; } .sx-chart::-webkit-scrollbar { display: none; }
+  .sx-cols { display: flex; gap: 4px; min-width: 100%; width: max-content; position: relative; }
+  .sx-cols::before { content: ''; position: absolute; left: 0; right: 0; top: 78px; height: 1px; background: var(--line-2); }
+  .sx-col { flex: 1 0 36px; display: grid; justify-items: center; padding: 0; background: none; border-radius: 8px; }
+  .sx-up, .sx-dn { height: 78px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; } .sx-up { justify-content: flex-end; }
+  .sx-col i { display: block; width: 62%; max-width: 26px; border-radius: 5px 5px 0 0; transform-origin: bottom; animation: stGrow .6s var(--ease) both; }
+  .sx-up i { background: #050506; box-shadow: inset 0 0 0 1px #55555c; } .sx-dn i { background: #f4f4f2; border-radius: 0 0 5px 5px; transform-origin: top; }
+  .sx-col em { font-style: normal; font-size: 12px; color: var(--fg-3); } .sx-col.b .sx-up em, .sx-col.w .sx-dn em { color: var(--fg); font-size: 13px; }
+  .sx-col.w .sx-up i, .sx-col.b .sx-dn i { opacity: .38; }
+  .sx-col small { font-size: 9.5px; color: var(--fg-3); white-space: nowrap; margin-top: 6px; letter-spacing: .02em; }
+  @keyframes stGrow { from { transform: scaleY(0); } }
+  .sx-trio { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); margin-top: 12px; }
+  .sx-trio div { display: grid; gap: 5px; padding: 14px 20px; } .sx-trio div + div { border-left: 1px solid var(--line); } .sx-trio b { font-size: 26px; line-height: 1; }
+  .sx-facts { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+  .sx-facts div { display: grid; gap: 3px; min-width: 0; padding: 14px 20px; } .sx-facts div + div { border-left: 1px solid var(--line); } .sx-facts b { font-size: 15px; } .sx-facts small { font-size: 12px; color: var(--fg-3); }
+  .sx-you { border-radius: 18px; padding: 16px; border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--line-2)); background: linear-gradient(150deg, color-mix(in srgb, var(--gold) 13%, var(--surface)), var(--surface) 55%); }
+  .sx-yt { display: flex; align-items: center; gap: 14px; }
+  .sx-ring { position: relative; width: 64px; height: 64px; flex: none; display: grid; place-items: center; } .sx-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .sx-ring circle { fill: none; stroke: color-mix(in srgb, var(--fg) 10%, transparent); stroke-width: 5; } .sx-ring circle.on { stroke: var(--gold); stroke-linecap: round; }
+  .sx-ring b { font-size: 21px; } .sx-ring b small { font-size: 11px; color: var(--fg-2); margin-left: 1px; }
+  .sx-yh { flex: 1; min-width: 0; display: grid; gap: 4px; } .sx-yh .label { color: var(--gold); } .sx-yh b { font-size: 15px; } .sx-yh small { font-size: 12px; color: var(--fg-3); }
+  .sx-form { display: inline-flex; gap: 4px; flex: none; } .sx-form i { width: 8px; height: 22px; border-radius: 3px; background: var(--fg-3); } .sx-form i.w { background: var(--sx-w); } .sx-form i.l { background: var(--sx-l); height: 12px; align-self: flex-end; }
+  .sx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin-top: 14px; border-radius: 12px; overflow: hidden; background: var(--line); border: 1px solid var(--line); }
+  .sx-grid div { display: grid; gap: 5px; padding: 12px 10px; background: color-mix(in srgb, var(--bg) 55%, var(--surface)); } .sx-grid b { font-size: 22px; line-height: 1; white-space: nowrap; } .sx-grid .label { font-size: 9.5px; white-space: nowrap; }
+  .sx-mate { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 12px; padding: 0; background: none; font-size: 13px; color: var(--fg-2) !important; } .sx-mate .avatar { width: 28px; height: 28px; }
+  .sx-mate span { flex: 1; min-width: 0; } .sx-mate b { color: var(--fg); } .sx-mate small { font-size: 12px; color: var(--fg-3); }
+  .sx-sh { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 10px 2px 10px; } .sx-sh small { font-size: 12px; color: var(--fg-3); }
+  .sx-lead { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sx-lt { display: grid; justify-items: center; gap: 5px; padding: 12px 6px 11px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--surface); min-width: 0; text-align: center !important; transition: border-color .15s, background .15s; }
+  .sx-lt .label { font-size: 9.5px; white-space: nowrap; } .sx-lt .avatar { width: 42px; height: 42px; margin: 3px 0 1px; } .sx-lt b { font-size: 13px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sx-lt em { font-style: normal; font-size: 13px; padding: 2px 8px; border-radius: 6px; background: color-mix(in srgb, var(--fg) 9%, transparent); }
+  .sx-lt.on { border-color: var(--gold); background: linear-gradient(170deg, color-mix(in srgb, var(--gold) 14%, var(--surface)), var(--surface) 70%); } .sx-lt.on .label { color: var(--gold); } .sx-lt.on em { background: var(--gold); color: #1a1408; } .sx-lt.on .avatar { box-shadow: 0 0 0 2px var(--gold); }
+  .sx-lk { display: grid; place-items: center; height: 70px; font-size: 12px; color: var(--fg-3); }
+  #sx-board { border: 1px solid var(--line-2); border-radius: 18px; background: var(--surface); padding: 16px 14px 14px; }
+  .sx-bh { display: grid; gap: 4px; margin: 0 2px 14px; } .sx-bh h3 { font-size: 18px; margin: 0; } .sx-bh small { font-size: 12px; color: var(--fg-3); }
+  .sx-podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 8px; align-items: end; margin-bottom: 10px; }
+  .sx-pod { display: grid; justify-items: center; gap: 3px; padding: 14px 6px 12px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--bg); min-width: 0; text-align: center !important; }
+  .sx-pf { position: relative; margin-bottom: 5px; } .sx-pf .avatar { width: 50px; height: 50px; box-shadow: 0 0 0 2px var(--line-2); }
+  .sx-pf i { position: absolute; right: -5px; bottom: -4px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; font-style: normal; font-size: 11px; background: var(--surface-3); color: var(--fg); box-shadow: 0 0 0 2px var(--bg); }
+  .sx-pod .sx-nm { font-size: 13px; font-weight: 600; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sx-pod b { font-size: 22px; line-height: 1.1; } .sx-pod small { font-size: 10.5px; color: var(--fg-3); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sx-pod.p1 { padding-top: 20px; border-color: color-mix(in srgb, var(--gold) 60%, var(--line-2)); background: linear-gradient(175deg, color-mix(in srgb, var(--gold) 16%, var(--bg)), var(--bg) 75%); }
+  .sx-pod.p1 .avatar { width: 62px; height: 62px; box-shadow: 0 0 0 2px var(--gold); } .sx-pod.p1 i { background: var(--gold); color: #1a1408; } .sx-pod.p1 b { font-size: 27px; color: var(--gold); }
+  .sx-pod.me .sx-nm::after, .sx-nm em { content: 'You'; font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); margin-left: 6px; }
+  .sx-list { display: grid; } .sx-row { display: flex; align-items: center; gap: 11px; width: 100%; padding: 10px 4px; background: none; border-top: 1px solid var(--line); }
+  .sx-rk { width: 18px; text-align: center; font-size: 13px; color: var(--fg-3); flex: none; } .sx-row .avatar { width: 34px; height: 34px; }
+  .sx-who { flex: 1; min-width: 0; display: grid; gap: 5px; } .sx-row .sx-nm { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sx-who small { font-size: 11.5px; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sx-meter { display: flex; gap: 2px; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--fg) 7%, transparent); overflow: hidden; } .sx-meter i { display: block; height: 4px; min-width: 3px; border-radius: 2px; background: var(--fg-2); }
+  .sx-meter.neg i { background: var(--sx-l); opacity: .75; } .sx-meter.seg { background: none; } .sx-meter.seg i.w { background: var(--sx-w); } .sx-meter.seg i.d { background: var(--fg-3); } .sx-meter.seg i.l { background: color-mix(in srgb, var(--sx-l) 55%, transparent); }
+  .sx-val { font-size: 17px; min-width: 46px; text-align: right; flex: none; } .sx-row.me { background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 10%, transparent), transparent 70%); }
+  .sx-gap { text-align: center; color: var(--fg-3); font-size: 12px; line-height: 1; padding: 6px 0; border-top: 1px solid var(--line); }
+  .sx-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--line); } #sx-body .sx-acts .btn { color: var(--fg-2); font-size: 12.5px; }
+  .sx-lock { text-align: center; display: grid; gap: 10px; justify-items: center; padding: 18px 0 8px; } .sx-lock p { font-size: 13px; color: var(--fg-2); margin: 0; }
+  .sx-duos { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding: 0 16px; margin: 0 -16px; padding: 0 16px; } .sx-duos::-webkit-scrollbar { display: none; }
+  .sx-duo { flex: 0 0 148px; scroll-snap-align: start; display: grid; gap: 4px; padding: 14px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--surface); position: relative; }
+  .sx-pair { display: flex; margin-bottom: 8px; } .sx-pair .avatar { width: 40px; height: 40px; box-shadow: 0 0 0 3px var(--surface); } .sx-pair .avatar + .avatar { margin-left: -10px; }
+  .sx-duo b { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sx-duo small { font-size: 11.5px; color: var(--fg-3); }
+  .sx-duo em { position: absolute; top: 14px; right: 12px; font-style: normal; font-size: 13px; padding: 2px 7px; border-radius: 6px; background: color-mix(in srgb, var(--fg) 9%, transparent); } .sx-duo.top em { background: var(--gold); color: #1a1408; }
+  .sx-duo.me { border-color: color-mix(in srgb, var(--gold) 55%, var(--line-2)); }
+  @media (max-width: 380px) { .sx-side b { font-size: 50px; } .sx-grid b { font-size: 19px; } }
+  @media (min-width: 721px) { .sx-lead { grid-template-columns: repeat(6, 1fr); } .sx-duos { margin: 0; padding: 0; flex-wrap: wrap; overflow: visible; } }
+  @media (prefers-reduced-motion: reduce) { .sx-col i { animation: none; } }
   .xp-h { display: flex; align-items: center; justify-content: space-between; margin: 22px 2px 8px; } .xp-h .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; } .xp-h .fx-chev { width: 6px; height: 6px; transform: rotate(-45deg); }
   .xp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .xp-tile { display: grid; gap: 8px; align-content: start; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-2); background: linear-gradient(160deg, color-mix(in srgb, var(--gold) 9%, var(--surface)), var(--surface) 60%); font: inherit; color: var(--fg); text-align: left; cursor: pointer; min-width: 0; }
   .xp-tile .label { color: var(--gold); } .xp-tile small { font-size: 12px; color: var(--fg-3); } .xp-tile small b { color: var(--fg-2); } .xp-faces { display: flex; } .xp-faces .avatar { width: 26px; height: 26px; margin-left: -6px; border: 2px solid var(--surface); } .xp-faces .avatar:first-child { margin-left: 0; }
@@ -1372,8 +1420,8 @@
     <div id="inform"></div>
   </section>
   <section class="hsec" id="panel-stats">
-    <div class="sh"><h2>Stats</h2><span id="st-sub">Every game with a score and teams</span></div>
-    <div id="st-body"></div>
+    <div class="sh"><h2>Stats</h2><span id="sx-sub">Every game with a score and teams</span></div>
+    <div id="sx-body"></div>
   </section>
   <section class="hsec" id="panel-wall">
     <div class="sh"><h2>Century Wall</h2><span>The night each member reached 100</span></div><div class="gate-screen"></div>
@@ -4358,7 +4406,7 @@ function copyTotw(btn) {
 }
 /* ── History → Stats: everything we can count from games with a score and both teams ── */
 const ST_MIN = 3;
-let ST_BOARD = 'win', ST_ALL = false;
+let ST_BOARD = 'win', ST_ALL = false, ST_HTML = {};
 function statsData() {
   const games = ((RATINGS && RATINGS.ok && RATINGS.games) || []).filter(g => koOf(g) <= Date.now() && g.b !== '' && g.b != null && g.w !== '' && g.w != null && !isNaN(+g.b) && !isNaN(+g.w)
     && (g.black || []).length && (g.white || []).length).sort((a, b) => a.date.localeCompare(b.date));
@@ -4393,69 +4441,93 @@ function statsData() {
 }
 const stSigned = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
 const stRec = x => `${x.w}W ${x.d}D ${x.l}L`;
+const stMax = (rows, f) => Math.max(1e-9, ...rows.map(f));
 const ST_BOARDS = [
-  { k: 'win', t: 'Win rate', note: `${ST_MIN}+ games`, rows: d => d.ps.filter(x => x.gp >= ST_MIN).sort((a, b) => b.wr - a.wr || b.gp - a.gp || b.gd - a.gd), val: x => Math.round(x.wr * 100) + '%', sub: x => `${stRec(x)} · ${x.gp} games` },
-  { k: 'pm', t: 'Plus / minus', note: 'Goal difference with them on the pitch', rows: d => d.ps.slice().sort((a, b) => b.gd - a.gd || b.gp - a.gp), val: x => stSigned(x.gd), sub: x => `${x.gf} for · ${x.ga} against · ${x.gp} games` },
-  { k: 'rating', t: 'Match rating', gated: true, note: `Average of their nightly ratings · ${ST_MIN}+ rated games`, rows: d => d.ps.filter(x => x.rk >= ST_MIN).sort((a, b) => b.avg - a.avg || b.rk - a.rk), val: x => x.avg.toFixed(1), sub: x => `${x.rk} rated games` },
-  { k: 'motm', t: 'Man of the match', note: 'Awards since the vote started', rows: d => d.ps.filter(x => x.motm).sort((a, b) => b.motm - a.motm || a.gp - b.gp), val: x => x.motm + '★', sub: x => `in ${x.gp} game${x.gp === 1 ? '' : 's'}` },
-  { k: 'def', t: 'Fewest conceded', note: `Goals let in per game while playing · ${ST_MIN}+ games`, rows: d => d.ps.filter(x => x.gp >= ST_MIN).sort((a, b) => a.ga / a.gp - b.ga / b.gp || b.gp - a.gp), val: x => (x.ga / x.gp).toFixed(1), sub: x => `${x.ga} in ${x.gp} games` },
-  { k: 'run', t: 'Unbeaten', note: 'Current run of games without a loss', rows: d => d.ps.filter(x => x.unb >= 2).sort((a, b) => b.unb - a.unb || b.wrun - a.wrun), val: x => x.unb, sub: x => `best winning run ${x.wrun}` },
+  { k: 'win', t: 'Win rate', s: 'Win rate', note: `Share of games won · ${ST_MIN}+ games`, rows: d => d.ps.filter(x => x.gp >= ST_MIN).sort((a, b) => b.wr - a.wr || b.gp - a.gp || b.gd - a.gd), val: x => Math.round(x.wr * 100) + '%', sub: x => `${stRec(x)}`,
+    meter: x => `<span class="sx-meter seg">${x.w ? `<i class="w" style="flex:${x.w}"></i>` : ''}${x.d ? `<i class="d" style="flex:${x.d}"></i>` : ''}${x.l ? `<i class="l" style="flex:${x.l}"></i>` : ''}</span>` },
+  { k: 'pm', t: 'Plus / minus', s: 'Plus / minus', note: 'Goals for minus goals against while they were playing', rows: d => d.ps.slice().sort((a, b) => b.gd - a.gd || b.gp - a.gp), val: x => stSigned(x.gd), sub: x => `${x.gf} for · ${x.ga} against · ${x.gp} game${x.gp === 1 ? '' : 's'}`, ps: x => `${x.gp} game${x.gp === 1 ? '' : 's'}`, frac: (x, rows) => Math.abs(x.gd) / stMax(rows, y => Math.abs(y.gd)), neg: x => x.gd < 0 },
+  { k: 'rating', t: 'Match rating', s: 'Rating', gated: true, note: `Average of their nightly ratings · ${ST_MIN}+ rated games`, rows: d => d.ps.filter(x => x.rk >= ST_MIN).sort((a, b) => b.avg - a.avg || b.rk - a.rk), val: x => x.avg.toFixed(1), sub: x => `${x.rk} rated games`, frac: x => Math.max(0, (x.avg - 4) / 6) },
+  { k: 'motm', t: 'Man of the match', s: 'MOTM', note: 'Awards since the vote started', rows: d => d.ps.filter(x => x.motm).sort((a, b) => b.motm - a.motm || a.gp - b.gp), val: x => x.motm + '★', sub: x => `in ${x.gp} game${x.gp === 1 ? '' : 's'}`, frac: (x, rows) => x.motm / stMax(rows, y => y.motm) },
+  { k: 'def', t: 'Fewest conceded', s: 'Conceded', note: `Goals let in per game while playing · ${ST_MIN}+ games · lower is better`, rows: d => d.ps.filter(x => x.gp >= ST_MIN).sort((a, b) => a.ga / a.gp - b.ga / b.gp || b.gp - a.gp), val: x => (x.ga / x.gp).toFixed(1), sub: x => `${x.ga} in ${x.gp} games`, frac: (x, rows) => (x.ga / x.gp) / stMax(rows, y => y.ga / y.gp) },
+  { k: 'run', t: 'Unbeaten', s: 'Unbeaten', note: 'Games in a row without a loss, right now', rows: d => d.ps.filter(x => x.unb >= 2).sort((a, b) => b.unb - a.unb || b.wrun - a.wrun), val: x => x.unb, sub: x => `best winning run ${x.wrun}`, ps: x => `win run ${x.wrun}`, frac: (x, rows) => x.unb / stMax(rows, y => y.unb) },
 ];
 function stMeName() {
   if (!VOTER || !VOTER.ok || !VOTER.name) return null;
   const p = ALL_PLAYERS.find(x => x.name.toLowerCase() === VOTER.name.toLowerCase()); return p ? p.name : null;
 }
 const stJs = n => esc(n).replace(/'/g, "\\'");
-function stRow(x, i, B, me) {
-  const p = ALL_PLAYERS.find(y => y.name === x.n);
-  return `<button class="if-row st-row${x.n === me ? ' me' : ''}" onclick="openPlayerByName('${stJs(x.n)}')"><span class="if-n">${i + 1}</span>${p ? photo(p, 'avatar') : ''}<span class="st-who"><span class="if-name">${esc(x.n)}</span><small>${B.sub(x)}</small></span><b class="num if-avg${i === 0 ? ' hi' : ''}">${B.val(x)}</b></button>`;
+const stFace = n => { const p = ALL_PLAYERS.find(y => y.name === n); return p ? photo(p, 'avatar') : '<div class="ph avatar"></div>'; };
+const stForm = x => `<span class="sx-form">${x.run.slice(-5).map(r => `<i class="${r}"></i>`).join('')}</span>`;
+const stDay = g => new Date(`${g.date}T12:00:00+03:00`).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short' });
+function stSet(id, html) { const el = document.getElementById(id); if (!el || ST_HTML[id] === html) return false; ST_HTML[id] = html; el.innerHTML = html; return true; }
+function stPick(k) { ST_BOARD = k; ST_ALL = false; renderStats(); }
+function stRow(x, i, B, me, rows) {
+  const meter = B.meter ? B.meter(x) : `<span class="sx-meter${B.neg && B.neg(x) ? ' neg' : ''}"><i style="width:${Math.max(3, Math.round(B.frac(x, rows) * 100))}%"></i></span>`;
+  return `<button class="sx-row${x.n === me ? ' me' : ''}" onclick="openPlayerByName('${stJs(x.n)}')"><span class="sx-rk num">${i + 1}</span>${stFace(x.n)}<span class="sx-who"><span class="sx-nm">${esc(x.n)}${x.n === me ? '<em>You</em>' : ''}</span>${meter}<small>${B.sub(x)}</small></span><b class="num sx-val">${B.val(x)}</b></button>`;
+}
+function stPod(x, i, B, me) {
+  return `<button class="sx-pod p${i + 1}${x.n === me ? ' me' : ''}" onclick="openPlayerByName('${stJs(x.n)}')"><span class="sx-pf">${stFace(x.n)}<i class="num">${i + 1}</i></span><span class="sx-nm">${esc(x.n.split(' ')[0])}</span><b class="num">${B.val(x)}</b><small>${(B.ps || B.sub)(x)}</small></button>`;
 }
 function renderStats() {
-  const el = document.getElementById('st-body'); if (!el) return;
-  if (!RATINGS || !RATINGS.ok || !ALL_PLAYERS.length) { el.innerHTML = '<div class="loading">Loading…</div>'; return; }
-  const d = statsData(), sub = document.getElementById('st-sub');
-  if (!d) { el.innerHTML = '<div class="empty">Shows once a game has a score and both teams.</div>'; return; }
-  if (sub) sub.textContent = `${d.games.length} game${d.games.length === 1 ? '' : 's'} with a score and teams · ${dayOf(d.games[0])} – ${dayOf(d.games[d.games.length - 1])}`;
-  const locked = gateLocked(), me = stMeName(), M = me && d.ps.find(x => x.n === me);
-  const tot = d.sh.b + d.sh.w + d.sh.d, pct = k => tot ? d.sh[k] / tot * 100 : 0;
+  const el = document.getElementById('sx-body'); if (!el) return;
+  if (!RATINGS || !RATINGS.ok || !ALL_PLAYERS.length) { el.innerHTML = '<div class="loading">Loading…</div>'; ST_HTML = {}; return; }
+  const d = statsData(), sub = document.getElementById('sx-sub');
+  if (!d) { el.innerHTML = '<div class="empty">Shows once a game has a score and both teams.</div>'; ST_HTML = {}; return; }
+  if (!document.getElementById('sx-top')) { el.innerHTML = '<div id="sx-top"></div><div id="sx-you"></div><div id="sx-lead"></div><div id="sx-board"></div><div id="sx-duos"></div>'; ST_HTML = {}; }
+  if (sub) sub.textContent = `${dayOf(d.games[0])} – ${dayOf(d.games[d.games.length - 1])}`;
+  const locked = gateLocked(), me = stMeName(), M = me && d.ps.find(x => x.n === me), N = d.games.length;
   const score = g => +g.b === +g.w ? `Draw ${g.b}–${g.w}` : `${+g.b > +g.w ? 'Black' : 'White'} ${Math.max(+g.b, +g.w)}–${Math.min(+g.b, +g.w)}`;
-  let h = `<div class="stats four">
-      <div class="stat"><b class="num">${d.games.length}</b><div class="label">Games</div></div>
-      <div class="stat"><b class="num">${d.goals}</b><div class="label">Goals</div></div>
-      <div class="stat"><b class="num">${(d.goals / d.games.length).toFixed(1)}</b><div class="label">Goals a game</div></div>
-      <div class="stat"><b class="num">${d.ps.length}</b><div class="label">Players</div></div></div>`;
-  h += `<div class="st-card"><div class="st-h"><span class="label">Black v White</span><small>${d.sh.d ? `${d.sh.d} draw${d.sh.d === 1 ? '' : 's'}` : 'no draws'}</small></div>
-    <div class="st-bw"><span><i class="gd-shirt b"></i>Black <b class="num">${d.sh.b}</b></span><span><b class="num">${d.sh.w}</b> White<i class="gd-shirt w"></i></span></div>
-    <div class="st-bar"><i class="b" style="width:${pct('b')}%"></i><i class="d" style="width:${pct('d')}%"></i><i class="w" style="width:${pct('w')}%"></i></div>
-    <div class="st-facts"><div><span class="label">Biggest win</span><b>${score(d.big)}</b><small>${esc(dayOf(d.big))}</small></div>${d.high ? `<div><span class="label">Most goals</span><b>${+d.high.b + +d.high.w} goals</b><small>${score(d.high)} · ${esc(dayOf(d.high))}</small></div>` : `<div><span class="label">Tightest game</span><b>${score(d.tight)}</b><small>${esc(dayOf(d.tight))}</small></div>`}</div></div>`;
+
+  /* scoreboard + every result as a bar pair */
+  const top = Math.max(...d.games.map(g => Math.max(+g.b, +g.w))), ht = v => Math.max(3, Math.round(v / top * 58));
+  const lead = d.sh.b === d.sh.w ? '' : d.sh.b > d.sh.w ? 'b' : 'w';
+  if (stSet('sx-top', `<div class="sx-hero">
+    <div class="sx-sb"><div class="sx-side${lead === 'b' ? ' lead' : ''}"><span class="label"><i class="gd-shirt b"></i>Black</span><b class="num">${d.sh.b}</b></div>
+      <div class="sx-mid"><span class="label">Wins</span><small>${N} game${N === 1 ? '' : 's'}${d.sh.d ? ` · ${d.sh.d} drawn` : ''}</small></div>
+      <div class="sx-side r${lead === 'w' ? ' lead' : ''}"><span class="label">White<i class="gd-shirt w"></i></span><b class="num">${d.sh.w}</b></div></div>
+    <div class="sx-chart" id="sx-chart"><div class="sx-cols">${d.games.map(g => { const b = +g.b, w = +g.w, r = b > w ? 'b' : w > b ? 'w' : 'd';
+      return `<button class="sx-col ${r}" onclick="showTab('matches')" aria-label="${esc(dayOf(g))}: ${score(g)}"><span class="sx-up"><em class="num">${b}</em><i style="height:${ht(b)}px"></i></span><span class="sx-dn"><i style="height:${ht(w)}px"></i><em class="num">${w}</em></span><small>${stDay(g)}</small></button>`; }).join('')}</div></div>
+    <div class="sx-trio"><div><b class="num">${d.goals}</b><span class="label">Goals</span></div><div><b class="num">${(d.goals / N).toFixed(1)}</b><span class="label">A game</span></div><div><b class="num">${d.ps.length}</b><span class="label">Players</span></div></div>
+    <div class="sx-facts"><div><span class="label">Biggest win</span><b>${score(d.big)}</b><small>${esc(dayOf(d.big))}</small></div>${d.high ? `<div><span class="label">Most goals</span><b>${+d.high.b + +d.high.w} goals</b><small>${score(d.high)} · ${esc(dayOf(d.high))}</small></div>` : `<div><span class="label">Tightest game</span><b>${score(d.tight)}</b><small>${esc(dayOf(d.tight))}</small></div>`}</div>
+  </div>`)) { const c = document.getElementById('sx-chart'); if (c) c.scrollLeft = c.scrollWidth; }
+
+  /* the viewer's own line */
+  let you = '';
   if (M) {
     const mates = d.pairs.filter(x => (x.a === me || x.b === me) && x.gp >= 2).map(x => Object.assign({ o: x.a === me ? x.b : x.a }, x)).sort((a, b) => b.w / b.gp - a.w / a.gp || b.gp - a.gp);
-    const bm = mates[0], wrRank = ST_BOARDS[0].rows(d).findIndex(x => x.n === me);
-    h += `<div class="st-card st-you"><div class="st-h"><span class="label">Your numbers</span><small>${M.gp} game${M.gp === 1 ? '' : 's'}${wrRank >= 0 ? ` · ${ordinal(wrRank + 1)} on win rate` : ''}</small></div>
-      <div class="st-grid">
-        <div><b class="num">${Math.round(M.wr * 100)}%</b><span class="label">Won</span></div>
-        <div><b class="num">${M.w}-${M.d}-${M.l}</b><span class="label">W-D-L</span></div>
+    const bm = mates[0], wrRank = ST_BOARDS[0].rows(d).findIndex(x => x.n === me), C = 2 * Math.PI * 27;
+    you = `<div class="sx-you"><div class="sx-yt">
+        <span class="sx-ring"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27"/><circle class="on" cx="32" cy="32" r="27" stroke-dasharray="${(M.wr * C).toFixed(1)} ${C.toFixed(1)}"/></svg><b class="num">${Math.round(M.wr * 100)}<small>%</small></b></span>
+        <span class="sx-yh"><span class="label">Your numbers</span><b>${M.w} won · ${M.d} drawn · ${M.l} lost</b><small>${M.gp} game${M.gp === 1 ? '' : 's'}${wrRank >= 0 ? ` · ${ordinal(wrRank + 1)} on win rate` : ''}</small></span>${stForm(M)}</div>
+      <div class="sx-grid">
         <div><b class="num">${stSigned(M.gd)}</b><span class="label">Plus / minus</span></div>
-        <div><b class="num">${locked ? '–' : M.rk ? M.avg.toFixed(1) : '–'}</b><span class="label">Avg rating</span></div>
+        <div><b class="num">${locked || !M.rk ? '–' : M.avg.toFixed(1)}</b><span class="label">Avg rating</span></div>
         <div><b class="num">${M.motm}</b><span class="label">MOTM</span></div>
         <div><b class="num">${M.unb}</b><span class="label">Unbeaten</span></div></div>
-      ${bm ? `<div class="st-mate">Best with <b>${esc(bm.o)}</b> · won ${bm.w} of ${bm.gp} together</div>` : ''}</div>`;
+      ${bm ? `<button class="sx-mate" onclick="openPlayerByName('${stJs(bm.o)}')">${stFace(bm.o)}<span>Best with <b>${esc(bm.o)}</b></span><small>won ${bm.w} of ${bm.gp} together</small></button>` : ''}</div>`;
   }
+  stSet('sx-you', you);
+
+  /* who leads each board; tapping a tile opens that board underneath */
   const B = ST_BOARDS.find(b => b.k === ST_BOARD) || ST_BOARDS[0];
-  h += `<div class="st-pick">${ST_BOARDS.map(b => `<button class="${b.k === B.k ? 'on' : ''}" onclick="ST_BOARD='${b.k}';ST_ALL=false;renderStats()">${b.t}</button>`).join('')}</div>
-    <div class="st-note">${B.note}</div>`;
-  if (B.gated && locked) h += `<div class="st-card st-lock"><span class="label">Locked</span><p>${esc(gateLine())}.</p>${gateAction()}</div>`;
+  stSet('sx-lead', `<div class="sx-sh"><span class="label">Leaders</span><small>Tap one for the full table</small></div><div class="sx-lead">${ST_BOARDS.map(b => { const lk = b.gated && locked, x = lk ? null : b.rows(d)[0];
+    return `<button class="sx-lt${b.k === B.k ? ' on' : ''}" onclick="stPick('${b.k}')"><span class="label">${b.s}</span>${lk ? '<span class="sx-lk">Locked</span>' : x ? `${stFace(x.n)}<b>${esc(x.n.split(' ')[0])}</b><em class="num">${b.val(x)}</em>` : '<span class="sx-lk">–</span>'}</button>`; }).join('')}</div>`);
+
+  let h = `<div class="sx-bh"><h3>${B.t}</h3><small>${B.note}</small></div>`;
+  if (B.gated && locked) h += `<div class="sx-lock"><span class="label">Locked</span><p>${esc(gateLine())}.</p>${gateAction()}</div>`;
   else {
-    const rows = B.rows(d), shown = ST_ALL ? rows : rows.slice(0, 8), mi = me ? rows.findIndex(x => x.n === me) : -1;
-    h += rows.length ? `<div class="if-list">${shown.map((x, i) => stRow(x, i, B, me)).join('')}${!ST_ALL && mi >= 8 ? `<div class="st-gap">···</div>${stRow(rows[mi], mi, B, me)}` : ''}</div>
-      ${rows.length > 8 ? `<button class="btn link st-more" onclick="ST_ALL=!ST_ALL;renderStats()">${ST_ALL ? 'Show top 8' : `Show all ${rows.length}`}</button>` : ''}` : '<div class="empty">Nobody yet.</div>';
+    const rows = B.rows(d), pod = rows.length >= 3 ? 3 : 0, rest = rows.slice(pod), shown = ST_ALL ? rest : rest.slice(0, 5), mi = me ? rows.findIndex(x => x.n === me) : -1;
+    if (!rows.length) h += '<div class="empty">Nobody yet.</div>';
+    else h += `${pod ? `<div class="sx-podium">${[1, 0, 2].map(i => stPod(rows[i], i, B, me)).join('')}</div>` : ''}
+      <div class="sx-list">${shown.map((x, i) => stRow(x, i + pod, B, me, rows)).join('')}${!ST_ALL && mi >= pod + 5 ? `<div class="sx-gap">···</div>${stRow(rows[mi], mi, B, me, rows)}` : ''}</div>
+      <div class="sx-acts">${rest.length > 5 ? `<button class="btn ghost" onclick="ST_ALL=!ST_ALL;renderStats()">${ST_ALL ? 'Show fewer' : `Show all ${rows.length}`}</button>` : ''}<button class="btn ghost" onclick="copyStats(this)">Copy for WhatsApp</button></div>`;
   }
-  const duos = d.pairs.filter(x => x.gp >= ST_MIN && x.w / x.gp >= .5).sort((a, b) => b.w / b.gp - a.w / a.gp || b.gp - a.gp).slice(0, 5);
-  if (duos.length) h += `<div class="label" style="margin:26px 2px 8px">Best partnerships · ${ST_MIN}+ games on the same team</div><div class="if-list">${duos.map((x, i) => {
-    const pa = ALL_PLAYERS.find(y => y.name === x.a), pb = ALL_PLAYERS.find(y => y.name === x.b);
-    return `<div class="if-row st-row st-duo${x.a === me || x.b === me ? ' me' : ''}"><span class="if-n">${i + 1}</span><span class="xp-faces">${pa ? photo(pa, 'avatar') : ''}${pb ? photo(pb, 'avatar') : ''}</span><span class="st-who"><span class="if-name">${esc(x.a.split(' ')[0])} & ${esc(x.b.split(' ')[0])}</span><small>${stRec(x)} together</small></span><b class="num if-avg${i === 0 ? ' hi' : ''}">${Math.round(x.w / x.gp * 100)}%</b></div>`; }).join('')}</div>`;
-  h += `<div class="tw-foot" style="margin-top:16px"><button class="btn ghost" onclick="copyStats(this)">Copy for WhatsApp</button><small>Only games with a score and both teams count. Guests aren't listed.</small></div>`;
-  el.innerHTML = h;
+  stSet('sx-board', h);
+
+  const duos = d.pairs.filter(x => x.gp >= ST_MIN && x.w / x.gp >= .5).sort((a, b) => b.w / b.gp - a.w / a.gp || b.gp - a.gp).slice(0, 8);
+  stSet('sx-duos', (duos.length ? `<div class="sx-sh"><span class="label">Best partnerships</span><small>${ST_MIN}+ games on the same team</small></div><div class="sx-duos">${duos.map((x, i) =>
+    `<div class="sx-duo${x.a === me || x.b === me ? ' me' : ''}${i === 0 ? ' top' : ''}"><span class="sx-pair">${stFace(x.a)}${stFace(x.b)}</span><b>${esc(x.a.split(' ')[0])} & ${esc(x.b.split(' ')[0])}</b><small>won ${x.w} of ${x.gp} together</small><em class="num">${Math.round(x.w / x.gp * 100)}%</em></div>`).join('')}</div>` : '')
+    + `<p class="foot-note">Only games with a score and both teams count. Guests aren't listed.</p>`);
 }
 function copyStats(btn) {
   const d = statsData(); if (!d) return;
