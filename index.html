@@ -1118,6 +1118,14 @@
   .wn-list { display: grid; gap: 12px; margin: 16px 0 20px; text-align: left; } .wn-i { display: flex; gap: 12px; align-items: flex-start; } .wn-ic { font-size: 20px; line-height: 1.2; width: 26px; text-align: center; flex: none; }
   .wn-i b { display: block; font-size: 15px; } .wn-i small { display: block; font-size: 13px; color: var(--fg-2); line-height: 1.45; margin-top: 2px; } .wn-i small b { display: inline; font-size: inherit; color: var(--fg); }
   .tw-k2 { font-size: 10px; color: var(--fg-3); } .if-k { font-size: 11.5px; color: var(--fg-3); white-space: nowrap; }
+  .ph-pop { text-align: center; } .ph-faces { display: flex; align-items: center; justify-content: center; margin: 6px 0 18px; }
+  .ph-faces .avatar { width: 52px; height: 52px; margin: 0 -8px; box-shadow: 0 0 0 3px var(--bg); opacity: .85; } .ph-faces .avatar:first-child, .ph-faces .avatar:last-child { width: 42px; height: 42px; opacity: .55; }
+  .ph-you, .ph-new { position: relative; z-index: 2; width: 84px; height: 84px; margin: 0 4px; border-radius: 50%; flex: none; }
+  .ph-you { display: grid; place-items: center; align-content: center; gap: 0; border: 2px dashed var(--gold); background: radial-gradient(circle, color-mix(in srgb, var(--gold) 16%, var(--surface)), var(--surface)); color: var(--gold); cursor: pointer; font: inherit; box-shadow: 0 0 0 4px var(--bg), 0 0 30px -6px color-mix(in srgb, var(--gold) 70%, transparent); animation: phPulse 2.4s ease-in-out infinite; }
+  .ph-you span { font-size: 30px; line-height: 1; font-weight: 300; } .ph-you b { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ph-new { object-fit: cover; object-position: top; box-shadow: 0 0 0 3px var(--gold), 0 0 0 7px var(--bg); }
+  @keyframes phPulse { 50% { box-shadow: 0 0 0 4px var(--bg), 0 0 40px -2px color-mix(in srgb, var(--gold) 85%, transparent); } }
+  .ph-copy { font-size: 14px; line-height: 1.5; color: var(--fg-2); margin: 10px 4px 20px; }
   .wn-where { font-size: 12px; color: var(--fg-3); margin: 10px 0 0; }
   .new-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-left: 6px; vertical-align: 2px; }
   .tw-pitch { position: relative; display: grid; gap: 14px; padding: 18px 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, #3ecf8e 25%, var(--line-2)); background: repeating-linear-gradient(180deg, color-mix(in srgb, #3ecf8e 9%, var(--surface)) 0 44px, color-mix(in srgb, #3ecf8e 5%, var(--surface)) 44px 88px); overflow: hidden; }
@@ -2841,7 +2849,7 @@ async function renderYou() {
         if (fk) { sec.classList.add('adm-fold'); if (!ADM_UNFOLD.has(fk)) sec.classList.add('folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => { sec.classList.toggle('folded'); ADM_UNFOLD[sec.classList.contains('folded') ? 'delete' : 'add'](fk); }; } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
   strikePop(v); ratePop(me, r); whatsNewPop(); paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
   if (v.isAdmin) renderAdmin(me);
-  if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else maybeProfilePop(me);
+  if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else if (!maybePhotoPop(me)) maybeProfilePop(me);
 }
 /* Your position and preferred foot: tap to change; saved to the attendance sheet, shown straight away here. */
 const footReview = n => ((RATINGS && RATINGS.footReviews) || {})[n];
@@ -2919,6 +2927,46 @@ function repaintProfile() {
   const pd = profileDone(me), nb = document.querySelector('.me-go.me-gold');
   if (nb) { if (pd.done >= pd.total) nb.remove(); else nb.innerHTML = `${nudgeLabel(me, pd)}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span>`; }
   paintProfilePopTop();
+}
+/* ── No photo yet: a pop-up on opening the site, once per visit, snoozed 2 days by "Later". Purely for how the app looks. ── */
+function maybePhotoPop(me) {
+  if (!me || !VOTER || !VOTER.ok || VOTER.pending || photoSrc(me) || document.getElementById('ph-overlay')) return false;
+  try { if (sessionStorage.getItem('w910_pp')) return false; if (Date.now() - Number(localStorage.getItem('w910_photo_later') || 0) < 2 * 86400000) return false; } catch (_) { return false; }
+  let tries = 0;
+  const go = () => { if (document.querySelector('.overlay.open')) { if (++tries < 40) setTimeout(go, 3000); return; }
+    if (photoSrc(me) || document.getElementById('ph-overlay')) return;
+    try { if (sessionStorage.getItem('w910_pp')) return; sessionStorage.setItem('w910_pp', '1'); } catch (_) {}
+    openPhotoPop(me); };
+  setTimeout(go, 1200);
+  return true;
+}
+function openPhotoPop(me) {
+  me = me || meP(); if (!me) return;
+  const own = (RATINGS && RATINGS.ok && RATINGS.photos) || {}, withPh = ALL_PLAYERS.filter(p => p !== me && own[p.name]), faces = withPh.slice().sort((a, b) => b.count - a.count).slice(0, 4), first = esc(me.name.split(' ')[0]);
+  const ov = document.createElement('div'); ov.className = 'overlay open'; ov.id = 'ph-overlay'; ov.onclick = e => { if (e.target === ov) closePhotoPop(true); };
+  ov.innerHTML = `<div class="sheet app-sheet app-pop ph-pop">
+      <div class="ph-faces">${faces.slice(0, 2).map(p => photo(p, 'avatar')).join('')}<button class="ph-you" onclick="document.getElementById('ph-file').click()" aria-label="Add your photo"><span>+</span><b>${first}</b></button>${faces.slice(2).map(p => photo(p, 'avatar')).join('')}</div>
+      <div class="pp-title" style="text-align:center">Your card's missing a face</div>
+      <p class="ph-copy">Purely for the looks: faces make the cards, lineups and team sheets look the part. Don't be the grey circle in the lineup.</p>
+      <input type="file" id="ph-file" accept="image/*" hidden onchange="photoPopUpload(this)">
+      <button class="btn app-go" id="ph-go" onclick="document.getElementById('ph-file').click()">Add my photo</button>
+      <button class="btn link app-later" onclick="closePhotoPop(true)">Later</button>
+      <p class="wn-where" id="ph-st">Any clear face shot works. Change it on Me any time.</p></div>`;
+  document.body.appendChild(ov); document.body.style.overflow = 'hidden';
+}
+function closePhotoPop(later) { const ov = document.getElementById('ph-overlay'); if (ov) ov.remove(); document.body.style.overflow = ''; if (later) { try { localStorage.setItem('w910_photo_later', String(Date.now())); } catch (_) {} } }
+async function photoPopUpload(input) {
+  const file = input.files && input.files[0]; if (!file) return; input.value = '';
+  const st = document.getElementById('ph-st'), go = document.getElementById('ph-go'); go.disabled = true; go.textContent = 'Uploading…'; st.textContent = '';
+  try {
+    const data = await shrinkImage(file, 720), res = await api(null, { action: 'photo', t: TOKEN, data });
+    if (!res.ok) throw new Error(res.error || 'Upload failed');
+    const you = document.querySelector('.ph-you'); if (you) you.outerHTML = `<img class="ph-new" src="${data}" alt="">`;
+    document.querySelector('.ph-pop .pp-title').textContent = 'Looking sharp';
+    document.querySelector('.ph-copy').textContent = 'That\'s on your card now, and in every lineup you\'re in.';
+    go.disabled = false; go.textContent = 'Done'; go.onclick = () => closePhotoPop(false); st.textContent = '';
+    renderCards().then(renderYou).catch(() => {});
+  } catch (e) { go.disabled = false; go.textContent = 'Try another photo'; st.textContent = e.message; }
 }
 /* ── "Build your card": pops up when a player opens the site with their profile unfinished, once per visit ── */
 const PP_LEVELS = [[0, 'Trialist'], [4, 'Squad player'], [7, 'First XI'], [10, 'Fully built']];
