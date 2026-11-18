@@ -564,6 +564,12 @@
   .tm-pod.drag { z-index: 9; cursor: grabbing; box-shadow: 0 10px 22px rgba(0,0,0,.55); transform: translate(-50%, -50%) scale(1.1); transition: background-color .18s, color .18s, border-color .18s; }
   .tm-pitch[data-size="9"] .tm-pod, .tm-pitch[data-size="10"] .tm-pod, .tm-pitch[data-size="11"] .tm-pod { font-size: 11px; padding: 2px 8px 2px 2px; } .tm-pitch[data-size="9"] .tm-pod .avatar, .tm-pitch[data-size="10"] .tm-pod .avatar, .tm-pitch[data-size="11"] .tm-pod .avatar { width: 20px; height: 20px; }
   .tm-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; } .tm-foot .sp { flex: 1; } .tm-foot .btn { padding: 8px 12px; font-size: 12.5px; }
+  .tm-count small { font-size: 11px; color: var(--fg-3); letter-spacing: 0; padding: 1px 5px; border-radius: 4px; background: color-mix(in srgb, var(--fg) 8%, transparent); }
+  .tm-hint { text-align: center; font-size: 11.5px; color: var(--fg-3); margin-top: 8px; }
+  .tm-pub { display: flex; gap: 8px; margin-top: 12px; } .tm-pub .tm-go { flex: 1; justify-content: center; min-height: 48px; font-size: 15px; font-weight: 800; background: var(--gold); color: #1a1408; border-color: var(--gold); } .tm-pub .ghost { min-height: 48px; }
+  .tm-msg { font-size: 12px; color: var(--fg-3); text-align: center; margin-top: 8px; } .tm-msg.err { color: var(--neg); }
+  .fx-pick { display: flex; align-items: center; gap: 10px; margin: 0 16px; padding: 12px 14px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line-2)); background: linear-gradient(100deg, color-mix(in srgb, var(--gold) 18%, var(--surface)), var(--surface) 80%); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
+  .fx-pick b { font-size: 14px; color: var(--gold); } .fx-pick small { flex: 1; font-size: 12px; color: var(--fg-2); } .fx-pick .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
   .tm-credit { text-align: center; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); margin-top: 8px; }
   @media (max-width: 720px) { .sheet.tm { padding: 14px 16px 12px; } }
   .free-btn { font-size: 11px; padding: 0; color: var(--fg-3); } .free-btn[data-armed="1"] { color: var(--neg); }
@@ -3316,9 +3322,10 @@ function renderAdminTodo() {
   if (pend) items.push(['players', 'pending-body', `${pend} claim${pend === 1 ? '' : 's'} to approve`]);
   if (L && !L.score && now > koOf(L) + 3600000) items.push(['games', 'ga-teams', `Score for ${dayOf(L)} not in yet`]);
   if (N && N.date === todayNbo() && !N.hasGate) items.push(['games', 'ga-gate', `No gate code for tonight`]);
+  if (N && N.date === todayNbo() && !(N.teams && ((N.teams.black || []).length || (N.teams.white || []).length))) items.push(['tm', N.date, `No teams for tonight`]);
   const sk = Object.keys((RATINGS && RATINGS.strikes) || {}).filter(n => RATINGS.strikes[n].length >= 3);
   if (sk.length) items.push(['players', 'strikes-admin', `${sk.join(', ')} on 3 strikes`]);
-  el.innerHTML = items.length ? `<span class="label">Needs you</span>${items.map(([g, id, t]) => `<button onclick="admJump('${g}', '${id}')">${esc(t)} →</button>`).join('')}` : '';
+  el.innerHTML = items.length ? `<span class="label">Needs you</span>${items.map(([g, id, t]) => `<button onclick="${g === 'tm' ? `openTeamMaker('${id}')` : `admJump('${g}', '${id}')`}">${esc(t)} →</button>`).join('')}` : '';
   el.hidden = !items.length;
   const b = document.getElementById('adm-b-players'); if (b) b.textContent = pend || '';
 }
@@ -4179,6 +4186,16 @@ function tmLayout(mode) {
   else { b = names.filter((_, i) => i % 2 === 0); w = names.filter((_, i) => i % 2); }
   return Object.assign(tmPlace(b, true), tmPlace(w, false));
 }
+/* A player's strength for balancing: their card's average (votes blended with the starting point); 70 for guests and unrated. */
+function tmRating(n) { const r = RATINGS && RATINGS.ok && RATINGS.players && RATINGS.players[n], st = r && (r.stats || r.base); if (!st) return 70;
+  const v = STAT_KEYS.map(k => st[k]).filter(x => typeof x === 'number'); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 70; }
+function tmBalance() {
+  const { names } = TM, cap = Math.ceil(names.length / 2), sorted = names.slice().sort((a, b) => tmRating(b) - tmRating(a) || Math.random() - .5), b = [], w = []; let sb = 0, sw = 0;
+  sorted.forEach(n => { const toB = b.length < cap && (w.length >= cap || sb <= sw); (toB ? b : w).push(n); if (toB) sb += tmRating(n); else sw += tmRating(n); });
+  return Object.assign(tmPlace(b, true), tmPlace(w, false));
+}
+const tmSides = () => ({ black: TM.names.filter(n => TM.pos[n].y < 50), white: TM.names.filter(n => TM.pos[n].y >= 50) });
+function tmTidy() { const s = tmSides(); TM.pos = Object.assign(tmPlace(s.black, true), tmPlace(s.white, false)); }
 function openTeamMaker(date) {
   const N = RATINGS && RATINGS.next, f = date && ((RATINGS && RATINGS.fixtures) || []).find(x => x.date === date);
   let g = N && (!date || N.date === date) && ((N.list || []).length || N.teams) ? N : null;
@@ -4186,7 +4203,7 @@ function openTeamMaker(date) {
   if (!g) return;
   const T = g.teams && ((g.teams.black || []).length || (g.teams.white || []).length) ? g.teams : null;
   const names = T ? [...(T.black || []), ...(T.white || [])] : (g.list || []).slice(); if (!names.length) return;
-  TM = { g, T, names, key: 'w910_tm_' + g.date };
+  TM = { g, T, names, key: 'w910_tm_' + g.date, admin: !!(VOTER && VOTER.isAdmin), msg: '' };
   let saved = null; try { saved = JSON.parse(localStorage.getItem(TM.key)); } catch (_) {}
   TM.pos = saved && names.every(n => saved[n]) ? saved : tmLayout();
   paintTeamMaker(); document.getElementById('tm-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
@@ -4195,13 +4212,15 @@ function closeTeamMaker() { document.getElementById('tm-overlay').classList.remo
 function tmSave() { try { localStorage.setItem(TM.key, JSON.stringify(TM.pos)); } catch (_) {} }
 function tmCounts() {
   const b = TM.names.filter(n => TM.pos[n].y < 50).length, w = TM.names.length - b, el = document.getElementById('tm-count'); if (!el) return;
-  el.innerHTML = `<span><i class="gd-shirt"></i>Black <b class="num">${b}</b></span><span class="even">${b === w ? 'Even sides' : `${Math.abs(b - w)} short`}</span><span><b class="num">${w}</b> White<i class="gd-shirt w"></i></span>`;
+  const S = tmSides(), avg = a => a.length ? a.reduce((x, n) => x + tmRating(n), 0) / a.length : 0, show = !gateLocked(), ab = avg(S.black), aw = avg(S.white);
+  el.innerHTML = `<span><i class="gd-shirt"></i>Black <b class="num">${b}</b>${show && b ? `<small class="num">${ab.toFixed(0)}</small>` : ''}</span><span class="even">${b !== w ? `${Math.abs(b - w)} short` : show && b && w ? (Math.abs(ab - aw) < 1 ? 'Even sides' : `${ab > aw ? 'Black' : 'White'} +${Math.abs(ab - aw).toFixed(1)}`) : 'Even sides'}</span><span>${show && w ? `<small class="num">${aw.toFixed(0)}</small>` : ''}<b class="num">${w}</b> White<i class="gd-shirt w"></i></span>`;
 }
-function tmReset(mode) { TM.pos = tmLayout(mode); tmSave(); paintTeamMaker(); }
+function tmReset(mode) { TM.pos = mode === 'balance' ? tmBalance() : tmLayout(mode); TM.msg = ''; tmSave(); paintTeamMaker(); }
 function tmSwap() { TM.names.forEach(n => { TM.pos[n] = { x: TM.pos[n].x, y: 100 - TM.pos[n].y }; }); tmSave(); paintTeamMaker(); }
 function paintTeamMaker() {
   const { g, names } = TM, size = g.size || 6, me = VOTER && VOTER.ok ? VOTER.name : '';
-  document.getElementById('tm-body').innerHTML = `<div class="tm-title">My teams</div>
+  const live = TM.T && ((TM.T.black || []).length || (TM.T.white || []).length);
+  document.getElementById('tm-body').innerHTML = `<div class="tm-title">${TM.admin ? (g.date === todayNbo() ? "Tonight's teams" : 'Pick the teams') : 'My teams'}</div>
     <div class="tm-sub">${esc(dayOf(g))} · ${fmtKo(g)} · ${size}-a-side · ${names.length} players</div>
     <div class="tm-count" id="tm-count"></div>
     <div class="tm-pitch" id="tm-pitch" data-size="${size}">
@@ -4210,21 +4229,40 @@ function paintTeamMaker() {
       ${names.map(n => { const p = ALL_PLAYERS.find(x => x.name === n), q = TM.pos[n]; return `<div class="tm-pod ${q.y < 50 ? 'b' : 'w'}${n === me ? ' me' : ''}" data-n="${esc(n)}" style="left:${q.x}%;top:${q.y}%">${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span>${esc(tmShort(n))}</span></div>`; }).join('')}
     </div>
     <div class="tm-credit">Wednesday 9–10 · wednesday910.vercel.app</div>
-    <div class="tm-foot"><button class="btn ghost" onclick="tmReset('shuffle')">Shuffle</button><button class="btn ghost" onclick="tmSwap()">Swap sides</button><span class="sp"></span><button class="btn link" onclick="tmReset()">Reset</button><button class="btn" onclick="closeTeamMaker()">Done</button></div>`;
+    <div class="tm-hint">Tap a player to move them across, or drag.</div>
+    <div class="tm-foot"><button class="btn ghost" onclick="tmReset('balance')">⚖︎ Balance</button><button class="btn ghost" onclick="tmReset('shuffle')">Shuffle</button><button class="btn ghost" onclick="tmSwap()">Swap</button><span class="sp"></span>${TM.admin ? '' : `<button class="btn link" onclick="tmReset()">Reset</button><button class="btn" onclick="closeTeamMaker()">Done</button>`}</div>
+    ${TM.admin ? `<div class="tm-pub"><button class="btn tm-go" id="tm-go" onclick="tmPublish(this)">${live ? 'Update the teams' : 'Publish teams'}</button><button class="btn ghost" onclick="tmCopy(this)">Copy</button></div>
+      <div class="tm-msg${TM.msg && TM.msg.startsWith('!') ? ' err' : ''}" id="tm-msg">${esc((TM.msg || '').replace(/^!/, '')) || (live ? 'These are up on the site. Change anything and update.' : 'Everyone sees them on the game card once published.')}</div>` : ''}`;
   tmCounts();
   const pitch = document.getElementById('tm-pitch');
   pitch.querySelectorAll('.tm-pod').forEach(pod => {
     pod.addEventListener('pointerdown', e => {
       e.preventDefault(); pod.setPointerCapture(e.pointerId); pod.classList.add('drag');
-      const n = pod.dataset.n, r = pitch.getBoundingClientRect();
-      const move = ev => { const x = Math.max(6, Math.min(94, (ev.clientX - r.left) / r.width * 100)), y = Math.max(3, Math.min(97, (ev.clientY - r.top) / r.height * 100));
+      const n = pod.dataset.n, r = pitch.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY; let moved = false;
+      const move = ev => { if (!moved && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 7) return; moved = true; const x = Math.max(6, Math.min(94, (ev.clientX - r.left) / r.width * 100)), y = Math.max(3, Math.min(97, (ev.clientY - r.top) / r.height * 100));
         TM.pos[n] = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }; pod.style.left = x + '%'; pod.style.top = y + '%';
         const side = y < 50 ? 'b' : 'w'; if (!pod.classList.contains(side)) { pod.classList.remove('b', 'w'); pod.classList.add(side); tmCounts(); } };
-      const up = () => { pod.classList.remove('drag'); pod.removeEventListener('pointermove', move); pod.removeEventListener('pointerup', up); pod.removeEventListener('pointercancel', up); tmSave(); tmCounts(); };
+      const up = ev => { pod.classList.remove('drag'); pod.removeEventListener('pointermove', move); pod.removeEventListener('pointerup', up); pod.removeEventListener('pointercancel', up);
+        if (!moved && ev.type === 'pointerup') { TM.pos[n] = { x: TM.pos[n].x, y: TM.pos[n].y < 50 ? 75 : 25 }; tmTidy(); tmSave(); paintTeamMaker(); return; }
+        tmSave(); tmCounts(); };
       pod.addEventListener('pointermove', move); pod.addEventListener('pointerup', up); pod.addEventListener('pointercancel', up);
     });
   });
 }
+/* Admin: put the pitch's two sides up as the game's teams (Games tab via editGame, same as the All games editor). */
+async function tmPublish(btn) {
+  const S = tmSides(), g = TM.g, msg = document.getElementById('tm-msg');
+  if (!S.black.length || !S.white.length) { msg.textContent = 'Both sides need players.'; msg.classList.add('err'); return; }
+  if (S.black.length !== S.white.length && btn.dataset.sure !== '1') { btn.dataset.sure = '1'; btn.textContent = `Publish ${S.black.length} v ${S.white.length} anyway?`; msg.textContent = 'The sides are uneven. Tap again to publish, or move someone across.'; return; }
+  const prev = ((RATINGS && RATINGS.games) || []).find(x => x.date === g.date) || {};
+  btn.disabled = true; btn.textContent = 'Publishing…';
+  let res; try { res = await api(null, { action: 'editGame', t: TOKEN, date: g.date, time: g.time || '21:00', size: g.size || 6, teams: S, list: [], scoreBlack: prev.b ?? '', scoreWhite: prev.w ?? '' }); } catch (e) { res = { ok: false, error: e.message }; }
+  if (!res || !res.ok) { TM.msg = '!' + ((res && res.error) || 'Could not save. Try again.'); paintTeamMaker(); return; }
+  TM.T = { black: S.black, white: S.white }; TM.msg = `Published · ${S.black.length} v ${S.white.length}. Everyone sees them on the game card.`; tmSave(); paintTeamMaker();
+  RATINGS_AT = 0; try { await fetchResults(); } catch (_) {} renderGameday();
+}
+function tmCopy(btn) { const S = tmSides(), txt = `${dayOf(TM.g)} · ${fmtKo(TM.g)}\n\n${teamsToText(S)}`;
+  navigator.clipboard.writeText(txt).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy', 1600); }, () => {}); }
 /* ── Sign-ups: the list for each open game lives here instead of a copy-pasted WhatsApp message.
    First come, first in; past the slots you're on standby and move up when someone drops out. ── */
 let FX_ADD = '', FX_MSG = {};
@@ -4238,6 +4276,7 @@ function fxWhatsApp(f) {
   return `${fxDay(f.date)} ${fxSpan(f)}\n\n${inl.map((x, i) => `${i + 1}. ${nm(x)}`).join('\n')}${sb.length ? `\n\nStandby:\n${sb.map(nm).join('\n')}` : ''}\n\nSign up: ${location.origin}/#in`;
 }
 let FX_OPEN = '', FX_WARN = null;
+const fxSoon = d => { const r = fxRel(d); return r === 'Tonight' || r === 'Tomorrow'; };
 const strikesOf = n => (((RATINGS && RATINGS.strikes) || {})[n] || []).length;
 const skDate = d => new Date(`${d}T12:00:00+03:00`).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short' });
 const strikeTag = n => { const ds = (((RATINGS && RATINGS.strikes) || {})[n] || []).slice().sort(), k = Math.min(3, ds.length); return k ? `<span class="sk${k >= 3 ? ' max' : ''}" title="Strikes for dropping out late">${'✕'.repeat(k)}<em>${k >= 3 ? '3 strikes' : k === 1 ? '1 strike' : k + ' strikes'} · ${ds.slice(-3).map(skDate).join(', ')}</em></span>` : ''; };
@@ -4300,7 +4339,7 @@ function renderFixtures() {
       ${vg && (f.date === todayNbo() || admin) ? `<button class="gd-gate" onclick="copyGate(this)"><span><span class="label">Gate code${f.date === todayNbo() ? ' · tonight' : ''}</span><b>${esc(vg.gate)}</b></span><small>Tap to copy</small></button>` : ''}
       <div class="fx-btns">
         ${pos >= 0 ? `<button class="btn ghost" onclick="fxOut('${f.date}', '', this)">I'm out</button>` : ''}
-        ${T || nIn ? `<button class="btn ghost" onclick="openTeamMaker('${f.date}')">Team maker</button>` : ''}
+        ${T || nIn ? `<button class="btn ghost" onclick="openTeamMaker('${f.date}')">${admin ? (T ? 'Edit teams' : 'Pick teams') : 'Team maker'}</button>` : ''}
         ${admin ? `<button class="btn ghost" onclick="FX_ADD = FX_ADD === '${f.date}' ? '' : '${f.date}'; renderFixtures()">+ Add</button>` : ''}
         <button class="btn link fx-copy" onclick="fxCopy('${f.date}', this)">Copy for WhatsApp</button>
       </div>
@@ -4314,6 +4353,7 @@ function renderFixtures() {
         <span class="fx-count"><span class="t num"><b>${nIn}</b>/${f.slots}</span>${stat}</span><i class="fx-chev"></i></button>
       <div class="fx-bar"><i style="width:${f.slots ? nIn / f.slots * 100 : 0}%"></i></div>
       <div class="fx-row"><span class="fx-who">${fxFaces(f)}</span>${primary}</div>
+      ${admin && !T && nIn >= 4 && fxSoon(f.date) ? `<button class="fx-pick" onclick="openTeamMaker('${f.date}')"><b>Pick ${f.date === todayNbo() ? "tonight's" : "tomorrow's"} teams</b><small>${nIn} in · tap to set</small><i class="fx-chev"></i></button>` : ''}
       ${promoted ? `<div class="fx-note">You're in now. Someone dropped out.</div>` : ''}
       ${FX_MSG[f.date] ? `<div class="fx-note err">${esc(FX_MSG[f.date])}</div>` : ''}
       ${FX_WARN && FX_WARN.date === f.date ? (() => { const who = FX_WARN.name || me, self = !FX_WARN.name || mine(FX_WARN.name), k = strikesOf(who), nx = Math.min(3, k + 1);
