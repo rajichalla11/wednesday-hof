@@ -165,6 +165,8 @@ function doPost(e) {
     if (body.action === 'tap') return json_(tap_(body));
     if (body.action === 'signup') return json_(signup_(body));
     if (body.action === 'withdraw') return json_(withdraw_(body));
+    if (body.action === 'setHours') return json_(setHours_(body));
+    if (body.action === 'setFormat') return json_(setFormat_(body));
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
     if (body.action === 'setProfile') return json_(setProfile_(body));
     if (body.action === 'footVote') return json_(footVote_(body));
@@ -799,6 +801,15 @@ function gamesPublic_() {
              time: String(r[5] || '21:00').slice(0, 5) || '21:00', list: split(r[6]), size: Number(r[7]) || 6, motm: settled ? motmFor_(d) : [], raters: Object.keys(raters[d] || {}).length, ratings: avgs(d) }; })
     .filter(function (g) { return /^\d{4}-\d{2}-\d{2}$/.test(g.date); });
 }
+/* Game format (Games tab columns 10-12): how many teams, how many hours, and whether everyone on the list must reconfirm
+   (set when a game changes shape after sign-ups, e.g. 2 teams for an hour becomes 3 teams for two). */
+function gameFmt_() {
+  const out = {}; if (!ss_().getSheetByName('Games')) return out;
+  tab_('Games').forEach(function (r) { const d = String(r[0]).slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+    out[d] = { nteams: Math.max(2, Math.min(4, Number(r[9]) || 2)), hours: Math.max(1, Math.min(3, Number(r[10]) || 1)), reconfirm: String(r[11] || '') === '1' }; });
+  return out;
+}
+function slotsOf_(g) { return ((g && g.nteams) || 2) * ((g && g.size) || 6); }
 function kickoff_(g) { return new Date(g.date + 'T' + (g.time || '21:00') + ':00+03:00'); }
 /** Match voting closes at 11:00 Nairobi time the morning after the game. */
 const CLOSE_LATE_ = { '2026-11-04': '2026-11-05T14:00:00+03:00' };   // one-off: voting for a game kept open past 11am the next morning
@@ -815,9 +826,10 @@ function allGames_() {
     const b = split(r[1]), w = split(r[2]);
     out.push({ date: d, time: String(r[5] || '21:00').slice(0, 5) || '21:00', gate: '', teams: b.length || w.length ? { black: b, white: w } : null, score: r[3] === '' || r[4] === '' ? null : { black: Number(r[3]), white: Number(r[4]) }, list: split(r[6]), standby: [], size: Number(r[7]) || 6 });
   });
-  const su = signupsByDate_();
+  const su = signupsByDate_(), fm = gameFmt_();
+  out.forEach(function (g) { const f = fm[g.date] || {}; g.nteams = f.nteams || 2; g.hours = f.hours || 1; g.reconfirm = !!f.reconfirm; });
   out.forEach(function (g) { const list = su[g.date]; if (!list || !list.length || (g.list && g.list.length)) return;   // a lineup the admin entered for the game wins over sign-ups
-    const slots = 2 * (g.size || 6);   // sign-ups on the site are the list: first come, first in; the rest are standby
+    const slots = slotsOf_(g);   // sign-ups on the site are the list: first come, first in; the rest are standby
     g.list = list.slice(0, slots).map(function (x) { return x.name; }); g.standby = list.slice(slots).map(function (x) { return x.name; }); });
   return out;
 }
@@ -837,14 +849,14 @@ function nextGame_() {
    adds another player or a guest (shown as "via" whoever brought them). Only you, whoever added you, or the admin can remove you. */
 function signupsByDate_() {
   const out = {}; if (!ss_().getSheetByName('Signups')) return out;
-  tab_('Signups').forEach(function (r) { const d = String(r[0]).slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return; (out[d] = out[d] || []).push({ name: String(r[2]), kind: String(r[3] || 'player'), by: String(r[4] || ''), ts: String(r[1]) }); });
+  tab_('Signups').forEach(function (r) { const d = String(r[0]).slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return; (out[d] = out[d] || []).push({ name: String(r[2]), kind: String(r[3] || 'player'), by: String(r[4] || ''), ts: String(r[1]), hrs: String(r[5] || '') }); });
   Object.keys(out).forEach(function (d) { out[d].sort(function (a, b) { return a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0; }); });
   return out;
 }
 function fixturesPublic_() {
   const now = Date.now(), su = signupsByDate_();
   return allGames_().filter(function (g) { return kickoff_(g).getTime() + 3600000 > now; }).sort(function (a, b) { return kickoff_(a).getTime() - kickoff_(b).getTime(); })
-    .map(function (g) { return { date: g.date, time: g.time, size: g.size || 6, slots: 2 * (g.size || 6), teams: !!g.teams, hasGate: !!gateFor_(g.date), signups: (su[g.date] || []).map(function (x) { return { name: x.name, kind: x.kind, by: x.by }; }) }; });
+    .map(function (g) { return { date: g.date, time: g.time, size: g.size || 6, slots: slotsOf_(g), nteams: g.nteams || 2, hours: g.hours || 1, reconfirm: !!g.reconfirm, teams: !!g.teams, hasGate: !!gateFor_(g.date), signups: (su[g.date] || []).map(function (x) { return { name: x.name, kind: x.kind, by: x.by, hrs: x.hrs }; }) }; });
 }
 function signupSheet_() { const sh = sheet_('Signups'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'ts', 'name', 'kind', 'by']); return sh; }
 function signup_(body) {
@@ -868,6 +880,47 @@ function signup_(body) {
   bust_('Signups'); syncSheetSafe_(date);
   return { ok: true, fixtures: fixturesPublic_() };
 }
+/** Which hours someone on a game's list can make: both | early | late. Themselves, whoever added them, or the admin. */
+function setHours_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
+  const date = String(body.date || ''), hrs = ['both', 'early', 'late'].indexOf(String(body.hours)) >= 0 ? String(body.hours) : '';
+  if (!hrs) return { ok: false, error: 'Pick your hours.' };
+  const name = String(body.name || me).toLowerCase(), admin = isAdmin_(me);
+  const lock = LockService.getScriptLock(); lock.waitLock(10000); let done = false;
+  try {
+    const sh = signupSheet_(), data = sh.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]).slice(0, 10) !== date || String(data[i][2]).toLowerCase() !== name) continue;
+      if (!(admin || name === me.toLowerCase() || String(data[i][4]).toLowerCase() === me.toLowerCase())) return { ok: false, error: 'Only they, whoever added them, or the admin can change this.' };
+      sh.getRange(i + 1, 6).setValue(hrs); done = true;
+    }
+  } finally { lock.releaseLock(); }
+  if (!done) return { ok: false, error: 'Not on that list.' };
+  bust_('Signups');
+  return { ok: true, fixtures: fixturesPublic_() };
+}
+/** Admin: change a game's shape: kick-off, players a side, number of teams, hours, and whether everyone has to reconfirm.
+    Turning reconfirm on clears everyone's hours so the whole list answers again; their places in the queue stay as they are. */
+function setFormat_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? String(body.date) : ''; if (!date) return { ok: false, error: 'Which game?' };
+  const g = allGames_().filter(function (x) { return x.date === date; })[0]; if (!g) return { ok: false, error: 'That game is not open.' };
+  const time = /^\d{1,2}:\d{2}$/.test(String(body.time || '')) ? ('0' + body.time).slice(-5) : g.time, size = Math.max(4, Math.min(11, parseInt(body.size, 10) || g.size || 6));
+  const nteams = Math.max(2, Math.min(4, parseInt(body.nteams, 10) || 2)), hours = Math.max(1, Math.min(3, parseInt(body.hours, 10) || 1)), reconfirm = !!body.reconfirm;
+  const sh = sheet_('Games'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'black', 'white', 'black_goals', 'white_goals', 'time', 'list', 'size', 'motm']);
+  if (!sh.getRange(1, 10).getValue()) sh.getRange(1, 10, 1, 3).setValues([['teams', 'hours', 'reconfirm']]);
+  const data = sh.getDataRange().getValues(); let at = -1;
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date) { at = i + 1; break; }
+  if (at < 0) { sh.appendRow(["'" + date, '', '', '', '', "'" + time, '', size, '']); at = sh.getLastRow(); }
+  sh.getRange(at, 6).setValue("'" + time); sh.getRange(at, 8).setValue(size); sh.getRange(at, 10, 1, 3).setValues([[nteams, hours, reconfirm ? 1 : '']]);
+  if (gameInfo_().date === date) { setSetting_('game_time', "'" + time); setSetting_('game_size', size); }
+  if (reconfirm && body.clearHours) { const su = signupSheet_(), d2 = su.getDataRange().getValues();
+    for (let i = 1; i < d2.length; i++) if (String(d2[i][0]).slice(0, 10) === date && d2[i][5]) su.getRange(i + 1, 6).setValue(''); bust_('Signups'); }
+  bust_('Games'); syncSheetSafe_(date);
+  if (body.notify) { const names = (signupsByDate_()[date] || []).filter(function (x) { return x.kind === 'player'; }).map(function (x) { return x.name; });
+    pushSafe_(names, 'newgame', dayLabel_(date) + ' is now ' + nteams + ' teams, ' + koLabel_({ time: time }) + ' for ' + hours + ' hour' + (hours === 1 ? '' : 's'), reconfirm ? 'Your place in the queue stays. Tap to confirm which hours you can make.' : 'Same list, new format.', '/#in'); }
+  return { ok: true, fixtures: fixturesPublic_() };
+}
 function withdraw_(body) {
   const me = voterName_(body.t);
   if (!me) return { ok: false, error: 'Find your card first.' };
@@ -877,7 +930,7 @@ function withdraw_(body) {
     // Pulling out of a spot (not standby) within 36 hours of kick-off is a strike, unless the admin takes them off
     const g = allGames_().filter(function (x) { return x.date === date; })[0], su = signupsByDate_()[date] || [];
     const idx = su.map(function (x) { return x.name.toLowerCase(); }).indexOf(name), row = su[idx];
-    if (g && row && row.kind === 'player' && !admin && idx < 2 * (g.size || 6)) { const left = kickoff_(g).getTime() - Date.now(); if (left < 36 * 3600000 && left > -3600000) strike = row.name; }
+    if (g && row && row.kind === 'player' && !admin && idx < slotsOf_(g) && !(g.reconfirm && !row.hrs)) { const left = kickoff_(g).getTime() - Date.now(); if (left < 36 * 3600000 && left > -3600000) strike = row.name; }
     const sh = signupSheet_(), data = sh.getDataRange().getValues();
     for (let i = data.length - 1; i >= 1; i--) {
       if (String(data[i][0]).slice(0, 10) !== date || String(data[i][2]).toLowerCase() !== name) continue;
@@ -910,7 +963,7 @@ function strikeNights_() {
 }
 function sheetLabel_(date) { return Utilities.formatDate(new Date(date + 'T12:00:00+03:00'), 'Africa/Nairobi', 'dd MMM yyyy'); }
 function sheetCharges_(g) {
-  const slots = 2 * (g.size || 6), su = signupsByDate_()[g.date] || [];
+  const slots = slotsOf_(g), su = signupsByDate_()[g.date] || [];
   const T = g.teams && ((g.teams.black || []).length || (g.teams.white || []).length), names = T ? (g.teams.black || []).concat(g.teams.white || []) : (g.list || []);
   const out = [], seen = {}, add = function (n, note) { const k = String(n).toLowerCase(); if (!n || seen[k]) return; seen[k] = 1; out.push({ name: n, note: note }); };
   names.forEach(function (n) { const x = su.filter(function (y) { return y.name.toLowerCase() === n.toLowerCase(); })[0]; add(n, x && x.kind === 'guest' ? 'guest, ' + SHEET_NOTE + (x.by ? ', via ' + x.by : '') : SHEET_NOTE); });
@@ -1165,7 +1218,7 @@ function gameNames_(g) { return g.teams && ((g.teams.black || []).length || (g.t
 /** People who moved from standby into a spot, comparing the list before a change with now. */
 function notifyPromoted_(date, before) {
   const g = allGames_().filter(function (x) { return x.date === date; })[0]; if (!g || kickoff_(g).getTime() < Date.now()) return;
-  const slots = 2 * (g.size || 6), after = (signupsByDate_()[date] || []).map(function (x) { return x.name.toLowerCase(); });
+  const slots = slotsOf_(g), after = (signupsByDate_()[date] || []).map(function (x) { return x.name.toLowerCase(); });
   const up = before.filter(function (x, i) { return i >= slots && x.kind === 'player' && after.indexOf(x.name.toLowerCase()) >= 0 && after.indexOf(x.name.toLowerCase()) < slots; }).map(function (x) { return x.name; });
   if (up.length) pushSafe_(up, 'promoted', "You're in for " + dayLabel_(date), 'Someone dropped out, so you moved up from standby. Kick-off ' + koLabel_(g) + '.', '/#home');
 }
@@ -1316,7 +1369,7 @@ function adminPlayer_(body) {
   const given = votesAll.filter(function (r) { return String(r[13] || '').toLowerCase() === l; }).map(function (r) { return { win: String(r[0]), target: String(r[2]), stats: r.slice(4, 10).map(Number), day: r[11] instanceof Date ? Utilities.formatDate(r[11], 'Africa/Nairobi', 'yyyy-MM-dd') : String(r[11] || '').replace(/^'/, ''), traits: String(r[12] || ''), comment: String(r[10] || '') }; });
   const received = votesAll.filter(function (r) { return String(r[2]).toLowerCase() === l; }).length;
   const mv = {}; if (has('MatchVotes')) tab_('MatchVotes').forEach(function (r) { if (String(r[6] || '').toLowerCase() !== l) return; const d = String(r[0]).slice(0, 10); mv[d] = mv[d] || { date: d, rated: 0, motm: '', ts: iso(r[5]) }; mv[d].rated++; if (r[4]) mv[d].motm = String(r[2]); });
-  const su = []; const all = signupsByDate_(); Object.keys(all).forEach(function (d) { const g = allGames_().filter(function (x) { return x.date === d; })[0], slots = 2 * ((g && g.size) || 6);
+  const su = []; const all = signupsByDate_(); Object.keys(all).forEach(function (d) { const g = allGames_().filter(function (x) { return x.date === d; })[0], slots = slotsOf_(g || {});
     all[d].forEach(function (x, i) { if (x.name.toLowerCase() === l || String(x.by).toLowerCase() === l) su.push({ date: d, ts: iso(x.ts), name: x.name, kind: x.kind, by: x.by, pos: i + 1, inn: i < slots }); }); });
   const strikes = has('Strikes') ? tab_('Strikes').filter(function (r) { return String(r[2]).toLowerCase() === l; }).map(function (r) { return { date: String(r[0]).slice(0, 10), ts: iso(r[1]), by: String(r[3] || ''), cleared: !!r[4] }; }) : [];
   const prof = has('Profiles') ? tab_('Profiles').filter(function (r) { return String(r[0]).toLowerCase() === l; })[0] : null;

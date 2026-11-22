@@ -568,6 +568,15 @@
   .tm-hint { text-align: center; font-size: 11.5px; color: var(--fg-3); margin-top: 8px; }
   .tm-pub { display: flex; gap: 8px; margin-top: 12px; } .tm-pub .tm-go { flex: 1; justify-content: center; min-height: 48px; font-size: 15px; font-weight: 800; background: var(--gold); color: #1a1408; border-color: var(--gold); } .tm-pub .ghost { min-height: 48px; }
   .tm-msg { font-size: 12px; color: var(--fg-3); text-align: center; margin-top: 8px; } .tm-msg.err { color: var(--neg); }
+  .fx-conf { display: grid; gap: 6px; margin: 0 16px; padding: 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--gold) 60%, var(--line-2)); background: linear-gradient(160deg, color-mix(in srgb, var(--gold) 16%, var(--surface)), var(--surface) 75%); }
+  .fx-conf .label { color: var(--gold); } .fx-conf-t { font-size: 16px; } .fx-conf small { font-size: 12.5px; color: var(--fg-2); line-height: 1.4; }
+  .fx-conf-b { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; } .fx-conf-b .btn { justify-content: center; min-height: 44px; white-space: nowrap; } .fx-conf-b .fx-both { grid-column: 1 / -1; min-height: 48px; font-size: 14.5px; font-weight: 800; background: var(--gold); border-color: var(--gold); color: #1a1408; }
+  .fx-conf-b .btn.ghost.on { border-color: var(--fg); color: var(--fg); } .fx-cant { justify-self: center; margin-top: 2px; font-size: 12.5px; }
+  .fx-conf.done { display: flex; align-items: center; gap: 10px; padding: 11px 14px; } .fx-conf.done > span { flex: 1; display: grid; gap: 2px; } .fx-conf.done b { font-size: 14px; color: var(--gold); }
+  .fx-hsum { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 16px; font-size: 11.5px; color: var(--fg-3); } .fx-hsum span { display: inline-flex; align-items: baseline; gap: 5px; } .fx-hsum b { font-size: 14px; color: var(--fg); } .fx-hsum .wait b { color: var(--gold); }
+  .fx-hrs { display: table; margin-top: 2px; font-style: normal; font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 4px; background: color-mix(in srgb, var(--fg) 9%, transparent); color: var(--fg-2); white-space: nowrap; } .fx-hrs.both { background: color-mix(in srgb, #3fb96b 18%, transparent); color: #4cc77a; } .fx-hrs.q { color: var(--gold); background: color-mix(in srgb, var(--gold) 14%, transparent); }
+  .fx-fmt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--line); } .fx-fmt input[type=time], .fx-fmt select { height: 36px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--bg); color: var(--fg); font: inherit; padding: 0 8px; }
+  .fx-chk { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--fg-2); width: 100%; } .fx-fmt small { font-size: 12px; color: var(--fg-3); }
   .fx-pick { display: flex; align-items: center; gap: 10px; margin: 0 16px; padding: 12px 14px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line-2)); background: linear-gradient(100deg, color-mix(in srgb, var(--gold) 18%, var(--surface)), var(--surface) 80%); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
   .fx-pick b { font-size: 14px; color: var(--gold); } .fx-pick small { flex: 1; font-size: 12px; color: var(--fg-2); } .fx-pick .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
   .tm-credit { text-align: center; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); margin-top: 8px; }
@@ -4318,12 +4327,38 @@ function fxRel(d) { const t = todayNbo(), dd = Math.round((new Date(d + 'T12:00:
 function fxFaces(f) { const ps = f.signups.slice(0, f.slots).map(x => ALL_PLAYERS.find(p => p.name === x.name)).filter(Boolean), shown = ps.slice(0, 5), more = Math.min(f.slots, f.signups.length) - shown.length;
   return shown.length ? `<span class="gd-faces fx-faces">${shown.map(p => photo(p, 'avatar')).join('')}${more > 0 ? `<span class="avatar fx-more">+${more}</span>` : ''}</span>` : ''; }
 const fxDay = d => new Date(`${d}T12:00:00+03:00`).toLocaleDateString('en-GB', { timeZone: NBO, weekday: 'long' });
-const fxSpan = f => { const h = +f.time.slice(0, 2), m = f.time.slice(3), e = (h + 1) % 24, ap = x => x % 12 || 12; return `${ap(h)}${m !== '00' ? ':' + m : ''}-${ap(e)}${m !== '00' ? ':' + m : ''}${e >= 12 ? 'pm' : 'am'}`; };
+const fxSpan = f => { const h = +f.time.slice(0, 2), m = f.time.slice(3), e = (h + (f.hours || 1)) % 24, ap = x => x % 12 || 12; return `${ap(h)}${m !== '00' ? ':' + m : ''}-${ap(e)}${m !== '00' ? ':' + m : ''}${e >= 12 ? 'pm' : 'am'}`; };
 function fxWhatsApp(f) {
-  const nm = x => x.kind === 'guest' && x.by ? `${x.name} (via ${x.by})` : x.name, inl = f.signups.slice(0, f.slots), sb = f.signups.slice(f.slots);
-  return `${fxDay(f.date)} ${fxSpan(f)}\n\n${inl.map((x, i) => `${i + 1}. ${nm(x)}`).join('\n')}${sb.length ? `\n\nStandby:\n${sb.map(nm).join('\n')}` : ''}\n\nSign up: ${location.origin}/#in`;
+  const two = f.reconfirm || (f.hours || 1) > 1, nm = x => (x.kind === 'guest' && x.by ? `${x.name} (via ${x.by})` : x.name) + (two ? ` · ${x.hrs ? fxHrsLabel(f, x.hrs) : 'not confirmed'}` : ''), inl = f.signups.slice(0, f.slots), sb = f.signups.slice(f.slots);
+  return `${fxDay(f.date)} ${fxSpan(f)}\n\n${inl.map((x, i) => `${i + 1}. ${nm(x)}`).join('\n')}${sb.length ? `\n\nStandby:\n${sb.map(nm).join('\n')}` : ''}\n\n${f.reconfirm ? `${f.nteams || 2} teams, ${fxSpan(f)}. Confirm your hours on the app (your place stays): ` : 'Sign up: '}${location.origin}/#in`;
 }
 let FX_OPEN = '', FX_WARN = null;
+/* Two-hour games: everyone on the list says which hours they can make. early = first hour, late = second, both = the whole session. */
+const fxH = (f, i) => { const h = (+f.time.slice(0, 2) + i) % 24, m = f.time.slice(3); return `${h % 12 || 12}${m !== '00' ? ':' + m : ''}`; };
+const fxHrsLabel = (f, k) => k === 'both' ? `${fxH(f, 0)}–${fxH(f, 2)}` : k === 'early' ? `${fxH(f, 0)}–${fxH(f, 1)}` : k === 'late' ? `${fxH(f, 1)}–${fxH(f, 2)}` : '';
+const fxHrsTag = (f, x) => f.reconfirm || (f.hours || 1) > 1 ? (x.hrs ? `<i class="fx-hrs ${x.hrs}">${fxHrsLabel(f, x.hrs)}</i>` : (f.reconfirm ? '<i class="fx-hrs q">not confirmed</i>' : '')) : '';
+function fxHours(date, hrs, btn) {
+  const f = ((RATINGS && RATINGS.fixtures) || []).find(x => x.date === date), me = VOTER && VOTER.name; if (!f || !me) return;
+  const x = f.signups.find(y => y.name.toLowerCase() === me.toLowerCase()); if (x) x.hrs = hrs; FX_HRS_EDIT = ''; renderFixtures();
+  fxCall({ action: 'setHours', date, hours: hrs }, null, date);
+}
+let FX_HRS_EDIT = '';
+function fxConfirmHtml(f, me, pos) {
+  if (!(f.reconfirm && pos >= 0)) return '';
+  const x = f.signups[pos], inn = pos < f.slots, place = inn ? `You're #${pos + 1} of ${f.slots}` : `You're ${ordN(pos - f.slots)} on standby`;
+  const fmt = `${fxSpan(f)} · ${f.nteams || 2} teams of ${f.size}`;
+  if (x.hrs && FX_HRS_EDIT !== f.date) return `<div class="fx-conf done"><span><b>You're in for ${x.hrs === 'both' ? 'both hours' : fxHrsLabel(f, x.hrs) + 'pm only'}</b><small>${place} · ${fmt}</small></span><button class="btn link" onclick="FX_HRS_EDIT='${f.date}';renderFixtures()">Change</button></div>`;
+  return `<div class="fx-conf"><div class="label">New format · confirm your spot</div><b class="fx-conf-t">It's now ${fmt}</b>
+    <small>${place}, and your place stays. Which hours can you make?</small>
+    <div class="fx-conf-b"><button class="btn${x.hrs === 'both' ? ' on' : ''} fx-both" onclick="fxHours('${f.date}','both',this)">Both hours · ${fxHrsLabel(f, 'both')}</button>
+      <button class="btn ghost${x.hrs === 'early' ? ' on' : ''}" onclick="fxHours('${f.date}','early',this)">${fxHrsLabel(f, 'early')} only</button><button class="btn ghost${x.hrs === 'late' ? ' on' : ''}" onclick="fxHours('${f.date}','late',this)">${fxHrsLabel(f, 'late')} only</button></div>
+    <button class="btn link fx-cant" onclick="fxOut('${f.date}', '', this)">I can't make it</button></div>`;
+}
+function fxHrsSummary(f) {
+  if (!(f.reconfirm || (f.hours || 1) > 1)) return '';
+  const c = { both: 0, early: 0, late: 0, '': 0 }; f.signups.forEach(x => c[x.hrs || '']++);
+  return `<div class="fx-hsum"><span><b class="num">${c.both}</b>${fxHrsLabel(f, 'both')}</span><span><b class="num">${c.early}</b>${fxHrsLabel(f, 'early')} only</span><span><b class="num">${c.late}</b>${fxHrsLabel(f, 'late')} only</span>${f.reconfirm ? `<span class="${c[''] ? 'wait' : ''}"><b class="num">${c['']}</b>to confirm</span>` : ''}</div>`;
+}
 const fxSoon = d => { const r = fxRel(d); return r === 'Tonight' || r === 'Tomorrow'; };
 const strikesOf = n => (((RATINGS && RATINGS.strikes) || {})[n] || []).length;
 const skDate = d => new Date(`${d}T12:00:00+03:00`).toLocaleDateString('en-GB', { timeZone: NBO, day: 'numeric', month: 'short' });
@@ -4332,7 +4367,7 @@ const strikeTag = n => { const ds = (((RATINGS && RATINGS.strikes) || {})[n] || 
 function lateDrop(f, name) {
   if (VOTER && VOTER.isAdmin) return false;
   const i = f.signups.findIndex(x => x.name.toLowerCase() === name.toLowerCase()), left = koOf(f) - Date.now();
-  return i >= 0 && i < f.slots && f.signups[i].kind === 'player' && left < 36 * 3600000 && left > -3600000;
+  return i >= 0 && i < f.slots && f.signups[i].kind === 'player' && !(f.reconfirm && !f.signups[i].hrs) && left < 36 * 3600000 && left > -3600000;
 }
 function fxToggle(date) { FX_OPEN = FX_OPEN === date ? '' : date; if (FX_ADD && FX_ADD !== FX_OPEN) FX_ADD = ''; renderFixtures(); }
 function fxOpen(date) { FX_OPEN = date; renderFixtures(); const c = document.getElementById('fx-' + date); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
@@ -4350,9 +4385,9 @@ function renderNextLine(fx, me) {
   const i = pos(f), inn = i < f.slots, ko = koOf(f), now = Date.now(), today = f.date === todayNbo();
   const vgc = (VOTER && VOTER.gates && VOTER.gates[f.date]) || (VOTER && VOTER.game && VOTER.game.date === f.date && VOTER.game.gate) || '', vg = vgc ? { gate: vgc } : null;
   el.innerHTML = `<div class="nx" role="button" onclick="fxOpen('${f.date}')">
-    <div class="nx-l"><span class="label">Your next game</span><b>${today ? 'Tonight' : esc(dayOf(f))} · ${fmtKo(f)}</b><small>${today ? esc(dayOf(f)) + ' · ' : ''}${fxSpan(f)} · ${f.size}-a-side</small></div>
+    <div class="nx-l"><span class="label">Your next game</span><b>${today ? 'Tonight' : esc(dayOf(f))} · ${fmtKo(f)}</b><small>${today ? esc(dayOf(f)) + ' · ' : ''}${fxSpan(f)} · ${(f.nteams || 2) > 2 ? `${f.nteams} teams of ${f.size}` : `${f.size}-a-side`}</small></div>
     <div class="nx-r">${now < ko ? `<b class="num">${fmtLeft(ko - now)}</b><span class="label">to kick-off</span>` : '<b class="num">Live</b><span class="label">playing now</span>'}</div>
-    <div class="nx-f"><span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${i + 1}` : `Standby · ${ordN(i - f.slots)}`}</span><span>${Math.min(f.signups.length, f.slots)} of ${f.slots} in</span><i class="fx-chev"></i></div>
+    <div class="nx-f">${f.reconfirm && !f.signups[i].hrs ? `<span class="gd-st sb">Confirm your hours</span>` : `<span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${i + 1}` : `Standby · ${ordN(i - f.slots)}`}</span>`}<span>${Math.min(f.signups.length, f.slots)} of ${f.slots} in</span><i class="fx-chev"></i></div>
     ${today && vg && vg.gate ? `<button class="gd-gate nx-gate" onclick="event.stopPropagation(); copyGate(this)"><span><span class="label">Gate</span><b>${esc(vg.gate)}</b></span><small>Tap to copy</small></button>` : ''}
   </div>`;
 }
@@ -4373,7 +4408,7 @@ function renderFixtures() {
     const row = (x, i, isSb) => { const canRm = me && (admin || mine(x.name) || (x.by && mine(x.by)));
       return `<li class="${mine(x.name) ? 'me' : ''}"><span class="fx-n">${isSb ? '' : i + 1 + '.'}</span><span class="fx-name${x.pending ? ' pend' : ''}">${esc(x.name)}${x.kind === 'player' ? strikeTag(x.name) : ''}${x.kind === 'guest' ? `<small>guest${x.by ? ` · via ${esc(x.by)}` : ''}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</li>`; };
     const cell = (x, i, isSb) => { const canRm = me && (admin || mine(x.name) || (x.by && mine(x.by))), p = ALL_PLAYERS.find(y => y.name === x.name);
-      return `<div class="fx-cell${mine(x.name) ? ' me' : ''}${x.pending ? ' pend' : ''}"><span class="fx-n">${i + 1}</span>${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span class="fx-name">${esc(x.name)}${x.kind === 'player' ? strikeTag(x.name) : ''}${x.kind === 'guest' ? `<small>guest${x.by ? ` · via ${esc(x.by)}` : ''}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</div>`; };
+      return `<div class="fx-cell${mine(x.name) ? ' me' : ''}${x.pending ? ' pend' : ''}"><span class="fx-n">${i + 1}</span>${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span class="fx-name">${esc(x.name)}${x.kind === 'player' ? strikeTag(x.name) : ''}${x.kind === 'guest' ? `<small>guest${x.by ? ` · via ${esc(x.by)}` : ''}</small>` : x.by ? `<small>added by ${esc(x.by)}</small>` : ''}${fxHrsTag(f, x)}</span>${canRm ? `<button class="fx-x" onclick="fxOut('${f.date}', '${esc(x.name).replace(/'/g, "\\'")}', this)" aria-label="Take off">×</button>` : ''}</div>`; };
     const others = fx.filter(o => o.date !== f.date), sbRows = f.signups.slice(f.slots);
     const stat = T ? `<span class="fx-tag">Teams out</span>` : left > 0 ? `<span class="fx-stat">${left} spot${left === 1 ? '' : 's'} left</span>` : `<span class="fx-stat full">Full · ${nSb ? `${nSb} on standby` : 'join standby'}</span>`;
     const primary = pos >= 0 ? `<span class="gd-st ${inn ? 'in' : 'sb'}">${inn ? `You're in · #${pos + 1}` : `Standby · ${ordN(sb)}`}</span>`
@@ -4393,14 +4428,17 @@ function renderFixtures() {
       </div>
       ${admin && FX_ADD === f.date ? `<div class="fx-add"><div class="fx-add-row"><input id="fx-p-${f.date}" list="fx-names" placeholder="Add a player" autocomplete="off"><button class="btn" onclick="fxAddPlayer('${f.date}', this)">Add</button></div>
         <div class="fx-add-row"><input id="fx-g-${f.date}" placeholder="Or a guest's name (not on the site)" autocomplete="off"><button class="btn ghost" onclick="fxAddGuest('${f.date}', this)">Add guest</button></div></div>` : ''}
-      ${admin ? `<details class="fx-admin"${FX_ADM_OPEN === f.date ? ' open' : ''}><summary aria-label="Admin">⋯</summary><div class="fx-gate-row"><span class="label">Gate code</span><input class="pf-in fx-gate-in" id="fx-gate-${f.date}" value="${esc(gateCode)}" placeholder="e.g. VK526" autocapitalize="characters" autocomplete="off"><button class="btn" onclick="fxSetGate('${f.date}', this)">Save</button><small id="fx-gate-st-${f.date}"></small></div><div class="fx-admin-in">${nSb && others.length ? `<select onchange="if (this.value) fxMove('${f.date}', this.value, this)"><option value="">Move standby to…</option>${others.map(o => `<option value="${o.date}">${esc(fxDay(o.date))} ${esc(o.date.slice(8))}</option>`).join('')}</select>` : ''}<button class="btn link" onclick="fxRemoveGame('${f.date}', ${f.signups.length}, this)">Remove game</button></div></details>` : ''}
+      ${admin ? `<details class="fx-admin"${FX_ADM_OPEN === f.date ? ' open' : ''}><summary aria-label="Admin">⋯</summary><div class="fx-fmt"><span class="label">Format</span><input type="time" id="fx-ft-${f.date}" value="${f.time}"><select id="fx-fn-${f.date}">${[2, 3, 4].map(n => `<option value="${n}"${(f.nteams || 2) === n ? ' selected' : ''}>${n} teams</option>`).join('')}</select><select id="fx-fs-${f.date}">${[5, 6, 7, 8, 9].map(n => `<option value="${n}"${f.size === n ? ' selected' : ''}>${n} a side</option>`).join('')}</select><select id="fx-fh-${f.date}">${[1, 2].map(n => `<option value="${n}"${(f.hours || 1) === n ? ' selected' : ''}>${n} hour${n > 1 ? 's' : ''}</option>`).join('')}</select>
+        <label class="fx-chk"><input type="checkbox" id="fx-fr-${f.date}"${f.reconfirm ? ' checked' : ''}> Everyone reconfirms their hours</label><label class="fx-chk"><input type="checkbox" id="fx-fp-${f.date}"> Send a notification</label>
+        <button class="btn" onclick="fxSetFormat('${f.date}', this)">Save format</button><small id="fx-fmt-st-${f.date}"></small></div><div class="fx-gate-row"><span class="label">Gate code</span><input class="pf-in fx-gate-in" id="fx-gate-${f.date}" value="${esc(gateCode)}" placeholder="e.g. VK526" autocapitalize="characters" autocomplete="off"><button class="btn" onclick="fxSetGate('${f.date}', this)">Save</button><small id="fx-gate-st-${f.date}"></small></div><div class="fx-admin-in">${nSb && others.length ? `<select onchange="if (this.value) fxMove('${f.date}', this.value, this)"><option value="">Move standby to…</option>${others.map(o => `<option value="${o.date}">${esc(fxDay(o.date))} ${esc(o.date.slice(8))}</option>`).join('')}</select>` : ''}<button class="btn link" onclick="fxRemoveGame('${f.date}', ${f.signups.length}, this)">Remove game</button></div></details>` : ''}
     </div>`;
     return `<article class="fx${open ? ' open' : ''}${pos >= 0 ? ' mine' : ''}" id="fx-${f.date}">
       <button class="fx-head" onclick="fxToggle('${f.date}')" aria-expanded="${open}">
-        <span class="fx-when"><b>${esc(fxDay(f.date))} ${esc(dayOf(f).replace(/^\w+\s/, ''))}</b><span>${fxRel(f.date) ? `<em class="fx-rel${f.date === todayNbo() ? ' now' : ''}">${fxRel(f.date)}</em>` : ''}${fxSpan(f)} · ${f.size}-a-side</span></span>
+        <span class="fx-when"><b>${esc(fxDay(f.date))} ${esc(dayOf(f).replace(/^\w+\s/, ''))}</b><span>${fxRel(f.date) ? `<em class="fx-rel${f.date === todayNbo() ? ' now' : ''}">${fxRel(f.date)}</em>` : ''}${fxSpan(f)} · ${(f.nteams || 2) > 2 ? `${f.nteams} teams of ${f.size}` : `${f.size}-a-side`}</span></span>
         <span class="fx-count"><span class="t num"><b>${nIn}</b>/${f.slots}</span>${stat}</span><i class="fx-chev"></i></button>
       <div class="fx-bar"><i style="width:${f.slots ? nIn / f.slots * 100 : 0}%"></i></div>
       <div class="fx-row"><span class="fx-who">${fxFaces(f)}</span>${primary}</div>
+      ${fxConfirmHtml(f, me, pos)}${fxHrsSummary(f)}
       ${admin && !T && nIn >= 4 && fxSoon(f.date) ? `<button class="fx-pick" onclick="openTeamMaker('${f.date}')"><b>Pick ${f.date === todayNbo() ? "tonight's" : "tomorrow's"} teams</b><small>${nIn} in · tap to set</small><i class="fx-chev"></i></button>` : ''}
       ${promoted ? `<div class="fx-note">You're in now. Someone dropped out.</div>` : ''}
       ${FX_MSG[f.date] ? `<div class="fx-note err">${esc(FX_MSG[f.date])}</div>` : ''}
@@ -4459,6 +4497,15 @@ function fxMove(from, to, sel) { fxCall({ action: 'moveStandby', from, to }, nul
 function fxRemoveGame(date, n, btn) { if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.textContent = n ? `Remove game and its ${n} sign-ups?` : 'Tap again to remove'; return; } fxCall({ action: 'removeFixture', date, force: true }, btn, date); }
 function fxNewGame(btn) { const d = document.getElementById('fx-new-d').value; if (!d) return; fxCall({ action: 'addFixture', date: d, time: document.getElementById('fx-new-t').value, size: document.getElementById('fx-new-s').value }, btn, ''); }
 let FX_ADM_OPEN = '';
+async function fxSetFormat(date, btn) {
+  const v = id => document.getElementById(id + date), st = v('fx-fmt-st-'); FX_ADM_OPEN = date;
+  const f = ((RATINGS && RATINGS.fixtures) || []).find(x => x.date === date), on = v('fx-fr-').checked;
+  btn.disabled = true; btn.textContent = '…';
+  let res; try { res = await api(null, { action: 'setFormat', t: TOKEN, date, time: v('fx-ft-').value, size: v('fx-fs-').value, nteams: v('fx-fn-').value, hours: v('fx-fh-').value, reconfirm: on, clearHours: on && f && !f.reconfirm, notify: v('fx-fp-').checked }); } catch (e) { res = { ok: false, error: e.message }; }
+  btn.disabled = false; btn.textContent = 'Save format';
+  if (res.ok) { if (RATINGS && res.fixtures) RATINGS.fixtures = res.fixtures; renderFixtures(); const s2 = document.getElementById('fx-fmt-st-' + date); if (s2) s2.textContent = 'Saved'; RATINGS_AT = 0; fetchResults().then(renderGameday); }
+  else if (st) st.textContent = res.error || 'Could not save';
+}
 async function fxSetGate(date, btn) {
   const inp = document.getElementById('fx-gate-' + date), st = document.getElementById('fx-gate-st-' + date); FX_ADM_OPEN = date;
   btn.disabled = true; btn.textContent = '…';
