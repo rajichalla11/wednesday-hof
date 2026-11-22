@@ -806,9 +806,12 @@ function gamesPublic_() {
 function gameFmt_() {
   const out = {}; if (!ss_().getSheetByName('Games')) return out;
   tab_('Games').forEach(function (r) { const d = String(r[0]).slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
-    out[d] = { nteams: Math.max(2, Math.min(4, Number(r[9]) || 2)), hours: Math.max(1, Math.min(3, Number(r[10]) || 1)), reconfirm: String(r[11] || '') === '1' }; });
+    out[d] = { nteams: Math.max(2, Math.min(4, Number(r[9]) || 2)), hours: Math.max(1, Math.min(3, Number(r[10]) || 1)), reconfirm: String(r[11] || '') === '1', fee: Number(r[12]) || 0 }; });
   return out;
 }
+/* What one player pays for a game: the session fee (Games col 13, else the usual SHEET_FEE); half of it for one hour of a longer session. */
+function feeFor_(g, hrs) { const full = (g && g.fee) || SHEET_FEE; return g && (g.hours || 1) > 1 && (hrs === 'early' || hrs === 'late') ? Math.round(full / 2) : full; }
+function feeOfDate_(date) { const g = allGames_().filter(function (x) { return x.date === date; })[0]; return g ? feeFor_(g, '') : SHEET_FEE; }
 function slotsOf_(g) { return ((g && g.nteams) || 2) * ((g && g.size) || 6); }
 function kickoff_(g) { return new Date(g.date + 'T' + (g.time || '21:00') + ':00+03:00'); }
 /** Match voting closes at 11:00 Nairobi time the morning after the game. */
@@ -827,7 +830,7 @@ function allGames_() {
     out.push({ date: d, time: String(r[5] || '21:00').slice(0, 5) || '21:00', gate: '', teams: b.length || w.length ? { black: b, white: w } : null, score: r[3] === '' || r[4] === '' ? null : { black: Number(r[3]), white: Number(r[4]) }, list: split(r[6]), standby: [], size: Number(r[7]) || 6 });
   });
   const su = signupsByDate_(), fm = gameFmt_();
-  out.forEach(function (g) { const f = fm[g.date] || {}; g.nteams = f.nteams || 2; g.hours = f.hours || 1; g.reconfirm = !!f.reconfirm; });
+  out.forEach(function (g) { const f = fm[g.date] || {}; g.nteams = f.nteams || 2; g.hours = f.hours || 1; g.reconfirm = !!f.reconfirm; g.fee = f.fee || SHEET_FEE; });
   out.forEach(function (g) { const list = su[g.date]; if (!list || !list.length || (g.list && g.list.length)) return;   // a lineup the admin entered for the game wins over sign-ups
     const slots = slotsOf_(g);   // sign-ups on the site are the list: first come, first in; the rest are standby
     g.list = list.slice(0, slots).map(function (x) { return x.name; }); g.standby = list.slice(slots).map(function (x) { return x.name; }); });
@@ -856,7 +859,7 @@ function signupsByDate_() {
 function fixturesPublic_() {
   const now = Date.now(), su = signupsByDate_();
   return allGames_().filter(function (g) { return kickoff_(g).getTime() + 3600000 > now; }).sort(function (a, b) { return kickoff_(a).getTime() - kickoff_(b).getTime(); })
-    .map(function (g) { return { date: g.date, time: g.time, size: g.size || 6, slots: slotsOf_(g), nteams: g.nteams || 2, hours: g.hours || 1, reconfirm: !!g.reconfirm, teams: !!g.teams, hasGate: !!gateFor_(g.date), signups: (su[g.date] || []).map(function (x) { return { name: x.name, kind: x.kind, by: x.by, hrs: x.hrs }; }) }; });
+    .map(function (g) { return { date: g.date, time: g.time, size: g.size || 6, slots: slotsOf_(g), nteams: g.nteams || 2, hours: g.hours || 1, reconfirm: !!g.reconfirm, fee: g.fee || SHEET_FEE, teams: !!g.teams, hasGate: !!gateFor_(g.date), signups: (su[g.date] || []).map(function (x) { return { name: x.name, kind: x.kind, by: x.by, hrs: x.hrs }; }) }; });
 }
 function signupSheet_() { const sh = sheet_('Signups'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'ts', 'name', 'kind', 'by']); return sh; }
 function signup_(body) {
@@ -896,7 +899,7 @@ function setHours_(body) {
     }
   } finally { lock.releaseLock(); }
   if (!done) return { ok: false, error: 'Not on that list.' };
-  bust_('Signups');
+  bust_('Signups'); syncSheetSafe_(date);
   return { ok: true, fixtures: fixturesPublic_() };
 }
 /** Admin: change a game's shape: kick-off, players a side, number of teams, hours, and whether everyone has to reconfirm.
@@ -908,11 +911,12 @@ function setFormat_(body) {
   const time = /^\d{1,2}:\d{2}$/.test(String(body.time || '')) ? ('0' + body.time).slice(-5) : g.time, size = Math.max(4, Math.min(11, parseInt(body.size, 10) || g.size || 6));
   const nteams = Math.max(2, Math.min(4, parseInt(body.nteams, 10) || 2)), hours = Math.max(1, Math.min(3, parseInt(body.hours, 10) || 1)), reconfirm = !!body.reconfirm;
   const sh = sheet_('Games'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'black', 'white', 'black_goals', 'white_goals', 'time', 'list', 'size', 'motm']);
-  if (!sh.getRange(1, 10).getValue()) sh.getRange(1, 10, 1, 3).setValues([['teams', 'hours', 'reconfirm']]);
+  if (!sh.getRange(1, 13).getValue()) sh.getRange(1, 10, 1, 4).setValues([['teams', 'hours', 'reconfirm', 'fee']]);
+  const fee = parseInt(body.fee, 10) > 0 ? Math.min(5000, parseInt(body.fee, 10)) : (g.fee && g.fee !== SHEET_FEE ? g.fee : '');
   const data = sh.getDataRange().getValues(); let at = -1;
   for (let i = 1; i < data.length; i++) if (String(data[i][0]).slice(0, 10) === date) { at = i + 1; break; }
   if (at < 0) { sh.appendRow(["'" + date, '', '', '', '', "'" + time, '', size, '']); at = sh.getLastRow(); }
-  sh.getRange(at, 6).setValue("'" + time); sh.getRange(at, 8).setValue(size); sh.getRange(at, 10, 1, 3).setValues([[nteams, hours, reconfirm ? 1 : '']]);
+  sh.getRange(at, 6).setValue("'" + time); sh.getRange(at, 8).setValue(size); sh.getRange(at, 10, 1, 4).setValues([[nteams, hours, reconfirm ? 1 : '', fee]]);
   if (gameInfo_().date === date) { setSetting_('game_time', "'" + time); setSetting_('game_size', size); }
   if (reconfirm && body.clearHours) { const su = signupSheet_(), d2 = su.getDataRange().getValues();
     for (let i = 1; i < d2.length; i++) if (String(d2[i][0]).slice(0, 10) === date && d2[i][5]) su.getRange(i + 1, 6).setValue(''); bust_('Signups'); }
@@ -965,9 +969,11 @@ function sheetLabel_(date) { return Utilities.formatDate(new Date(date + 'T12:00
 function sheetCharges_(g) {
   const slots = slotsOf_(g), su = signupsByDate_()[g.date] || [];
   const T = g.teams && ((g.teams.black || []).length || (g.teams.white || []).length), names = T ? (g.teams.black || []).concat(g.teams.white || []) : (g.list || []);
-  const out = [], seen = {}, add = function (n, note) { const k = String(n).toLowerCase(); if (!n || seen[k]) return; seen[k] = 1; out.push({ name: n, note: note }); };
-  names.forEach(function (n) { const x = su.filter(function (y) { return y.name.toLowerCase() === n.toLowerCase(); })[0]; add(n, x && x.kind === 'guest' ? 'guest, ' + SHEET_NOTE + (x.by ? ', via ' + x.by : '') : SHEET_NOTE); });
-  if (ss_().getSheetByName('Strikes')) tab_('Strikes').forEach(function (r) { if (String(r[0]).slice(0, 10) === g.date && r[2] && !r[4]) add(String(r[2]), SHEET_NOTE + ', dropped out late'); });
+  const out = [], seen = {}, add = function (n, note, fee) { const k = String(n).toLowerCase(); if (!n || seen[k]) return; seen[k] = 1; out.push({ name: n, note: note, fee: fee }); };
+  const hrsNote = function (h) { return (g.hours || 1) > 1 && (h === 'early' || h === 'late') ? ', ' + (h === 'early' ? 'first' : 'second') + ' hour only' : ''; };
+  names.forEach(function (n) { const x = su.filter(function (y) { return y.name.toLowerCase() === n.toLowerCase(); })[0], h = x ? x.hrs : '';
+    add(n, (x && x.kind === 'guest' ? 'guest, ' + SHEET_NOTE + (x.by ? ', via ' + x.by : '') : SHEET_NOTE) + hrsNote(h), feeFor_(g, h)); });
+  if (ss_().getSheetByName('Strikes')) tab_('Strikes').forEach(function (r) { if (String(r[0]).slice(0, 10) === g.date && r[2] && !r[4]) add(String(r[2]), SHEET_NOTE + ', dropped out late', feeFor_(g, '')); });
   return { full: !!T || names.length >= slots, list: out };
 }
 function syncSheet_(date, dry) {
@@ -1009,12 +1015,12 @@ function syncSheet_(date, dry) {
     c.list.forEach(function (x) {
       let r = findRow(x.name);
       if (r < 0) { r = ++lastRow; wide.getRange(r, 2).setValue(x.name); wide.getRange(r, 1).setFormula('=COUNT(H' + r + ':ZZ' + r + ')'); wide.getRange(r, 6).setValue(0); wide.getRange(r, 7).setFormula('=F' + r + '-SUM(H' + r + ':ZZ' + r + ')'); rowNames.push(x.name); }
-      wide.getRange(r, col).setValue(SHEET_FEE); rows[x.name.toLowerCase()] = r;
+      wide.getRange(r, col).setValue(x.fee || SHEET_FEE); rows[x.name.toLowerCase()] = r;
     });
     // Game Log: replace this code's rows for the date
     const data = log.getDataRange().getDisplayValues();
     for (let i = data.length - 1; i >= 1; i--) if (normLabel_(data[i][0]) === normLabel_(label) && String(data[i][3]).indexOf(SHEET_NOTE) >= 0) log.deleteRow(i + 1);   // Sheets shows "04 Nov 2026" as "4 Nov 2026"
-    if (c.list.length) log.getRange(log.getLastRow() + 1, 1, c.list.length, 4).setValues(c.list.map(function (x) { return [label, x.name, SHEET_FEE, x.note]; }));
+    if (c.list.length) log.getRange(log.getLastRow() + 1, 1, c.list.length, 4).setValues(c.list.map(function (x) { return [label, x.name, x.fee || SHEET_FEE, x.note]; }));
     pr.setProperty(key, JSON.stringify({ col: label, rows: rows, at: new Date().toISOString(), n: c.list.length }));
     return { ok: true, charged: c.list.length, label: label };
   } finally { if (lock) lock.releaseLock(); }
@@ -1309,7 +1315,7 @@ function strikesPublic_() {
 function myStrikes_(name) {
   if (!ss_().getSheetByName('Strikes')) return [];
   return tab_('Strikes').filter(function (r) { return String(r[2]).toLowerCase() === name.toLowerCase() && !r[4]; })
-    .map(function (r) { return { date: String(r[0]).slice(0, 10), ts: String(r[1]).replace(/^'/, ''), seen: !!r[5], fee: SHEET_FEE }; });
+    .map(function (r) { return { date: String(r[0]).slice(0, 10), ts: String(r[1]).replace(/^'/, ''), seen: !!r[5], fee: feeOfDate_(String(r[0]).slice(0, 10)) }; });
 }
 function ackStrikes_(body) {
   const me = voterName_(body.t); if (!me) return { ok: false };
@@ -1342,7 +1348,7 @@ function pushStrikes_() {
     if (!r[2] || r[4] || r[5] || !subs[String(r[2]).toLowerCase()]) return;   // wait until they have notifications on
     const name = String(r[2]), date = String(r[0]).replace(/^'/, '').slice(0, 10), n = Math.min(3, (all[name] || []).length);
     pushOnce_('strike|' + name + '|' + date, function () {
-      pushSafe_([name], 'strike', 'You got a strike', 'You came off ' + dayLabel_(date) + ' inside 36 hours of kick-off, so you\'ve been charged KES ' + SHEET_FEE + '. Strike ' + n + ' of 3.', '/#home');
+      pushSafe_([name], 'strike', 'You got a strike', 'You came off ' + dayLabel_(date) + ' inside 36 hours of kick-off, so you\'ve been charged KES ' + feeOfDate_(date) + '. Strike ' + n + ' of 3.', '/#home');
     });
   });
 }
