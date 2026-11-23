@@ -578,6 +578,11 @@
   .fx-fmt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--line); } .fx-fmt input[type=time], .fx-fmt select { height: 36px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--bg); color: var(--fg); font: inherit; padding: 0 8px; }
   .fx-fee { width: 84px; height: 36px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--bg); color: var(--fg); font: inherit; padding: 0 8px; } .fx-fee-l { font-size: 12px; color: var(--fg-3); }
   .fx-chk { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--fg-2); width: 100%; } .fx-fmt small { font-size: 12px; color: var(--fg-3); }
+  .gd-shirt.r { background: #d9352b; border-color: #d9352b; }
+  .mc-score.mc-3, .gd-score.gd-3 { display: flex; justify-content: center; gap: 18px; } .mc-score.mc-3 .side, .gd-score.gd-3 .side { justify-content: center; }
+  .mc-teams.mc-teams3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .gd-teams.gd-teams3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .gd-tl { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  @media (max-width: 560px) { .mc-teams.mc-teams3, .gd-teams.gd-teams3 { grid-template-columns: 1fr; } }
+  .mr-team { display: flex; align-items: center; gap: 7px; }
   .fx-pick { display: flex; align-items: center; gap: 10px; margin: 0 16px; padding: 12px 14px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line-2)); background: linear-gradient(100deg, color-mix(in srgb, var(--gold) 18%, var(--surface)), var(--surface) 80%); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
   .fx-pick b { font-size: 14px; color: var(--gold); } .fx-pick small { flex: 1; font-size: 12px; color: var(--fg-2); } .fx-pick .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
   .tm-credit { text-align: center; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); margin-top: 8px; }
@@ -1980,7 +1985,7 @@ document.querySelectorAll('#posfilter button').forEach(b => b.onclick = () => { 
 const PL_TIERS = ['icon', 'gold', 'silver', 'bronze'];
 function renderPlayers() {
   const grid = document.getElementById('cards-grid');
-  const L = RATINGS && RATINGS.ok && RATINGS.last, lastSet = new Set(L ? [...((L.teams && L.teams.black) || []), ...((L.teams && L.teams.white) || []), ...(L.list || []), ...(L.squad || [])].map(n => n.toLowerCase()) : []);
+  const L = RATINGS && RATINGS.ok && RATINGS.last, lastSet = new Set(L ? [...((L.teams && L.teams.black) || []), ...((L.teams && L.teams.white) || []), ...((L.teams && L.teams.red) || []), ...(L.list || []), ...(L.squad || [])].map(n => n.toLowerCase()) : []);
   const fits = (p, f) => !f || (f === 'last' ? lastSet.has(p.name.toLowerCase()) : PL_TIERS.includes(f) ? tierOf(p) === f : posClass(p.position) === f);
   const found = ALL_PLAYERS.filter(p => !PLAYER_Q || p.name.toLowerCase().includes(PLAYER_Q)), base = found.filter(p => fits(p, ACTIVE_FILTER));
   document.querySelectorAll('#posfilter button').forEach(b => { const n = found.filter(p => fits(p, b.dataset.filter)).length, em = b.querySelector('em'); if (em) em.textContent = n; b.hidden = !n && b.dataset.filter !== '' && b.dataset.filter !== ACTIVE_FILTER; });
@@ -3296,7 +3301,7 @@ function splashFor() {
   if (R) {
     const fx = (R.fixtures || []).find(f => f.date === today && koOf(f) + 2 * 3600000 > now);
     if (fx) { const g = (R.games || []).find(x => x.date === fx.date) || {}, ko = `Tonight ${hr(fx.time)}`;
-      const team = me && (has(g.black, me.name) ? 'Black' : has(g.white, me.name) ? 'White' : '');
+      const team = me && (has(g.black, me.name) ? 'Black' : has(g.white, me.name) ? 'White' : has(g.red, me.name) ? 'Red' : '');
       const inList = me && (team || has((fx.signups || []).slice(0, fx.slots).map(x => x.name), me.name));
       const left = Math.max(0, (fx.slots || 12) - (fx.signups || []).length);
       if (team) picks.push([1, `${ko} · You're on <b>${team}</b>`, 'gd|' + fx.date]);
@@ -3391,10 +3396,10 @@ function renderAdminTodo() {
 function formFor(p, limit = 8) {
   const games = ((RATINGS && RATINGS.ok && RATINGS.games) || []).filter(g => koOf(g) <= Date.now()).sort((a, b) => b.date.localeCompare(a.date)), out = [];
   for (const g of games) {
-    const inB = (g.black || []).includes(p.name), inW = (g.white || []).includes(p.name), inL = (g.list || []).includes(p.name), rt = g.ratings && g.ratings[p.name];
-    if (!inB && !inW && !inL && !rt) continue;
-    const side = inB ? 'black' : inW ? 'white' : '';
-    let res = ''; if (side && g.b != null && g.w != null) { const m = side === 'black' ? g.b : g.w, t = side === 'black' ? g.w : g.b; res = m > t ? 'W' : m < t ? 'L' : 'D'; }
+    const inB = (g.black || []).includes(p.name), inW = (g.white || []).includes(p.name), inR = (g.red || []).includes(p.name), inL = (g.list || []).includes(p.name), rt = g.ratings && g.ratings[p.name];
+    if (!inB && !inW && !inR && !inL && !rt) continue;
+    const side = inB ? 'black' : inW ? 'white' : inR ? 'red' : '';
+    let res = ''; if (side && side !== 'red' && !(g.red || []).length && g.b != null && g.w != null) { const m = side === 'black' ? g.b : g.w, t = side === 'black' ? g.w : g.b; res = m > t ? 'W' : m < t ? 'L' : 'D'; }
     out.push({ g, side, res, score: g.b != null && g.w != null ? (side === 'white' ? `${g.w}–${g.b}` : `${g.b}–${g.w}`) : '', rt: rt ? rt.avg : null, n: rt ? rt.n : 0, motm: (g.motm || []).includes(p.name) });
     if (out.length >= limit) break;
   }
@@ -3412,7 +3417,7 @@ function formGuideHtml(p) {   // full, newest first, for the profile
   return `<div class="label" style="margin-top:22px">Form guide · last ${f.length} game${f.length === 1 ? '' : 's'}${avg ? ` · average ${avg}` : ''}</div>
     <div class="fg-list">${f.map(x => `<div class="fg-row${x.res ? ' r' + x.res : ''}"><span class="fg-d">${esc(dayOf(x.g))}</span>
       <span class="fg-res${x.res ? ' r' + x.res : ''}">${x.res ? { W: 'Won', L: 'Lost', D: 'Draw' }[x.res] : x.score ? 'Played' : 'Played'}${x.score && x.side ? ` ${x.score}` : ''}</span>
-      ${x.side ? `<i class="gd-shirt${x.side === 'white' ? ' w' : ''}"></i>` : '<i></i>'}
+      ${x.side ? `<i class="gd-shirt${TEAM_SHIRT[x.side]}"></i>` : '<i></i>'}
       ${x.motm ? '<span class="fg-star">★</span>' : '<span></span>'}
       <span class="rt${x.rt != null && x.rt >= 8 ? ' hi' : ''}">${locked || x.rt == null ? '–' : x.rt.toFixed(1)}</span></div>`).join('')}</div>
     ${locked ? `<div class="muted" style="font-size:12px;margin-top:6px">Match ratings show once you've rated ${gateNeed()} teammates.</div>` : ''}`;
@@ -4023,7 +4028,7 @@ function gameView() {
   const L = RATINGS.last || null, N = RATINGS.next || null, now = Date.now();
   if (L) {
     const ko = koOf(L), closes = L.closes ? new Date(L.closes).getTime() : ko + 14 * 3600000;
-    if (now < ko + 3600000) return { g: L, ph: 'live' };
+    if (now < ko + (L.hours || 1) * 3600000) return { g: L, ph: 'live' };
     if (now < closes) return { g: L, ph: 'post', next: N };
     if (N) return { g: N, ph: 'pre', last: L };
     if (now < closes + 6 * 86400000) return { g: L, ph: 'final' };
@@ -4101,10 +4106,15 @@ function recordFor(p) {
     const mine = side === 'b' ? gm.b : gm.w, theirs = side === 'b' ? gm.w : gm.b; if (mine > theirs) r.w++; else if (mine < theirs) r.l++; else r.d++; });
   return r.w + r.d + r.l ? r : null;
 }
+/* Teams: Black and White, plus Red on three-team nights. */
+const TEAM_KEYS = ['black', 'white', 'red'], TEAM_NAME = { black: 'Black', white: 'White', red: 'Red' }, TEAM_SHIRT = { black: '', white: ' w', red: ' r' };
+const teamsIn = T => T ? TEAM_KEYS.filter(k => (T[k] || []).length) : [];
+const teamOf = (T, n) => T ? TEAM_KEYS.find(k => (T[k] || []).includes(n)) || '' : '';
+const allTeamNames = T => T ? TEAM_KEYS.flatMap(k => T[k] || []) : [];
 const closeLbl = g => { const t = g && g.closes ? new Date(g.closes) : null; return t ? new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Nairobi', hour: 'numeric', minute: '2-digit', hour12: true }).format(t).replace(':00', '').replace(/\s/g, '').toLowerCase() : '11am'; };
 function gameSquad(g) {
   const names = new Set((g.squad || []).map(n => n.toLowerCase()));
-  if (g.teams) [...(g.teams.black || []), ...(g.teams.white || [])].forEach(n => names.add(n.toLowerCase()));
+  if (g.teams) allTeamNames(g.teams).forEach(n => names.add(n.toLowerCase()));
   const s = SESSIONS.find(x => x.date && new Intl.DateTimeFormat('en-CA', { timeZone: NBO }).format(x.date) === g.date);   // once the sheet has tonight's column, those players count too
   if (s) s.players.forEach(p => names.add(p.name.toLowerCase()));
   return ALL_PLAYERS.filter(p => names.has(p.name.toLowerCase()));
@@ -4142,7 +4152,7 @@ function renderGameday() {
   const el = document.getElementById('gameday'), ll = document.getElementById('lastline'); if (!el) return;
   const L = RATINGS && RATINGS.ok && ALL_PLAYERS.length ? RATINGS.last : null, now = Date.now();
   const ko = L ? koOf(L) : 0, closes = L ? (L.closes ? new Date(L.closes).getTime() : ko + 14 * 3600000) : 0;
-  const ph = !L || now < ko ? '' : now < ko + 3600000 ? 'live' : now < closes ? 'post' : 'final';
+  const ph = !L || now < ko ? '' : now < ko + (L.hours || 1) * 3600000 ? 'live' : now < closes ? 'post' : 'final';
   if (ph === 'live' || ph === 'post') paintGame(el, { g: L, ph }, GD_OPEN, 'gdToggle()');
   else { el.hidden = true; el.innerHTML = ''; }
   if (!ll) return;
@@ -4169,7 +4179,7 @@ function paintGame(el, view, open, toggleFn) {
   const closes = g.closes ? new Date(g.closes).getTime() : 0;
   const fmtTag = g.size && g.size !== 6 ? ` · ${g.size}-a-side` : '';
   const head = ph === 'pre' ? [today ? 'Game day' : 'Next game', `Kick-off ${fmtKo(g)} · ${dayLbl}${fmtTag}`, fmtLeft(ko - now), 'to kick-off']
-    : ph === 'live' ? ['Playing now', `${fmtKo(g)} kick-off · ${dayLbl}`, fmtLeft(ko + 3600000 - now), 'left']
+    : ph === 'live' ? ['Playing now', `${fmtKo(g)} kick-off · ${dayLbl}`, fmtLeft(ko + (g.hours || 1) * 3600000 - now), 'left']
     : ph === 'post' ? ['Full time', `${today ? 'Tonight' : dayLbl} · voting closes ${closeLbl(g)}`, String(g.raters || 0), g.raters === 1 ? 'player has rated' : 'players have rated']
     : ['Full time', `${dayLbl} · voting closed`, String(g.raters || 0), g.raters === 1 ? 'player rated' : 'players rated'];
   const gate = ph === 'post' || ph === 'final' ? '' : !g.hasGate ? '' : mine && mine.gate
@@ -4193,7 +4203,9 @@ function paintGame(el, view, open, toggleFn) {
   const scoreline = `<div class="gd-score"><span class="side${won('black')}"><i class="gd-shirt"></i>Black</span>${sc ? `<span class="mid num">${sc.black}<i>–</i>${sc.white}</span>` : '<span class="mid vs">vs</span>'}<span class="side w${won('white')}">White<i class="gd-shirt w"></i></span></div>`;
   const left = spots - list.length;
   const rtNote = !isPost ? '' : showRt ? `<div class="gd-note gd-rtnote">Match ratings out of 10 · ${g.raters} rated${ph === 'post' ? ' so far' : ''} · tap a player for their card</div>` : `<div class="gd-note gd-rtnote">Match ratings show once three players have rated${g.raters ? ` · ${g.raters} so far` : ''}.</div>`;
-  const lineupSec = T ? sec('', '', scoreline + `<div class="gd-teams"><div class="gd-team">${byRt(T.black || []).map(plRow).join('')}</div><div class="gd-team">${byRt(T.white || []).map(plRow).join('')}</div></div>` + rtNote)
+  const three = teamsIn(T).length > 2, threeHead = `<div class="gd-score gd-3">${teamsIn(T).map(k => `<span class="side"><i class="gd-shirt${TEAM_SHIRT[k]}"></i>${TEAM_NAME[k]}</span>`).join('<span class="mid vs">·</span>')}</div>`;
+  const lineupSec = T && three ? sec('', '', threeHead + `<div class="gd-teams gd-teams3">${teamsIn(T).map(k => `<div class="gd-team"><div class="label gd-tl"><i class="gd-shirt${TEAM_SHIRT[k]}"></i>${TEAM_NAME[k]}</div>${byRt(T[k]).map(plRow).join('')}</div>`).join('')}</div>` + rtNote)
+    : T ? sec('', '', scoreline + `<div class="gd-teams"><div class="gd-team">${byRt(T.black || []).map(plRow).join('')}</div><div class="gd-team">${byRt(T.white || []).map(plRow).join('')}</div></div>` + rtNote)
     : list.length && isPost ? sec('', '', (sc ? scoreline : '') + `<div class="label" style="margin:${sc ? 12 : 0}px 0 8px">Played · ${list.length}</div><div class="gd-team gd-one">${byRt(list).map(plRow).join('')}</div>` + rtNote)
     : list.length ? sec(`In · ${list.length} of ${spots}`, ph === 'pre' ? [left > 0 ? `${left} spot${left === 1 ? '' : 's'} left` : '', 'teams to follow'].filter(Boolean).join(' · ') : '', `<div class="gd-chips">${list.map(n => pChip(n)).join('')}</div>`)
     : squad.length ? sec('', '', (isPost && sc ? scoreline : '') + `<div style="display:flex;align-items:center"><div class="gd-faces">${faces}</div><span class="n"><b>${squad.length}</b> ${isPost ? 'played' : today ? 'in tonight' : 'in'}</span></div>`)
@@ -4211,11 +4223,11 @@ function paintGame(el, view, open, toggleFn) {
   const foot = '';
   el.dataset.phase = ph; el.hidden = false;
   // Where the viewer stands for this game, in one pill
-  const myBlack = T && (T.black || []).includes(meName), myWhite = T && (T.white || []).includes(meName), myList = list.includes(meName), mySb = sbList.indexOf(meName);
-  const status = !meName || isPost ? '' : myBlack ? `<span class="gd-st in">You're on Black</span>` : myWhite ? `<span class="gd-st in">You're on White</span>` : myList ? `<span class="gd-st in">You're in</span>`
+  const myTeam = T ? teamOf(T, meName) : '', myList = list.includes(meName), mySb = sbList.indexOf(meName);
+  const status = !meName || isPost ? '' : myTeam ? `<span class="gd-st in">You're on ${TEAM_NAME[myTeam]}</span>` : myList ? `<span class="gd-st in">You're in</span>`
     : mySb >= 0 ? `<span class="gd-st sb">Standby · ${['1st', '2nd', '3rd'][mySb] || (mySb + 1) + 'th'} in line</span>` : (T || list.length) ? `<span class="gd-st out">Not on the list</span>` : '';
-  const countTxt = T ? `${(T.black || []).length} v ${(T.white || []).length}` : list.length ? `${list.length} of ${spots} in${(g.standby || []).length ? ` · ${g.standby.length} standby` : ''}` : 'Lineup to follow';
-  const faceRow = (T ? [...(T.black || []), ...(T.white || [])] : list).slice(0, 7).map(n => { const p = ALL_PLAYERS.find(x => x.name === n); return p ? photo(p, 'avatar') : ''; }).join('');
+  const countTxt = T ? teamsIn(T).map(k => T[k].length).join(' v ') : list.length ? `${list.length} of ${spots} in${(g.standby || []).length ? ` · ${g.standby.length} standby` : ''}` : 'Lineup to follow';
+  const faceRow = (T ? allTeamNames(T) : list).slice(0, 7).map(n => { const p = ALL_PLAYERS.find(x => x.name === n); return p ? photo(p, 'avatar') : ''; }).join('');
   const hasMore = !!(T || list.length || squad.length);
   const toggle = hasMore ? `<button class="btn ghost gd-more" onclick="${toggleFn}">${GD_OPEN ? 'Hide' : isPost ? 'Lineup & ratings' : 'Lineup'} ${GD_OPEN ? '↑' : '↓'}</button>` : '';
   const scoreOnly = isPost && sc && !GD_OPEN ? `<div class="gd-sec">${scoreline}</div>` : '';
@@ -4528,9 +4540,9 @@ function mtToggle(date) { MT_OPEN[date] = !MT_OPEN[date]; renderMatches(); }
 function matchCardHtml(g, open, toggle) {
   const sc = g.b != null && g.w != null ? { black: g.b, white: g.w } : null, motm = g.motm || [], r = g.ratings || {};
   const won = side => !sc || sc.black === sc.white ? '' : (sc[side] > sc[side === 'black' ? 'white' : 'black'] ? ' won' : ' lost');
-  const res = !sc ? 'No score' : sc.black === sc.white ? 'Draw' : `${sc.black > sc.white ? 'Black' : 'White'} won`;
-  const hasTeams = (g.black || []).length || (g.white || []).length, played = hasTeams ? g.black.length + g.white.length : (g.list || []).length;
-  const me = VOTER && VOTER.ok ? VOTER.name : '', mySide = me && (g.black || []).includes(me) ? 'black' : me && (g.white || []).includes(me) ? 'white' : '', hasRt = (g.raters || 0) >= 3, rt = n => hasRt && r[n] && r[n].n >= 2 ? r[n].avg : null;
+  const three = (g.red || []).length > 0, res = three ? '3 teams' : !sc ? 'No score' : sc.black === sc.white ? 'Draw' : `${sc.black > sc.white ? 'Black' : 'White'} won`;
+  const hasTeams = (g.black || []).length || (g.white || []).length, played = hasTeams ? g.black.length + g.white.length + (g.red || []).length : (g.list || []).length;
+  const me = VOTER && VOTER.ok ? VOTER.name : '', mySide = three ? '' : me && (g.black || []).includes(me) ? 'black' : me && (g.white || []).includes(me) ? 'white' : '', hasRt = (g.raters || 0) >= 3, rt = n => hasRt && r[n] && r[n].n >= 2 ? r[n].avg : null;
   const best = Object.keys(r).filter(n => rt(n) != null).sort((x, y) => r[y].avg - r[x].avg)[0];
   const pl = n => { const p = ALL_PLAYERS.find(x => x.name === n), v = rt(n);
     return `<div class="mc-p${motm.includes(n) ? ' motm' : ''}${n === me ? ' me' : ''}${p ? ' tap' : ''}"${p ? ` onclick="openPlayerByName('${esc(n).replace(/'/g, "\\'")}')"` : ''}>${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span class="mc-n">${esc(n)}${motm.includes(n) ? ' <i>★</i>' : ''}</span>${hasRt ? `<b class="num rt${n === best ? ' hi' : ''}${v == null ? ' none' : ''}">${v != null ? v.toFixed(1) : '–'}</b>` : ''}</div>`; };
@@ -4538,14 +4550,14 @@ function matchCardHtml(g, open, toggle) {
   const mp = motm.length ? ALL_PLAYERS.find(x => x.name === motm[0]) : null;
   const pending = !motm.length && Date.now() < koOf(g) + 38 * 3600000;
   const body = !open ? '' : `<div class="mc-body">${hasTeams
-      ? `<div class="mc-teams"><div><div class="label"><i class="gd-shirt"></i>Black${sc ? ` · ${sc.black}` : ''}</div>${byRt(g.black).map(pl).join('')}</div><div><div class="label"><i class="gd-shirt w"></i>White${sc ? ` · ${sc.white}` : ''}</div>${byRt(g.white).map(pl).join('')}</div></div>`
+      ? three ? `<div class="mc-teams mc-teams3">${TEAM_KEYS.filter(k => (g[k] || []).length).map(k => `<div><div class="label"><i class="gd-shirt${TEAM_SHIRT[k]}"></i>${TEAM_NAME[k]}</div>${byRt(g[k]).map(pl).join('')}</div>`).join('')}</div>` : `<div class="mc-teams"><div><div class="label"><i class="gd-shirt"></i>Black${sc ? ` · ${sc.black}` : ''}</div>${byRt(g.black).map(pl).join('')}</div><div><div class="label"><i class="gd-shirt w"></i>White${sc ? ` · ${sc.white}` : ''}</div>${byRt(g.white).map(pl).join('')}</div></div>`
       : `<div class="mc-teams one"><div>${byRt(g.list || []).map(pl).join('')}</div></div>`}
     <div class="mc-foot">${hasRt ? `Match ratings out of 10 · ${g.raters} rated · tap a player for their card` : `Match ratings show once three players have rated${g.raters ? ` · ${g.raters} so far` : ''}.`}</div></div>`;
   return `<article class="mc${open ? ' open' : ''}" id="mc-${g.date}">
     <button class="mc-head" onclick="${toggle}">
-      <span class="mc-when"><b>${esc(dayOf(g))}</b><small>${fmtKo(g)} · ${g.size || 6}-a-side${played ? ` · ${played} played` : ''}</small></span>
+      <span class="mc-when"><b>${esc(dayOf(g))}</b><small>${fmtKo(g)} · ${three ? `3 teams of ${g.size || 6}` : `${g.size || 6}-a-side`}${played ? ` · ${played} played` : ''}</small></span>
       ${sc && mySide ? `<span class="mc-res you${won(mySide) || ' drew'}">You ${won(mySide) === ' won' ? 'won' : won(mySide) === ' lost' ? 'lost' : 'drew'}</span>` : `<span class="mc-res none">${res}</span>`}</button>
-    <div class="mc-score"><span class="side${won('black')}${mySide === 'black' ? ' mine' : ''}"><i class="gd-shirt"></i>Black</span><span class="mid num">${sc ? `<b class="${won('black').trim()}">${sc.black}</b><i>–</i><b class="${won('white').trim()}">${sc.white}</b>` : '–'}</span><span class="side w${won('white')}${mySide === 'white' ? ' mine' : ''}">White<i class="gd-shirt w"></i></span></div>
+    ${three ? `<div class="mc-score mc-3">${TEAM_KEYS.filter(k => (g[k] || []).length).map(k => `<span class="side${me && (g[k] || []).includes(me) ? ' mine' : ''}"><i class="gd-shirt${TEAM_SHIRT[k]}"></i>${TEAM_NAME[k]}</span>`).join('')}</div>` : `<div class="mc-score"><span class="side${won('black')}${mySide === 'black' ? ' mine' : ''}"><i class="gd-shirt"></i>Black</span><span class="mid num">${sc ? `<b class="${won('black').trim()}">${sc.black}</b><i>–</i><b class="${won('white').trim()}">${sc.white}</b>` : '–'}</span><span class="side w${won('white')}${mySide === 'white' ? ' mine' : ''}">White<i class="gd-shirt w"></i></span></div>`}
     <div class="mc-ft">${motm.length ? `<div class="mc-mm">${mp ? photo(mp, 'avatar') : '<span class="gd-last-star">★</span>'}<span><small>Man of the match</small><b>${esc(motm.join(', '))}</b></span></div>`
       : `<div class="mc-mm none">${pending ? 'Man of the match is decided the morning after.' : 'No man of the match.'}</div>`}
     ${played ? `<button class="mc-more" onclick="${toggle}">${open ? 'Hide' : hasTeams ? 'Teams' : 'Who played'} <i class="fx-chev"></i></button>` : ''}</div>
@@ -4758,9 +4770,9 @@ function openMatch() {
   const g = RATINGS && RATINGS.last; if (!g || !VOTER || !VOTER.ok) return;
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   const prev = (VOTER.last && VOTER.last.date === g.date && VOTER.last.mine) || { ratings: {}, motm: '' };
-  const T = g.teams || { black: [], white: [] }, mySide = me && (T.black || []).includes(me.name) ? 'black' : me && (T.white || []).includes(me.name) ? 'white' : '';
-  const side = p => (T.black || []).includes(p.name) ? 'black' : (T.white || []).includes(p.name) ? 'white' : '';
-  const order = p => side(p) === mySide ? 0 : side(p) ? 1 : 2;
+  const T = g.teams || { black: [], white: [] }, mySide = me ? teamOf(T, me.name) : '';
+  const side = p => teamOf(T, p.name);
+  const order = p => side(p) === mySide ? 0 : side(p) ? 1 + TEAM_KEYS.indexOf(side(p)) : 9;
   MATCH = { g, ratings: Object.assign({}, prev.ratings), motm: prev.motm, side, mySide, list: gameSquad(g).filter(p => p !== me).sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name)) };
   Object.keys(MATCH.ratings).forEach(n => { const p = ALL_PLAYERS.find(x => x.name === n); if (p && !MATCH.list.includes(p)) MATCH.list.push(p); });
   paintMatch(); document.getElementById('match-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
@@ -4772,7 +4784,7 @@ function paintMatch() {
   document.getElementById('m-body').innerHTML = `<div class="label">${tn ? 'Tonight' : esc(dayOf(MATCH.g))} · voting closes ${closeLbl(MATCH.g)}</div>
     <div class="b-title" style="margin-top:8px">${tn ? 'Rate tonight' : 'Rate the game'}</div>
     <div class="b-copy">Out of 10 for how they played ${tn ? 'tonight' : 'that night'}, not in general. Tap the star for your man of the match.</div>
-    ${MATCH.list.map((p, i) => { const v = MATCH.ratings[p.name], sd = MATCH.side(p), prevSd = i ? MATCH.side(MATCH.list[i - 1]) : null; return `${sd && sd !== prevSd ? `<div class="label" style="margin-top:16px">${sd === MATCH.mySide ? 'Your team' : 'Opposition'} · ${sd === 'black' ? 'Black' : 'White'}</div>` : ''}<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="Man of the match">★</button>
+    ${MATCH.list.map((p, i) => { const v = MATCH.ratings[p.name], sd = MATCH.side(p), prevSd = i ? MATCH.side(MATCH.list[i - 1]) : null; return `${sd && sd !== prevSd ? `<div class="label mr-team" style="margin-top:16px"><i class="gd-shirt${TEAM_SHIRT[sd]}"></i>${sd === MATCH.mySide ? 'Your team' : teamsIn(MATCH.g.teams).length > 2 ? 'Team' : 'Opposition'} · ${TEAM_NAME[sd]}</div>` : ''}<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="Man of the match">★</button>
       <div class="mr-seg">${[4,5,6,7,8,9,10].map(x => `<button class="${v === x ? 'on' : ''}" onclick="setMr('${esc(p.name)}', ${x})">${x}</button>`).join('')}</div></div>`; }).join('') || '<div class="empty" style="margin-top:14px">Nobody has checked in yet. Add who played below.</div>'}
     <select class="mr-add" onchange="addMr(this.value)"><option value="">+ Add someone who played tonight</option>${others.map(p => `<option>${esc(p.name)}</option>`).join('')}</select>
     <div class="mr-foot"><span class="muted" id="mr-msg" style="font-size:12px">${n} rated${MATCH.motm ? ` · ★ ${esc(MATCH.motm)}` : ''}</span><span style="flex:1"></span><button class="btn" id="mr-save" onclick="saveMatch()" ${n ? '' : 'disabled'}>Save ratings</button></div>`;
