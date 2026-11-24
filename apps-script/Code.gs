@@ -930,6 +930,8 @@ function awardsTally_(rows) {
     out[k] = { votes: tot.length, top: Object.keys(c).sort(function (a, b) { return c[b] - c[a] || a.localeCompare(b); }).slice(0, 3).map(function (n) { return { name: n, n: c[n], pct: Math.round(100 * c[n] / tot.length) }; }) }; });
   return out;
 }
+/** Editor only: wipe every awards ballot (used once before launch, to drop votes cast while the vote was briefly visible). */
+function resetAwards() { const sh = ss_().getSheetByName('Awards'); const n = sh ? Math.max(0, sh.getLastRow() - 1) : 0; if (n) sh.deleteRows(2, n); bust_('Awards'); cache_().remove('results'); cache_().remove('results_stale'); Logger.log('removed ' + n + ' ballot rows'); }
 /** Admin only, and only once voting has closed: the top 3 for every award, to prepare for (and present at) the drinks. */
 function awardsResults_(body) {
   const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
@@ -940,6 +942,7 @@ function awardsResults_(body) {
    Drinks tab: ts, name, going (1/0), guests. One row per person, rewritten on each answer. */
 function rsvp_(body) {
   const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
+  if (Date.now() > new Date('2026-12-08T23:59:00+03:00').getTime()) return { ok: false, error: 'RSVPs closed on Mon 8 Dec.' };
   const going = !!body.going, guests = going ? Math.max(0, Math.min(3, parseInt(body.guests, 10) || 0)) : 0;
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
