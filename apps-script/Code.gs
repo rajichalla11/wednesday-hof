@@ -166,6 +166,7 @@ function doPost(e) {
     if (body.action === 'signup') return json_(signup_(body));
     if (body.action === 'withdraw') return json_(withdraw_(body));
     if (body.action === 'setHours') return json_(setHours_(body));
+    if (body.action === 'award') return json_(award_(body));
     if (body.action === 'setFormat') return json_(setFormat_(body));
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
     if (body.action === 'setProfile') return json_(setProfile_(body));
@@ -230,7 +231,7 @@ function me_(token) {
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), tweaks: isAdmin_(name) ? tweaks_() : undefined, voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), strikes: myStrikes_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), tweaks: isAdmin_(name) ? tweaks_() : undefined, voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), strikes: myStrikes_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null, awards: myAwards_(token) };
 }
 
 /* ───────── top-ups ─────────
@@ -415,7 +416,7 @@ function buildResults_() {
   try { liftCards_(cur, formBoosts_(games, players_()), win); } catch (e) { console.error('liftCards_ ' + e); }
   try { applyTweaks_(cur); } catch (e) { console.error('applyTweaks_ ' + e); }
   const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(cur), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
-  out.game = gamePublic_(); out.motm = motmTally_(); out.games = games;
+  out.game = gamePublic_(); out.motm = motmTally_(); out.games = games; out.awards = awardsPublic_();
   const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_(); out.footReviews = footReviews_(); out.profiles = profiles_();
   out.ballots = tab_('Voters').filter(function (r) { return r[3] && String(r[5] || '') && String(r[5]) !== '0'; }).length;   // people who have voted (a voter can hold an older anonymous ballot and a newer named one, so ballot ids would count them twice)
   const js = JSON.stringify(out); cache_().put('results', js, 300); cache_().put('results_stale', js, 21600);
@@ -884,6 +885,43 @@ function signup_(body) {
   return { ok: true, fixtures: fixturesPublic_() };
 }
 /** Which hours someone on a game's list can make: both | early | late. Themselves, whoever added them, or the admin. */
+/* ───────── 2026 awards ─────────
+   Awards tab: day, ballot (sha of 'awards|' + token, so it can't be matched to any other table), award key, pick. One pick per
+   award per ballot; a resubmission replaces the ballot. Nobody can see who picked whom. Results (top 3 with share of the vote)
+   are only sent once voting has closed; until then only the number of people who have voted. */
+const AWARDS_ = ['poty', 'teammate', 'improved', 'signing', 'moaner', 'ballhog', 'touch'];
+const AWARDS_CLOSE_ = '2026-12-01T23:00:00+03:00';
+function awardsOpen_() { return Date.now() < new Date(AWARDS_CLOSE_).getTime(); }
+function awardBallot_(t) { return sha_('awards|' + t); }
+function award_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
+  if (!awardsOpen_()) return { ok: false, error: 'Voting for the awards has closed.' };
+  const names = {}; players_().forEach(function (p) { names[p.name.toLowerCase()] = p.name; });
+  const picks = body.picks || {}, b = awardBallot_(body.t), rows = [];
+  AWARDS_.forEach(function (k) { const who = names[String(picks[k] || '').toLowerCase()]; if (who && who.toLowerCase() !== me.toLowerCase()) rows.push([today_(), b, k, who]); });
+  if (!rows.length) return { ok: false, error: 'Pick at least one.' };
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const sh = sheet_('Awards'); if (sh.getLastRow() === 0) sh.appendRow(['day', 'ballot', 'award', 'pick']);
+    const data = sh.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) if (data[i][1] === b) sh.deleteRow(i + 1);
+    rows.forEach(function (r) { insertRandom_(sh, ["'" + r[0]].concat(r.slice(1))); });
+  } finally { lock.releaseLock(); }
+  bust_('Awards'); cache_().remove('results');
+  return { ok: true, awards: awardsPublic_(), mine: myAwards_(body.t) };
+}
+function myAwards_(t) {
+  if (!ss_().getSheetByName('Awards')) return {};
+  const b = awardBallot_(t), out = {}; tab_('Awards').forEach(function (r) { if (r[1] === b) out[String(r[2])] = String(r[3]); }); return out;
+}
+function awardsPublic_() {
+  const rows = ss_().getSheetByName('Awards') ? tab_('Awards') : [], ballots = {}; rows.forEach(function (r) { ballots[r[1]] = 1; });
+  const out = { keys: AWARDS_, closes: AWARDS_CLOSE_, open: awardsOpen_(), voters: Object.keys(ballots).length };
+  if (!out.open) { out.results = {}; AWARDS_.forEach(function (k) { const c = {}, tot = rows.filter(function (r) { return r[2] === k; });
+    tot.forEach(function (r) { c[r[3]] = (c[r[3]] || 0) + 1; });
+    out.results[k] = Object.keys(c).sort(function (a, b) { return c[b] - c[a] || a.localeCompare(b); }).slice(0, 3).map(function (n) { return { name: n, pct: Math.round(100 * c[n] / tot.length) }; }); }); }
+  return out;
+}
 function setHours_(body) {
   const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
   const date = String(body.date || ''), hrs = ['both', 'early', 'late'].indexOf(String(body.hours)) >= 0 ? String(body.hours) : '';

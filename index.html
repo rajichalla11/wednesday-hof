@@ -1140,6 +1140,20 @@
   .ph-you span { font-size: 30px; line-height: 1; font-weight: 300; } .ph-you b { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ph-new { object-fit: cover; object-position: top; box-shadow: 0 0 0 3px var(--gold), 0 0 0 7px var(--bg); }
   @keyframes phPulse { 50% { box-shadow: 0 0 0 4px var(--bg), 0 0 40px -2px color-mix(in srgb, var(--gold) 85%, transparent); } }
+  /* 2026 awards */
+  .sheet.aw { max-width: 460px; padding: 22px 18px 18px; } .aw-dots { display: flex; gap: 5px; justify-content: center; margin: 0 40px 16px; } .aw-dots i { flex: 1; height: 4px; border-radius: 2px; background: var(--surface-3); cursor: pointer; } .aw-dots i.done { background: color-mix(in srgb, var(--gold) 50%, var(--surface-3)); } .aw-dots i.on { background: var(--gold); }
+  .aw-head { display: flex; gap: 14px; align-items: flex-start; } .aw-big { font-size: 44px; line-height: 1; flex: none; } .sheet.aw > .aw-big { display: block; text-align: center; margin: 8px 0 10px; font-size: 56px; }
+  .aw-sub { font-size: 13px; color: var(--fg-2); line-height: 1.45; margin: 6px 0 0; } .sheet.aw > .aw-sub { text-align: center; margin: 10px 0 16px; }
+  .aw-q { width: 100%; height: 40px; margin: 14px 0 10px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface); color: var(--fg); font: inherit; font-size: 16px; }
+  .aw-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-height: min(52vh, 430px); overflow-y: auto; padding: 2px; }
+  .aw-p { display: grid; justify-items: center; gap: 6px; padding: 10px 4px 9px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--surface); font: inherit; color: var(--fg); cursor: pointer; min-width: 0; }
+  .aw-p .avatar { width: 46px; height: 46px; } .aw-p b { font-size: 12px; font-weight: 600; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .aw-p.on { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 16%, var(--surface)); } .aw-p.on .avatar { box-shadow: 0 0 0 2px var(--gold); } .aw-p.on b { color: var(--gold); }
+  .aw-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; } .aw-foot span { flex: 1; }
+  .aw-sum { display: grid; gap: 6px; margin: 14px 0 16px; } .aw-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
+  .aw-ic { font-size: 20px; width: 26px; text-align: center; } .aw-rt { flex: 1; display: grid; min-width: 0; } .aw-rt small { font-size: 11px; color: var(--fg-3); } .aw-rt b { font-size: 14px; } .aw-row .avatar { width: 30px; height: 30px; }
+  .aw-card { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0 0 14px; padding: 14px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--gold) 60%, var(--line-2)); background: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--gold) 22%, transparent), transparent 60%), var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
+  .aw-card.done { border-color: var(--line-2); background: var(--surface); } .aw-card-ic { font-size: 30px; flex: none; } .aw-card-t { flex: 1; display: grid; gap: 3px; min-width: 0; } .aw-card-t .label { color: var(--gold); } .aw-card-t b { font-size: 15.5px; } .aw-card-t small { font-size: 12px; color: var(--fg-2); } .aw-card .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
   .me-ph { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
   .me-ph-c { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 2px dashed var(--gold); color: var(--gold); font-size: 22px; font-weight: 300; animation: phPulse 2.4s ease-in-out infinite; }
   .me-ph > span:nth-child(2) { flex: 1; display: grid; gap: 2px; } .me-ph b { font-size: 14.5px; color: var(--gold); } .me-ph small { font-size: 12px; color: var(--fg-2); } .me-ph .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
@@ -1471,6 +1485,7 @@
     <div id="nextline"></div>
     <div id="fixtures"></div>
     <div id="lastline"></div>
+    <div id="aw-home"></div>
     <div id="you-body"></div>
     <div id="explore-strip"></div>
   </section>
@@ -2865,7 +2880,7 @@ async function renderYou() {
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         const fk = ['seed-body', 'admin-body', 'named-body', 'games-admin'].find(id => sec.querySelector('#' + id));
         if (fk) { sec.classList.add('adm-fold'); if (!ADM_UNFOLD.has(fk)) sec.classList.add('folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => { sec.classList.toggle('folded'); ADM_UNFOLD[sec.classList.contains('folded') ? 'delete' : 'add'](fk); }; } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
-  strikePop(v); ratePop(me, r); if (photoSrc(me)) whatsNewPop(); paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
+  strikePop(v); ratePop(me, r); if (photoSrc(me)) whatsNewPop(); try { renderAwardsCard(); maybeAwardsPop(); } catch (e) { console.error(e); } paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
   if (v.isAdmin) renderAdmin(me);
   if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else if (!maybePhotoPop(me)) maybeProfilePop(me);
 }
@@ -2946,6 +2961,81 @@ function repaintProfile() {
   if (nb) { if (pd.done >= pd.total) nb.remove(); else nb.innerHTML = `${nudgeLabel(me, pd)}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span>`; }
   paintProfilePopTop();
 }
+/* ── 2026 awards: one pick per award, anonymous, open until 1 Dec 11pm; the top 3 are revealed in Wrapped ── */
+const AWARDS = [
+  { k: 'poty', ic: '🏆', t: 'Player of the Year', d: 'The best of 2026. No debate.' },
+  { k: 'teammate', ic: '🤝', t: 'Best Teammate', d: 'Passes, shouts encouragement, never sulks.' },
+  { k: 'improved', ic: '📈', t: 'Most Improved', d: 'Not the same player who started the year.' },
+  { k: 'signing', ic: '✍️', t: 'Signing of the Season', d: 'Best newcomer of 2026.', fresh: true },
+  { k: 'moaner', ic: '🗣️', t: 'Biggest Moaner', d: 'The pitch, the ref, the teammates. Always something.' },
+  { k: 'ballhog', ic: '🐷', t: 'Ball Hog', d: 'Passing is optional, apparently.' },
+  { k: 'touch', ic: '🧱', t: 'Worst First Touch', d: 'The ball comes back faster than it arrived.' },
+];
+let AW = null;
+const awOpen = () => { const a = RATINGS && RATINGS.ok && RATINGS.awards; return !!(a ? a.open : Date.now() < new Date('2026-12-01T23:00:00+03:00').getTime()); };
+const awMine = () => (VOTER && VOTER.awards) || {};
+const awDone = () => Object.keys(awMine()).length > 0;
+function awNominees(a) {
+  const me = VOTER && VOTER.name ? VOTER.name.toLowerCase() : '';
+  return ALL_PLAYERS.filter(p => p.name.toLowerCase() !== me && (a.fresh ? p.firstIdx >= 0 && SESSIONS[p.firstIdx] && SESSIONS[p.firstIdx].year === THIS_YEAR && p.gamesThisYear >= 2 : p.gamesThisYear >= 3))
+    .sort((x, y) => y.gamesThisYear - x.gamesThisYear || x.name.localeCompare(y.name));
+}
+function openAwards(at) {
+  if (!TOKEN || !VOTER || !VOTER.ok) return openClaim();
+  AW = { i: at || 0, picks: Object.assign({}, awMine()), q: '', done: false };
+  let ov = document.getElementById('aw-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'aw-overlay'; ov.onclick = e => { if (e.target === ov) closeAwards(); }; document.body.appendChild(ov); }
+  paintAwards(); ov.classList.add('open'); document.body.style.overflow = 'hidden';
+}
+function closeAwards() { const ov = document.getElementById('aw-overlay'); if (ov) ov.classList.remove('open'); document.body.style.overflow = ''; }
+function awPick(name) { const a = AWARDS[AW.i]; AW.picks[a.k] = AW.picks[a.k] === name ? undefined : name; if (!AW.picks[a.k]) delete AW.picks[a.k]; paintAwards(); if (AW.picks[a.k]) setTimeout(() => { if (AW && AWARDS[AW.i] === a) { AW.i++; AW.q = ''; paintAwards(); } }, 280); }
+function awGo(i) { AW.i = Math.max(0, Math.min(AWARDS.length, i)); AW.q = ''; paintAwards(); }
+function paintAwards() {
+  const ov = document.getElementById('aw-overlay'); if (!ov || !AW) return;
+  const n = AWARDS.length, dots = `<div class="aw-dots">${AWARDS.map((a, i) => `<i class="${i === AW.i ? 'on' : AW.picks[a.k] ? 'done' : ''}" onclick="awGo(${i})"></i>`).join('')}</div>`;
+  const close = `<div class="controls"><button class="ctl" onclick="closeAwards()" title="Close">✕</button></div>`;
+  if (AW.done) { ov.innerHTML = `<div class="sheet aw">${close}<div class="aw-big">🗳️</div><div class="pp-title" style="text-align:center">Votes in</div><p class="aw-sub">The top 3 for every award are revealed in your 2026 Wrapped on <b>Thu 3 Dec</b>. You can change your picks until Tue 1 Dec, 11pm.</p><button class="btn app-go" onclick="closeAwards()">Done</button></div>`; return; }
+  if (AW.i >= n) {
+    const k = Object.keys(AW.picks).length;
+    ov.innerHTML = `<div class="sheet aw">${close}${dots}<div class="label" style="color:var(--gold)">Your ballot · ${k} of ${n}</div><div class="pp-title">Happy with these?</div>
+      <div class="aw-sum">${AWARDS.map((a, i) => { const p = AW.picks[a.k] && ALL_PLAYERS.find(x => x.name === AW.picks[a.k]); return `<button class="aw-row" onclick="awGo(${i})"><span class="aw-ic">${a.ic}</span><span class="aw-rt"><small>${a.t}</small><b>${p ? esc(p.name) : 'No pick'}</b></span>${p ? photo(p, 'avatar') : ''}</button>`; }).join('')}</div>
+      <button class="btn app-go" id="aw-send" onclick="sendAwards(this)" ${k ? '' : 'disabled'}>Submit my votes</button><p class="aw-sub" id="aw-msg">Anonymous. Nobody sees who you picked, not even the admin.</p></div>`;
+    return;
+  }
+  const a = AWARDS[AW.i], q = AW.q.toLowerCase(), list = awNominees(a).filter(p => !q || p.name.toLowerCase().includes(q));
+  ov.innerHTML = `<div class="sheet aw">${close}${dots}
+    <div class="aw-head"><span class="aw-big">${a.ic}</span><div><div class="label" style="color:var(--gold)">Award ${AW.i + 1} of ${n}</div><div class="pp-title">${a.t}</div><p class="aw-sub">${a.d}</p></div></div>
+    <input class="aw-q" type="search" placeholder="Search" value="${esc(AW.q)}" oninput="AW.q=this.value;paintAwardsGrid()">
+    <div class="aw-grid" id="aw-grid">${awGridHtml(a, list)}</div>
+    <div class="aw-foot"><button class="btn link" onclick="awGo(${AW.i - 1})" ${AW.i ? '' : 'disabled'}>← Back</button><span></span><button class="btn ghost" onclick="awGo(${AW.i + 1})">${AW.picks[a.k] ? 'Next →' : 'Skip'}</button></div></div>`;
+}
+function awGridHtml(a, list) { return list.map(p => `<button class="aw-p${AW.picks[a.k] === p.name ? ' on' : ''}" onclick="awPick('${esc(p.name).replace(/'/g, "\\'")}')">${photo(p, 'avatar')}<b>${esc(p.name)}</b></button>`).join('') || '<div class="empty" style="grid-column:1/-1">Nobody matches.</div>'; }
+function paintAwardsGrid() { const a = AWARDS[AW.i], q = AW.q.toLowerCase(), g = document.getElementById('aw-grid'); if (g) g.innerHTML = awGridHtml(a, awNominees(a).filter(p => !q || p.name.toLowerCase().includes(q))); }
+async function sendAwards(btn) {
+  btn.disabled = true; btn.textContent = 'Sending…';
+  let res; try { res = await api(null, { action: 'award', t: TOKEN, picks: AW.picks }); } catch (e) { res = { ok: false, error: e.message }; }
+  if (!res || !res.ok) { btn.disabled = false; btn.textContent = 'Try again'; const m = document.getElementById('aw-msg'); if (m) m.textContent = (res && res.error) || 'Could not send.'; return; }
+  VOTER.awards = res.mine || AW.picks; try { writeCache('w910_me', VOTER); } catch (_) {}
+  if (RATINGS && res.awards) RATINGS.awards = res.awards;
+  AW.done = true; paintAwards(); renderAwardsCard();
+}
+/* Pops up once per visit until you've voted (after the photo prompt, never on top of another pop-up) */
+function maybeAwardsPop() {
+  if (!awOpen() || awDone() || !TOKEN || !VOTER || !VOTER.ok || VOTER.pending) return;
+  try { if (sessionStorage.getItem('w910_aw')) return; } catch (_) { return; }
+  let tries = 0;
+  const go = () => { if (document.querySelector('.overlay.open') || document.getElementById('ph-overlay')) { if (++tries < 60) setTimeout(go, 2500); return; }
+    if (awDone()) return; try { if (sessionStorage.getItem('w910_aw')) return; sessionStorage.setItem('w910_aw', '1'); } catch (_) {}
+    openAwards(0); };
+  setTimeout(go, 1800);
+}
+/* The card on Home (above your box) and in History while voting is open */
+function awardsCardHtml() {
+  if (!awOpen()) return '';
+  const a = RATINGS && RATINGS.awards, done = awDone(), left = Math.max(0, new Date('2026-12-01T23:00:00+03:00') - Date.now()), days = Math.ceil(left / 86400000);
+  return `<button class="aw-card${done ? ' done' : ''}" onclick="openAwards(${done ? AWARDS.length : 0})"><span class="aw-card-ic">🏆</span><span class="aw-card-t"><span class="label">2026 Awards · ${days} day${days === 1 ? '' : 's'} left</span><b>${done ? 'You voted · change your picks' : 'Vote for the 2026 awards'}</b><small>${done ? 'Results drop in Wrapped on Thu 3 Dec' : `Player of the Year, Biggest Moaner and 5 more · 1 minute`}${a && a.voters ? ` · ${a.voters} voted so far` : ''}</small></span><i class="fx-chev"></i></button>`;
+}
+function renderAwardsCard() { const el = document.getElementById('aw-home'); if (el) el.innerHTML = awardsCardHtml(); const h = document.getElementById('aw-hist'); if (h) h.innerHTML = awardsCardHtml() || '<div class="empty">Voting has closed. The results are in your 2026 Wrapped.</div>'; }
 /* ── No photo yet: a pop-up on opening the site, once per visit, snoozed 2 days by "Later". Purely for how the app looks. ── */
 function maybePhotoPop(me) {
   if (!me || !VOTER || !VOTER.ok || VOTER.pending || photoSrc(me) || document.getElementById('ph-overlay')) return false;
@@ -4147,6 +4237,7 @@ function lastCardHtml(L, onclick, label) {
 /* Home, top to bottom: straight after a game the rate panel takes over until voting closes at 11am; otherwise your next game,
    the open games (one card each, tap to open), the last result in one line, then your card. */
 function renderGameday() {
+  try { renderAwardsCard(); } catch (e) { console.error(e); }
   try { renderMatches(); } catch (e) { console.error(e); }
   try { renderWeek(); } catch (e) { console.error(e); }
   try { renderStats(); } catch (e) { console.error(e); }
