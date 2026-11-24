@@ -3158,7 +3158,7 @@ const AWARDS = [
 ];
 const AW_CLOSE = new Date('2026-12-06T23:00:00+03:00').getTime();
 /* Off until the awards are finalised: only the admin sees the card (as a preview); no pop-up for anyone. Flip to true to launch. */
-const AWARDS_LIVE = false, awSee = () => AWARDS_LIVE || !!(VOTER && VOTER.isAdmin);
+const AWARDS_LIVE = true, awSee = () => AWARDS_LIVE || !!(VOTER && VOTER.isAdmin);
 /* Trophy art, drawn to a 64×64 box. Filled with the award's metallic gradient (#aw-g-<key>), outlined a shade darker. */
 const AW_ART = {
   goal: `<circle cx="32" cy="32" r="22"/><path class="hi" d="M32 25l6.7 4.8-2.6 7.9h-8.2l-2.6-7.9z"/><path class="ln" d="M32 25V10M38.7 29.8l14.2-4.6M36.1 37.7l8.8 12.1M27.9 37.7l-8.8 12.1M25.3 29.8l-14.2-4.6"/>`,
