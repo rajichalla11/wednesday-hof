@@ -1140,6 +1140,9 @@
   .ph-you span { font-size: 30px; line-height: 1; font-weight: 300; } .ph-you b { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ph-new { object-fit: cover; object-position: top; box-shadow: 0 0 0 3px var(--gold), 0 0 0 7px var(--bg); }
   @keyframes phPulse { 50% { box-shadow: 0 0 0 4px var(--bg), 0 0 40px -2px color-mix(in srgb, var(--gold) 85%, transparent); } }
+  .me-ph { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
+  .me-ph-c { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 2px dashed var(--gold); color: var(--gold); font-size: 22px; font-weight: 300; animation: phPulse 2.4s ease-in-out infinite; }
+  .me-ph > span:nth-child(2) { flex: 1; display: grid; gap: 2px; } .me-ph b { font-size: 14.5px; color: var(--gold); } .me-ph small { font-size: 12px; color: var(--fg-2); } .me-ph .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
   .ph-copy { font-size: 14px; line-height: 1.5; color: var(--fg-2); margin: 10px 4px 20px; }
   .wn-where { font-size: 12px; color: var(--fg-3); margin: 10px 0 0; }
   .new-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-left: 6px; vertical-align: 2px; }
@@ -2862,7 +2865,7 @@ async function renderYou() {
       [...meb.querySelectorAll(':scope > section')].sort((x, y) => rank(x) - rank(y)).forEach(sec => { sec.classList.add('adm-sec'); sec.dataset.grp = admGroupOf(sec); aw.appendChild(sec);
         const fk = ['seed-body', 'admin-body', 'named-body', 'games-admin'].find(id => sec.querySelector('#' + id));
         if (fk) { sec.classList.add('adm-fold'); if (!ADM_UNFOLD.has(fk)) sec.classList.add('folded'); const h = sec.querySelector('.sh'); h.insertAdjacentHTML('beforeend', '<i class="fx-chev"></i>'); h.onclick = () => { sec.classList.toggle('folded'); ADM_UNFOLD[sec.classList.contains('folded') ? 'delete' : 'add'](fk); }; } }); admShow(ADM_GRP); try { renderGamesAdmin(); } catch (_) {} } }
-  strikePop(v); ratePop(me, r); whatsNewPop(); paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
+  strikePop(v); ratePop(me, r); if (photoSrc(me)) whatsNewPop(); paintSelfPreview(); paintNotif(); pushAuto(); flipHint(meb.querySelector('.me-card .card'));
   if (v.isAdmin) renderAdmin(me);
   if (document.getElementById('pp-overlay')) { const ph = document.getElementById('pp-photo'); if (ph) paintProfilePopTop(); } else if (!maybePhotoPop(me)) maybeProfilePop(me);
 }
@@ -2946,11 +2949,11 @@ function repaintProfile() {
 /* ── No photo yet: a pop-up on opening the site, once per visit, snoozed 2 days by "Later". Purely for how the app looks. ── */
 function maybePhotoPop(me) {
   if (!me || !VOTER || !VOTER.ok || VOTER.pending || photoSrc(me) || document.getElementById('ph-overlay')) return false;
-  try { if (sessionStorage.getItem('w910_pp')) return false; if (Date.now() - Number(localStorage.getItem('w910_photo_later') || 0) < 2 * 86400000) return false; } catch (_) { return false; }
+  try { if (sessionStorage.getItem('w910_ph')) return false; sessionStorage.setItem('w910_pp', '1'); } catch (_) { return false; }
   let tries = 0;
   const go = () => { if (document.querySelector('.overlay.open')) { if (++tries < 40) setTimeout(go, 3000); return; }
     if (photoSrc(me) || document.getElementById('ph-overlay')) return;
-    try { if (sessionStorage.getItem('w910_pp')) return; sessionStorage.setItem('w910_pp', '1'); } catch (_) {}
+    try { if (sessionStorage.getItem('w910_ph')) return; sessionStorage.setItem('w910_ph', '1'); } catch (_) {}
     openPhotoPop(me); };
   setTimeout(go, 1200);
   return true;
@@ -2965,8 +2968,8 @@ function openPhotoPop(me) {
       <p class="ph-copy">Purely for the looks: faces make the cards, lineups and team sheets look the part. Don't be the grey circle in the lineup.</p>
       <input type="file" id="ph-file" accept="image/*" hidden onchange="photoPopUpload(this)">
       <button class="btn app-go" id="ph-go" onclick="document.getElementById('ph-file').click()">Add my photo</button>
-      <button class="btn link app-later" onclick="closePhotoPop(true)">Later</button>
-      <p class="wn-where" id="ph-st">Any clear face shot works. Change it on Me any time.</p></div>`;
+      <button class="btn link app-later" onclick="closePhotoPop(true)">Not now</button>
+      <p class="wn-where" id="ph-st">Any clear face shot works. This will keep popping up until there's a face on your card.</p></div>`;
   document.body.appendChild(ov); document.body.style.overflow = 'hidden';
 }
 function closePhotoPop(later) { const ov = document.getElementById('ph-overlay'); if (ov) ov.remove(); document.body.style.overflow = ''; if (later) { try { localStorage.setItem('w910_photo_later', String(Date.now())); } catch (_) {} } }
@@ -3511,6 +3514,7 @@ function meStripHtml(me, v, o) {
   // the profile nudge shows alongside, whatever else is waiting, until it's complete
   const pd = profileDone(me), prof = pd.done < pd.total ? `<button class="btn me-go me-gold" onclick="openProfileEdit()">${nudgeLabel(me, pd)}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span></button>` : '';
   return `<div class="me-box">
+      ${photoSrc(me) ? '' : `<button class="me-ph" onclick="openPhotoPop()"><span class="me-ph-c">+</span><span><b>Your card has no face</b><small>Add a photo · 10 seconds · purely for the looks</small></span><i class="fx-chev"></i></button>`}
       <div class="me-top">${photo(me, 'avatar me-av')}<div class="me-id"><b>${esc(me.name)}</b><span>#${me.rank} all-time · ${TIER_NAME[tierOf(me)]}</span></div></div>
       ${balTileHtml(me, v, o)}
       ${strikesOf(me.name) ? `<div class="me-sk">${strikeTag(me.name)}<span>for dropping out late · ${Math.min(3, strikesOf(me.name))} of 3</span></div>` : ''}
@@ -4568,7 +4572,7 @@ function matchCardHtml(g, open, toggle) {
    New features for keen users go here as more History sections, so Home and the core tabs stay as people know them. ── */
 const rtOk = (g, n) => g && g.ratings && g.ratings[n] && g.ratings[n].n >= 2 && (g.raters || 0) >= 3;
 /* The in-form team: everyone's average match rating over the last 4 games (played in at least 2 of them, rated by 2+ each
-   time). The best six go on the pitch by position; the captain has the most man-of-the-match awards in those games. */
+   time). The best six go on the pitch by position; the captain is the one with the best average match rating. */
 const IF_GAMES = 4;
 function informTeamData() {
   const games = ((RATINGS && RATINGS.ok && RATINGS.games) || []).filter(g => koOf(g) <= Date.now() && (g.raters || 0) >= 3).sort((a, b) => b.date.localeCompare(a.date)).slice(0, IF_GAMES);
@@ -4580,7 +4584,7 @@ function informTeamData() {
   if (ranked.length < 4) return null;
   const team = ranked.slice(0, 6), pos = n => { const k = posClass((ALL_PLAYERS.find(p => p.name === n) || {}).position); return k === 'other' ? 'midfield' : k; };
   const lines = { attack: team.filter(x => pos(x.n) === 'attack'), midfield: team.filter(x => pos(x.n) === 'midfield'), defense: team.filter(x => pos(x.n) === 'defense') };
-  const captain = team.slice().sort((a, b) => b.motm - a.motm || b.avg - a.avg)[0].n;
+  const captain = team.slice().sort((a, b) => b.avg - a.avg || b.k - a.k || b.motm - a.motm)[0].n;
   return { games, team, lines, captain, next: ranked.slice(6, 11), from: games[games.length - 1], to: games[0] };
 }
 function renderWeek() {
@@ -4592,7 +4596,7 @@ function renderWeek() {
   const mini = x => { const p = ALL_PLAYERS.find(y => y.name === x.n);
     return `<button class="tw-p${x.n === d.captain ? ' cap' : ''}" onclick="openPlayerByName('${esc(x.n).replace(/'/g, "\\'")}')">${p ? photo(p, 'avatar') : ''}${x.n === d.captain ? '<i class="tw-c">C</i>' : ''}<b>${esc(x.n.split(' ')[0])}</b><span class="num">${x.avg.toFixed(1)}</span><small class="tw-k2">${x.k} game${x.k === 1 ? '' : 's'}${x.motm ? ` · ${x.motm}★` : ''}</small></button>`; };
   t.innerHTML = `<div class="tw-pitch">${['attack', 'midfield', 'defense'].filter(k => d.lines[k].length).map(k => `<div class="tw-line"><span class="tw-k">${{ attack: 'ATT', midfield: 'MID', defense: 'DEF' }[k]}</span>${d.lines[k].map(mini).join('')}</div>`).join('')}</div>
-    <div class="tw-foot"><button class="btn ghost" onclick="copyTotw(this)">Copy for WhatsApp</button><small>Captain: most man of the match awards · positions from each player's profile</small></div>`;
+    <div class="tw-foot"><button class="btn ghost" onclick="copyTotw(this)">Copy for WhatsApp</button><small>Captain: best average match rating · positions from each player's profile</small></div>`;
   f.innerHTML = d.next.length ? `<div class="label" style="margin:22px 2px 8px">Knocking on the door</div><div class="if-list">${d.next.map((x, i) => { const p = ALL_PLAYERS.find(y => y.name === x.n);
       return `<button class="if-row" onclick="openPlayerByName('${esc(x.n).replace(/'/g, "\\'")}')"><span class="if-n">${i + 7}</span>${p ? photo(p, 'avatar') : ''}<span class="if-name">${esc(x.n)}</span><small class="if-k">${x.k} games${x.motm ? ` · ${x.motm}★` : ''}</small><b class="num if-avg">${x.avg.toFixed(1)}</b></button>`; }).join('')}</div>` : '';
   renderExploreStrip(d);
