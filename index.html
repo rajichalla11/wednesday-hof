@@ -1187,7 +1187,7 @@
   /* locked-in moment */
   .aw-locked { text-align: center; } .aw-locked .aw-top + * { margin-top: auto; } .aw-locked .aw-nav { margin-top: auto; }
   .aw-lockart { position: relative; width: 230px; height: 230px; margin: 0 auto 12px; display: grid; place-items: center; }
-  .aw-lockart .aw-art.ghost { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .22; filter: blur(.5px); animation: awSpin 14s linear infinite; } @keyframes awSpin { to { transform: rotate(360deg); } }
+  .aw-lockart .aw-art.ghost { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .2; filter: blur(.5px); animation: awBreathe 3.2s ease-in-out infinite; } @keyframes awBreathe { 50% { transform: scale(1.06); opacity: .28; } } @keyframes awSpin { to { transform: rotate(360deg); } }
   .aw-lockph { position: relative; width: 136px; height: 136px; border-radius: 50%; padding: 5px; background: conic-gradient(from 0deg, var(--a), #fff, var(--a2), var(--a)); box-shadow: 0 0 60px -6px var(--a); animation: awPop .5s cubic-bezier(.2,.9,.3,1.4) both; }
   .aw-lockph .avatar { width: 100% !important; height: 100% !important; font-size: 34px; } @keyframes awPop { from { transform: scale(.4); opacity: 0; } }
   .aw-stamp { display: inline-block; margin: 14px auto 0; padding: 6px 14px; border: 2px solid var(--a); border-radius: 8px; color: var(--a); font-size: 13px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; transform: rotate(-6deg); animation: awStamp .45s .25s cubic-bezier(.2,.9,.3,1.5) both; } @keyframes awStamp { from { transform: rotate(-6deg) scale(2.4); opacity: 0; } }
@@ -1242,7 +1242,7 @@
   .aw-flash { position: absolute; inset: 0; background: radial-gradient(circle, #fff6d8, transparent 60%); opacity: 0; pointer-events: none; animation: awFlash .7s 1.2s ease-out both; } @keyframes awFlash { 15% { opacity: .9; } 100% { opacity: 0; } }
   .aw-core { position: relative; width: 300px; height: 300px; display: grid; place-items: center; flex: none; }
   .aw-orbit { position: absolute; inset: 0; animation: awSpin 22s linear infinite; }
-  .aw-orbit span { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px; transform: rotate(calc(360deg / var(--n) * var(--i))) translate(128px) rotate(calc(-360deg / var(--n) * var(--i))); animation: awOrbIn .7s cubic-bezier(.2,.9,.3,1.3) both; animation-delay: calc(var(--i) * 70ms); }
+  .aw-orbit span { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px; transform: rotate(calc(360deg / var(--n) * var(--i))) translate(var(--orb, 128px)) rotate(calc(-360deg / var(--n) * var(--i))); animation: awOrbIn .7s cubic-bezier(.2,.9,.3,1.3) both; animation-delay: calc(var(--i) * 70ms); }
   .aw-orbit .aw-art { width: 100%; height: 100%; } @keyframes awOrbIn { from { transform: rotate(calc(360deg / var(--n) * var(--i))) translate(0) scale(0); opacity: 0; } }
   .aw-seal.big { position: relative; z-index: 2; width: 172px; height: 172px; margin: 0; animation: awSlam .55s .75s cubic-bezier(.3,1.6,.5,1) both; } .aw-seal.big span { font-size: 78px; } .aw-seal.big small { font-size: 11px; letter-spacing: .16em; }
   @keyframes awSlam { 0% { transform: scale(4) rotate(-30deg); opacity: 0; } 70% { transform: scale(.92) rotate(4deg); opacity: 1; } 100% { transform: none; } }
@@ -1301,6 +1301,42 @@
   .rv-crown { width: 80px; height: 80px; margin: 0 auto -18px; position: relative; z-index: 3; animation: awSlam .6s cubic-bezier(.3,1.6,.5,1) both; } .rv-crown .aw-art { width: 100%; height: 100%; }
   .rv-pct { margin-top: 10px; font-size: 16px; color: rgba(255,255,255,.75); } .rv-s-win .aw-rays { opacity: 1; animation: awSpin 30s linear infinite; }
   .rv-pod { display: flex; justify-content: center; gap: 22px; margin-top: 22px; animation: awUp .6s 1s both; } .rv-pod span { display: grid; justify-items: center; gap: 4px; } .rv-pod .avatar { width: 52px; height: 52px; box-shadow: 0 0 0 2px rgba(255,255,255,.3); } .rv-pod b { font-size: 13px; } .rv-pod small { font-size: 11px; color: rgba(255,255,255,.55); }
+  /* QA: never clip content. Centred screens centre with auto margins and scroll if a phone is too short; no sideways scroll mid-transition. */
+  .aw-ov { overflow: hidden; }
+  .aw-intro, .ev, .aw-wr, .aw-sealed { justify-content: flex-start; overflow-y: auto; scrollbar-width: none; } .aw-intro::-webkit-scrollbar, .ev::-webkit-scrollbar, .aw-wr::-webkit-scrollbar { display: none; }
+  .aw-intro .aw-fan { margin-top: auto; } .aw-intro .aw-fine { margin-bottom: auto; padding-bottom: 6px; }
+  .ev-in, .aw-wr-in { margin: auto 0; padding: 30px 0 8px; }
+  .aw-fin .aw-core { margin-top: auto; } .aw-fin .aw-fin-b { margin-bottom: auto; }
+  @media (max-height: 700px) {
+    .aw-intro .aw-h { font-size: 46px; } .aw-fan { height: 104px; margin-bottom: 10px; } .aw-chips { margin-top: 12px; } .aw-intro .aw-cta { margin-top: 14px; }
+    .aw-core { width: 236px; height: 236px; --orb: 100px; } .aw-orbit span { width: 36px; height: 36px; margin: -18px; } .aw-seal.big { width: 138px; height: 138px; } .aw-seal.big span { font-size: 62px; } .aw-shock { width: 138px; height: 138px; margin: -69px; } .aw-fin-t .aw-h { font-size: 48px; } .aw-fin-b .aw-cta { margin-top: 12px; }
+    .ev-stein { width: 76px; height: 76px; margin-bottom: 8px; } .ev-h { font-size: 24px; } .ev-meta { margin-top: 10px; } .ev-meta span { padding: 5px 10px; font-size: 12px; } .ev .aw-blurb { font-size: 13px; margin-top: 8px; } .ev-btns { margin-top: 12px; } .ev-going { margin-top: 10px; }
+    .aw-wr-h span:first-child { font-size: 70px; } .aw-wr-h span:last-child { font-size: 50px; } .aw-wr .aw-blurb { font-size: 13px; } .aw-cd { margin-top: 12px; } .aw-cd span { min-width: 54px; padding: 8px 4px; } .aw-cd b { font-size: 22px; } .aw-tease { margin-top: 12px; gap: 6px; } .aw-tease div { padding: 9px 12px; } .aw-wr .aw-cta { margin-top: 14px; }
+    .aw-lockart { width: 190px; height: 190px; } .aw-lockph { width: 116px; height: 116px; }
+    .aw-hero { margin-bottom: 10px; } .aw-halo { width: 80px; height: 80px; border-radius: 24px; } .aw-halo .aw-art { width: 58px; height: 58px; }
+    .aw-rv-h .aw-h.sm { font-size: 24px; } .aw-ring { width: 56px; height: 56px; } .aw-ring b { font-size: 18px; }
+    .aw-cab { gap: 6px; margin-top: 10px; } .aw-tile { padding: 9px 10px; gap: 7px; border-radius: 14px; } .aw-tile-top .aw-art { width: 24px; height: 24px; } .aw-tile-who .avatar, .aw-tile .aw-empty { width: 28px; height: 28px; } .aw-tile-who b { font-size: 13px; }
+    .aw-seal-cta { min-height: 48px; } .aw-review .aw-fine { margin-top: 6px; font-size: 11px; }
+  }
+  /* smooth on older phones: heavy decorative layers get their own compositor layer */
+  .aw-rays, .aw-blobs i, .aw-orbit, .aw-orbit span, .aw-halo .aw-art, .aw-seal.big, .aw-shock, .aw-rain i, .aw-burst i, .aw-stage { will-change: transform; } .aw-flash { will-change: opacity; }
+  .aw-stage, .aw-p, .aw-tile { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+  @media (max-width: 340px) { .aw-intro .aw-h { font-size: 44px; } .aw-wr-h span:first-child { font-size: 64px; } .aw-wr-h span:last-child { font-size: 46px; } .aw-cd span { min-width: 50px; } .aw-h.sm { font-size: 25px; } .aw-fan span { margin-left: -24px; width: 48px; height: 48px; transform: translateX(calc(var(--i) * 28px)) translateY(calc(var(--i) * var(--i) * 3px)) rotate(calc(var(--i) * 8deg)); } .aw-fan span:nth-child(4) { transform: translateX(calc(var(--i) * 28px)) translateY(calc(var(--i) * var(--i) * 3px)) rotate(calc(var(--i) * 8deg)); } }
+  /* live reveal: sized to the screen's height so it fills a TV and still fits a phone */
+  .aw-stage.rv { max-width: none; padding-bottom: max(46px, calc(env(safe-area-inset-bottom) + 34px)); }
+  .rv .rv-body { width: 100%; max-width: 1100px; margin: auto; }
+  .rv .aw-kicker { font-size: clamp(11px, 1.9vh, 20px); } .rv .aw-blurb { font-size: clamp(14px, 2.6vh, 26px); max-width: 30em; margin-left: auto; margin-right: auto; }
+  .aw-h.rv-big { font-size: clamp(40px, 10vh, 120px); } .rv-name { font-size: clamp(36px, 8.5vh, 104px); } .rv-winner { font-size: clamp(42px, 9.5vh, 120px); }
+  .rv-halo { width: clamp(130px, 30vh, 320px); height: clamp(130px, 30vh, 320px); margin-bottom: 2.2vh; }
+  .rv-place { font-size: clamp(20px, 4.4vh, 52px); margin: 1.4vh 0 2.2vh; }
+  .rv-ph { width: clamp(120px, 30vh, 320px); height: clamp(120px, 30vh, 320px); margin-bottom: 2vh; } .rv-ph.win { width: clamp(130px, 31vh, 330px); height: clamp(130px, 31vh, 330px); }
+  .rv-crown { width: clamp(52px, 9vh, 110px); height: clamp(52px, 9vh, 110px); margin-bottom: calc(clamp(52px, 9vh, 110px) * -.25); }
+  .rv-pct { font-size: clamp(14px, 2.4vh, 26px); margin-top: 1vh; }
+  .rv-pod { margin-top: 2.4vh; gap: clamp(18px, 4vw, 60px); } .rv-pod .avatar { width: clamp(40px, 7vh, 84px); height: clamp(40px, 7vh, 84px); } .rv-pod b { font-size: clamp(12px, 2vh, 22px); } .rv-pod small { font-size: clamp(10px, 1.6vh, 18px); }
+  .rv .aw-fan { height: clamp(110px, 22vh, 260px); } .rv .aw-fan span { width: clamp(48px, 10vh, 120px); height: clamp(48px, 10vh, 120px); margin-left: calc(clamp(48px, 10vh, 120px) / -2); top: 4vh; transform: translateX(calc(var(--i) * clamp(30px, 7.5vh, 96px))) translateY(calc(var(--i) * var(--i) * .5vh)) rotate(calc(var(--i) * 8deg)); }
+  .rv .aw-fan span:nth-child(4) { transform: translateX(calc(var(--i) * clamp(30px, 7.5vh, 96px))) translateY(calc(var(--i) * var(--i) * .5vh)) rotate(calc(var(--i) * 8deg)); }
+  .rv-tag { font-size: clamp(11px, 1.6vh, 16px); } .rv-hint { font-size: clamp(11px, 1.5vh, 15px); }
+  .rv-s-end .aw-seal.big { width: clamp(130px, 26vh, 280px); height: clamp(130px, 26vh, 280px); margin: 0 auto 2vh; } .rv-s-end .aw-seal.big span { font-size: clamp(56px, 12vh, 130px); }
   .me-ph { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
   .me-ph-c { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 2px dashed var(--gold); color: var(--gold); font-size: 22px; font-weight: 300; animation: phPulse 2.4s ease-in-out infinite; }
   .me-ph > span:nth-child(2) { flex: 1; display: grid; gap: 2px; } .me-ph b { font-size: 14.5px; color: var(--gold); } .me-ph small { font-size: 12px; color: var(--fg-2); } .me-ph .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
@@ -3141,7 +3177,7 @@ let AW = null;
 const awOpen = () => Date.now() < AW_CLOSE;
 const awMine = () => (VOTER && VOTER.awards) || {};
 const awDone = () => Object.keys(awMine()).some(k => AWARDS.some(a => a.k === k));
-const AW_NEW = ['boot', 'wall', 'magic'], awNeedsNew = () => awDone() && AW_NEW.every(k => !awMine()[k]);   // voted before these three were added
+const awNeedsNew = () => false;   // was for ballots cast before the award list changed; those were cleared before launch
 const awMe = () => VOTER && VOTER.name ? ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()) : null;
 function awTogether(me, p) { if (!me) return 0; let n = 0; for (let i = 0; i < SESSIONS.length; i++) if (SESSIONS[i] && SESSIONS[i].year === THIS_YEAR && me.attendance[i] && p.attendance[i]) n++; return n; }
 function awNominees(a) {
