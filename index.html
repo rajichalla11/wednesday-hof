@@ -1140,20 +1140,82 @@
   .ph-you span { font-size: 30px; line-height: 1; font-weight: 300; } .ph-you b { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ph-new { object-fit: cover; object-position: top; box-shadow: 0 0 0 3px var(--gold), 0 0 0 7px var(--bg); }
   @keyframes phPulse { 50% { box-shadow: 0 0 0 4px var(--bg), 0 0 40px -2px color-mix(in srgb, var(--gold) 85%, transparent); } }
-  /* 2026 awards */
-  .sheet.aw { max-width: 460px; padding: 22px 18px 18px; } .aw-dots { display: flex; gap: 5px; justify-content: center; margin: 0 40px 16px; } .aw-dots i { flex: 1; height: 4px; border-radius: 2px; background: var(--surface-3); cursor: pointer; } .aw-dots i.done { background: color-mix(in srgb, var(--gold) 50%, var(--surface-3)); } .aw-dots i.on { background: var(--gold); }
-  .aw-head { display: flex; gap: 14px; align-items: flex-start; } .aw-big { font-size: 44px; line-height: 1; flex: none; } .sheet.aw > .aw-big { display: block; text-align: center; margin: 8px 0 10px; font-size: 56px; }
-  .aw-sub { font-size: 13px; color: var(--fg-2); line-height: 1.45; margin: 6px 0 0; } .sheet.aw > .aw-sub { text-align: center; margin: 10px 0 16px; }
-  .aw-q { width: 100%; height: 40px; margin: 14px 0 10px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface); color: var(--fg); font: inherit; font-size: 16px; }
-  .aw-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-height: min(52vh, 430px); overflow-y: auto; padding: 2px; }
-  .aw-p { display: grid; justify-items: center; gap: 6px; padding: 10px 4px 9px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--surface); font: inherit; color: var(--fg); cursor: pointer; min-width: 0; }
-  .aw-p .avatar { width: 46px; height: 46px; } .aw-p b { font-size: 12px; font-weight: 600; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .aw-p.on { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 16%, var(--surface)); } .aw-p.on .avatar { box-shadow: 0 0 0 2px var(--gold); } .aw-p.on b { color: var(--gold); }
-  .aw-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; } .aw-foot span { flex: 1; }
-  .aw-sum { display: grid; gap: 6px; margin: 14px 0 16px; } .aw-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
-  .aw-ic { font-size: 20px; width: 26px; text-align: center; } .aw-rt { flex: 1; display: grid; min-width: 0; } .aw-rt small { font-size: 11px; color: var(--fg-3); } .aw-rt b { font-size: 14px; } .aw-row .avatar { width: 30px; height: 30px; }
-  .aw-card { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0 0 14px; padding: 14px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--gold) 60%, var(--line-2)); background: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--gold) 22%, transparent), transparent 60%), var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
-  .aw-card.done { border-color: var(--line-2); background: var(--surface); } .aw-card-ic { font-size: 30px; flex: none; } .aw-card-t { flex: 1; display: grid; gap: 3px; min-width: 0; } .aw-card-t .label { color: var(--gold); } .aw-card-t b { font-size: 15.5px; } .aw-card-t small { font-size: 12px; color: var(--fg-2); } .aw-card .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
+  /* 2026 awards: full-screen, each award in its own colour (--a / --a2) */
+  .aw-ov { padding: 0; align-items: stretch; background: #07070a; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .aw-ov::before { content: ''; position: absolute; inset: 0; pointer-events: none; transition: background .5s;
+    background: radial-gradient(80% 50% at 50% 0%, color-mix(in srgb, var(--a) 30%, transparent), transparent 70%), radial-gradient(60% 40% at 100% 100%, color-mix(in srgb, var(--a2) 22%, transparent), transparent 70%); }
+  .aw-ov::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5; background-image: radial-gradient(rgba(255,255,255,.12) 1px, transparent 1px); background-size: 22px 22px; -webkit-mask-image: linear-gradient(to bottom, #000, transparent 60%); mask-image: linear-gradient(to bottom, #000, transparent 60%); }
+  .aw-stage { position: relative; z-index: 1; width: 100%; max-width: 520px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; padding: max(14px, env(safe-area-inset-top)) 18px max(16px, env(safe-area-inset-bottom)); overflow: hidden; color: #fff; }
+  .aw-stage.in-r { animation: awInR .42s cubic-bezier(.2,.8,.2,1) both; } .aw-stage.in-l { animation: awInL .42s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes awInR { from { opacity: 0; transform: translateX(40px); } } @keyframes awInL { from { opacity: 0; transform: translateX(-40px); } }
+  .aw-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .aw-x { width: 36px; height: 36px; flex: none; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); color: #fff; font: inherit; font-size: 14px; cursor: pointer; }
+  .aw-x.solo { position: absolute; top: max(14px, env(safe-area-inset-top)); right: 18px; z-index: 2; }
+  .aw-steps { flex: 1; display: flex; gap: 6px; } .aw-count { font-size: 12px; color: rgba(255,255,255,.55); min-width: 28px; text-align: right; }
+  .aw-step { flex: 1; height: 26px; padding: 0; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); cursor: pointer; display: grid; place-items: center; transition: all .25s; }
+  .aw-step.done { border-color: color-mix(in srgb, var(--a) 70%, transparent); background: color-mix(in srgb, var(--a) 20%, transparent); }
+  .aw-step.on { border-color: var(--a); box-shadow: 0 0 0 1px var(--a), 0 0 14px -2px var(--a); background: color-mix(in srgb, var(--a) 26%, transparent); }
+  .aw-art { display: block; filter: drop-shadow(0 6px 14px rgba(0,0,0,.45)); } .aw-art .ln { fill: none; } .aw-art .hi { fill: #fff; stroke: none; opacity: .92; }
+  .aw-art.mini { width: 18px; height: 18px; filter: none; }
+  .aw-hero { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
+  .aw-halo { position: relative; flex: none; width: 96px; height: 96px; display: grid; place-items: center; border-radius: 28px; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--a) 40%, transparent), transparent 70%), rgba(255,255,255,.04); border: 1px solid color-mix(in srgb, var(--a) 45%, transparent); box-shadow: 0 0 40px -10px var(--a); }
+  .aw-halo .aw-art { width: 70px; height: 70px; animation: awFloat 3.2s ease-in-out infinite; } @keyframes awFloat { 50% { transform: translateY(-4px) rotate(-3deg); } }
+  .aw-halo::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.22) 45%, transparent 60%); background-size: 250% 100%; animation: awShine 3.6s ease-in-out infinite; pointer-events: none; } @keyframes awShine { 0%, 40% { background-position: 150% 0; } 80%, 100% { background-position: -50% 0; } }
+  .aw-kicker { font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--a); }
+  .aw-h { margin: 6px 0 0; font-size: 46px; line-height: .95; font-weight: 900; letter-spacing: -.03em; background: linear-gradient(180deg, #fff 30%, color-mix(in srgb, var(--a) 60%, #fff)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .aw-h.sm { font-size: 28px; line-height: 1.05; }
+  .aw-blurb { margin: 10px 0 0; font-size: 14px; line-height: 1.45; color: rgba(255,255,255,.72); text-align: center; } .aw-blurb.left { text-align: left; margin-top: 6px; font-size: 13px; } .aw-blurb b { color: #fff; }
+  .aw-search { position: relative; display: block; margin-bottom: 10px; } .aw-search svg { position: absolute; left: 12px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); fill: none; stroke: rgba(255,255,255,.45); stroke-width: 2; stroke-linecap: round; }
+  .aw-search input { width: 100%; height: 42px; padding: 0 12px 0 36px; border-radius: 12px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; font: inherit; font-size: 16px; -webkit-appearance: none; } .aw-search input:focus { outline: none; border-color: var(--a); }
+  .aw-grid { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: max-content; gap: 8px; padding: 2px 2px 12px; scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent); } .aw-grid::-webkit-scrollbar { display: none; }
+  .aw-p { position: relative; display: grid; justify-items: center; gap: 4px; padding: 12px 4px 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,.1); background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02)); color: #fff; font: inherit; cursor: pointer; min-width: 0; transition: transform .15s, border-color .2s, background .2s; -webkit-tap-highlight-color: transparent; }
+  .aw-p:active { transform: scale(.94); } .aw-p .avatar { width: 54px; height: 54px; box-shadow: 0 0 0 2px rgba(255,255,255,.12); transition: box-shadow .2s; }
+  .aw-p b { font-size: 12.5px; font-weight: 700; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .aw-p small { font-size: 10px; color: rgba(255,255,255,.45); white-space: nowrap; }
+  .aw-p.on { border-color: var(--a); background: linear-gradient(180deg, color-mix(in srgb, var(--a) 30%, transparent), color-mix(in srgb, var(--a) 8%, transparent)); box-shadow: 0 0 22px -6px var(--a); } .aw-p.on .avatar { box-shadow: 0 0 0 3px var(--a); }
+  .aw-none { grid-column: 1 / -1; text-align: center; padding: 30px; color: rgba(255,255,255,.5); font-size: 13px; }
+  .aw-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-top: 6px; }
+  .aw-link { border: 0; background: none; color: rgba(255,255,255,.7); font: inherit; font-size: 14px; font-weight: 600; padding: 10px 4px; cursor: pointer; } .aw-link:hover { color: #fff; }
+  .aw-next { border: 0; border-radius: 999px; padding: 12px 22px; background: var(--a); color: #120c02; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
+  .aw-cta { width: 100%; min-height: 54px; margin-top: 18px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #fff2c9, var(--a) 45%, var(--a2)); color: #170f02; font: inherit; font-size: 17px; font-weight: 900; letter-spacing: -.01em; cursor: pointer; box-shadow: 0 12px 30px -12px var(--a); transition: transform .15s; } .aw-cta:active { transform: scale(.97); } .aw-cta:disabled { opacity: .45; }
+  .aw-fine { display: block; margin-top: 10px; text-align: center; font-size: 12px; color: rgba(255,255,255,.5); line-height: 1.4; }
+  /* intro */
+  .aw-intro { justify-content: center; text-align: center; } .aw-intro .aw-h { font-size: 58px; }
+  .aw-fan { position: relative; height: 130px; margin-bottom: 18px; } .aw-fan span { position: absolute; left: 50%; top: 20px; width: 70px; height: 70px; margin-left: -35px; transform: translateX(calc(var(--i) * 44px)) translateY(calc(var(--i) * var(--i) * 4px)) rotate(calc(var(--i) * 9deg)); animation: awFan .7s cubic-bezier(.2,.9,.2,1.2) both; animation-delay: calc((var(--i) + 3) * 60ms); }
+  .aw-fan span:nth-child(1) { z-index: 1; } .aw-fan span:nth-child(4) { z-index: 5; transform: translateY(-14px) scale(1.25); } .aw-fan .aw-art { width: 100%; height: 100%; }
+  @keyframes awFan { from { opacity: 0; transform: translateY(40px) scale(.6); } }
+  .aw-chips { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 18px; } .aw-chips span { font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.85); }
+  /* locked-in moment */
+  .aw-locked { text-align: center; } .aw-locked .aw-top + * { margin-top: auto; } .aw-locked .aw-nav { margin-top: auto; }
+  .aw-lockart { position: relative; width: 230px; height: 230px; margin: 0 auto 12px; display: grid; place-items: center; }
+  .aw-lockart .aw-art.ghost { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .22; filter: blur(.5px); animation: awSpin 14s linear infinite; } @keyframes awSpin { to { transform: rotate(360deg); } }
+  .aw-lockph { position: relative; width: 136px; height: 136px; border-radius: 50%; padding: 5px; background: conic-gradient(from 0deg, var(--a), #fff, var(--a2), var(--a)); box-shadow: 0 0 60px -6px var(--a); animation: awPop .5s cubic-bezier(.2,.9,.3,1.4) both; }
+  .aw-lockph .avatar { width: 100% !important; height: 100% !important; font-size: 34px; } @keyframes awPop { from { transform: scale(.4); opacity: 0; } }
+  .aw-stamp { display: inline-block; margin: 14px auto 0; padding: 6px 14px; border: 2px solid var(--a); border-radius: 8px; color: var(--a); font-size: 13px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; transform: rotate(-6deg); animation: awStamp .45s .25s cubic-bezier(.2,.9,.3,1.5) both; } @keyframes awStamp { from { transform: rotate(-6deg) scale(2.4); opacity: 0; } }
+  /* review */
+  .aw-ticket { flex: 1; min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 8px; margin-top: 16px; scrollbar-width: none; }
+  .aw-line { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--a) 35%, rgba(255,255,255,.08)); background: linear-gradient(100deg, color-mix(in srgb, var(--a) 16%, transparent), rgba(255,255,255,.02) 70%); color: #fff; font: inherit; text-align: left; cursor: pointer; }
+  .aw-line .aw-art { width: 34px; height: 34px; flex: none; } .aw-lt { flex: 1; min-width: 0; display: grid; gap: 1px; } .aw-lt small { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--a); } .aw-lt b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .aw-line .avatar { width: 38px; height: 38px; box-shadow: 0 0 0 2px var(--a); } .aw-empty { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 1.5px dashed rgba(255,255,255,.3); color: rgba(255,255,255,.5); }
+  /* sealed */
+  .aw-sealed { justify-content: center; text-align: center; }
+  .aw-seal { position: relative; width: 150px; height: 150px; margin: 0 auto 22px; border-radius: 50%; display: grid; place-content: center; background: radial-gradient(circle at 35% 30%, #ff6b5a, #b3261e 55%, #6d120c); box-shadow: inset 0 -8px 18px rgba(0,0,0,.35), inset 0 6px 14px rgba(255,255,255,.25), 0 20px 50px -14px rgba(179,38,30,.8); animation: awSeal .6s cubic-bezier(.2,.9,.3,1.4) both; }
+  .aw-seal::before { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 2px dashed rgba(255,220,200,.45); }
+  .aw-seal span { font-size: 64px; font-weight: 900; line-height: .9; color: #ffd9cf; text-shadow: 0 2px 0 rgba(0,0,0,.25); } .aw-seal small { font-size: 13px; font-weight: 800; letter-spacing: .2em; color: #ffd9cf; }
+  @keyframes awSeal { from { transform: scale(2.2) rotate(-20deg); opacity: 0; } }
+  /* effects */
+  .aw-burst { position: fixed; z-index: 400; width: 0; height: 0; pointer-events: none; } .aw-burst i { position: absolute; width: 7px; height: 11px; border-radius: 2px; animation: awBurst .9s cubic-bezier(.15,.7,.3,1) both; }
+  @keyframes awBurst { to { transform: translate(var(--x), var(--y)) rotate(260deg); opacity: 0; } }
+  .aw-rain { position: fixed; inset: 0; z-index: 400; pointer-events: none; overflow: hidden; } .aw-rain i { position: absolute; top: -20px; width: 8px; height: 13px; border-radius: 2px; animation: awRain linear both; }
+  @keyframes awRain { to { transform: translateY(110vh) rotate(var(--r)); } }
+  @media (prefers-reduced-motion: reduce) { .aw-stage, .aw-halo .aw-art, .aw-halo::after, .aw-fan span, .aw-lockph, .aw-stamp, .aw-seal, .aw-lockart .aw-art.ghost { animation: none !important; } }
+  @media (min-width: 560px) { .aw-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  /* the Home card */
+  .aw-card { position: relative; overflow: hidden; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px 12px; width: 100%; margin: 0 0 14px; padding: 16px; border-radius: 18px; border: 1px solid rgba(245,196,81,.5); background: radial-gradient(90% 120% at 0% 0%, rgba(245,196,81,.22), transparent 60%), radial-gradient(70% 90% at 100% 100%, rgba(196,155,255,.16), transparent 60%), #0d0c10; font: inherit; color: #fff; text-align: left; cursor: pointer; }
+  .aw-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.12) 45%, transparent 60%); background-size: 250% 100%; animation: awShine 4.5s ease-in-out infinite; pointer-events: none; }
+  .aw-card-row { grid-column: 1 / -1; display: flex; gap: 2px; } .aw-card-row span { width: 34px; height: 34px; } .aw-card-row .aw-art { width: 100%; height: 100%; }
+  .aw-card-t { display: grid; gap: 3px; min-width: 0; } .aw-card-k { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #f5c451; } .aw-card-t b { font-size: 18px; font-weight: 800; letter-spacing: -.01em; } .aw-card-t small { font-size: 12px; color: rgba(255,255,255,.65); }
+  .aw-card-go { padding: 10px 18px; border-radius: 999px; background: linear-gradient(135deg, #fff2c9, #f5c451 45%, #b9771a); color: #170f02; font-weight: 900; font-size: 14px; }
+  .aw-card.done { border-color: rgba(255,255,255,.14); } .aw-card.done .aw-card-go { background: rgba(255,255,255,.1); color: #fff; } .aw-card.done .aw-card-t b { color: #4fe0a0; }
   .me-ph { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
   .me-ph-c { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 2px dashed var(--gold); color: var(--gold); font-size: 22px; font-weight: 300; animation: phPulse 2.4s ease-in-out infinite; }
   .me-ph > span:nth-child(2) { flex: 1; display: grid; gap: 2px; } .me-ph b { font-size: 14.5px; color: var(--gold); } .me-ph small { font-size: 12px; color: var(--fg-2); } .me-ph .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
@@ -2961,81 +3023,162 @@ function repaintProfile() {
   if (nb) { if (pd.done >= pd.total) nb.remove(); else nb.innerHTML = `${nudgeLabel(me, pd)}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span>`; }
   paintProfilePopTop();
 }
-/* ── 2026 awards: one pick per award, anonymous, open until 1 Dec 11pm; the top 3 are revealed in Wrapped ── */
+/* ── 2026 awards: one pick per award, anonymous, open until 1 Dec 11pm; the top 3 are revealed in Wrapped ──
+   Each award has its own colour and trophy art. Flow: intro → one screen per award (pick → locked-in moment → next)
+   → ballot review → seal. Nominees are ordered by how many 2026 games they played with you, so the people you know come first. */
 const AWARDS = [
-  { k: 'poty', ic: '🏆', t: 'Player of the Year', d: 'The best of 2026. No debate.' },
-  { k: 'teammate', ic: '🤝', t: 'Best Teammate', d: 'Passes, shouts encouragement, never sulks.' },
-  { k: 'improved', ic: '📈', t: 'Most Improved', d: 'Not the same player who started the year.' },
-  { k: 'signing', ic: '✍️', t: 'Signing of the Season', d: 'Best newcomer of 2026.', fresh: true },
-  { k: 'moaner', ic: '🗣️', t: 'Biggest Moaner', d: 'The pitch, the ref, the teammates. Always something.' },
-  { k: 'ballhog', ic: '🐷', t: 'Ball Hog', d: 'Passing is optional, apparently.' },
-  { k: 'touch', ic: '🧱', t: 'Worst First Touch', d: 'The ball comes back faster than it arrived.' },
+  { k: 'poty', t: 'Player of the Year', d: 'The best of 2026. The one you’d pick first, every time.', c: '#f5c451', c2: '#b9771a' },
+  { k: 'boot', t: 'Golden Boot', d: 'Deadliest finisher. Half a chance, back of the net.', c: '#ff9a3c', c2: '#c2410c' },
+  { k: 'wall', t: 'The Wall', d: 'Nothing gets past. The defender everyone wants behind them.', c: '#7fb2ff', c2: '#2b5fb8' },
+  { k: 'magic', t: 'The Magician', d: 'Skills, nutmegs, the stuff you talk about on the way home.', c: '#c49bff', c2: '#7240d6' },
+  { k: 'teammate', t: 'Best Teammate', d: 'Passes, shouts encouragement, lifts everyone. Never sulks.', c: '#ff7d9d', c2: '#c0335a' },
+  { k: 'improved', t: 'Most Improved', d: 'Not the same player who started the year.', c: '#4fe0a0', c2: '#14855a' },
+  { k: 'signing', t: 'Signing of the Season', d: 'Best newcomer of 2026. Where were they all this time?', c: '#5fd3ff', c2: '#0e7fae', fresh: true },
 ];
+const AW_CLOSE = new Date('2026-12-01T23:00:00+03:00').getTime();
+/* Trophy art, drawn to a 64×64 box. Filled with the award's metallic gradient (#aw-g-<key>), outlined a shade darker. */
+const AW_ART = {
+  poty: `<path d="M21 9h22v11c0 9-5 15-11 15S21 29 21 20z"/><path class="ln" d="M21 13h-6c0 8 3 12 8 12M43 13h6c0 8-3 12-8 12"/><path d="M29 35h6v6h-6z"/><path d="M22 43h20l2 9H20z"/><path class="hi" d="M32 13l2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7z"/>`,
+  boot: `<path d="M13 15h15l4 15c7 1 15 3 19 6 4 3 3 10-2 10H15c-3 0-4-2-4-5z"/><path class="ln" d="M20 22h9M21 27h9M22 32h9"/><circle class="hi" cx="18" cy="50" r="3"/><circle class="hi" cx="30" cy="50" r="3"/><circle class="hi" cx="43" cy="50" r="3"/>`,
+  wall: `<path d="M32 7l21 7v16c0 14-9 22-21 27C20 52 11 44 11 30V14z"/><path class="ln" d="M13 22h38M12 31h40M14 40h36M19 48h26M24 14v8M40 14v8M32 22v9M22 31v9M42 31v9M32 40v8"/>`,
+  magic: `<path d="M12 52l26-26 4 4-26 26z"/><path class="hi" d="M44 8l2.5 6.5L53 17l-6.5 2.5L44 26l-2.5-6.5L35 17l6.5-2.5z"/><path class="hi" d="M53 30l1.4 3.6L58 35l-3.6 1.4L53 40l-1.4-3.6L48 35l3.6-1.4z"/><path class="hi" d="M28 8l1.2 3L32 12l-2.8 1L28 16l-1.2-3L24 12l2.8-1z"/>`,
+  teammate: `<circle cx="22" cy="19" r="8"/><circle cx="42" cy="19" r="8"/><path d="M8 50c0-11 6-18 14-18 5 0 8 2 10 5 2-3 5-5 10-5 8 0 14 7 14 18z"/><path class="hi" d="M32 33c-3-4-9-3-9 2 0 4 9 9 9 9s9-5 9-9c0-5-6-6-9-2z"/>`,
+  improved: `<path d="M10 52h10V38H10zM27 52h10V28H27zM44 52h10V18H44z"/><path class="ln" d="M12 30L28 18l8 6L52 9"/><path class="hi" d="M45 8h9v9z"/>`,
+  signing: `<path d="M14 8h26l10 10v38H14z"/><path class="ln" d="M20 22h18M20 29h24M20 36h16"/><path d="M40 8v10h10"/><circle class="hi" cx="40" cy="46" r="7"/><path class="ln" d="M37 46l2 2 4-4"/>`,
+};
+const awArt = (a, cls = '') => `<svg class="aw-art ${cls}" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="aw-g-${a.k}-${cls || 'x'}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff8e8"/><stop offset=".35" stop-color="${a.c}"/><stop offset="1" stop-color="${a.c2}"/></linearGradient></defs><g fill="url(#aw-g-${a.k}-${cls || 'x'})" stroke="${a.c2}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">${AW_ART[a.k]}</g></svg>`;
 let AW = null;
-const awOpen = () => { const a = RATINGS && RATINGS.ok && RATINGS.awards; return !!(a ? a.open : Date.now() < new Date('2026-12-01T23:00:00+03:00').getTime()); };
+const awOpen = () => { const a = RATINGS && RATINGS.ok && RATINGS.awards; return a ? !!a.open : Date.now() < AW_CLOSE; };
 const awMine = () => (VOTER && VOTER.awards) || {};
-const awDone = () => Object.keys(awMine()).length > 0;
+const awDone = () => Object.keys(awMine()).some(k => AWARDS.some(a => a.k === k));
+const AW_NEW = ['boot', 'wall', 'magic'], awNeedsNew = () => awDone() && AW_NEW.every(k => !awMine()[k]);   // voted before these three were added
+const awMe = () => VOTER && VOTER.name ? ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()) : null;
+function awTogether(me, p) { if (!me) return 0; let n = 0; for (let i = 0; i < SESSIONS.length; i++) if (SESSIONS[i] && SESSIONS[i].year === THIS_YEAR && me.attendance[i] && p.attendance[i]) n++; return n; }
 function awNominees(a) {
-  const me = VOTER && VOTER.name ? VOTER.name.toLowerCase() : '';
-  return ALL_PLAYERS.filter(p => p.name.toLowerCase() !== me && (a.fresh ? p.firstIdx >= 0 && SESSIONS[p.firstIdx] && SESSIONS[p.firstIdx].year === THIS_YEAR && p.gamesThisYear >= 2 : p.gamesThisYear >= 3))
-    .sort((x, y) => y.gamesThisYear - x.gamesThisYear || x.name.localeCompare(y.name));
+  const me = awMe();
+  return ALL_PLAYERS.filter(p => p !== me && (a.fresh ? p.firstIdx >= 0 && SESSIONS[p.firstIdx] && SESSIONS[p.firstIdx].year === THIS_YEAR && p.gamesThisYear >= 2 : p.gamesThisYear >= 3))
+    .map(p => ({ p, w: awTogether(me, p) })).sort((x, y) => y.w - x.w || y.p.gamesThisYear - x.p.gamesThisYear || x.p.name.localeCompare(y.p.name));
 }
 function openAwards(at) {
   if (!TOKEN || !VOTER || !VOTER.ok) return openClaim();
-  AW = { i: at || 0, picks: Object.assign({}, awMine()), q: '', done: false };
+  const mine = awMine(), has = awDone();
+  AW = { i: at != null ? at : has ? AWARDS.length : -1, picks: {}, q: '', phase: '', dir: 1 };
+  AWARDS.forEach(a => { if (mine[a.k]) AW.picks[a.k] = mine[a.k]; });
   let ov = document.getElementById('aw-overlay');
-  if (!ov) { ov = document.createElement('div'); ov.className = 'overlay'; ov.id = 'aw-overlay'; ov.onclick = e => { if (e.target === ov) closeAwards(); }; document.body.appendChild(ov); }
+  if (!ov) { ov = document.createElement('div'); ov.className = 'overlay aw-ov'; ov.id = 'aw-overlay'; document.body.appendChild(ov); }
   paintAwards(); ov.classList.add('open'); document.body.style.overflow = 'hidden';
 }
-function closeAwards() { const ov = document.getElementById('aw-overlay'); if (ov) ov.classList.remove('open'); document.body.style.overflow = ''; }
-function awPick(name) { const a = AWARDS[AW.i]; AW.picks[a.k] = AW.picks[a.k] === name ? undefined : name; if (!AW.picks[a.k]) delete AW.picks[a.k]; paintAwards(); if (AW.picks[a.k]) setTimeout(() => { if (AW && AWARDS[AW.i] === a) { AW.i++; AW.q = ''; paintAwards(); } }, 280); }
-function awGo(i) { AW.i = Math.max(0, Math.min(AWARDS.length, i)); AW.q = ''; paintAwards(); }
+function closeAwards() { const ov = document.getElementById('aw-overlay'); if (ov) ov.classList.remove('open'); document.body.style.overflow = ''; clearTimeout(AW && AW.timer); }
+function awGo(i, dir) { clearTimeout(AW.timer); AW.dir = dir || (i >= AW.i ? 1 : -1); AW.i = Math.max(-1, Math.min(AWARDS.length, i)); AW.q = ''; AW.phase = ''; paintAwards(); }
+function awPick(name, el) {
+  const a = AWARDS[AW.i]; if (!a || AW.phase === 'locked') return;
+  if (AW.picks[a.k] === name) { delete AW.picks[a.k]; paintAwards(); return; }
+  AW.picks[a.k] = name; try { navigator.vibrate && navigator.vibrate(12); } catch (_) {}
+  if (el) awBurst(el, a);
+  AW.phase = 'locked'; setTimeout(() => { if (AW && AWARDS[AW.i] === a) paintAwards(); }, 160);
+  AW.timer = setTimeout(() => { if (AW && AWARDS[AW.i] === a && AW.phase === 'locked') awGo(AW.i + 1, 1); }, 1500);
+}
+/* A little burst of confetti in the award's colours from the tile you tapped */
+function awBurst(el, a) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const r = el.getBoundingClientRect(), box = document.createElement('div'); box.className = 'aw-burst'; box.style.left = (r.left + r.width / 2) + 'px'; box.style.top = (r.top + r.height / 2) + 'px';
+  for (let i = 0; i < 18; i++) { const s = document.createElement('i'), ang = Math.PI * 2 * i / 18 + Math.random() * .4, d = 50 + Math.random() * 70;
+    s.style.setProperty('--x', Math.cos(ang) * d + 'px'); s.style.setProperty('--y', Math.sin(ang) * d - 20 + 'px'); s.style.background = [a.c, a.c2, '#fff'][i % 3]; s.style.animationDelay = Math.random() * 60 + 'ms'; box.appendChild(s); }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 1100);
+}
+function awTop(a) {
+  const n = AWARDS.length;
+  return `<div class="aw-top"><button class="aw-x" onclick="closeAwards()" aria-label="Close">✕</button>
+    <div class="aw-steps">${AWARDS.map((b, i) => `<button class="aw-step${i === AW.i ? ' on' : ''}${AW.picks[b.k] ? ' done' : ''}" style="--a:${b.c}" onclick="awGo(${i})" aria-label="${esc(b.t)}">${AW.picks[b.k] ? awArt(b, 'mini') : ''}</button>`).join('')}</div>
+    <span class="aw-count num">${Math.min(AW.i + 1, n)}/${n}</span></div>`;
+}
 function paintAwards() {
   const ov = document.getElementById('aw-overlay'); if (!ov || !AW) return;
-  const n = AWARDS.length, dots = `<div class="aw-dots">${AWARDS.map((a, i) => `<i class="${i === AW.i ? 'on' : AW.picks[a.k] ? 'done' : ''}" onclick="awGo(${i})"></i>`).join('')}</div>`;
-  const close = `<div class="controls"><button class="ctl" onclick="closeAwards()" title="Close">✕</button></div>`;
-  if (AW.done) { ov.innerHTML = `<div class="sheet aw">${close}<div class="aw-big">🗳️</div><div class="pp-title" style="text-align:center">Votes in</div><p class="aw-sub">The top 3 for every award are revealed in your 2026 Wrapped on <b>Thu 3 Dec</b>. You can change your picks until Tue 1 Dec, 11pm.</p><button class="btn app-go" onclick="closeAwards()">Done</button></div>`; return; }
-  if (AW.i >= n) {
-    const k = Object.keys(AW.picks).length;
-    ov.innerHTML = `<div class="sheet aw">${close}${dots}<div class="label" style="color:var(--gold)">Your ballot · ${k} of ${n}</div><div class="pp-title">Happy with these?</div>
-      <div class="aw-sum">${AWARDS.map((a, i) => { const p = AW.picks[a.k] && ALL_PLAYERS.find(x => x.name === AW.picks[a.k]); return `<button class="aw-row" onclick="awGo(${i})"><span class="aw-ic">${a.ic}</span><span class="aw-rt"><small>${a.t}</small><b>${p ? esc(p.name) : 'No pick'}</b></span>${p ? photo(p, 'avatar') : ''}</button>`; }).join('')}</div>
-      <button class="btn app-go" id="aw-send" onclick="sendAwards(this)" ${k ? '' : 'disabled'}>Submit my votes</button><p class="aw-sub" id="aw-msg">Anonymous. Nobody sees who you picked, not even the admin.</p></div>`;
+  const n = AWARDS.length, days = Math.max(0, Math.ceil((AW_CLOSE - Date.now()) / 86400000)), voters = RATINGS && RATINGS.awards && RATINGS.awards.voters;
+  ov.style.setProperty('--a', AW.i >= 0 && AW.i < n ? AWARDS[AW.i].c : '#f5c451'); ov.style.setProperty('--a2', AW.i >= 0 && AW.i < n ? AWARDS[AW.i].c2 : '#b9771a');
+  const anim = AW.dir > 0 ? 'in-r' : 'in-l';
+  if (AW.i < 0) {   // intro
+    ov.innerHTML = `<div class="aw-stage aw-intro ${anim}"><button class="aw-x solo" onclick="closeAwards()" aria-label="Close">✕</button>
+      <div class="aw-fan">${AWARDS.map((a, i) => `<span style="--i:${i - 3};--a:${a.c}">${awArt(a, 'fan')}</span>`).join('')}</div>
+      <div class="aw-kicker">Wednesday 9–10 presents</div><h2 class="aw-h">The 2026<br>Awards</h2>
+      <p class="aw-blurb">Seven trophies. You pick the winners.<br>Top 3 for each are revealed in Wrapped on <b>Thu 3 Dec</b>.</p>
+      <div class="aw-chips"><span>7 awards</span><span>~1 minute</span><span>100% anonymous</span></div>
+      <button class="aw-cta" onclick="awGo(0, 1)">Start voting</button>
+      <small class="aw-fine">${days} day${days === 1 ? '' : 's'} left${voters ? ` · ${voters} already voted` : ''}</small></div>`;
     return;
   }
-  const a = AWARDS[AW.i], q = AW.q.toLowerCase(), list = awNominees(a).filter(p => !q || p.name.toLowerCase().includes(q));
-  ov.innerHTML = `<div class="sheet aw">${close}${dots}
-    <div class="aw-head"><span class="aw-big">${a.ic}</span><div><div class="label" style="color:var(--gold)">Award ${AW.i + 1} of ${n}</div><div class="pp-title">${a.t}</div><p class="aw-sub">${a.d}</p></div></div>
-    <input class="aw-q" type="search" placeholder="Search" value="${esc(AW.q)}" oninput="AW.q=this.value;paintAwardsGrid()">
+  if (AW.i >= n) {   // ballot review
+    const k = AWARDS.filter(a => AW.picks[a.k]).length;
+    if (AW.phase === 'sealed') {
+      ov.innerHTML = `<div class="aw-stage aw-sealed in-r"><button class="aw-x solo" onclick="closeAwards()" aria-label="Close">✕</button>
+        <div class="aw-seal"><span>W</span><small>9–10</small></div><h2 class="aw-h sm">Ballot sealed</h2>
+        <p class="aw-blurb">Your ${k} vote${k === 1 ? '' : 's'} are in. Nobody will ever know who you picked.<br>The winners drop in your <b>2026 Wrapped</b> on Thu 3 Dec.</p>
+        <button class="aw-cta" onclick="closeAwards()">Done</button><button class="aw-link" onclick="AW.phase='';paintAwards()">Change my picks</button></div>`;
+      awConfetti(); return;
+    }
+    ov.innerHTML = `<div class="aw-stage aw-review ${anim}">${awTop(Object.assign({}, AW, { i: n }))}
+      <div class="aw-kicker">Your ballot · ${k} of ${n}</div><h2 class="aw-h sm">Happy with these?</h2>
+      <div class="aw-ticket">${AWARDS.map((a, i) => { const p = AW.picks[a.k] && ALL_PLAYERS.find(x => x.name === AW.picks[a.k]);
+        return `<button class="aw-line" style="--a:${a.c};--a2:${a.c2}" onclick="awGo(${i}, -1)">${awArt(a, 'line')}<span class="aw-lt"><small>${a.t}</small><b>${p ? esc(p.name) : 'Skipped · tap to pick'}</b></span>${p ? photo(p, 'avatar') : '<span class="aw-empty">+</span>'}</button>`; }).join('')}</div>
+      <button class="aw-cta" id="aw-send" onclick="sendAwards(this)" ${k ? '' : 'disabled'}>Seal my ballot</button><small class="aw-fine" id="aw-msg">Anonymous. Not even the admin can see who you picked. You can change it until Tue 1 Dec, 11pm.</small></div>`;
+    return;
+  }
+  const a = AWARDS[AW.i], pick = AW.picks[a.k], pp = pick && ALL_PLAYERS.find(x => x.name === pick);
+  if (AW.phase === 'locked' && pp) {   // the locked-in moment
+    ov.innerHTML = `<div class="aw-stage aw-locked">${awTop(AW)}
+      <div class="aw-lockart">${awArt(a, 'ghost')}<div class="aw-lockph">${photo(pp, 'avatar')}</div></div>
+      <div class="aw-kicker">Your ${a.t}</div><h2 class="aw-h sm">${esc(pp.name)}</h2><div class="aw-stamp">Locked in</div>
+      <div class="aw-nav"><button class="aw-link" onclick="clearTimeout(AW.timer);AW.phase='';paintAwards()">Change</button><button class="aw-next" onclick="awGo(${AW.i + 1}, 1)">Next →</button></div></div>`;
+    return;
+  }
+  const q = AW.q.toLowerCase(), list = awNominees(a).filter(x => !q || x.p.name.toLowerCase().includes(q));
+  ov.innerHTML = `<div class="aw-stage ${anim}">${awTop(AW)}
+    <div class="aw-hero"><div class="aw-halo">${awArt(a, 'big')}</div><div><div class="aw-kicker">Award ${AW.i + 1} of ${n}</div><h2 class="aw-h sm">${a.t}</h2><p class="aw-blurb left">${a.d}</p></div></div>
+    <label class="aw-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search ${list.length} players" value="${esc(AW.q)}" oninput="AW.q=this.value;paintAwardsGrid()"></label>
     <div class="aw-grid" id="aw-grid">${awGridHtml(a, list)}</div>
-    <div class="aw-foot"><button class="btn link" onclick="awGo(${AW.i - 1})" ${AW.i ? '' : 'disabled'}>← Back</button><span></span><button class="btn ghost" onclick="awGo(${AW.i + 1})">${AW.picks[a.k] ? 'Next →' : 'Skip'}</button></div></div>`;
+    <div class="aw-nav">${AW.i ? `<button class="aw-link" onclick="awGo(${AW.i - 1}, -1)">← Back</button>` : '<span></span>'}<button class="aw-link" onclick="awGo(${AW.i + 1}, 1)">${pick ? 'Next →' : 'Not sure · skip'}</button></div></div>`;
 }
-function awGridHtml(a, list) { return list.map(p => `<button class="aw-p${AW.picks[a.k] === p.name ? ' on' : ''}" onclick="awPick('${esc(p.name).replace(/'/g, "\\'")}')">${photo(p, 'avatar')}<b>${esc(p.name)}</b></button>`).join('') || '<div class="empty" style="grid-column:1/-1">Nobody matches.</div>'; }
-function paintAwardsGrid() { const a = AWARDS[AW.i], q = AW.q.toLowerCase(), g = document.getElementById('aw-grid'); if (g) g.innerHTML = awGridHtml(a, awNominees(a).filter(p => !q || p.name.toLowerCase().includes(q))); }
+function awGridHtml(a, list) {
+  return list.map(({ p, w }) => `<button class="aw-p${AW.picks[a.k] === p.name ? ' on' : ''}" onclick="awPick('${esc(p.name).replace(/'/g, "\\'")}', this)">${photo(p, 'avatar')}<b>${esc(p.name)}</b><small>${w ? `${w} together` : `${p.gamesThisYear} games`}</small></button>`).join('')
+    || '<div class="aw-none">Nobody matches that.</div>';
+}
+function paintAwardsGrid() { const a = AWARDS[AW.i], q = AW.q.toLowerCase(), g = document.getElementById('aw-grid'); if (g) g.innerHTML = awGridHtml(a, awNominees(a).filter(x => !q || x.p.name.toLowerCase().includes(q))); }
+function awConfetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = document.createElement('div'); box.className = 'aw-rain';
+  for (let i = 0; i < 60; i++) { const s = document.createElement('i'), a = AWARDS[i % AWARDS.length]; s.style.left = Math.random() * 100 + '%'; s.style.background = i % 2 ? a.c : a.c2; s.style.animationDelay = Math.random() * 900 + 'ms'; s.style.animationDuration = 1600 + Math.random() * 1400 + 'ms'; s.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg'); box.appendChild(s); }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 3600);
+}
 async function sendAwards(btn) {
-  btn.disabled = true; btn.textContent = 'Sending…';
+  btn.disabled = true; btn.textContent = 'Sealing…';
   let res; try { res = await api(null, { action: 'award', t: TOKEN, picks: AW.picks }); } catch (e) { res = { ok: false, error: e.message }; }
   if (!res || !res.ok) { btn.disabled = false; btn.textContent = 'Try again'; const m = document.getElementById('aw-msg'); if (m) m.textContent = (res && res.error) || 'Could not send.'; return; }
-  VOTER.awards = res.mine || AW.picks; try { writeCache('w910_me', VOTER); } catch (_) {}
+  VOTER.awards = res.mine || Object.assign({}, AW.picks); try { writeCache('w910_me', VOTER); } catch (_) {}
   if (RATINGS && res.awards) RATINGS.awards = res.awards;
-  AW.done = true; paintAwards(); renderAwardsCard();
+  AW.phase = 'sealed'; paintAwards(); renderAwardsCard();
 }
 /* Pops up once per visit until you've voted (after the photo prompt, never on top of another pop-up) */
 function maybeAwardsPop() {
-  if (!awOpen() || awDone() || !TOKEN || !VOTER || !VOTER.ok || VOTER.pending) return;
+  if (!awOpen() || (awDone() && !awNeedsNew()) || !TOKEN || !VOTER || !VOTER.ok || VOTER.pending) return;
   try { if (sessionStorage.getItem('w910_aw')) return; } catch (_) { return; }
   let tries = 0;
   const go = () => { if (document.querySelector('.overlay.open') || document.getElementById('ph-overlay')) { if (++tries < 60) setTimeout(go, 2500); return; }
-    if (awDone()) return; try { if (sessionStorage.getItem('w910_aw')) return; sessionStorage.setItem('w910_aw', '1'); } catch (_) {}
-    openAwards(0); };
+    if (awDone() && !awNeedsNew()) return; try { if (sessionStorage.getItem('w910_aw')) return; sessionStorage.setItem('w910_aw', '1'); } catch (_) {}
+    openAwards(awNeedsNew() ? AWARDS.findIndex(a => a.k === 'boot') : undefined); };
   setTimeout(go, 1800);
 }
-/* The card on Home (above your box) and in History while voting is open */
+/* The card on Home (above your box) while voting is open */
 function awardsCardHtml() {
   if (!awOpen()) return '';
-  const a = RATINGS && RATINGS.awards, done = awDone(), left = Math.max(0, new Date('2026-12-01T23:00:00+03:00') - Date.now()), days = Math.ceil(left / 86400000);
-  return `<button class="aw-card${done ? ' done' : ''}" onclick="openAwards(${done ? AWARDS.length : 0})"><span class="aw-card-ic">🏆</span><span class="aw-card-t"><span class="label">2026 Awards · ${days} day${days === 1 ? '' : 's'} left</span><b>${done ? 'You voted · change your picks' : 'Vote for the 2026 awards'}</b><small>${done ? 'Results drop in Wrapped on Thu 3 Dec' : `Player of the Year, Biggest Moaner and 5 more · 1 minute`}${a && a.voters ? ` · ${a.voters} voted so far` : ''}</small></span><i class="fx-chev"></i></button>`;
+  const fresh3 = awNeedsNew(), done = awDone() && !fresh3, days = Math.max(0, Math.ceil((AW_CLOSE - Date.now()) / 86400000)), voters = RATINGS && RATINGS.awards && RATINGS.awards.voters;
+  return `<button class="aw-card${done ? ' done' : ''}" onclick="openAwards(${fresh3 ? 1 : ''})">
+    <span class="aw-card-row">${AWARDS.map(a => `<span style="--a:${a.c}">${awArt(a, 'card')}</span>`).join('')}</span>
+    <span class="aw-card-t"><span class="aw-card-k">The 2026 Awards · ${days} day${days === 1 ? '' : 's'} left</span><b>${done ? 'Ballot sealed ✓' : fresh3 ? '3 new awards to vote on' : 'Pick this year’s winners'}</b><small>${done ? 'Tap to change your picks · winners revealed Thu 3 Dec' : `7 trophies · 1 minute · anonymous${voters ? ` · ${voters} voted` : ''}`}</small></span>
+    <span class="aw-card-go">${done ? 'Edit' : 'Vote'}</span></button>`;
 }
-function renderAwardsCard() { const el = document.getElementById('aw-home'); if (el) el.innerHTML = awardsCardHtml(); const h = document.getElementById('aw-hist'); if (h) h.innerHTML = awardsCardHtml() || '<div class="empty">Voting has closed. The results are in your 2026 Wrapped.</div>'; }
+function renderAwardsCard() { const el = document.getElementById('aw-home'); if (el) el.innerHTML = awardsCardHtml(); }
+document.addEventListener('keydown', e => { const ov = document.getElementById('aw-overlay'); if (!ov || !ov.classList.contains('open') || !AW) return;
+  if (e.key === 'Escape') closeAwards(); else if (e.target.tagName !== 'INPUT' && e.key === 'ArrowRight') awGo(AW.i + 1, 1); else if (e.target.tagName !== 'INPUT' && e.key === 'ArrowLeft') awGo(AW.i - 1, -1); });
 /* ── No photo yet: a pop-up on opening the site, once per visit, snoozed 2 days by "Later". Purely for how the app looks. ── */
 function maybePhotoPop(me) {
   if (!me || !VOTER || !VOTER.ok || VOTER.pending || photoSrc(me) || document.getElementById('ph-overlay')) return false;
