@@ -1267,6 +1267,40 @@
   .aw-card-wr .aw-card-t b { font-size: 24px; background: linear-gradient(90deg, #ff6ad5, #f5c451, #5fd3ff); -webkit-background-clip: text; background-clip: text; color: transparent; } .aw-card-wr .aw-card-k { color: #4fe0a0; }
   .aw-card-row span { width: 28px; height: 28px; }
   @media (prefers-reduced-motion: reduce) { .aw-fin, .aw-rays, .aw-flash, .aw-orbit, .aw-orbit span, .aw-seal.big, .aw-shock, .aw-fin-t, .aw-fin-b, .aw-blobs i, .aw-wr-h span, .aw-tease div, .aw-tile { animation: none !important; } .aw-rays { opacity: 1; } }
+  /* drinks RSVP */
+  .ev { justify-content: center; text-align: center; } .ev-in { position: relative; z-index: 2; }
+  .ev-glow { position: absolute; inset: 0; background: radial-gradient(60% 40% at 50% 30%, rgba(255,194,61,.28), transparent 70%); pointer-events: none; }
+  .ev-stein { width: 110px; height: 110px; margin: 0 auto 14px; animation: evClink 2.6s ease-in-out infinite; } @keyframes evClink { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(6deg) translateY(-4px); } }
+  .ev-h { font-size: 30px; max-width: 320px; margin-left: auto; margin-right: auto; background: linear-gradient(180deg, #fff 30%, #ffd57a); -webkit-background-clip: text; background-clip: text; }
+  .ev-meta { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; } .ev-meta span { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; background: rgba(255,194,61,.12); border: 1px solid rgba(255,194,61,.35); font-size: 13px; font-weight: 700; }
+  .ev-meta svg { width: 15px; height: 15px; fill: none; stroke: #ffc23d; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ev-going { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; } .ev-going small { font-size: 13px; color: rgba(255,255,255,.7); } .ev-going b { color: #fff; }
+  .ev-faces { display: flex; } .ev-faces .avatar { width: 30px; height: 30px; margin-left: -8px; box-shadow: 0 0 0 2px #07070a; } .ev-faces .avatar:first-child { margin-left: 0; } .ev-more { display: grid; place-items: center; font-size: 10px; font-weight: 800; background: #2a2418; color: #ffc23d; }
+  .ev-btns { margin-top: 18px; } .ev-guests { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 14px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); font-size: 14px; color: rgba(255,255,255,.8); }
+  .ev-step { display: flex; align-items: center; gap: 10px; } .ev-step button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.06); color: #fff; font-size: 18px; cursor: pointer; } .ev-step b { min-width: 64px; text-align: center; font-size: 14px; }
+  .ev-cta { margin-top: 12px; background: linear-gradient(135deg, #fff3c4, #ffc23d 45%, #b9650f); box-shadow: 0 12px 30px -12px #ffc23d; }
+  .ev-you { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 18px; padding: 14px; border-radius: 14px; border: 1px solid rgba(255,194,61,.4); background: rgba(255,194,61,.1); } .ev-you b { font-size: 17px; color: #ffc23d; } .ev-you.out { border-color: rgba(255,255,255,.15); background: rgba(255,255,255,.04); } .ev-you.out b { color: rgba(255,255,255,.75); }
+  .ev-next { display: block; margin: 16px auto 0; color: #ff9ee6; }
+  .ev-card { margin: 0 0 14px; border-radius: 18px; border: 1px solid rgba(255,194,61,.45); background: radial-gradient(90% 120% at 0% 0%, rgba(255,194,61,.2), transparent 60%), #0e0c09; overflow: hidden; }
+  .ev-card-main { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; border: 0; background: none; font: inherit; color: #fff; text-align: left; cursor: pointer; } .ev-card-main .ev-stein { width: 48px; height: 48px; margin: 0; flex: none; animation: none; }
+  .ev-card-t { flex: 1; display: grid; gap: 3px; min-width: 0; } .ev-card-t b { font-size: 17px; } .ev-card-t small { font-size: 12px; color: rgba(255,255,255,.65); }
+  .ev-card-go { flex: none; padding: 10px 16px; border-radius: 999px; font-weight: 900; font-size: 14px; background: linear-gradient(135deg, #fff3c4, #ffc23d 45%, #b9650f); color: #1c1003; } .ev-card-go.in { background: rgba(79,224,160,.16); color: #4fe0a0; } .ev-card-go.out { background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); }
+  .ev-present { width: 100%; padding: 11px; border: 0; border-top: 1px solid rgba(255,194,61,.25); background: rgba(255,194,61,.08); color: #ffc23d; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+  /* live reveal */
+  .rv { justify-content: center; text-align: center; cursor: pointer; user-select: none; -webkit-user-select: none; } .rv-body { position: relative; z-index: 2; }
+  .rv-tag { position: absolute; top: max(18px, env(safe-area-inset-top)); left: 18px; right: 64px; text-align: left; font-size: 11px; font-weight: 800; color: #ffc23d; letter-spacing: .04em; }
+  .rv-prog { position: absolute; left: 18px; right: 18px; bottom: max(14px, env(safe-area-inset-bottom)); height: 3px; border-radius: 2px; background: rgba(255,255,255,.1); } .rv-prog i { display: block; height: 100%; border-radius: 2px; background: var(--a); transition: width .4s; }
+  .rv-hint { position: absolute; left: 0; right: 0; bottom: max(26px, calc(env(safe-area-inset-bottom) + 12px)); font-size: 11px; color: rgba(255,255,255,.35); }
+  .aw-h.rv-big { font-size: clamp(44px, 11vw, 96px); } .rv-name { font-size: clamp(40px, 10vw, 84px); line-height: 1; } .rv-winner { font-size: clamp(48px, 12vw, 104px); }
+  .rv-halo { width: clamp(150px, 34vw, 260px); height: clamp(150px, 34vw, 260px); margin: 0 auto 18px; display: grid; place-items: center; border-radius: 40px; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--a) 45%, transparent), transparent 70%); animation: awPop .6s cubic-bezier(.2,.9,.3,1.4) both; } .rv-halo .aw-art { width: 70%; height: 70%; animation: awFloat 3.2s ease-in-out infinite; }
+  .rv-halo.pulse { animation: rvPulse 1s ease-in-out infinite; } @keyframes rvPulse { 50% { transform: scale(1.08); filter: brightness(1.3); } }
+  .rv-drum { animation: rvDrum .18s linear infinite; } @keyframes rvDrum { 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+  .rv-place { font-size: clamp(22px, 5vw, 40px); font-weight: 900; letter-spacing: .3em; text-transform: uppercase; color: var(--a); margin: 10px 0 16px; animation: awUp .5s both; }
+  .rv-ph { width: clamp(140px, 30vw, 240px); height: clamp(140px, 30vw, 240px); margin: 0 auto 16px; border-radius: 50%; padding: 5px; background: conic-gradient(from 0deg, var(--a), #fff, var(--a2), var(--a)); animation: awPop .6s .1s cubic-bezier(.2,.9,.3,1.4) both; } .rv-ph .avatar { width: 100% !important; height: 100% !important; font-size: 48px; }
+  .rv-ph.p2 { filter: saturate(.85); } .rv-ph.win { width: clamp(180px, 40vw, 300px); height: clamp(180px, 40vw, 300px); box-shadow: 0 0 80px -6px var(--a); animation-delay: .3s; }
+  .rv-crown { width: 80px; height: 80px; margin: 0 auto -18px; position: relative; z-index: 3; animation: awSlam .6s cubic-bezier(.3,1.6,.5,1) both; } .rv-crown .aw-art { width: 100%; height: 100%; }
+  .rv-pct { margin-top: 10px; font-size: 16px; color: rgba(255,255,255,.75); } .rv-s-win .aw-rays { opacity: 1; animation: awSpin 30s linear infinite; }
+  .rv-pod { display: flex; justify-content: center; gap: 22px; margin-top: 22px; animation: awUp .6s 1s both; } .rv-pod span { display: grid; justify-items: center; gap: 4px; } .rv-pod .avatar { width: 52px; height: 52px; box-shadow: 0 0 0 2px rgba(255,255,255,.3); } .rv-pod b { font-size: 13px; } .rv-pod small { font-size: 11px; color: rgba(255,255,255,.55); }
   .me-ph { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
   .me-ph-c { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 2px dashed var(--gold); color: var(--gold); font-size: 22px; font-weight: 300; animation: phPulse 2.4s ease-in-out infinite; }
   .me-ph > span:nth-child(2) { flex: 1; display: grid; gap: 2px; } .me-ph b { font-size: 14.5px; color: var(--gold); } .me-ph small { font-size: 12px; color: var(--fg-2); } .me-ph .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
@@ -3074,7 +3108,7 @@ function repaintProfile() {
   if (nb) { if (pd.done >= pd.total) nb.remove(); else nb.innerHTML = `${nudgeLabel(me, pd)}<span class="me-prog"><i style="width:${pd.done / pd.total * 100}%"></i></span>`; }
   paintProfilePopTop();
 }
-/* ── 2026 awards: one pick per award, anonymous, open until 1 Dec 11pm; the top 3 are revealed in Wrapped ──
+/* ── 2026 awards: one pick per award, anonymous, open until Sun 6 Dec 11pm; handed out at the drinks on Wed 9 Dec (live reveal below), public from midnight after ──
    Each award has its own colour and trophy art. Flow: intro → one screen per award (pick → locked-in moment → next)
    → ballot review → seal. Nominees are ordered by how many 2026 games they played with you, so the people you know come first. */
 const AWARDS = [
@@ -3089,7 +3123,7 @@ const AWARDS = [
   { k: 'improved', t: 'Most Improved', d: 'Not the same player who started the year.', c: '#4fe0a0', c2: '#14855a' },
   { k: 'signing', t: 'Signing of the Season', d: 'Best newcomer of 2026. Where were they all this time?', c: '#5fd3ff', c2: '#0e7fae', fresh: true },
 ];
-const AW_CLOSE = new Date('2026-12-01T23:00:00+03:00').getTime();
+const AW_CLOSE = new Date('2026-12-06T23:00:00+03:00').getTime();
 /* Off until the awards are finalised: only the admin sees the card (as a preview); no pop-up for anyone. Flip to true to launch. */
 const AWARDS_LIVE = false, awSee = () => AWARDS_LIVE || !!(VOTER && VOTER.isAdmin);
 /* Trophy art, drawn to a 64×64 box. Filled with the award's metallic gradient (#aw-g-<key>), outlined a shade darker. */
@@ -3107,7 +3141,7 @@ const AW_ART = {
 };
 const awArt = (a, cls = '') => `<svg class="aw-art ${cls}" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="aw-g-${a.k}-${cls || 'x'}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff8e8"/><stop offset=".35" stop-color="${a.c}"/><stop offset="1" stop-color="${a.c2}"/></linearGradient></defs><g fill="url(#aw-g-${a.k}-${cls || 'x'})" stroke="${a.c2}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">${AW_ART[a.k]}</g></svg>`;
 let AW = null;
-const awOpen = () => { const a = RATINGS && RATINGS.ok && RATINGS.awards; return a ? !!a.open : Date.now() < AW_CLOSE; };
+const awOpen = () => Date.now() < AW_CLOSE;
 const awMine = () => (VOTER && VOTER.awards) || {};
 const awDone = () => Object.keys(awMine()).some(k => AWARDS.some(a => a.k === k));
 const AW_NEW = ['boot', 'wall', 'magic'], awNeedsNew = () => awDone() && AW_NEW.every(k => !awMine()[k]);   // voted before these three were added
@@ -3161,7 +3195,7 @@ function paintAwards() {
     ov.innerHTML = `<div class="aw-stage aw-intro ${anim}"><button class="aw-x solo" onclick="closeAwards()" aria-label="Close">✕</button>
       <div class="aw-fan">${AWARDS.map((a, i) => `<span style="--i:${i - (AWARDS.length - 1) / 2};--a:${a.c}">${awArt(a, 'fan')}</span>`).join('')}</div>
       <div class="aw-kicker">Wednesday 9–10 presents</div><h2 class="aw-h">The 2026<br>Awards</h2>
-      <p class="aw-blurb">Ten trophies. You pick the winners.<br>Top 3 for each are revealed in Wrapped on <b>Thu 3 Dec</b>.</p>
+      <p class="aw-blurb">Ten trophies. You pick the winners.<br>Winners are handed out at the end-of-year drinks, <b>Kraftory Biergarten, Wed 9 Dec</b>.</p>
       <div class="aw-chips"><span>10 awards</span><span>~2 minutes</span><span>100% anonymous</span></div>
       <button class="aw-cta" onclick="awGo(0, 1)">Start voting</button>
       <small class="aw-fine">${days} day${days === 1 ? '' : 's'} left${voters ? ` · ${voters} already voted` : ''}</small></div>`;
@@ -3169,6 +3203,7 @@ function paintAwards() {
   }
   if (AW.i >= n) {
     const k = AWARDS.filter(a => AW.picks[a.k]).length;
+    if (AW.phase === 'drinks') { ov.style.setProperty('--a', '#ffc23d'); ov.innerHTML = evScreenHtml(true); return; }
     if (AW.phase === 'wrapped') { ov.style.setProperty('--a', '#ff6ad5'); ov.innerHTML = awWrappedHtml(); awCountdown(); return; }
     if (AW.phase === 'sealed') { ov.innerHTML = awFinaleHtml(k); awFinaleFx(); return; }
     ov.innerHTML = `<div class="aw-stage aw-review ${anim}">${awTop(Object.assign({}, AW, { i: n }))}
@@ -3179,7 +3214,7 @@ function paintAwards() {
           <span class="aw-tile-top">${awArt(a, 'tile')}<small>${a.t}</small></span>
           <span class="aw-tile-who">${p ? photo(p, 'avatar') : '<span class="aw-empty">+</span>'}<b>${p ? esc(p.name) : 'Tap to pick'}</b></span></button>`; }).join('')}</div>
       <button class="aw-cta aw-seal-cta" id="aw-send" onclick="sendAwards(this)" ${k ? '' : 'disabled'}><span class="aw-dot-seal">W</span>Seal my ballot</button>
-      <small class="aw-fine" id="aw-msg">Anonymous. Not even the admin can see who you picked. Change it any time until Tue 1 Dec, 11pm.</small></div>`;
+      <small class="aw-fine" id="aw-msg">Anonymous. Not even the admin can see who you picked. Change it any time until Sun 6 Dec, 11pm.</small></div>`;
     return;
   }
   const a = AWARDS[AW.i], pick = AW.picks[a.k], pp = pick && ALL_PLAYERS.find(x => x.name === pick);
@@ -3206,7 +3241,7 @@ function awFinaleHtml(k) {
       <div class="aw-shock"></div><div class="aw-shock s2"></div>
       <div class="aw-seal big"><span>W</span><small>9–10 · 2026</small></div></div>
     <div class="aw-fin-t"><div class="aw-kicker">${k} vote${k === 1 ? '' : 's'} · 100% anonymous</div><h2 class="aw-h">Sealed.</h2><p class="aw-blurb">Locked in the vault. Nobody will ever know who you picked.</p></div>
-    <div class="aw-fin-b"><button class="aw-cta" onclick="AW.phase='wrapped';paintAwards()">What happens next →</button><button class="aw-link" onclick="AW.phase='';paintAwards()">Change my picks</button></div></div>`;
+    <div class="aw-fin-b"><button class="aw-cta" onclick="AW.phase='drinks';paintAwards()">What happens next →</button><button class="aw-link" onclick="AW.phase='';paintAwards()">Change my picks</button></div></div>`;
 }
 function awFinaleFx() {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -3216,16 +3251,16 @@ function awFinaleFx() {
     awConfetti();
   }, 1250);
 }
-const AW_WRAPPED = new Date('2026-12-03T09:00:00+03:00').getTime();
+const AW_WRAPPED = new Date('2026-12-10T00:00:00+03:00').getTime();
 function awWrappedHtml() {
   const lock = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   return `<div class="aw-stage aw-wr in-r"><button class="aw-x solo" onclick="closeAwards()" aria-label="Close">✕</button>
     <div class="aw-blobs"><i></i><i></i><i></i><i></i></div>
-    <div class="aw-wr-in"><div class="aw-wr-k">Coming Thu 3 Dec</div>
+    <div class="aw-wr-in"><div class="aw-wr-k">Drops Thu 10 Dec · 12:00am</div>
       <h2 class="aw-wr-h"><span>2026</span><span>Wrapped</span></h2>
-      <p class="aw-blurb">Your year on the pitch, the lads you played with most, and the winners of all ${AWARDS.length} awards. All revealed together.</p>
+      <p class="aw-blurb">Midnight, straight after the drinks. Your year on the pitch, the lads you played with most, and every award winner from the night.</p>
       <div class="aw-cd" id="aw-cd"></div>
-      <div class="aw-tease">${[['Your year in numbers', '#f5c451'], ['Your football soulmate', '#ff7d9d'], ['Who won Player of the Year?', '#c49bff']].map(([t, c], i) => `<div style="--c:${c};--d:${i}"><span>${lock}</span><b>${t}</b></div>`).join('')}</div>
+      <div class="aw-tease">${[['Your year in numbers', '#f5c451'], ['Your football soulmate', '#ff7d9d'], ['All ' + AWARDS.length + ' award winners', '#c49bff']].map(([t, c], i) => `<div style="--c:${c};--d:${i}"><span>${lock}</span><b>${t}</b></div>`).join('')}</div>
       <button class="aw-cta" onclick="closeAwards()">Can’t wait</button><small class="aw-fine">You’ll get a notification the moment it drops.</small></div></div>`;
 }
 function awCountdown() {
@@ -3270,16 +3305,94 @@ function awardsCardHtml() {
   const fresh3 = awNeedsNew(), done = awDone() && !fresh3, days = Math.max(0, Math.ceil((AW_CLOSE - Date.now()) / 86400000)), voters = RATINGS && RATINGS.awards && RATINGS.awards.voters;
   if (done) { const dd = Math.max(0, Math.ceil((AW_WRAPPED - Date.now()) / 864e5));
     return `<button class="aw-card aw-card-wr" onclick="openAwards('wrapped')"><span class="aw-blobs sm"><i></i><i></i><i></i></span>
-      <span class="aw-card-t"><span class="aw-card-k">${AWARDS_LIVE ? 'Ballot sealed ✓' : 'Preview · only you can see this'}</span><b>2026 Wrapped</b><small>Coming Thu 3 Dec · ${dd} day${dd === 1 ? '' : 's'} to go</small></span>
+      <span class="aw-card-t"><span class="aw-card-k">${AWARDS_LIVE ? 'Ballot sealed ✓' : 'Preview · only you can see this'}</span><b>2026 Wrapped</b><small>Drops at midnight after the drinks · ${dd} day${dd === 1 ? '' : 's'} to go</small></span>
       <span class="aw-card-go">Peek</span></button>`; }
   return `<button class="aw-card" onclick="openAwards(${fresh3 ? 1 : ''})">
     <span class="aw-card-row">${AWARDS.map(a => `<span style="--a:${a.c}">${awArt(a, 'card')}</span>`).join('')}</span>
     <span class="aw-card-t"><span class="aw-card-k">${AWARDS_LIVE ? `The 2026 Awards · ${days} day${days === 1 ? '' : 's'} left` : 'Preview · only you can see this'}</span><b>${fresh3 ? 'New awards to vote on' : 'Pick this year’s winners'}</b><small>${AWARDS.length} trophies · 2 minutes · anonymous${voters ? ` · ${voters} voted` : ''}</small></span>
     <span class="aw-card-go">Vote</span></button>`;
 }
-function renderAwardsCard() { const el = document.getElementById('aw-home'); if (el) el.innerHTML = awardsCardHtml(); }
+function renderAwardsCard() { const el = document.getElementById('aw-home'); if (el) el.innerHTML = awardsCardHtml() + drinksCardHtml(); }
 document.addEventListener('keydown', e => { const ov = document.getElementById('aw-overlay'); if (!ov || !ov.classList.contains('open') || !AW) return;
   if (e.key === 'Escape') closeAwards(); else if (e.target.tagName !== 'INPUT' && e.key === 'ArrowRight') awGo(AW.i + 1, 1); else if (e.target.tagName !== 'INPUT' && e.key === 'ArrowLeft') awGo(AW.i - 1, -1); });
+/* ── End-of-year drinks: RSVP (after sealing your ballot, and a card on Home) ── */
+const EVENT = { place: 'Kraftory Biergarten', day: 'Wed 9 Dec', date: '2026-12-09' };
+const STEIN_ART = `<svg class="aw-art ev-stein" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="ev-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".4" stop-color="#ffc23d"/><stop offset="1" stop-color="#b9650f"/></linearGradient></defs>
+  <g stroke="#9a5208" stroke-width="1.6" stroke-linejoin="round"><path fill="none" stroke-width="5" d="M45 26h5a6 6 0 0 1 6 6v6a6 6 0 0 1-6 6h-5"/><path fill="url(#ev-g)" d="M13 20h32v34a4 4 0 0 1-4 4H17a4 4 0 0 1-4-4z"/>
+  <path fill="none" stroke="#fff3c4" stroke-opacity=".6" d="M21 28v22M29 28v22M37 28v22"/><path fill="#fff" stroke="#e8dcc0" d="M11 20c0-5 4-8 8-7 1-4 6-6 10-4 3-3 9-2 11 2 4-1 8 2 7 7 2 1 2 4 0 5H12c-2-1-2-2-1-3z"/></g>
+  <circle cx="24" cy="15" r="1.6" fill="#e8dcc0"/><circle cx="36" cy="13" r="1.3" fill="#e8dcc0"/></svg>`;
+const evMine = () => (VOTER && VOTER.rsvp) || null;
+const evData = () => (RATINGS && RATINGS.ok && RATINGS.drinks) || { going: [], total: 0 };
+let EV_GUESTS = 0;
+function evFaces(max) { const g = evData().going, ps = g.map(x => ALL_PLAYERS.find(p => p.name === x.name)).filter(Boolean).slice(0, max || 6);
+  return ps.length ? `<span class="ev-faces">${ps.map(p => photo(p, 'avatar')).join('')}${g.length > ps.length ? `<span class="avatar ev-more">+${g.length - ps.length}</span>` : ''}</span>` : ''; }
+function evScreenHtml(next) {
+  const m = evMine(), d = evData(), n = d.total || 0;
+  const answer = m ? `<div class="ev-you ${m.going ? 'in' : 'out'}"><b>${m.going ? `You’re in${m.guests ? ` +${m.guests}` : ''} ✓` : 'You can’t make it'}</b><button class="aw-link" onclick="VOTER.rsvp=null;paintAwards()">Change</button></div>`
+    : `<div class="ev-btns"><div class="ev-guests"><span>Bringing anyone?</span><div class="ev-step"><button onclick="EV_GUESTS=Math.max(0,EV_GUESTS-1);paintAwards()" aria-label="Fewer">−</button><b class="num">${EV_GUESTS ? '+' + EV_GUESTS : 'Just me'}</b><button onclick="EV_GUESTS=Math.min(3,EV_GUESTS+1);paintAwards()" aria-label="More">+</button></div></div>
+        <button class="aw-cta ev-cta" onclick="evRsvp(true, this)">I’m in</button><button class="aw-link" onclick="evRsvp(false, this)">Can’t make it</button></div>`;
+  return `<div class="aw-stage ev in-r"><button class="aw-x solo" onclick="closeAwards()" aria-label="Close">✕</button>
+    <div class="ev-glow"></div><div class="ev-in">${STEIN_ART}
+      <div class="aw-kicker" style="color:#ffc23d">End of year drinks</div><h2 class="aw-h sm ev-h">Trophies, pints and a proper send-off</h2>
+      <div class="ev-meta"><span><svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>${EVENT.place}</span><span><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${EVENT.day}</span></div>
+      <p class="aw-blurb">All ${AWARDS.length} trophies get handed out on the night. Winners stay secret until then.</p>
+      ${n ? `<div class="ev-going">${evFaces(7)}<small><b>${n}</b> going so far</small></div>` : ''}
+      ${answer}
+      ${next ? `<button class="aw-link ev-next" onclick="AW.phase='wrapped';paintAwards()">And after the drinks: 2026 Wrapped →</button>` : ''}</div></div>`;
+}
+async function evRsvp(going, btn) {
+  if (!TOKEN) return openClaim();
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  let res; try { res = await api(null, { action: 'rsvp', t: TOKEN, going, guests: going ? EV_GUESTS : 0 }); } catch (e) { res = { ok: false, error: e.message }; }
+  if (!res || !res.ok) { if (btn) { btn.disabled = false; btn.textContent = 'Try again'; } return; }
+  VOTER.rsvp = res.mine; if (RATINGS && res.drinks) RATINGS.drinks = res.drinks; try { writeCache('w910_me', VOTER); } catch (_) {}
+  if (going && btn) awBurst(btn, { c: '#ffc23d', c2: '#b9650f' });
+  if (document.getElementById('aw-overlay') && document.getElementById('aw-overlay').classList.contains('open')) paintAwards(); renderAwardsCard();
+}
+function openDrinks() { openAwards(AWARDS.length); AW.phase = 'drinks'; paintAwards(); }
+function drinksCardHtml() {
+  if (!awSee() || Date.now() > new Date(EVENT.date + 'T23:59:00+03:00').getTime()) return '';
+  const m = evMine(), n = evData().total || 0, admin = VOTER && VOTER.isAdmin;
+  return `<div class="ev-card"><button class="ev-card-main" onclick="openDrinks()">${STEIN_ART}<span class="ev-card-t"><span class="aw-card-k" style="color:#ffc23d">${AWARDS_LIVE ? 'End of year drinks' : 'Preview · only you can see this'}</span><b>${EVENT.place}</b><small>${EVENT.day} · awards night${n ? ` · ${n} going` : ''}</small></span>
+      <span class="ev-card-go${m ? (m.going ? ' in' : ' out') : ''}">${m ? (m.going ? `In${m.guests ? ' +' + m.guests : ''} ✓` : 'Out') : 'RSVP'}</span></button>
+    ${admin ? `<button class="ev-present" onclick="openReveal()">Present the awards on the night →</button>` : ''}</div>`;
+}
+/* ── Live reveal for the night: full screen, tap through. Each award: intro → 3rd → 2nd → drumroll → winner. Admin only. ── */
+const REVEAL_ORDER = ['signing', 'improved', 'hype', 'celebration', 'teammate', 'magic', 'wall', 'goal', 'boot', 'poty'];
+let RV = null;
+async function openReveal() {
+  if (!(VOTER && VOTER.isAdmin)) return;
+  let ov = document.getElementById('rv-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.className = 'overlay aw-ov rv-ov'; ov.id = 'rv-overlay'; document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="aw-stage rv-load"><div class="aw-kicker">Loading the envelopes…</div></div>`; ov.classList.add('open'); document.body.style.overflow = 'hidden';
+  let res; try { res = await api(null, { action: 'awardsResults', t: TOKEN }); } catch (e) { res = { ok: false }; }
+  let results = res && res.ok ? res.results : null, rehearsal = !results;
+  if (rehearsal) { results = {}; AWARDS.forEach(a => { const pool = awNominees(a).map(x => x.p.name).sort(() => Math.random() - .5).slice(0, 3), v = [46, 31, 23]; results[a.k] = { votes: 24, top: pool.map((name, i) => ({ name, pct: v[i] })) }; }); }
+  const steps = [{ t: 'title' }];
+  REVEAL_ORDER.forEach(k => { const a = AWARDS.find(x => x.k === k), r = results[k]; if (!a || !r || !r.top || !r.top.length) return;
+    steps.push({ t: 'intro', a, r }); if (r.top[2]) steps.push({ t: 'place', a, r, i: 2 }); if (r.top[1]) steps.push({ t: 'place', a, r, i: 1 }); steps.push({ t: 'drum', a, r }); steps.push({ t: 'win', a, r }); });
+  steps.push({ t: 'end' });
+  RV = { steps, i: 0, rehearsal }; paintReveal();
+}
+function closeReveal() { const ov = document.getElementById('rv-overlay'); if (ov) ov.classList.remove('open'); document.body.style.overflow = ''; RV = null; }
+function rvGo(d) { if (!RV) return; RV.i = Math.max(0, Math.min(RV.steps.length - 1, RV.i + d)); paintReveal(); }
+function paintReveal() {
+  const ov = document.getElementById('rv-overlay'); if (!ov || !RV) return;
+  const s = RV.steps[RV.i], a = s.a, P = n => ALL_PLAYERS.find(p => p.name === n), ph = n => { const p = P(n); return p ? photo(p, 'avatar') : `<span class="avatar ph"><span class="fb">${esc(n[0] || '?')}</span></span>`; };
+  ov.style.setProperty('--a', a ? a.c : '#f5c451'); ov.style.setProperty('--a2', a ? a.c2 : '#b9771a');
+  const chrome = `<button class="aw-x solo" onclick="closeReveal()" aria-label="Close">✕</button>${RV.rehearsal ? '<div class="rv-tag">Rehearsal · made-up results · real ones unlock when voting closes</div>' : ''}<div class="rv-prog"><i style="width:${RV.i / (RV.steps.length - 1) * 100}%"></i></div>`;
+  let body = '';
+  if (s.t === 'title') body = `<div class="aw-fan">${AWARDS.map((x, i) => `<span style="--i:${i - (AWARDS.length - 1) / 2};--a:${x.c}">${awArt(x, 'fan')}</span>`).join('')}</div><div class="aw-kicker">Wednesday 9–10 · ${EVENT.place}</div><h2 class="aw-h rv-big">The 2026<br>Awards</h2><p class="aw-blurb">${AWARDS.length} trophies, voted by the lads.</p>`;
+  else if (s.t === 'intro') body = `<div class="rv-halo">${awArt(a, 'big')}</div><div class="aw-kicker">Award ${REVEAL_ORDER.indexOf(a.k) + 1} of ${AWARDS.length}</div><h2 class="aw-h rv-big">${a.t}</h2><p class="aw-blurb">${a.d}</p>`;
+  else if (s.t === 'place') { const x = s.r.top[s.i]; body = `<div class="aw-kicker">${a.t}</div><div class="rv-place">${s.i === 2 ? 'Third' : 'Second'}</div><div class="rv-ph p${s.i}">${ph(x.name)}</div><h2 class="aw-h rv-name">${esc(x.name)}</h2><div class="rv-pct num">${x.pct}% of the votes</div>`; }
+  else if (s.t === 'drum') body = `<div class="rv-halo pulse">${awArt(a, 'big')}</div><div class="aw-kicker">${a.t}</div><h2 class="aw-h rv-big rv-drum">And the winner is…</h2>`;
+  else if (s.t === 'win') { const x = s.r.top[0]; body = `<div class="aw-rays"></div><div class="rv-crown">${awArt(a, 'big')}</div><div class="rv-ph win">${ph(x.name)}</div><div class="aw-kicker">${a.t} 2026</div><h2 class="aw-h rv-name rv-winner">${esc(x.name)}</h2><div class="rv-pct num">${x.pct}% of the votes</div>
+      <div class="rv-pod">${[1, 2].filter(i => s.r.top[i]).map(i => `<span>${ph(s.r.top[i].name)}<b>${esc(s.r.top[i].name)}</b><small>${i === 1 ? '2nd' : '3rd'} · ${s.r.top[i].pct}%</small></span>`).join('')}</div>`; }
+  else body = `<div class="aw-seal big" style="animation:none"><span>W</span><small>9–10 · 2026</small></div><h2 class="aw-h rv-big">Cheers, lads</h2><p class="aw-blurb">2026 Wrapped drops at midnight.</p>`;
+  ov.innerHTML = `<div class="aw-stage rv rv-s-${s.t} in-r" onclick="if (!event.target.closest('button')) rvGo(1)">${chrome}<div class="rv-body">${body}</div><div class="rv-hint">Tap anywhere · ← → keys</div></div>`;
+  if (s.t === 'win') setTimeout(() => { awConfetti(); const w = document.querySelector('.rv-ph.win'); if (w) awBurst(w, a); }, 350);
+}
+document.addEventListener('keydown', e => { if (!RV) return; if (e.key === 'Escape') closeReveal(); else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); rvGo(1); } else if (e.key === 'ArrowLeft') rvGo(-1); });
 /* ── No photo yet: a pop-up on opening the site, once per visit, snoozed 2 days by "Later". Purely for how the app looks. ── */
 function maybePhotoPop(me) {
   if (!me || !VOTER || !VOTER.ok || VOTER.pending || photoSrc(me) || document.getElementById('ph-overlay')) return false;

@@ -101,7 +101,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles', 'Push', 'PushLog', 'Tweaks'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles', 'Push', 'PushLog', 'Tweaks', 'Awards', 'Drinks'].forEach(bust_); cache_().remove('players'); }
 
 /** One-off: strips what could link a ballot to a voter from data written before Version 20. Voters keep only a rough
  *  "rated" band (no last-vote time), ballot and check-in times become the day only, and ballot rows are shuffled so
@@ -167,6 +167,8 @@ function doPost(e) {
     if (body.action === 'withdraw') return json_(withdraw_(body));
     if (body.action === 'setHours') return json_(setHours_(body));
     if (body.action === 'award') return json_(award_(body));
+    if (body.action === 'awardsResults') return json_(awardsResults_(body));
+    if (body.action === 'rsvp') return json_(rsvp_(body));
     if (body.action === 'setFormat') return json_(setFormat_(body));
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
     if (body.action === 'setProfile') return json_(setProfile_(body));
@@ -231,7 +233,7 @@ function me_(token) {
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), tweaks: isAdmin_(name) ? tweaks_() : undefined, voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), strikes: myStrikes_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null, awards: myAwards_(token) };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), tweaks: isAdmin_(name) ? tweaks_() : undefined, voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), strikes: myStrikes_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null, awards: myAwards_(token), rsvp: myRsvp_(name) };
 }
 
 /* ───────── top-ups ─────────
@@ -416,7 +418,7 @@ function buildResults_() {
   try { liftCards_(cur, formBoosts_(games, players_()), win); } catch (e) { console.error('liftCards_ ' + e); }
   try { applyTweaks_(cur); } catch (e) { console.error('applyTweaks_ ' + e); }
   const out = { ok: true, window: win, open: open, minVotes: MIN_VOTES, priorWeight: PRIOR_WEIGHT, requireCode: !!String(settings_().claim_code || '').trim(), photos: photos_(), claimed: claimedNames_(), players: strip(cur), prev: prevWin ? strip(aggregate_(all.filter(function (r) { return r[0] === prevWin; }), seeds)) : {}, prevWindow: prevWin };
-  out.game = gamePublic_(); out.motm = motmTally_(); out.games = games; out.awards = awardsPublic_();
+  out.game = gamePublic_(); out.motm = motmTally_(); out.games = games; out.awards = awardsPublic_(); out.drinks = drinksPublic_();
   const lg = lastGame_(), ng = nextGame_(); out.last = lg ? gamePublic_(lg) : null; out.next = ng ? gamePublic_(ng) : null; out.fixtures = fixturesPublic_(); out.strikes = strikesPublic_(); out.footReviews = footReviews_(); out.profiles = profiles_();
   out.ballots = tab_('Voters').filter(function (r) { return r[3] && String(r[5] || '') && String(r[5]) !== '0'; }).length;   // people who have voted (a voter can hold an older anonymous ballot and a newer named one, so ballot ids would count them twice)
   const js = JSON.stringify(out); cache_().put('results', js, 300); cache_().put('results_stale', js, 21600);
@@ -890,7 +892,8 @@ function signup_(body) {
    award per ballot; a resubmission replaces the ballot. Nobody can see who picked whom. Results (top 3 with share of the vote)
    are only sent once voting has closed; until then only the number of people who have voted. */
 const AWARDS_ = ['poty', 'boot', 'goal', 'wall', 'magic', 'celebration', 'teammate', 'hype', 'improved', 'signing'];
-const AWARDS_CLOSE_ = '2026-12-01T23:00:00+03:00';
+const AWARDS_CLOSE_ = '2026-12-06T23:00:00+03:00';   // voting closes Sun 6 Dec, 11pm
+const AWARDS_PUBLIC_ = '2026-12-10T00:00:00+03:00';  // handed out at the drinks on Wed 9 Dec; public on the site (and in Wrapped) from midnight after
 function awardsOpen_() { return Date.now() < new Date(AWARDS_CLOSE_).getTime(); }
 function awardBallot_(t) { return sha_('awards|' + t); }
 function award_(body) {
@@ -917,10 +920,46 @@ function myAwards_(t) {
 function awardsPublic_() {
   const rows = ss_().getSheetByName('Awards') ? tab_('Awards') : [], ballots = {}; rows.forEach(function (r) { ballots[r[1]] = 1; });
   const out = { keys: AWARDS_, closes: AWARDS_CLOSE_, open: awardsOpen_(), voters: Object.keys(ballots).length };
-  if (!out.open) { out.results = {}; AWARDS_.forEach(function (k) { const c = {}, tot = rows.filter(function (r) { return r[2] === k; });
-    tot.forEach(function (r) { c[r[3]] = (c[r[3]] || 0) + 1; });
-    out.results[k] = Object.keys(c).sort(function (a, b) { return c[b] - c[a] || a.localeCompare(b); }).slice(0, 3).map(function (n) { return { name: n, pct: Math.round(100 * c[n] / tot.length) }; }); }); }
+  if (Date.now() >= new Date(AWARDS_PUBLIC_).getTime()) out.results = awardsTally_(rows);   // nobody sees winners before the night
   return out;
+}
+function awardsTally_(rows) {
+  rows = rows || (ss_().getSheetByName('Awards') ? tab_('Awards') : []); const out = {};
+  AWARDS_.forEach(function (k) { const c = {}, tot = rows.filter(function (r) { return r[2] === k; });
+    tot.forEach(function (r) { c[r[3]] = (c[r[3]] || 0) + 1; });
+    out[k] = { votes: tot.length, top: Object.keys(c).sort(function (a, b) { return c[b] - c[a] || a.localeCompare(b); }).slice(0, 3).map(function (n) { return { name: n, n: c[n], pct: Math.round(100 * c[n] / tot.length) }; }) }; });
+  return out;
+}
+/** Admin only, and only once voting has closed: the top 3 for every award, to prepare for (and present at) the drinks. */
+function awardsResults_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  if (awardsOpen_()) return { ok: false, closed: false, error: 'Results unlock when voting closes (Sun 6 Dec, 11pm).' };
+  return { ok: true, results: awardsTally_() };
+}
+/* ───────── end-of-year drinks RSVP ─────────
+   Drinks tab: ts, name, going (1/0), guests. One row per person, rewritten on each answer. */
+function rsvp_(body) {
+  const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
+  const going = !!body.going, guests = going ? Math.max(0, Math.min(3, parseInt(body.guests, 10) || 0)) : 0;
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const sh = sheet_('Drinks'); if (sh.getLastRow() === 0) sh.appendRow(['ts', 'name', 'going', 'guests']);
+    const data = sh.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) if (String(data[i][1]).toLowerCase() === me.toLowerCase()) sh.deleteRow(i + 1);
+    sh.appendRow(["'" + new Date().toISOString(), me, going ? 1 : 0, guests]);
+  } finally { lock.releaseLock(); }
+  bust_('Drinks'); cache_().remove('results');
+  return { ok: true, drinks: drinksPublic_(), mine: { going: going, guests: guests } };
+}
+function drinksPublic_() {
+  const rows = ss_().getSheetByName('Drinks') ? tab_('Drinks') : [], going = rows.filter(function (r) { return Number(r[2]) === 1; });
+  return { going: going.map(function (r) { return { name: String(r[1]), guests: Number(r[3]) || 0 }; }), out: rows.filter(function (r) { return Number(r[2]) !== 1; }).length,
+           total: going.reduce(function (t, r) { return t + 1 + (Number(r[3]) || 0); }, 0) };
+}
+function myRsvp_(name) {
+  if (!ss_().getSheetByName('Drinks')) return null;
+  const r = tab_('Drinks').filter(function (x) { return String(x[1]).toLowerCase() === name.toLowerCase(); })[0];
+  return r ? { going: Number(r[2]) === 1, guests: Number(r[3]) || 0 } : null;
 }
 function setHours_(body) {
   const me = voterName_(body.t); if (!me) return { ok: false, error: 'Find your card first.' };
