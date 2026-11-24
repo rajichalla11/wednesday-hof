@@ -3036,6 +3036,8 @@ const AWARDS = [
   { k: 'signing', t: 'Signing of the Season', d: 'Best newcomer of 2026. Where were they all this time?', c: '#5fd3ff', c2: '#0e7fae', fresh: true },
 ];
 const AW_CLOSE = new Date('2026-12-01T23:00:00+03:00').getTime();
+/* Off until the awards are finalised: only the admin sees the card (as a preview); no pop-up for anyone. Flip to true to launch. */
+const AWARDS_LIVE = false, awSee = () => AWARDS_LIVE || !!(VOTER && VOTER.isAdmin);
 /* Trophy art, drawn to a 64×64 box. Filled with the award's metallic gradient (#aw-g-<key>), outlined a shade darker. */
 const AW_ART = {
   poty: `<path d="M21 9h22v11c0 9-5 15-11 15S21 29 21 20z"/><path class="ln" d="M21 13h-6c0 8 3 12 8 12M43 13h6c0 8-3 12-8 12"/><path d="M29 35h6v6h-6z"/><path d="M22 43h20l2 9H20z"/><path class="hi" d="M32 13l2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7z"/>`,
@@ -3159,7 +3161,7 @@ async function sendAwards(btn) {
 }
 /* Pops up once per visit until you've voted (after the photo prompt, never on top of another pop-up) */
 function maybeAwardsPop() {
-  if (!awOpen() || (awDone() && !awNeedsNew()) || !TOKEN || !VOTER || !VOTER.ok || VOTER.pending) return;
+  if (!AWARDS_LIVE || !awOpen() || (awDone() && !awNeedsNew()) || !TOKEN || !VOTER || !VOTER.ok || VOTER.pending) return;
   try { if (sessionStorage.getItem('w910_aw')) return; } catch (_) { return; }
   let tries = 0;
   const go = () => { if (document.querySelector('.overlay.open') || document.getElementById('ph-overlay')) { if (++tries < 60) setTimeout(go, 2500); return; }
@@ -3169,11 +3171,11 @@ function maybeAwardsPop() {
 }
 /* The card on Home (above your box) while voting is open */
 function awardsCardHtml() {
-  if (!awOpen()) return '';
+  if (!awOpen() || !awSee()) return '';
   const fresh3 = awNeedsNew(), done = awDone() && !fresh3, days = Math.max(0, Math.ceil((AW_CLOSE - Date.now()) / 86400000)), voters = RATINGS && RATINGS.awards && RATINGS.awards.voters;
   return `<button class="aw-card${done ? ' done' : ''}" onclick="openAwards(${fresh3 ? 1 : ''})">
     <span class="aw-card-row">${AWARDS.map(a => `<span style="--a:${a.c}">${awArt(a, 'card')}</span>`).join('')}</span>
-    <span class="aw-card-t"><span class="aw-card-k">The 2026 Awards · ${days} day${days === 1 ? '' : 's'} left</span><b>${done ? 'Ballot sealed ✓' : fresh3 ? '3 new awards to vote on' : 'Pick this year’s winners'}</b><small>${done ? 'Tap to change your picks · winners revealed Thu 3 Dec' : `7 trophies · 1 minute · anonymous${voters ? ` · ${voters} voted` : ''}`}</small></span>
+    <span class="aw-card-t"><span class="aw-card-k">${AWARDS_LIVE ? `The 2026 Awards · ${days} day${days === 1 ? '' : 's'} left` : 'Preview · only you can see this'}</span><b>${done ? 'Ballot sealed ✓' : fresh3 ? '3 new awards to vote on' : 'Pick this year’s winners'}</b><small>${done ? 'Tap to change your picks · winners revealed Thu 3 Dec' : `7 trophies · 1 minute · anonymous${voters ? ` · ${voters} voted` : ''}`}</small></span>
     <span class="aw-card-go">${done ? 'Edit' : 'Vote'}</span></button>`;
 }
 function renderAwardsCard() { const el = document.getElementById('aw-home'); if (el) el.innerHTML = awardsCardHtml(); }
