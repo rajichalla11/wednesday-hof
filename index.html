@@ -3114,12 +3114,9 @@ function repaintProfile() {
 const AWARDS = [
   { k: 'poty', t: 'Player of the Year', d: 'The best of 2026. The one you’d pick first, every time.', c: '#f5c451', c2: '#b9771a' },
   { k: 'boot', t: 'Golden Boot', d: 'Deadliest finisher. Half a chance, back of the net.', c: '#ff9a3c', c2: '#c2410c' },
-  { k: 'goal', t: 'Goal of the Season', d: 'Who scored the one we’re still talking about?', c: '#b8f04a', c2: '#4d7c0f' },
   { k: 'wall', t: 'The Wall', d: 'Nothing gets past. The defender everyone wants behind them.', c: '#7fb2ff', c2: '#2b5fb8' },
   { k: 'magic', t: 'The Magician', d: 'Skills, nutmegs, the stuff you talk about on the way home.', c: '#c49bff', c2: '#7240d6' },
-  { k: 'celebration', t: 'Best Celebration', d: 'Knee slides, shushes, the full Ronaldo. Pure cinema.', c: '#ff6ad5', c2: '#a3127f' },
   { k: 'teammate', t: 'Best Teammate', d: 'Passes, shouts encouragement, lifts everyone. Never sulks.', c: '#ff7d9d', c2: '#c0335a' },
-  { k: 'hype', t: 'The Hype Man', d: 'First to gee everyone up. Loudest voice on the pitch and in the chat.', c: '#ff6a4d', c2: '#b5281a' },
   { k: 'improved', t: 'Most Improved', d: 'Not the same player who started the year.', c: '#4fe0a0', c2: '#14855a' },
   { k: 'signing', t: 'Signing of the Season', d: 'Best newcomer of 2026. Where were they all this time?', c: '#5fd3ff', c2: '#0e7fae', fresh: true },
 ];
@@ -3195,8 +3192,8 @@ function paintAwards() {
     ov.innerHTML = `<div class="aw-stage aw-intro ${anim}"><button class="aw-x solo" onclick="closeAwards()" aria-label="Close">✕</button>
       <div class="aw-fan">${AWARDS.map((a, i) => `<span style="--i:${i - (AWARDS.length - 1) / 2};--a:${a.c}">${awArt(a, 'fan')}</span>`).join('')}</div>
       <div class="aw-kicker">Wednesday 9–10 presents</div><h2 class="aw-h">The 2026<br>Awards</h2>
-      <p class="aw-blurb">Ten trophies. You pick the winners.<br>Winners are handed out at the end-of-year drinks, <b>Kraftory Biergarten, Wed 9 Dec</b>.</p>
-      <div class="aw-chips"><span>10 awards</span><span>~2 minutes</span><span>100% anonymous</span></div>
+      <p class="aw-blurb">Seven trophies. You pick the winners.<br>Winners are handed out at the end-of-year drinks, <b>Kraftory Biergarten, Wed 9 Dec</b>.</p>
+      <div class="aw-chips"><span>${AWARDS.length} awards</span><span>~1 minute</span><span>100% anonymous</span></div>
       <button class="aw-cta" onclick="awGo(0, 1)">Start voting</button>
       <small class="aw-fine">${days} day${days === 1 ? '' : 's'} left${voters ? ` · ${voters} already voted` : ''}</small></div>`;
     return;
@@ -3311,7 +3308,7 @@ function awardsCardHtml() {
       <span class="aw-card-go">Peek</span></button>`; }
   return `<button class="aw-card" onclick="openAwards(${fresh3 ? 1 : ''})">
     <span class="aw-card-row">${AWARDS.map(a => `<span style="--a:${a.c}">${awArt(a, 'card')}</span>`).join('')}</span>
-    <span class="aw-card-t"><span class="aw-card-k">${AWARDS_LIVE ? `The 2026 Awards · ${days} day${days === 1 ? '' : 's'} left` : 'Preview · only you can see this'}</span><b>${fresh3 ? 'New awards to vote on' : 'Pick this year’s winners'}</b><small>${AWARDS.length} trophies · 2 minutes · anonymous${voters ? ` · ${voters} voted` : ''}</small></span>
+    <span class="aw-card-t"><span class="aw-card-k">${AWARDS_LIVE ? `The 2026 Awards · ${days} day${days === 1 ? '' : 's'} left` : 'Preview · only you can see this'}</span><b>${fresh3 ? 'New awards to vote on' : 'Pick this year’s winners'}</b><small>${AWARDS.length} trophies · 1 minute · anonymous${voters ? ` · ${voters} voted` : ''}</small></span>
     <span class="aw-card-go">Vote</span></button>`;
 }
 function renderAwardsCard() { const el = document.getElementById('aw-home'); if (el) el.innerHTML = awardsCardHtml() + drinksCardHtml(); }
@@ -3362,7 +3359,7 @@ function drinksCardHtml() {
     ${admin ? `<button class="ev-present" onclick="openReveal()">Present the awards on the night →</button>` : ''}</div>`;
 }
 /* ── Live reveal for the night: full screen, tap through. Each award: intro → 3rd → 2nd → drumroll → winner. Admin only. ── */
-const REVEAL_ORDER = ['signing', 'improved', 'hype', 'celebration', 'teammate', 'magic', 'wall', 'goal', 'boot', 'poty'];
+const REVEAL_ORDER = ['signing', 'improved', 'teammate', 'magic', 'wall', 'boot', 'poty'];
 let RV = null;
 async function openReveal() {
   if (!(VOTER && VOTER.isAdmin)) return;

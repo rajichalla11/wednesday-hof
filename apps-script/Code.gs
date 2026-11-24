@@ -891,7 +891,7 @@ function signup_(body) {
    Awards tab: day, ballot (sha of 'awards|' + token, so it can't be matched to any other table), award key, pick. One pick per
    award per ballot; a resubmission replaces the ballot. Nobody can see who picked whom. Results (top 3 with share of the vote)
    are only sent once voting has closed; until then only the number of people who have voted. */
-const AWARDS_ = ['poty', 'boot', 'goal', 'wall', 'magic', 'celebration', 'teammate', 'hype', 'improved', 'signing'];
+const AWARDS_ = ['poty', 'boot', 'wall', 'magic', 'teammate', 'improved', 'signing'];
 const AWARDS_CLOSE_ = '2026-12-06T23:00:00+03:00';   // voting closes Sun 6 Dec, 11pm
 const AWARDS_PUBLIC_ = '2026-12-10T00:00:00+03:00';  // handed out at the drinks on Wed 9 Dec; public on the site (and in Wrapped) from midnight after
 function awardsOpen_() { return Date.now() < new Date(AWARDS_CLOSE_).getTime(); }
