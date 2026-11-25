@@ -1337,6 +1337,26 @@
   .rv .aw-fan span:nth-child(4) { transform: translateX(calc(var(--i) * clamp(30px, 7.5vh, 96px))) translateY(calc(var(--i) * var(--i) * .5vh)) rotate(calc(var(--i) * 8deg)); }
   .rv-tag { font-size: clamp(11px, 1.6vh, 16px); } .rv-hint { font-size: clamp(11px, 1.5vh, 15px); }
   .rv-s-end .aw-seal.big { width: clamp(130px, 26vh, 280px); height: clamp(130px, 26vh, 280px); margin: 0 auto 2vh; } .rv-s-end .aw-seal.big span { font-size: clamp(56px, 12vh, 130px); }
+  /* The Manager card (History): obsidian and gold, same shield cut as the player cards */
+  .mgr { display: flex; align-items: center; gap: 22px; margin: 22px 0 4px; padding: 18px; border-radius: 18px; border: 1px solid rgba(227,192,98,.35); background: radial-gradient(90% 120% at 0% 0%, rgba(227,192,98,.14), transparent 60%), var(--surface); }
+  .mgr-card { --cut: polygon(0 4.2%, 7% 0, 93% 0, 100% 4.2%, 100% 94%, 50% 100%, 0 94%); position: relative; flex: none; width: 190px; padding: 0 0 22px; clip-path: var(--cut); -webkit-clip-path: var(--cut);
+    background: linear-gradient(160deg, #ffe08a, #b87a1e 30%, #ffd36b 52%, #8a4f10 78%, #f2b84b); color: #f6e7c1; filter: drop-shadow(0 14px 24px rgba(0,0,0,.5)); }
+  .mgr-face { position: absolute; inset: 3px; clip-path: var(--cut); -webkit-clip-path: var(--cut); background: radial-gradient(120% 60% at 50% 0%, rgba(227,192,98,.22), transparent 60%), repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 2px, transparent 2px 7px), linear-gradient(170deg, #1d1a15, #0b0a09 55%, #17120a); }
+  .mgr-face::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,225,150,.16) 47%, transparent 58%); background-size: 260% 100%; animation: awShine 5s ease-in-out infinite; }
+  .mgr-card > :not(.mgr-face) { position: relative; z-index: 1; }
+  .mgr-top { display: flex; gap: 6px; padding: 18px 12px 0 10px; } .mgr-l { display: grid; justify-items: center; gap: 3px; width: 54px; flex: none; padding-top: 6px; }
+  .mgr-l b { font-size: 19px; font-weight: 900; letter-spacing: .02em; color: #e3c062; line-height: 1; } .mgr-l span { font-size: 6.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: rgba(246,231,193,.6); }
+  .mgr-l i { width: 26px; height: 1px; background: rgba(227,192,98,.5); margin: 4px 0; } .mgr-l svg { width: 22px; height: 22px; fill: none; stroke: #e3c062; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+  .mgr-ph { position: relative; flex: 1; height: 112px; border-radius: 8px; overflow: hidden; background: linear-gradient(160deg, #2a241b, #141210); display: grid; place-items: center; -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent); mask-image: linear-gradient(to bottom, #000 70%, transparent); }
+  .mgr-ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; z-index: 1; } .mgr-ph span { font-size: 30px; font-weight: 800; color: rgba(227,192,98,.45); }
+  .mgr-name { margin: 6px 12px 0; padding: 6px 0; text-align: center; font-size: 15px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: #fff3d0; border-top: 1px solid rgba(227,192,98,.35); border-bottom: 1px solid rgba(227,192,98,.35); }
+  .mgr-stats { display: grid; grid-template-columns: 1fr 1fr; margin: 8px 12px 0; } .mgr-stats div { display: grid; justify-items: center; gap: 2px; text-align: center; } .mgr-stats div + div { border-left: 1px solid rgba(227,192,98,.25); }
+  .mgr-stats b { font-size: 20px; color: #e3c062; line-height: 1; } .mgr-stats span { font-size: 7.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(246,231,193,.6); max-width: 70px; line-height: 1.25; }
+  .mgr-traits { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 9px 10px 0; } .mgr-traits span { font-size: 7.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid rgba(227,192,98,.5); color: #f3d98a; }
+  .mgr-foot { margin-top: 9px; text-align: center; font-size: 7.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: rgba(246,231,193,.5); }
+  .mgr-side { display: grid; gap: 6px; align-content: center; min-width: 0; } .mgr-side .label { color: var(--gold); } .mgr-side b { font-size: 22px; font-weight: 800; } .mgr-side p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--fg-2); } .mgr-side .btn { justify-self: start; margin-top: 4px; } .mgr-side small { font-size: 12px; color: var(--fg-3); }
+  @media (max-width: 480px) { .mgr { flex-direction: column; text-align: center; } .mgr-side { justify-items: center; } .mgr-side .btn { justify-self: center; } }
+  @media (prefers-reduced-motion: reduce) { .mgr-face::after { animation: none; } }
   .me-ph { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
   .me-ph-c { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 2px dashed var(--gold); color: var(--gold); font-size: 22px; font-weight: 300; animation: phPulse 2.4s ease-in-out infinite; }
   .me-ph > span:nth-child(2) { flex: 1; display: grid; gap: 2px; } .me-ph b { font-size: 14.5px; color: var(--gold); } .me-ph small { font-size: 12px; color: var(--fg-2); } .me-ph .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
@@ -1684,6 +1704,7 @@
     <div class="stat"><b class="num" id="s-players">—</b><div class="label">Players</div></div>
   </div>
 
+  <div id="mgr-wrap"></div>
   <div class="seg hist-seg" id="hist-seg"><button data-sub="week">In form</button><button data-sub="stats">Stats<i class="new-dot"></i></button><button data-sub="records" class="on">Records</button><button data-sub="wall"><span class="long">Century Wall</span><span class="short">Wall</span></button><button data-sub="timeline">Season</button></div>
   <section class="hsec" id="panel-week">
     <div class="sh"><h2>In-form team</h2><span id="totw-sub">Best average match rating over the last 4 games</span></div>
@@ -3430,6 +3451,35 @@ function paintReveal() {
   if (s.t === 'win') setTimeout(() => { awConfetti(); const w = document.querySelector('.rv-ph.win'); if (w) awBurst(w, a); }, 350);
 }
 document.addEventListener('keydown', e => { if (!RV) return; if (e.key === 'Escape') closeReveal(); else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); rvGo(1); } else if (e.key === 'ArrowLeft') rvGo(-1); });
+/* ── The Manager: Sagar Dave, Aarav's dad, on the touchline every week. Not a player, so no stats; his own card in History. ── */
+const MANAGER = { name: 'Sagar Dave', son: 'Aarav', traits: ['Tactician', 'Touchline legend', 'Never misses a game'] };
+function mgrPhoto() { const id = RATINGS && RATINGS.ok && RATINGS.photos && RATINGS.photos[MANAGER.name]; return id ? (/^(data:|https?:)/.test(id) ? id : `https://lh3.googleusercontent.com/d/${id}=w600`) : ''; }
+function renderManager() {
+  const el = document.getElementById('mgr-wrap'); if (!el) return;
+  const ph = mgrPhoto(), admin = !!(VOTER && VOTER.isAdmin), son = ALL_PLAYERS.find(p => p.name === MANAGER.son), first = son && son.firstIdx >= 0 && SESSIONS[son.firstIdx];
+  const since = first && first.year ? first.year : 2023, yrs = Math.max(1, new Date().getFullYear() - since + 1);   // on the touchline since his son's first game
+  el.innerHTML = `<div class="mgr">
+    <div class="mgr-card">
+      <div class="mgr-face"></div>
+      <div class="mgr-top"><div class="mgr-l"><b>MGR</b><span>Touchline</span><i></i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v3H9z"/><rect x="5" y="5" width="14" height="17" rx="2"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4"/></svg></div>
+        <div class="mgr-ph">${ph ? `<img src="${esc(ph)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span>SD</span></div></div>
+      <div class="mgr-name">${esc(MANAGER.name)}</div>
+      <div class="mgr-stats"><div><b class="num">${since}</b><span>On the touchline since</span></div><div><b class="num">${yrs}</b><span>Seasons watching</span></div></div>
+      <div class="mgr-traits">${MANAGER.traits.map(t => `<span>${esc(t)}</span>`).join('')}</div>
+      <div class="mgr-foot">Manager · Wednesday 9–10</div>
+    </div>
+    <div class="mgr-side"><span class="label">The Manager</span><b>${esc(MANAGER.name)}</b><p>On the touchline week in, week out. Every team needs a gaffer.</p>
+      ${admin ? `<input type="file" id="mgr-file" accept="image/*" hidden onchange="mgrUpload(this)"><button class="btn ghost" onclick="document.getElementById('mgr-file').click()">${ph ? 'Change photo' : 'Add his photo'}</button><small id="mgr-st"></small>` : ''}</div>
+  </div>`;
+}
+async function mgrUpload(input) {
+  const file = input.files && input.files[0]; if (!file) return; input.value = '';
+  const st = document.getElementById('mgr-st'); if (st) st.textContent = 'Uploading…';
+  try { const data = await shrinkImage(file, 720), res = await api(null, { action: 'photo', t: TOKEN, name: MANAGER.name, data });
+    if (!res.ok) throw new Error(res.error || 'Upload failed');
+    RATINGS.photos = Object.assign({}, RATINGS.photos, { [MANAGER.name]: data }); renderManager(); RATINGS_AT = 0; fetchResults().then(renderManager).catch(() => {});
+  } catch (e) { if (st) st.textContent = e.message; }
+}
 /* ── No photo yet: a pop-up on opening the site, once per visit, snoozed 2 days by "Later". Purely for how the app looks. ── */
 function maybePhotoPop(me) {
   if (!me || !VOTER || !VOTER.ok || VOTER.pending || photoSrc(me) || document.getElementById('ph-overlay')) return false;
@@ -4631,6 +4681,7 @@ function lastCardHtml(L, onclick, label) {
 /* Home, top to bottom: straight after a game the rate panel takes over until voting closes at 11am; otherwise your next game,
    the open games (one card each, tap to open), the last result in one line, then your card. */
 function renderGameday() {
+  try { renderManager(); } catch (e) { console.error(e); }
   try { renderAwardsCard(); } catch (e) { console.error(e); }
   try { renderMatches(); } catch (e) { console.error(e); }
   try { renderWeek(); } catch (e) { console.error(e); }
