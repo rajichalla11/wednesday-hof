@@ -1363,6 +1363,13 @@
   .mgr-act-ic { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 12px; background: rgba(227,192,98,.12); color: var(--gold); font-size: 18px; }
   .mgr-act > span:nth-child(2) { flex: 1; display: grid; gap: 2px; min-width: 0; } .mgr-act b { font-size: 15px; } .mgr-act small { font-size: 12px; color: var(--fg-3); } .mgr-act .fx-chev { transform: rotate(-45deg); }
   .mgr-acct { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; margin: 18px 0 4px; } .mgr-acct small { width: 100%; text-align: center; font-size: 12px; color: var(--fg-3); }
+  .mgr-games { margin-top: 14px; display: grid; gap: 8px; } .mgr-sh { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 2px 0; } .mgr-sh .btn { font-size: 12.5px; }
+  .mgr-game { display: grid; gap: 10px; padding: 14px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--surface); cursor: pointer; }
+  .mgr-game.today { border-color: rgba(227,192,98,.6); background: linear-gradient(160deg, rgba(227,192,98,.14), var(--surface) 70%); }
+  .mgr-g-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; } .mgr-g-when { display: grid; gap: 3px; min-width: 0; } .mgr-g-when b { font-size: 16px; } .mgr-g-when small { font-size: 12px; color: var(--fg-3); }
+  .mgr-game .fx-rel { margin: 0; flex: none; } .mgr-g-mid { display: flex; align-items: center; gap: 10px; } .mgr-g-n { flex: 1; font-size: 13px; color: var(--fg-2); } .mgr-g-n b { font-size: 16px; color: var(--fg); } .mgr-g-mid .fx-chev { transform: rotate(-45deg); }
+  .mgr-gate { margin-top: 0; } .mgr-gnote { font-size: 12px; color: var(--fg-3); }
+  .mgr-last { display: grid; gap: 3px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--surface); font: inherit; color: var(--fg); text-align: left; cursor: pointer; } .mgr-last b { font-size: 15px; } .mgr-last small { font-size: 12px; color: var(--gold); }
   .me-ph { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
   .me-ph-c { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 2px dashed var(--gold); color: var(--gold); font-size: 22px; font-weight: 300; animation: phPulse 2.4s ease-in-out infinite; }
   .me-ph > span:nth-child(2) { flex: 1; display: grid; gap: 2px; } .me-ph b { font-size: 14.5px; color: var(--gold); } .me-ph small { font-size: 12px; color: var(--fg-2); } .me-ph .fx-chev { transform: rotate(-45deg); border-color: var(--gold); }
@@ -3496,12 +3503,31 @@ function renderManager() {
       ${admin || mine ? `<input type="file" id="mgr-file" accept="image/*" hidden onchange="mgrUpload(this)"><button class="btn ghost" onclick="document.getElementById('mgr-file').click()">Change photo</button><small id="mgr-st"></small>` : ''}</div>
   </div>`;
 }
+/* The manager isn't on any list, so his pages get their own games block: every open game, who's in, teams once they're out,
+   and the gate code on the day (the same codes every claimed member gets). Kept fresh by renderGameday. */
+function mgrGamesHtml() {
+  const fx = ((RATINGS && RATINGS.ok && RATINGS.fixtures) || []).slice().sort((a, b) => koOf(a) - koOf(b)), gates = (VOTER && VOTER.gates) || {};
+  const L = RATINGS && RATINGS.ok && RATINGS.last, sc = L && L.score;
+  const rows = fx.map(f => {
+    const nIn = Math.min(f.slots, f.signups.length), today = f.date === todayNbo(), gate = gates[f.date] || (VOTER && VOTER.game && VOTER.game.date === f.date && VOTER.game.gate) || '', rel = fxRel(f.date), T = fxTeams(f);
+    const gateEl = today && gate ? `<button class="gd-gate mgr-gate" onclick="event.stopPropagation(); copyGate(this)"><span><span class="label">Gate code · tonight</span><b>${esc(gate)}</b></span><small>Tap to copy</small></button>`
+      : `<span class="mgr-gnote">${today ? 'Gate code not set yet' : 'Gate code shows on the day'}</span>`;
+    return `<div class="mgr-game${today ? ' today' : ''}" onclick="showTab('home'); fxOpen('${f.date}')">
+      <div class="mgr-g-top"><span class="mgr-g-when"><b>${esc(fxDay(f.date))} ${esc(skDate(f.date))}</b><small>${fxSpan(f)} · ${(f.nteams || 2) > 2 ? `${f.nteams} teams of ${f.size}` : `${f.size}-a-side`}</small></span>${rel ? `<em class="fx-rel${today ? ' now' : ''}">${rel}</em>` : ''}</div>
+      <div class="mgr-g-mid">${fxFaces(f)}<span class="mgr-g-n"><b class="num">${nIn}</b>/${f.slots} in${T ? ' · teams out' : ''}</span><i class="fx-chev"></i></div>
+      ${gateEl}</div>`; }).join('');
+  return `<div class="mgr-sh"><span class="label">Upcoming games</span><button class="btn link" onclick="showTab('matches')">Results →</button></div>
+    ${rows || '<div class="empty">No games open right now.</div>'}
+    ${L && sc ? `<button class="mgr-last" onclick="showTab('matches')"><span class="label">Last game · ${esc(dayOf(L))}</span><b>${resultTxt(sc)}</b>${(L.motm || []).length ? `<small>★ ${esc(L.motm.join(', '))}</small>` : ''}</button>` : ''}`;
+}
+function renderMgrGames() { if (!(VOTER && VOTER.ok && isMgr(VOTER.name))) return; document.querySelectorAll('.mgr-games').forEach(el => { el.innerHTML = mgrGamesHtml(); }); }
 /* His Home and Me pages once he's claimed the card: the card, then the things he can do */
 function managerHomeHtml(v) {
   const need = gateNeed(), done = Math.min(selfRated(), need), m = evMine(), aw = awOpen(), voted = awDone();
   const row = (ic, t, sub, on, cls) => `<button class="mgr-act${cls ? ' ' + cls : ''}" onclick="${on}"><span class="mgr-act-ic">${ic}</span><span><b>${t}</b><small>${sub}</small></span><i class="fx-chev"></i></button>`;
   return `<div class="mgr mgr-me">${mgrCardHtml()}
     <div class="mgr-side"><span class="label">Welcome, gaffer</span><b>${esc(MANAGER.name)}</b><p>You watch every game, so you can rate any of the lads.</p></div></div>
+    <div class="mgr-games">${mgrGamesHtml()}</div>
     <div class="mgr-acts">
       ${row('★', gateLocked() ? `Rate the lads · ${done} of ${need}` : 'Rate the lads', gateLocked() ? `Rate ${need - done} more to unlock everyone's ratings` : 'Change a rating any time', 'openBallot()', gateLocked() ? 'hot' : '')}
       ${aw ? row('🏆', voted ? 'Awards ballot sealed ✓' : 'Vote in the 2026 Awards', voted ? 'Tap to change your picks' : '7 trophies · 1 minute · anonymous', 'openAwards()', voted ? '' : 'hot') : ''}
@@ -4720,7 +4746,7 @@ function lastCardHtml(L, onclick, label) {
 /* Home, top to bottom: straight after a game the rate panel takes over until voting closes at 11am; otherwise your next game,
    the open games (one card each, tap to open), the last result in one line, then your card. */
 function renderGameday() {
-  try { renderManager(); } catch (e) { console.error(e); }
+  try { renderManager(); renderMgrGames(); } catch (e) { console.error(e); }
   try { renderAwardsCard(); } catch (e) { console.error(e); }
   try { renderMatches(); } catch (e) { console.error(e); }
   try { renderWeek(); } catch (e) { console.error(e); }
