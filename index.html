@@ -3292,7 +3292,7 @@ function paintAwards() {
   }
   if (AW.i >= n) {
     const k = AWARDS.filter(a => AW.picks[a.k]).length;
-    if (AW.phase === 'drinks') { ov.style.setProperty('--a', '#ffc23d'); ov.innerHTML = evScreenHtml(true); return; }
+    if (AW.phase === 'drinks') { try { sessionStorage.setItem('w910_ev', '1'); } catch (_) {} ov.style.setProperty('--a', '#ffc23d'); ov.innerHTML = evScreenHtml(true); return; }
     if (AW.phase === 'wrapped') { ov.style.setProperty('--a', '#ff6ad5'); ov.innerHTML = awWrappedHtml(); awCountdown(); return; }
     if (AW.phase === 'sealed') { ov.innerHTML = awFinaleHtml(k); awFinaleFx(); return; }
     ov.innerHTML = `<div class="aw-stage aw-review ${anim}">${awTop(Object.assign({}, AW, { i: n }))}
@@ -3380,6 +3380,7 @@ async function sendAwards(btn) {
 }
 /* Pops up once per visit until you've voted (after the photo prompt, never on top of another pop-up) */
 function maybeAwardsPop() {
+  maybeDrinksPop();
   const preview = /awards-preview/.test(location.search) && VOTER && VOTER.isAdmin;   // admin: open the site with ?awards-preview to see the takeover as players will
   if (preview) { try { sessionStorage.removeItem('w910_aw'); } catch (_) {} }
   if ((!AWARDS_LIVE && !preview) || !awOpen() || (awDone() && !awNeedsNew() && !preview) || !TOKEN || !VOTER || !VOTER.ok || VOTER.pending) return;
@@ -3389,6 +3390,17 @@ function maybeAwardsPop() {
     if (awDone() && !awNeedsNew() && !preview) return; try { if (sessionStorage.getItem('w910_aw')) return; sessionStorage.setItem('w910_aw', '1'); } catch (_) {}
     openAwards(awNeedsNew() ? AWARDS.findIndex(a => a.k === 'boot') : undefined); };
   setTimeout(go, 250);
+}
+/* Drinks RSVP pops up once per visit until you've said yes or no (after the awards pop-up, never on top of another pop-up) */
+function maybeDrinksPop() {
+  const ss = k => { try { return sessionStorage.getItem(k); } catch (_) { return '1'; } };
+  if (!AWARDS_LIVE || !evOpen() || evMine() || !TOKEN || !VOTER || !VOTER.ok || VOTER.pending || ss('w910_ev')) return;
+  const awFirst = () => awOpen() && (!awDone() || awNeedsNew()) && !ss('w910_aw');
+  let tries = 0;
+  const go = () => { if (evMine() || ss('w910_ev')) return;
+    if (document.querySelector('.overlay.open') || awFirst()) { if (++tries < 120) setTimeout(go, 1500); return; }
+    try { sessionStorage.setItem('w910_ev', '1'); } catch (_) { return; } openDrinks(); };
+  setTimeout(go, 1200);
 }
 /* The card on Home (above your box) while voting is open */
 function awardsCardHtml() {
