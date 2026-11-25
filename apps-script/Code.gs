@@ -105,7 +105,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles', 'Push', 'PushLog', 'Tweaks', 'Awards', 'Drinks'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles', 'Push', 'PushLog', 'Tweaks', 'Awards', 'Drinks', 'MgrRatings'].forEach(bust_); cache_().remove('players'); }
 
 /** One-off: strips what could link a ballot to a voter from data written before Version 20. Voters keep only a rough
  *  "rated" band (no last-vote time), ballot and check-in times become the day only, and ballot rows are shuffled so
@@ -174,6 +174,7 @@ function doPost(e) {
     if (body.action === 'awardsResults') return json_(awardsResults_(body));
     if (body.action === 'rsvp') return json_(rsvp_(body));
     if (body.action === 'clearMine') return json_(clearMine_(body));
+    if (body.action === 'mgrRate') return json_(mgrRate_(body));
     if (body.action === 'setFormat') return json_(setFormat_(body));
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
     if (body.action === 'setProfile') return json_(setProfile_(body));
@@ -238,7 +239,7 @@ function me_(token) {
   const g = gameInfo_(), gm = g.date ? { date: g.date, time: g.time, gate: g.gate, teams: g.teams, score: g.score, list: g.list, standby: g.standby, size: g.size, in: !!squad_(g.date)[name.toLowerCase()], mine: myMatch_(g.date, token) } : null;
   const lg = lastGame_(), last = lg ? { date: lg.date, mine: myMatch_(lg.date, token) } : null;
   return { ok: true, name: name, window: win, open: open, seeds: seeds, mine: mine, feedback: shuffle_(feedback), minShared: MIN_SHARED, game: gm, last: last,
-           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), tweaks: isAdmin_(name) ? tweaks_() : undefined, voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), strikes: myStrikes_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null, awards: myAwards_(token), rsvp: myRsvp_(name) };
+           traits: TRAITS, maxTraits: MAX_TRAITS, self: self, isAdmin: isAdmin_(name), tweaks: isAdmin_(name) ? tweaks_() : undefined, voteAll: voteAll_(name), topups: topupsFor_(name), footVotes: myFootVotes_(name), push: myPush_(name), strikes: myStrikes_(name), gates: fixturesPublic_().reduce(function (o, f) { const gc = gateFor_(f.date); if (gc) o[f.date] = gc; return o; }, {}), potTopups: POTS_[name.toLowerCase()] ? topupsFor_(POTS_[name.toLowerCase()]) : null, awards: myAwards_(token), rsvp: myRsvp_(name), mgrMine: isManager_(name) ? mgrMine_() : undefined };
 }
 
 /* ───────── top-ups ─────────
@@ -804,11 +805,12 @@ function gamesPublic_() {
   const now = Date.now(), raters = {}, sums = {};
   if (ss_().getSheetByName('MatchVotes')) tab_('MatchVotes').forEach(function (r) { const d = String(r[0]).slice(0, 10), k = String(r[2]); (raters[d] = raters[d] || {})[r[1]] = 1;
     const g = (sums[d] = sums[d] || {}); g[k] = g[k] || { s: 0, n: 0 }; g[k].s += Number(r[3]); g[k].n++; });
+  const mg = mgrByDate_();
   const avgs = function (d) { const out = {}, g = sums[d] || {}; Object.keys(g).forEach(function (k) { if (g[k].n >= 2) out[k] = { avg: Math.round(10 * g[k].s / g[k].n) / 10, n: g[k].n }; }); return out; };   // the form guide: each player's average from that night (2+ votes)
   return tab_('Games').map(function (r) { const split = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
     const d = String(r[0]).slice(0, 10), settled = now >= closes_(d) || !!motmOverride_(d);
     return { date: d, black: split(r[1]), white: split(r[2]), red: split(r[13]), b: r[3] === '' ? null : Number(r[3]), w: r[4] === '' ? null : Number(r[4]),
-             time: String(r[5] || '21:00').slice(0, 5) || '21:00', list: split(r[6]), size: Number(r[7]) || 6, motm: settled ? motmFor_(d) : [], raters: Object.keys(raters[d] || {}).length, ratings: avgs(d) }; })
+             time: String(r[5] || '21:00').slice(0, 5) || '21:00', list: split(r[6]), size: Number(r[7]) || 6, motm: settled ? motmFor_(d) : [], raters: Object.keys(raters[d] || {}).length, ratings: avgs(d), mgr: settled && mg[d] ? mg[d] : undefined }; })
     .filter(function (g) { return /^\d{4}-\d{2}-\d{2}$/.test(g.date); });
 }
 /* Game format (Games tab columns 10-12): how many teams, how many hours, and whether everyone on the list must reconfirm
@@ -940,6 +942,37 @@ function awardsTally_(rows) {
 }
 /** Editor only: wipe every awards ballot (used once before launch, to drop votes cast while the vote was briefly visible). */
 function resetAwards() { const sh = ss_().getSheetByName('Awards'); const n = sh ? Math.max(0, sh.getLastRow() - 1) : 0; if (n) sh.deleteRows(2, n); bust_('Awards'); cache_().remove('results'); cache_().remove('results_stale'); Logger.log('removed ' + n + ' ballot rows'); }
+/* ───────── the Manager's ratings ─────────
+   MgrRatings tab: date, target, rating 1–10, star 0/1 (his pick of the night), updated. Kept apart from MatchVotes so the
+   manager never moves the players' averages or the man of the match; shown on the match card as the Manager's rating once
+   that night's voting has closed. He can rate any game up to 7 days after kick-off (the games he watched). */
+const MGR_DAYS_ = 7;
+function mgrByDate_() {
+  const out = {}; if (!ss_().getSheetByName('MgrRatings')) return out;
+  tab_('MgrRatings').forEach(function (r) { const d = String(r[0]).slice(0, 10), o = (out[d] = out[d] || { ratings: {}, star: '' }); o.ratings[String(r[1])] = Number(r[2]); if (Number(r[3])) o.star = String(r[1]); });
+  return out;
+}
+function mgrMine_() { const all = mgrByDate_(), out = {}, cut = Date.now() - (MGR_DAYS_ + 1) * 86400000; Object.keys(all).forEach(function (d) { if (new Date(d + 'T23:59:00+03:00').getTime() >= cut) out[d] = all[d]; }); return out; }
+function mgrRate_(body) {
+  const me = voterName_(body.t); if (!me || !isManager_(me)) return { ok: false, error: 'Managers only.' };
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? String(body.date) : ''; if (!date) return { ok: false, error: 'Which game?' };
+  const g = gamesPublic_().filter(function (x) { return x.date === date; })[0]; if (!g) return { ok: false, error: 'No game on that day.' };
+  const ko = kickoff_(g).getTime(); if (Date.now() < ko) return { ok: false, error: 'You can rate once it kicks off.' };
+  if (Date.now() > ko + MGR_DAYS_ * 86400000) return { ok: false, error: 'That game is more than a week old.' };
+  const names = {}; players_().forEach(function (p) { names[p.name.toLowerCase()] = p.name; });
+  const ratings = body.ratings || {}, star = String(body.star || '').toLowerCase(), rows = [];
+  Object.keys(ratings).forEach(function (k) { const who = names[k.toLowerCase()], v = Math.round(Number(ratings[k]) * 2) / 2;
+    if (who && !isNaN(v) && v >= 1 && v <= 10) rows.push(["'" + date, who, v, who.toLowerCase() === star ? 1 : 0, today_()]); });
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const sh = sheet_('MgrRatings'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'target', 'rating', 'star', 'updated']);
+    const data = sh.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) if (String(data[i][0]).slice(0, 10) === date) sh.deleteRow(i + 1);
+    if (rows.length) sh.getRange(sh.getLastRow() + 1, 1, rows.length, 5).setValues(rows);
+  } finally { lock.releaseLock(); }
+  bust_('MgrRatings'); cache_().remove('results'); cache_().remove('results_stale');
+  return { ok: true, saved: rows.length, mine: mgrMine_() };
+}
 /** Admin only: wipe the caller's own awards ballot and drinks RSVP, so the vote opens for them again like it does for everyone. */
 function clearMine_(body) {
   const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
@@ -1752,6 +1785,7 @@ function matchRate_(body) {
   if (!name) return { ok: false, error: 'This link isn’t recognised.' };
   const g = lastGame_();
   if (!g) return { ok: false, error: nextGame_() ? 'Match ratings open at kick-off.' : 'No game set.' };
+  if (isManager_(name)) return mgrRate_({ t: body.t, date: g.date, ratings: body.ratings, star: body.motm });   // the manager's ratings are kept apart from the players' vote
   if (Date.now() >= closes_(g.date)) return { ok: false, error: 'Voting for this game closed at ' + closeLabel_(g.date) + '.' };
   const names = {}; players_().forEach(function (p) { names[p.name.toLowerCase()] = p.name; });
   const out_ = {}; tab_('Strikes').forEach(function (r) { if (String(r[0]).slice(0, 10) === g.date && r[2] && !r[4]) out_[String(r[2]).toLowerCase()] = 1; });   // dropped out late: didn't play, so can't be rated

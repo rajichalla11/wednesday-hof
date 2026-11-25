@@ -1340,6 +1340,12 @@
   /* The Manager card (History): obsidian and gold, same shield cut as the player cards */
   .mgr { display: flex; align-items: center; gap: 22px; margin: 22px 0 4px; padding: 18px; border-radius: 18px; border: 1px solid rgba(227,192,98,.35); background: radial-gradient(90% 120% at 0% 0%, rgba(227,192,98,.14), transparent 60%), var(--surface); }
   #panel-wall:not(.on) + #mgr-wrap { display: none; }
+  .mc-mgr { flex: none; font-style: normal; font-size: 11px; font-weight: 800; line-height: 1; padding: 3px 6px; border-radius: 999px; color: var(--gold); border: 1px solid rgba(227,192,98,.45); background: rgba(227,192,98,.08); font-variant-numeric: tabular-nums; } .mc-mgr.pick { background: var(--gold); color: #17130a; border-color: var(--gold); }
+  .mc-mgrline { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--fg-2); } .mc-mgrline .mgr-row-ph { width: 22px; height: 22px; font-size: 8px; box-shadow: 0 0 0 1px rgba(227,192,98,.55); } .mc-mgrline .mc-mgr { margin-right: 2px; } .mc-mgrline b { color: var(--fg); }
+  .fg-mgr { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12.5px; color: var(--fg-2); }
+  .mgr-rate { display: grid; gap: 8px; margin-top: 14px; } .mgr-rate:empty { display: none; }
+  .pl-dot.t-mgr { background: var(--gold); box-shadow: 0 0 0 2px rgba(227,192,98,.25); } .pl-staff { grid-column: 1 / -1; } .pl-staff .mgr-row-in { width: 100%; font: inherit; color: var(--fg); text-align: left; cursor: pointer; }
+  .pl-row.pl-mgr { display: flex; align-items: center; gap: 12px; } .pl-row.pl-mgr .mgr-row-ph { width: 34px; height: 34px; }
   .mgr-row { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); } .mgr-row summary { list-style: none; cursor: pointer; display: grid; gap: 10px; } .mgr-row summary::-webkit-details-marker { display: none; }
   .mgr-row-in { display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); transition: border-color .2s; } .mgr-row summary:hover .mgr-row-in { border-color: var(--line-2); }
   .mgr-row-ph { position: relative; flex: none; width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--surface-3); box-shadow: 0 0 0 1.5px rgba(227,192,98,.55); font-size: 13px; font-weight: 800; color: var(--gold); }
@@ -2238,7 +2244,8 @@ function renderPlayers() {
     const locked = gateLocked(), me = VOTER && VOTER.ok ? VOTER.name : '';
     const rows = base.slice().sort((a, b) => b.count - a.count).map((p, i) => { const st = null;
       return `<button class="pl-row${p.name === me ? ' me' : ''}" data-pi="${ALL_PLAYERS.indexOf(p)}"><span class="pl-rk num">${i + 1}</span>${photo(p, 'avatar')}<span class="pl-n"><b>${esc(p.name)}<i class="pl-dot t-${tierOf(p)}"></i>${p.name === me ? '<em>You</em>' : ''}</b><small>${esc([posName(p), p.gamesThisYear ? `${p.gamesThisYear} in ${THIS_YEAR}` : `not seen in ${THIS_YEAR}`].filter(Boolean).join(' · '))}</small></span><span class="pl-c num">${p.count}<small>games</small></span></button>`; }).join('');
-    grid.innerHTML = rows || `<div class="empty">No player matches “${esc(PLAYER_Q)}”.</div>`;
+    const staff = mgrStaffHtml(true);
+    grid.innerHTML = (rows + staff) || `<div class="empty">No player matches “${esc(PLAYER_Q)}”.</div>`;
     paintGate();
     grid.querySelectorAll('.pl-row').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
     return;
@@ -2257,6 +2264,7 @@ function renderPlayers() {
       html += cardHtml(p, r.stats || null, { n: RATINGS && RATINGS.ok ? r.n : null, prev });
     }
   }
+  html += mgrStaffHtml(false);
   grid.innerHTML = html || `<div class="empty" style="grid-column:1/-1">${PLAYER_Q ? `No player matches “${esc(PLAYER_Q)}”.` : 'Nobody here.'}</div>`;
   paintGate();
   grid.querySelectorAll('.card').forEach(el => el.onclick = () => openProfile(ALL_PLAYERS[+el.dataset.pi]));
@@ -3532,7 +3540,38 @@ function mgrGamesHtml() {
     ${rows || '<div class="empty">No games open right now.</div>'}
     ${L && sc ? `<button class="mgr-last" onclick="showTab('matches')"><span class="label">Last game · ${esc(dayOf(L))}</span><b>${resultTxt(sc)}</b>${(L.motm || []).length ? `<small>★ ${esc(L.motm.join(', '))}</small>` : ''}</button>` : ''}`;
 }
-function renderMgrGames() { if (!(VOTER && VOTER.ok && isMgr(VOTER.name))) return; document.querySelectorAll('.mgr-games').forEach(el => { el.innerHTML = mgrGamesHtml(); }); }
+function renderMgrGames() { if (!(VOTER && VOTER.ok && isMgr(VOTER.name))) return; document.querySelectorAll('.mgr-games').forEach(el => { el.innerHTML = mgrGamesHtml(); }); document.querySelectorAll('.mgr-rate').forEach(el => { el.innerHTML = mgrRateHtml(); }); }
+/* The Manager rates the games he watched: any game up to a week after kick-off. His ratings are kept apart from the players'
+   vote (MgrRatings in the backend) and show in gold on the match card and the player's form guide once that night's voting closes. */
+const MGR_DAYS = 7;
+function mgrRateable() {
+  const now = Date.now(), gs = ((RATINGS && RATINGS.ok && RATINGS.games) || []).slice(), L = RATINGS && RATINGS.ok && RATINGS.last;
+  if (L && L.date && !gs.some(g => g.date === L.date)) gs.push({ date: L.date, time: L.time, black: (L.teams && L.teams.black) || [], white: (L.teams && L.teams.white) || [], red: (L.teams && L.teams.red) || [], list: L.squad || L.list || [] });
+  return gs.filter(g => koOf(g) <= now && now - koOf(g) <= MGR_DAYS * 864e5 && ((g.black || []).length + (g.white || []).length + (g.red || []).length + (g.list || []).length)).sort((a, b) => b.date.localeCompare(a.date));
+}
+function openMgrRate(date) {
+  const g = mgrRateable().find(x => x.date === date); if (!g || !VOTER || !VOTER.ok) return;
+  const L = RATINGS && RATINGS.last, T = { black: g.black || [], white: g.white || [], red: g.red || [] };
+  const names = new Set([...allTeamNames(T), ...(g.list || []), ...(L && L.date === date ? (L.squad || []) : [])].map(n => n.toLowerCase()));
+  const prev = (VOTER.mgrMine && VOTER.mgrMine[date]) || { ratings: {}, star: '' }, side = p => teamOf(T, p.name), order = p => side(p) ? TEAM_KEYS.indexOf(side(p)) : 9;
+  MATCH = { mgr: true, g, ratings: Object.assign({}, prev.ratings), motm: prev.star || '', side, mySide: '', list: ALL_PLAYERS.filter(p => names.has(p.name.toLowerCase())).sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name)) };
+  Object.keys(MATCH.ratings).forEach(n => { const p = ALL_PLAYERS.find(x => x.name === n); if (p && !MATCH.list.includes(p)) MATCH.list.push(p); });
+  paintMatch(); document.getElementById('match-overlay').classList.add('open'); document.body.style.overflow = 'hidden';
+}
+function mgrRateHtml() {
+  const gs = mgrRateable(), mine = (VOTER && VOTER.mgrMine) || {}; if (!gs.length) return '';
+  return `<div class="mgr-sh"><span class="label">Games you watched</span></div>` + gs.map(g => { const m = mine[g.date], n = m ? Object.keys(m.ratings || {}).length : 0, left = Math.max(1, Math.ceil((koOf(g) + MGR_DAYS * 864e5 - Date.now()) / 864e5));
+    return `<button class="mgr-act${n ? '' : ' hot'}" onclick="openMgrRate('${g.date}')"><span class="mgr-act-ic">${n ? '✓' : '📋'}</span><span><b>${n ? `Rated ${n} player${n === 1 ? '' : 's'} · ${esc(dayOf(g))}` : `Rate the game · ${esc(dayOf(g))}`}</b><small>${n ? `${m.star ? `★ ${esc(m.star)} · ` : ''}Tap to change` : `Shows in gold on the match card · ${left} day${left === 1 ? '' : 's'} left`}</small></span><i class="fx-chev"></i></button>`; }).join('');
+}
+const fmtMgr = v => Number.isInteger(v) ? String(v) : v.toFixed(1);
+/* Players tab: the Manager closes the squad list, under a quiet "Staff" heading (hidden while filtering, unless the search finds him) */
+function mgrStaffHtml(asList) {
+  if (ACTIVE_FILTER || (PLAYER_Q && !'sagar dave manager gaffer'.includes(PLAYER_Q))) return '';
+  const ph = mgrPhoto(), son = ALL_PLAYERS.find(p => p.name === MANAGER.son), first = son && son.firstIdx >= 0 && SESSIONS[son.firstIdx], since = first && first.year ? first.year : 2023;
+  const row = `<button class="${asList ? 'pl-row' : 'mgr-row-in'} pl-mgr" onclick="openMgrCard()"><span class="mgr-row-ph">${ph ? `<img src="${esc(ph)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span>SD</span></span><span class="mgr-row-t"><b>${esc(MANAGER.name)}</b><small>The Manager · on the touchline since ${since}</small></span><i class="fx-chev"></i></button>`;
+  return asList ? row : `<div class="group pl-g"><i class="pl-dot t-mgr"></i><b>Staff</b><small>On the touchline</small><span></span><em class="num">1</em></div><div class="pl-staff">${row}</div>`;
+}
+function openMgrCard() { showTab('wall'); setTimeout(() => { const d = document.querySelector('#mgr-wrap details'); if (d) { d.open = true; window.scrollTo({ top: d.getBoundingClientRect().top + scrollY - 70, behavior: 'smooth' }); } }, 80); }
 /* His Home and Me pages once he's claimed the card: the card, then the things he can do */
 function managerHomeHtml(v) {
   const need = gateNeed(), done = Math.min(selfRated(), need), m = evMine(), aw = awOpen(), voted = awDone();
@@ -3540,6 +3579,7 @@ function managerHomeHtml(v) {
   return `<div class="mgr mgr-me">${mgrCardHtml()}
     <div class="mgr-side"><span class="label">Welcome, gaffer</span><b>${esc(MANAGER.name)}</b><p>You watch every game, so you can rate any of the lads.</p></div></div>
     <div class="mgr-games">${mgrGamesHtml()}</div>
+    <div class="mgr-rate">${mgrRateHtml()}</div>
     <div class="mgr-acts">
       ${row('★', gateLocked() ? `Rate the lads · ${done} of ${need}` : 'Rate the lads', gateLocked() ? `Rate ${need - done} more to unlock everyone's ratings` : 'Change a rating any time', 'openBallot()', gateLocked() ? 'hot' : '')}
       ${aw ? row('🏆', voted ? 'Awards ballot sealed ✓' : 'Vote in the 2026 Awards', voted ? 'Tap to change your picks' : '7 trophies · 1 minute · anonymous', 'openAwards()', voted ? '' : 'hot') : ''}
@@ -4028,12 +4068,14 @@ function formStripHtml(p) {   // compact, oldest → newest, for the me strip
 function formGuideHtml(p) {   // full, newest first, for the profile
   const f = formFor(p, 8); if (!f.length) return '';
   const locked = gateLocked(), avg = locked ? null : formAvg(f);
+  const mgAll = ((RATINGS && RATINGS.ok && RATINGS.games) || []).map(g => g.mgr && g.mgr.ratings ? g.mgr.ratings[p.name] : null).filter(v => v != null), mgAvg = mgAll.length ? mgAll.reduce((a, b) => a + b, 0) / mgAll.length : null;
   return `<div class="label" style="margin-top:22px">Form guide · last ${f.length} game${f.length === 1 ? '' : 's'}${avg ? ` · average ${avg}` : ''}</div>
     <div class="fg-list">${f.map(x => `<div class="fg-row${x.res ? ' r' + x.res : ''}"><span class="fg-d">${esc(dayOf(x.g))}</span>
       <span class="fg-res${x.res ? ' r' + x.res : ''}">${x.res ? { W: 'Won', L: 'Lost', D: 'Draw' }[x.res] : x.score ? 'Played' : 'Played'}${x.score && x.side ? ` ${x.score}` : ''}</span>
       ${x.side ? `<i class="gd-shirt${TEAM_SHIRT[x.side]}"></i>` : '<i></i>'}
       ${x.motm ? '<span class="fg-star">★</span>' : '<span></span>'}
       <span class="rt${x.rt != null && x.rt >= 8 ? ' hi' : ''}">${locked || x.rt == null ? '–' : x.rt.toFixed(1)}</span></div>`).join('')}</div>
+    ${!locked && mgAvg != null ? `<div class="fg-mgr"><em class="mc-mgr">${mgAvg.toFixed(1)}</em><span>The Manager’s rating · average over ${mgAll.length} game${mgAll.length === 1 ? '' : 's'} he rated</span></div>` : ''}
     ${locked ? `<div class="muted" style="font-size:12px;margin-top:6px">Match ratings show once you've rated ${gateNeed()} teammates.</div>` : ''}`;
 }
 /* Home for someone without a card yet: what the site does for them, one button. */
@@ -5161,14 +5203,16 @@ function matchCardHtml(g, open, toggle) {
   const hasTeams = (g.black || []).length || (g.white || []).length, played = hasTeams ? g.black.length + g.white.length + (g.red || []).length : (g.list || []).length;
   const me = VOTER && VOTER.ok ? VOTER.name : '', mySide = three ? '' : me && (g.black || []).includes(me) ? 'black' : me && (g.white || []).includes(me) ? 'white' : '', hasRt = (g.raters || 0) >= 3, rt = n => hasRt && r[n] && r[n].n >= 2 ? r[n].avg : null;
   const best = Object.keys(r).filter(n => rt(n) != null).sort((x, y) => r[y].avg - r[x].avg)[0];
-  const pl = n => { const p = ALL_PLAYERS.find(x => x.name === n), v = rt(n);
-    return `<div class="mc-p${motm.includes(n) ? ' motm' : ''}${n === me ? ' me' : ''}${p ? ' tap' : ''}"${p ? ` onclick="openPlayerByName('${esc(n).replace(/'/g, "\\'")}')"` : ''}>${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span class="mc-n">${esc(n)}${motm.includes(n) ? ' <i>★</i>' : ''}</span>${hasRt ? `<b class="num rt${n === best ? ' hi' : ''}${v == null ? ' none' : ''}">${v != null ? v.toFixed(1) : '–'}</b>` : ''}</div>`; };
+  const MG = g.mgr && g.mgr.ratings && Object.keys(g.mgr.ratings).length ? g.mgr : null;
+  const pl = n => { const p = ALL_PLAYERS.find(x => x.name === n), v = rt(n), mv = MG ? MG.ratings[n] : null;
+    return `<div class="mc-p${motm.includes(n) ? ' motm' : ''}${n === me ? ' me' : ''}${p ? ' tap' : ''}"${p ? ` onclick="openPlayerByName('${esc(n).replace(/'/g, "\\'")}')"` : ''}>${p ? photo(p, 'avatar') : '<span class="avatar ph"><span class="fb">+</span></span>'}<span class="mc-n">${esc(n)}${motm.includes(n) ? ' <i>★</i>' : ''}</span>${mv != null ? `<em class="mc-mgr${MG.star === n ? ' pick' : ''}" title="The Manager’s rating">${fmtMgr(mv)}</em>` : ''}${hasRt ? `<b class="num rt${n === best ? ' hi' : ''}${v == null ? ' none' : ''}">${v != null ? v.toFixed(1) : '–'}</b>` : ''}</div>`; };
   const byRt = arr => arr.slice().sort((x, y) => (rt(y) ?? -1) - (rt(x) ?? -1));
   const mp = motm.length ? ALL_PLAYERS.find(x => x.name === motm[0]) : null;
   const pending = !motm.length && Date.now() < koOf(g) + 38 * 3600000;
   const body = !open ? '' : `<div class="mc-body">${hasTeams
       ? three ? `<div class="mc-teams mc-teams3">${TEAM_KEYS.filter(k => (g[k] || []).length).map(k => `<div><div class="label"><i class="gd-shirt${TEAM_SHIRT[k]}"></i>${TEAM_NAME[k]}</div>${byRt(g[k]).map(pl).join('')}</div>`).join('')}</div>` : `<div class="mc-teams"><div><div class="label"><i class="gd-shirt"></i>Black${sc ? ` · ${sc.black}` : ''}</div>${byRt(g.black).map(pl).join('')}</div><div><div class="label"><i class="gd-shirt w"></i>White${sc ? ` · ${sc.white}` : ''}</div>${byRt(g.white).map(pl).join('')}</div></div>`
       : `<div class="mc-teams one"><div>${byRt(g.list || []).map(pl).join('')}</div></div>`}
+    ${MG ? `<div class="mc-mgrline"><span class="mgr-row-ph"><img src="${esc(mgrPhoto())}" alt="" loading="lazy" onerror="this.remove()"><span>SD</span></span><span>In gold: the Manager’s ratings${MG.star ? ` · his pick of the night: <b>${esc(MG.star)}</b>` : ''}</span></div>` : ''}
     <div class="mc-foot">${hasRt ? `Match ratings out of 10 · ${g.raters} rated · tap a player for their card` : `Match ratings show once three players have rated${g.raters ? ` · ${g.raters} so far` : ''}.`}</div></div>`;
   return `<article class="mc${open ? ' open' : ''}" id="mc-${g.date}">
     <button class="mc-head" onclick="${toggle}">
@@ -5385,6 +5429,7 @@ async function toggleIn(isIn) {
 let MATCH = null;
 function openMatch() {
   const g = RATINGS && RATINGS.last; if (!g || !VOTER || !VOTER.ok) return;
+  if (isMgr(VOTER.name)) return openMgrRate(g.date);
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   const prev = (VOTER.last && VOTER.last.date === g.date && VOTER.last.mine) || { ratings: {}, motm: '' };
   const T = g.teams || { black: [], white: [] }, mySide = me ? teamOf(T, me.name) : '';
@@ -5397,13 +5442,13 @@ function openMatch() {
 function paintMatch() {
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()), n = Object.keys(MATCH.ratings).length;
   const others = ALL_PLAYERS.filter(p => p !== me && !MATCH.list.includes(p)).sort((a, b) => a.name.localeCompare(b.name));
-  const tn = MATCH.g.date === todayNbo();
-  document.getElementById('m-body').innerHTML = `<div class="label">${tn ? 'Tonight' : esc(dayOf(MATCH.g))} · voting closes ${closeLbl(MATCH.g)}</div>
-    <div class="b-title" style="margin-top:8px">${tn ? 'Rate tonight' : 'Rate the game'}</div>
-    <div class="b-copy">Out of 10 for how they played ${tn ? 'tonight' : 'that night'}, not in general. Tap the star for your man of the match.</div>
-    ${MATCH.list.map((p, i) => { const v = MATCH.ratings[p.name], sd = MATCH.side(p), prevSd = i ? MATCH.side(MATCH.list[i - 1]) : null; return `${sd && sd !== prevSd ? `<div class="label mr-team" style="margin-top:16px"><i class="gd-shirt${TEAM_SHIRT[sd]}"></i>${sd === MATCH.mySide ? 'Your team' : teamsIn(MATCH.g.teams).length > 2 ? 'Team' : 'Opposition'} · ${TEAM_NAME[sd]}</div>` : ''}<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="Man of the match">★</button>
+  const tn = MATCH.g.date === todayNbo(), M = MATCH.mgr;
+  document.getElementById('m-body').innerHTML = `<div class="label">${tn ? 'Tonight' : esc(dayOf(MATCH.g))} · ${M ? 'the Manager’s ratings' : `voting closes ${closeLbl(MATCH.g)}`}</div>
+    <div class="b-title" style="margin-top:8px">${M ? (tn ? 'Rate the lads tonight' : 'Rate the lads') : tn ? 'Rate tonight' : 'Rate the game'}</div>
+    <div class="b-copy">${M ? `Out of 10 for how each of them played ${tn ? 'tonight' : 'that night'}. Tap the star for your pick of the night. Your ratings go on the match card in gold once the players’ voting closes, and never change their average.` : `Out of 10 for how they played ${tn ? 'tonight' : 'that night'}, not in general. Tap the star for your man of the match.`}</div>
+    ${MATCH.list.map((p, i) => { const v = MATCH.ratings[p.name], sd = MATCH.side(p), prevSd = i ? MATCH.side(MATCH.list[i - 1]) : null; return `${sd && sd !== prevSd ? `<div class="label mr-team" style="margin-top:16px"><i class="gd-shirt${TEAM_SHIRT[sd]}"></i>${M ? TEAM_NAME[sd] : `${sd === MATCH.mySide ? 'Your team' : teamsIn(MATCH.g.teams).length > 2 ? 'Team' : 'Opposition'} · ${TEAM_NAME[sd]}`}</div>` : ''}<div class="mr-row"><div class="mr-who">${photo(p, 'avatar')}<b>${esc(p.name)}</b></div><button class="mr-star${MATCH.motm === p.name ? ' on' : ''}" onclick="setMotm('${esc(p.name)}')" aria-label="${M ? 'Pick of the night' : 'Man of the match'}">★</button>
       <div class="mr-seg">${[4,5,6,7,8,9,10].map(x => `<button class="${v === x ? 'on' : ''}" onclick="setMr('${esc(p.name)}', ${x})">${x}</button>`).join('')}</div></div>`; }).join('') || '<div class="empty" style="margin-top:14px">Nobody has checked in yet. Add who played below.</div>'}
-    <select class="mr-add" onchange="addMr(this.value)"><option value="">+ Add someone who played tonight</option>${others.map(p => `<option>${esc(p.name)}</option>`).join('')}</select>
+    <select class="mr-add" onchange="addMr(this.value)"><option value="">+ Add someone who played${M && !tn ? '' : ' tonight'}</option>${others.map(p => `<option>${esc(p.name)}</option>`).join('')}</select>
     <div class="mr-foot"><span class="muted" id="mr-msg" style="font-size:12px">${n} rated${MATCH.motm ? ` · ★ ${esc(MATCH.motm)}` : ''}</span><span style="flex:1"></span><button class="btn" id="mr-save" onclick="saveMatch()" ${n ? '' : 'disabled'}>Save ratings</button></div>`;
 }
 function setMr(name, v) { MATCH.ratings[name] = MATCH.ratings[name] === v ? undefined : v; if (MATCH.ratings[name] === undefined) delete MATCH.ratings[name]; paintMatch(); }
@@ -5411,8 +5456,10 @@ function setMotm(name) { MATCH.motm = MATCH.motm === name ? '' : name; paintMatc
 function addMr(name) { const p = ALL_PLAYERS.find(x => x.name === name); if (p && !MATCH.list.includes(p)) MATCH.list.push(p); paintMatch(); }
 async function saveMatch() {
   const btn = document.getElementById('mr-save'), msg = document.getElementById('mr-msg'); btn.disabled = true; btn.textContent = 'Saving…';
-  let res; try { res = await api(null, { action:'matchRate', t: TOKEN, ratings: MATCH.ratings, motm: MATCH.motm }); } catch (e) { res = { ok:false, error: e.message }; }
+  const M = MATCH.mgr;
+  let res; try { res = await api(null, M ? { action:'mgrRate', t: TOKEN, date: MATCH.g.date, ratings: MATCH.ratings, star: MATCH.motm } : { action:'matchRate', t: TOKEN, ratings: MATCH.ratings, motm: MATCH.motm }); } catch (e) { res = { ok:false, error: e.message }; }
   if (!res.ok) { btn.disabled = false; btn.textContent = 'Try again'; msg.textContent = res.error || 'Could not save'; return; }
+  if (M) { VOTER.mgrMine = res.mine || Object.assign(VOTER.mgrMine || {}, { [MATCH.g.date]: { ratings: Object.assign({}, MATCH.ratings), star: MATCH.motm } }); closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday(); return; }
   VOTER.last = { date: MATCH.g.date, mine: { ratings: Object.assign({}, MATCH.ratings), motm: MATCH.motm } };
   closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday();
 }
