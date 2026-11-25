@@ -5487,7 +5487,13 @@ async function saveMatch() {
   let res; try { res = await api(null, M ? { action:'mgrRate', t: TOKEN, date: MATCH.g.date, ratings: MATCH.ratings, star: MATCH.motm } : { action:'matchRate', t: TOKEN, ratings: MATCH.ratings, motm: MATCH.motm }); } catch (e) { res = { ok:false, error: e.message }; }
   if (!res.ok) { btn.disabled = false; btn.textContent = 'Try again'; msg.textContent = res.error || 'Could not save'; return; }
   if (M) { VOTER.mgrMine = res.mine || Object.assign(VOTER.mgrMine || {}, { [MATCH.g.date]: { ratings: Object.assign({}, MATCH.ratings), star: MATCH.motm } }); closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday(); return; }
-  VOTER.last = { date: MATCH.g.date, mine: { ratings: Object.assign({}, MATCH.ratings), motm: MATCH.motm }, played: true, live: res.live || null }; try { writeCache('w910_me', VOTER); } catch (_) {}
+  const sk = res.skipped || [], kept = Object.assign({}, MATCH.ratings); sk.forEach(n => delete kept[n]);
+  VOTER.last = { date: MATCH.g.date, mine: { ratings: kept, motm: MATCH.motm }, played: true, live: res.live || null }; try { writeCache('w910_me', VOTER); } catch (_) {}
+  if (sk.length) {   // never lose a rating quietly: say who didn't count, and keep the sheet open
+    sk.forEach(n => delete MATCH.ratings[n]); paintMatch();
+    const m2 = document.getElementById('mr-msg'); if (m2) { m2.style.color = 'var(--bad, #e5484d)'; m2.textContent = `Saved, but ${sk.join(' and ')} ${sk.length === 1 ? 'isn’t' : 'aren’t'} down as playing, so ${sk.length === 1 ? 'that rating' : 'those ratings'} didn’t count. Tell Raji if they played.`; }
+    RATINGS_AT = 0; fetchResults().then(() => renderGameday()); return;
+  }
   closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday();
 }
 function closeMatch() { document.getElementById('match-overlay').classList.remove('open'); document.body.style.overflow = ''; }

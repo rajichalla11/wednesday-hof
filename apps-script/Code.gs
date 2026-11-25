@@ -105,7 +105,7 @@ function closeWindow() {
 }
 
 /** Run from the editor after editing Settings, Seeds or Voters by hand, so the change shows at once instead of within 5 minutes. */
-function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles', 'Push', 'PushLog', 'Tweaks', 'Awards', 'Drinks', 'MgrRatings'].forEach(bust_); cache_().remove('players'); }
+function clearCaches() { ['Voters', 'Votes', 'SelfRatings', 'Windows', 'Seeds', 'Settings', 'Photos', 'Visits', 'Checkins', 'MatchVotes', 'Games', 'Signups', 'Taps', 'Strikes', 'TopUps', 'FootClaims', 'FootVotes', 'Profiles', 'Push', 'PushLog', 'Tweaks', 'Awards', 'Drinks', 'MgrRatings', 'MatchFix'].forEach(bust_); cache_().remove('players'); }
 
 /** One-off: strips what could link a ballot to a voter from data written before Version 20. Voters keep only a rough
  *  "rated" band (no last-vote time), ballot and check-in times become the day only, and ballot rows are shuffled so
@@ -176,6 +176,7 @@ function doPost(e) {
     if (body.action === 'clearMine') return json_(clearMine_(body));
     if (body.action === 'mgrRate') return json_(mgrRate_(body));
     if (body.action === 'resetCard') return json_(resetCard_(body));
+    if (body.action === 'setMatchRating') return json_(setMatchRating_(body));
     if (body.action === 'setFormat') return json_(setFormat_(body));
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
     if (body.action === 'setProfile') return json_(setProfile_(body));
@@ -808,12 +809,12 @@ function gamesPublic_() {
   const now = Date.now(), raters = {}, sums = {};
   if (ss_().getSheetByName('MatchVotes')) tab_('MatchVotes').forEach(function (r) { const d = String(r[0]).slice(0, 10), k = String(r[2]); (raters[d] = raters[d] || {})[r[1]] = 1;
     const g = (sums[d] = sums[d] || {}); g[k] = g[k] || { s: 0, n: 0 }; g[k].s += Number(r[3]); g[k].n++; });
-  const mg = mgrByDate_();
+  const mg = mgrByDate_(), fx = matchFixes_();
   const avgs = function (d) { const out = {}, g = sums[d] || {}; Object.keys(g).forEach(function (k) { if (g[k].n >= 2) out[k] = { avg: Math.round(10 * g[k].s / g[k].n) / 10, n: g[k].n }; }); return out; };   // the form guide: each player's average from that night (2+ votes)
   return tab_('Games').map(function (r) { const split = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
     const d = String(r[0]).slice(0, 10), settled = now >= closes_(d) || !!motmOverride_(d);
     return { date: d, black: split(r[1]), white: split(r[2]), red: split(r[13]), b: r[3] === '' ? null : Number(r[3]), w: r[4] === '' ? null : Number(r[4]),
-             time: String(r[5] || '21:00').slice(0, 5) || '21:00', list: split(r[6]), size: Number(r[7]) || 6, motm: settled ? motmFor_(d) : [], raters: Object.keys(raters[d] || {}).length, ratings: now >= closes_(d) ? avgs(d) : {}, mgr: settled && mg[d] ? mg[d] : undefined }; })   // a game's ratings go public at 11am the next morning; players who rated see them live through me_
+             time: String(r[5] || '21:00').slice(0, 5) || '21:00', list: split(r[6]), size: Number(r[7]) || 6, motm: settled ? motmFor_(d) : [], raters: Object.keys(raters[d] || {}).length, ratings: now >= closes_(d) ? applyFix_(avgs(d), d, fx) : {}, mgr: settled && mg[d] ? mg[d] : undefined }; })   // a game's ratings go public at 11am the next morning; players who rated see them live through me_
     .filter(function (g) { return /^\d{4}-\d{2}-\d{2}$/.test(g.date); });
 }
 /* Game format (Games tab columns 10-12): how many teams, how many hours, and whether everyone on the list must reconfirm
@@ -1466,10 +1467,11 @@ function linkRedeem_(body) {
 /* ───────── strikes ─────────
    Strikes tab: date (game), ts, name, by (who took them off), cleared. One for each late drop-out (inside 36 hours of
    kick-off, from a spot rather than standby). They only show; nothing is blocked. They stay until the admin clears them. */
-/** A strike counts unless cleared, or the player ended up on that game's teams after all (dropped out, came back and played). */
+/** A strike counts unless cleared, or the player ended up on that game's teams (or back on its list) after all: dropped out, came back and played. */
 let TEAMS_MEMO_ = null;
 function onTeams_(date, name) {
-  if (!TEAMS_MEMO_) { TEAMS_MEMO_ = {}; allGames_().forEach(function (g) { const T = g.teams; if (!T) return; const s = TEAMS_MEMO_[g.date] = {}; (T.black || []).concat(T.white || [], T.red || []).forEach(function (n) { s[String(n).toLowerCase()] = 1; }); }); }
+  if (!TEAMS_MEMO_) { TEAMS_MEMO_ = {}; allGames_().forEach(function (g) { const T = g.teams, names = T && ((T.black || []).length || (T.white || []).length) ? (T.black || []).concat(T.white || [], T.red || []) : (g.list || []);
+    const s = TEAMS_MEMO_[g.date] = {}; names.forEach(function (n) { s[String(n).toLowerCase()] = 1; }); }); }   // on the teams (or, before teams, back on the list) = played
   return !!(TEAMS_MEMO_[date] && TEAMS_MEMO_[date][String(name).toLowerCase()]);
 }
 function strikeLive_(r) { return !!r[2] && !r[4] && !onTeams_(String(r[0]).replace(/^'/, '').slice(0, 10), String(r[2])); }
@@ -1815,6 +1817,30 @@ function checkin_(body) {
   bust_('Checkins');
   return { ok: true, squad: Object.keys(squad_(g.date)).map(function (k) { return squad_(g.date)[k]; }) };
 }
+/* Admin-set match ratings. MatchFix tab: date, name, avg, by, ts; the latest row for a player and night wins, a blank avg removes it.
+   For when a player's ratings were lost: the set value replaces the voters' average for that night. */
+function matchFixes_() {
+  const out = {}; if (!ss_().getSheetByName('MatchFix')) return out;
+  tab_('MatchFix').forEach(function (r) { const d = String(r[0]).replace(/^'/, '').slice(0, 10), n = String(r[1] || ''), v = Number(r[2]);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !n) return; out[d] = out[d] || {}; if (r[2] === '' || isNaN(v)) delete out[d][n]; else out[d][n] = v; });
+  return out;
+}
+function applyFix_(ratings, date, fx) {
+  const f = (fx || matchFixes_())[date]; if (!f) return ratings;
+  Object.keys(f).forEach(function (n) { const was = ratings[n] || {}; ratings[n] = { avg: f[n], n: Math.max(2, was.n || 0), motm: was.motm || 0, fixed: true }; });
+  return ratings;
+}
+function setMatchRating_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const date = String(body.date || ''); if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: 'Which game?' };
+  const p = players_().filter(function (x) { return x.name.toLowerCase() === String(body.name || '').toLowerCase(); })[0]; if (!p) return { ok: false, error: 'Unknown player.' };
+  const clear = body.avg === '' || body.avg == null, v = Math.round(Number(body.avg) * 10) / 10;
+  if (!clear && (isNaN(v) || v < 1 || v > 10)) return { ok: false, error: 'Rating must be 1–10.' };
+  const sh = sheet_('MatchFix'); if (sh.getLastRow() === 0) sh.appendRow(['date', 'name', 'avg', 'by', 'ts']);
+  sh.appendRow(["'" + date, p.name, clear ? '' : v, me, "'" + new Date().toISOString()]);
+  bust_('MatchFix'); cache_().remove('results'); cache_().remove('results_stale');
+  return { ok: true, date: date, name: p.name, avg: clear ? null : v };
+}
 /** Who played a game (lower-case names): its teams once made, else its list, else whoever checked in. Empty if nothing is known. */
 function playedSet_(g) {
   const T = g && g.teams, out = {};
@@ -1841,10 +1867,11 @@ function matchRate_(body) {
   if (known && !played[name.toLowerCase()]) return { ok: false, error: 'Only the players from ' + dayLabel_(g.date) + ' rate it. Everyone sees the ratings at ' + closeLabel_(g.date) + '.' };
   const names = {}; players_().forEach(function (p) { names[p.name.toLowerCase()] = p.name; });
   const out_ = {}; tab_('Strikes').forEach(function (r) { if (String(r[0]).slice(0, 10) === g.date && strikeLive_(r)) out_[String(r[2]).toLowerCase()] = 1; });   // dropped out late (and didn't come back): didn't play, so can't be rated
-  const ratings = body.ratings || {}, motm = String(body.motm || '').toLowerCase(), b = id3_(body.t), rows = [];
+  const ratings = body.ratings || {}, motm = String(body.motm || '').toLowerCase(), b = id3_(body.t), rows = [], skipped = [];
   Object.keys(ratings).forEach(function (k) {
     const who = names[k.toLowerCase()], v = Math.round(Number(ratings[k]) * 2) / 2;
-    if (!who || who.toLowerCase() === name.toLowerCase() || out_[who.toLowerCase()] || isNaN(v) || v < 1 || v > 10) return;
+    if (who && who.toLowerCase() === name.toLowerCase()) return;
+    if (!who || out_[who.toLowerCase()] || isNaN(v) || v < 1 || v > 10) { skipped.push(who || k); return; }   // never dropped silently: the voter is told who didn't count
     rows.push([g.date, b, who, v, who.toLowerCase() === motm ? 1 : 0, today_(), name]);
   });
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
@@ -1859,7 +1886,8 @@ function matchRate_(body) {
     rows.forEach(function (r) { if (!sq[r[2].toLowerCase()]) setCheckin_(g.date, r[2], 'in'); });
   } finally { lock.releaseLock(); }
   bust_('MatchVotes'); bust_('Checkins'); cache_().remove('results');
-  return { ok: true, saved: rows.length, live: liveFor_(g, name, body.t) };
+  if (skipped.length) console.warn('matchRate_ skipped ' + skipped.join(', ') + ' for ' + g.date + ' (voter ' + name + ')');
+  return { ok: true, saved: rows.length, skipped: skipped, live: liveFor_(g, name, body.t) };
 }
 function myMatch_(date, token) {
   const b = id3_(String(token)), out = { ratings: {}, motm: '' };
@@ -1874,6 +1902,7 @@ function gamePublic_(g, full) {
     const k = String(r[2]); by[k] = by[k] || { sum: 0, n: 0, motm: 0 }; by[k].sum += Number(r[3]); by[k].n++; by[k].motm += Number(r[4]) ? 1 : 0;
   });
   const ratings = {}; Object.keys(by).forEach(function (k) { ratings[k] = { avg: Math.round(10 * by[k].sum / by[k].n) / 10, n: by[k].n, motm: by[k].motm }; });
+  applyFix_(ratings, g.date);
   (g.teams ? g.teams.black.concat(g.teams.white, g.teams.red || []) : []).concat(g.list || []).forEach(function (n) { if (!sq[n.toLowerCase()]) sq[n.toLowerCase()] = n; });
   const closes = closes_(g.date), final = Date.now() >= closes;
   const see = final || !!full;   // until 11am the next morning, only players who rated (and the admin) see the ratings, through me_
