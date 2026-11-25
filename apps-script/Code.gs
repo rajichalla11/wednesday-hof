@@ -21,6 +21,10 @@ const SITE_URL = 'https://wednesday910.vercel.app/';
 const STATS = ['PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY'];
 const TRAITS = ['ENGINE', 'FINISHER', 'PLAYMAKER', 'WALL', 'MAGICIAN', 'ROCKET', 'CAPTAIN', 'CLUTCH', 'SWEEPER', 'GLOVES', 'WILDCARD', 'ENFORCER', 'HEART', 'BRAIN', 'HUSTLER', 'SNIPER', 'JOKER', 'ROCK'];
 const MAX_TRAITS = 3;
+/* Managers: members who watch rather than play (Sagar Dave, Aarav's dad). They can claim a card, rate anyone, vote in the awards and RSVP,
+   but they're never on the attendance sheet and never counted as having played. */
+const MANAGERS_ = ['Sagar Dave'];
+function isManager_(n) { return MANAGERS_.some(function (m) { return m.toLowerCase() === String(n || '').trim().toLowerCase(); }); }
 const MIN_SHARED = 3;      // sessions you must have shared to rate someone
 const MIN_VOTES = 3;       // ballots before a rating is shown for a player with no baseline
 const PRIOR_WEIGHT = 3;    // the admin's exact baseline counts like this many votes
@@ -330,7 +334,8 @@ function rate_(body) {
   const target = String(body.target || '').trim();
   const ps = players_(), byName = {};
   ps.forEach(function (p) { byName[p.name.toLowerCase()] = p; });
-  const me = byName[name.toLowerCase()], tp = byName[target.toLowerCase()];
+  const me = byName[name.toLowerCase()] || (isManager_(name) ? { name: name, att: [] } : null), tp = byName[target.toLowerCase()];
+  if (!me) return { ok: false, error: 'You are not on the attendance sheet yet.' };
   if (!tp) return { ok: false, error: 'Unknown player.' };
   if (tp === me) return { ok: false, error: 'You can’t rate yourself.' };
   const shared = shared_(me, tp), anyone = voteAll_(name);
@@ -375,7 +380,7 @@ function claim_(body) {
   if (tries >= 5) return { ok: false, error: 'Too many attempts for this name. Try again in 15 minutes.' };
   const want = String(settings_().claim_code || '').trim().toLowerCase();   // blank in Settings = no code needed
   if (want && code.toLowerCase() !== want) { cache_().put(key, String(tries + 1), 900); return { ok: false, error: 'That code is not right.' }; }
-  const p = players_().filter(function (x) { return x.name.toLowerCase() === name.toLowerCase(); })[0];
+  const p = players_().filter(function (x) { return x.name.toLowerCase() === name.toLowerCase(); })[0] || (isManager_(name) ? { name: MANAGERS_.filter(function (m) { return m.toLowerCase() === name.toLowerCase(); })[0] } : null);
   if (!p) return { ok: false, error: 'That name is not on the attendance sheet.' };
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
@@ -760,6 +765,7 @@ function setFlag_(body) {
 }
 /** Players allowed to rate anyone, whatever nights they shared: Settings → vote_all, comma-separated. If the row is missing it defaults to Nirav, whose games mostly predate the tracked sessions. */
 function voteAll_(name) {
+  if (isManager_(name)) return true;   // a manager watches every game, so can rate anyone
   const s = settings_();
   const raw = Object.prototype.hasOwnProperty.call(s, 'vote_all') ? s.vote_all : 'Nirav';
   return String(raw || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean).indexOf(String(name || '').toLowerCase()) >= 0;
@@ -871,6 +877,7 @@ function signup_(body) {
   const date = String(body.date || ''), g = allGames_().filter(function (x) { return x.date === date; })[0];
   if (!g) return { ok: false, error: 'That game is not open.' };
   if (kickoff_(g).getTime() + 3600000 < Date.now()) return { ok: false, error: 'That game has been played.' };
+  if (isManager_(me) && !body.name && !body.guest) return { ok: false, error: 'Managers watch from the touchline.' };
   let name = me, kind = 'player';
   // Players sign up themselves only; adding someone else or a guest (+1) is for the admin
   if ((body.guest || (body.name && String(body.name).toLowerCase() !== me.toLowerCase())) && !isAdmin_(me)) return { ok: false, error: 'You can only sign yourself up. Ask the admin to add anyone else.' };
@@ -1750,7 +1757,7 @@ function matchRate_(body) {
     for (let i = data.length - 1; i >= 1; i--) if (String(data[i][0]).slice(0, 10) === g.date && data[i][1] === b) sh.deleteRow(i + 1);   // a resubmission replaces the old one
     rows.forEach(function (r) { insertRandom_(sh, ["'" + r[0]].concat(r.slice(1))); });
     const sq = squad_(g.date);
-    if (!sq[name.toLowerCase()]) setCheckin_(g.date, name, 'in');                 // rating tonight means you played tonight
+    if (!sq[name.toLowerCase()] && !isManager_(name)) setCheckin_(g.date, name, 'in');   // rating tonight means you played tonight (not for a manager, who watched)
     rows.forEach(function (r) { if (!sq[r[2].toLowerCase()]) setCheckin_(g.date, r[2], 'in'); });
   } finally { lock.releaseLock(); }
   bust_('MatchVotes'); bust_('Checkins');
