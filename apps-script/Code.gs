@@ -175,6 +175,7 @@ function doPost(e) {
     if (body.action === 'rsvp') return json_(rsvp_(body));
     if (body.action === 'clearMine') return json_(clearMine_(body));
     if (body.action === 'mgrRate') return json_(mgrRate_(body));
+    if (body.action === 'resetCard') return json_(resetCard_(body));
     if (body.action === 'setFormat') return json_(setFormat_(body));
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
     if (body.action === 'setProfile') return json_(setProfile_(body));
@@ -223,6 +224,7 @@ function me_(token) {
   if (!row) return { ok: false, error: 'This link isn’t recognised.' };
   if (row.status === 'pending') return { ok: true, pending: true, name: row.name };
   const name = row.name;
+  if (!row.claimed) markClaimed_(token);   // a sign-in link the admin sent: the first visit claims the card
   const win = props_().getProperty('window'), open = props_().getProperty('open') === '1';
   const mine = {}, feedback = [];
   const b = id2_(token), b3 = id3_(token);
@@ -972,6 +974,31 @@ function mgrRate_(body) {
   } finally { lock.releaseLock(); }
   bust_('MgrRatings'); cache_().remove('results'); cache_().remove('results_stale');
   return { ok: true, saved: rows.length, mine: mgrMine_() };
+}
+/** Admin: reset a card. Frees the name, deletes what was rated under it (card ratings, match ratings, the Manager's
+   ratings, drinks RSVP, notification sign-ups), and with link: true hands back a fresh sign-in link for that person.
+   The link's row is left unclaimed, so the card still shows as free until they open it. (Awards ballots are anonymous
+   and can't be traced to a card.) */
+function resetCard_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const want = String(body.name || '').trim().toLowerCase(); if (!want) return { ok: false, error: 'Which name?' };
+  if (want === me.toLowerCase()) return { ok: false, error: 'That is your own card.' };
+  const p = players_().filter(function (x) { return x.name.toLowerCase() === want; })[0], mgr = MANAGERS_.filter(function (m) { return m.toLowerCase() === want; })[0];
+  const name = p ? p.name : mgr; if (!name) return { ok: false, error: 'Unknown name.' };
+  const out = {}, lock = LockService.getScriptLock(); lock.waitLock(20000);
+  const wipe = function (tab, col, all) { const sh = ss_().getSheetByName(tab); if (!sh) return; const d = sh.getDataRange().getValues(); let n = 0;
+    for (let i = d.length - 1; i >= 1; i--) if (all || String(d[i][col]).trim().toLowerCase() === want) { sh.deleteRow(i + 1); n++; } out[tab] = n; bust_(tab); };
+  try {
+    wipe('Voters', 1); wipe('Votes', 4 + STATS.length + 3); wipe('MatchVotes', 6); wipe('Drinks', 1); wipe('Push', 1);
+    if (mgr) wipe('MgrRatings', 0, true);
+    if (body.link) { const token = newToken_(); sheet_('Voters').appendRow([id1_(token), name, new Date(), '', 'approved']); bust_('Voters'); out.token = token; }
+  } finally { lock.releaseLock(); }
+  cache_().remove('results'); cache_().remove('results_stale');
+  return { ok: true, name: name, removed: out, token: out.token };
+}
+function markClaimed_(token) {
+  const id = id1_(String(token)), sh = sheet_('Voters'), d = sh.getDataRange().getValues();
+  for (let i = 1; i < d.length; i++) if (d[i][0] === id) { sh.getRange(i + 1, 4).setValue(new Date()); bust_('Voters'); return; }
 }
 /** Admin only: wipe the caller's own awards ballot and drinks RSVP, so the vote opens for them again like it does for everyone. */
 function clearMine_(body) {
@@ -1896,7 +1923,7 @@ function voterRow_(token) {
   const id = id1_(String(token));
   const hit = tab_('Voters').filter(function (r) { return r[0] === id; })[0];
   if (!hit) return null;
-  return { name: String(hit[1]), status: String(hit[4] || '') === 'pending' ? 'pending' : 'approved' };
+  return { name: String(hit[1]), status: String(hit[4] || '') === 'pending' ? 'pending' : 'approved', claimed: !!hit[3] };
 }
 /** Writes a rough band (1–4, 5–9, 10+) of how many teammates this token's ballot has rated onto the voter's own row; never the exact number or a time, so a ballot can't be matched to a voter by watching counts change. */
 function voterStats_(token) {
