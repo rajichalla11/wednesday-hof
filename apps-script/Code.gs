@@ -173,6 +173,7 @@ function doPost(e) {
     if (body.action === 'award') return json_(award_(body));
     if (body.action === 'awardsResults') return json_(awardsResults_(body));
     if (body.action === 'rsvp') return json_(rsvp_(body));
+    if (body.action === 'clearMine') return json_(clearMine_(body));
     if (body.action === 'setFormat') return json_(setFormat_(body));
     if (body.action === 'clearStrikes') return json_(clearStrikes_(body));
     if (body.action === 'setProfile') return json_(setProfile_(body));
@@ -939,6 +940,17 @@ function awardsTally_(rows) {
 }
 /** Editor only: wipe every awards ballot (used once before launch, to drop votes cast while the vote was briefly visible). */
 function resetAwards() { const sh = ss_().getSheetByName('Awards'); const n = sh ? Math.max(0, sh.getLastRow() - 1) : 0; if (n) sh.deleteRows(2, n); bust_('Awards'); cache_().remove('results'); cache_().remove('results_stale'); Logger.log('removed ' + n + ' ballot rows'); }
+/** Admin only: wipe the caller's own awards ballot and drinks RSVP, so the vote opens for them again like it does for everyone. */
+function clearMine_(body) {
+  const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
+  const b = awardBallot_(body.t), lock = LockService.getScriptLock(); lock.waitLock(10000); let nb = 0, nr = 0;
+  try {
+    const aw = ss_().getSheetByName('Awards'); if (aw) { const d = aw.getDataRange().getValues(); for (let i = d.length - 1; i >= 1; i--) if (d[i][1] === b) { aw.deleteRow(i + 1); nb++; } }
+    const dr = ss_().getSheetByName('Drinks'); if (dr) { const d = dr.getDataRange().getValues(); for (let i = d.length - 1; i >= 1; i--) if (String(d[i][1]).toLowerCase() === me.toLowerCase()) { dr.deleteRow(i + 1); nr++; } }
+  } finally { lock.releaseLock(); }
+  bust_('Awards'); bust_('Drinks'); cache_().remove('results'); cache_().remove('results_stale');
+  return { ok: true, ballotRows: nb, rsvpRows: nr, awards: awardsPublic_(), drinks: drinksPublic_() };
+}
 /** Admin only, and only once voting has closed: the top 3 for every award, to prepare for (and present at) the drinks. */
 function awardsResults_(body) {
   const me = voterName_(body.t); if (!me || !isAdmin_(me)) return { ok: false, error: 'Admin only.' };
