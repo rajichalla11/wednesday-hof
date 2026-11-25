@@ -4780,6 +4780,9 @@ const TEAM_KEYS = ['black', 'white', 'red'], TEAM_NAME = { black: 'Black', white
 const teamsIn = T => T ? TEAM_KEYS.filter(k => (T[k] || []).length) : [];
 const teamOf = (T, n) => T ? TEAM_KEYS.find(k => (T[k] || []).includes(n)) || '' : '';
 const allTeamNames = T => T ? TEAM_KEYS.flatMap(k => T[k] || []) : [];
+const closeAt = g => g && g.closes ? new Date(g.closes).getTime() : g ? new Date(g.date + 'T11:00:00+03:00').getTime() + 864e5 : 0;
+const closeWhen = g => { const t = closeAt(g), d = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Nairobi' }).format(new Date(t)), lbl = closeLbl(g);
+  return d === todayNbo() ? `${lbl} today` : d === new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Nairobi' }).format(new Date(Date.now() + 864e5)) ? `${lbl} tomorrow` : lbl; };
 const closeLbl = g => { const t = g && g.closes ? new Date(g.closes) : null; return t ? new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Nairobi', hour: 'numeric', minute: '2-digit', hour12: true }).format(t).replace(':00', '').replace(/\s/g, '').toLowerCase() : '11am'; };
 function gameSquad(g) {
   const names = new Set((g.squad || []).map(n => n.toLowerCase()));
@@ -4842,7 +4845,7 @@ function openPlayerByName(n) { const p = ALL_PLAYERS.find(x => x.name === n); if
 function paintGame(el, view, open, toggleFn) {
   const GD_OPEN = !!open;
   if (!el || !view) return;
-  const { g, ph } = view;
+  const { ph } = view, g = withLive(view.g);
   const voterGame = VOTER && VOTER.ok && !VOTER.pending ? VOTER.game : null, mine = voterGame && voterGame.date === g.date ? voterGame : null, me = VOTER && VOTER.ok ? ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase()) : null;
   const myLast = VOTER && VOTER.ok && VOTER.last && VOTER.last.date === g.date ? VOTER.last.mine : null;
   const squad = gameSquad(g);
@@ -4858,11 +4861,11 @@ function paintGame(el, view, open, toggleFn) {
     : `<button class="gd-gate locked" onclick="${TOKEN ? '' : 'openClaim()'}"><span><span class="label">Gate code${today ? ' · tonight' : ''}</span><b>XXXXX</b></span><small>${TOKEN ? 'Loading…' : 'Find your card to see it'}</small></button>`;
   const faces = squad.slice(0, 9).map(p => photo(p, 'avatar')).join('');
   const T = g.teams && ((g.teams.black || []).length || (g.teams.white || []).length) ? g.teams : null, sc = g.score;
-  const checkBtn = !TOKEN && ph === 'post' ? `<button class="btn" onclick="openClaim()">Find your card to rate</button>` : TOKEN && ph === 'post' && VOTER && VOTER.ok && !VOTER.pending ? `<button class="btn" onclick="openMatch()">${Object.keys((myLast && myLast.ratings) || {}).length ? 'Edit my match ratings' : today ? 'Rate tonight' : 'Rate the game'}</button>` : '';
+  const checkBtn = !TOKEN && ph === 'post' ? `<button class="btn" onclick="openClaim()">Find your card to rate</button>` : TOKEN && ph === 'post' && VOTER && VOTER.ok && !VOTER.pending && playedLast(g) ? `<button class="btn" onclick="openMatch()">${Object.keys((myLast && myLast.ratings) || {}).length ? 'Edit my match ratings' : today ? 'Rate tonight' : 'Rate the game'}</button>` : '';
 
   const meName = me ? me.name : '';
   const isPost = ph === 'post' || ph === 'final';
-  const gr = g.ratings || {}, showRt = isPostPh(ph) && (g.raters || 0) >= 3, rtOf = n => showRt && gr[n] && gr[n].n >= 2 ? gr[n].avg : null;
+  const gr = g.ratings || {}, showRt = isPostPh(ph) && (g.raters || 0) >= 3 && Object.keys(gr).length > 0, rtOf = n => showRt && gr[n] && gr[n].n >= 2 ? gr[n].avg : null;
   const topRt = Object.keys(gr).filter(n => rtOf(n) != null).sort((a, b) => gr[b].avg - gr[a].avg)[0];
   const byRt = arr => showRt ? arr.slice().sort((x, y) => (rtOf(y) ?? -1) - (rtOf(x) ?? -1)) : arr;
   const plRow = n => { const p = ALL_PLAYERS.find(x => x.name === n), v = rtOf(n), star = (g.motm || []).includes(n);
@@ -4873,7 +4876,7 @@ function paintGame(el, view, open, toggleFn) {
   const won = side => !sc || sc.black === sc.white ? '' : (sc[side] > sc[side === 'black' ? 'white' : 'black'] ? ' won' : ' lost');
   const scoreline = `<div class="gd-score"><span class="side${won('black')}"><i class="gd-shirt"></i>Black</span>${sc ? `<span class="mid num">${sc.black}<i>–</i>${sc.white}</span>` : '<span class="mid vs">vs</span>'}<span class="side w${won('white')}">White<i class="gd-shirt w"></i></span></div>`;
   const left = spots - list.length;
-  const rtNote = !isPost ? '' : showRt ? `<div class="gd-note gd-rtnote">Match ratings out of 10 · ${g.raters} rated${ph === 'post' ? ' so far' : ''} · tap a player for their card</div>` : `<div class="gd-note gd-rtnote">Match ratings show once three players have rated${g.raters ? ` · ${g.raters} so far` : ''}.</div>`;
+  const rtNote = !isPost ? '' : showRt ? `<div class="gd-note gd-rtnote">Match ratings out of 10 · ${g.raters} rated${ph === 'post' ? ' so far' : ''} · tap a player for their card</div>` : ph === 'post' && (g.raters || 0) >= 3 ? `<div class="gd-note gd-rtnote">${rtHiddenNote(g)}</div>` : `<div class="gd-note gd-rtnote">Match ratings show once three players have rated${g.raters ? ` · ${g.raters} so far` : ''}.</div>`;
   const three = teamsIn(T).length > 2, threeHead = `<div class="gd-score gd-3">${teamsIn(T).map(k => `<span class="side"><i class="gd-shirt${TEAM_SHIRT[k]}"></i>${TEAM_NAME[k]}</span>`).join('<span class="mid vs">·</span>')}</div>`;
   const lineupSec = T && three ? sec('', '', threeHead + `<div class="gd-teams gd-teams3">${teamsIn(T).map(k => `<div class="gd-team"><div class="label gd-tl"><i class="gd-shirt${TEAM_SHIRT[k]}"></i>${TEAM_NAME[k]}</div>${byRt(T[k]).map(plRow).join('')}</div>`).join('')}</div>` + rtNote)
     : T ? sec('', '', scoreline + `<div class="gd-teams"><div class="gd-team">${byRt(T.black || []).map(plRow).join('')}</div><div class="gd-team">${byRt(T.white || []).map(plRow).join('')}</div></div>` + rtNote)
@@ -5208,12 +5211,23 @@ let MT_OPEN = {};
 function mtToggle(date) { MT_OPEN[date] = !MT_OPEN[date]; renderMatches(); }
 /* One played game: result and score up top, man of the match in one line, then (open) both teams side by side with each
    player's match rating. Used on the Matches tab and for "Last game" on Home. */
+/* Last game's ratings stay hidden until 11am the next morning; a player who played and rated (and the admin, and the Manager once he's rated) gets them live from me_. */
+const lastMine = g => VOTER && VOTER.ok && VOTER.last && g && VOTER.last.date === g.date ? VOTER.last : null;
+function withLive(g) { const L = lastMine(g), lv = L && L.live; if (!lv) return g;
+  return Object.assign({}, g, { ratings: Object.keys(g.ratings || {}).length ? g.ratings : (lv.ratings || {}), motm: (g.motm || []).length ? g.motm : (lv.motm || []) }); }
+const playedLast = g => { const L = lastMine(g); return !L || L.played !== false || isMgr(VOTER.name); };
+function rtHiddenNote(g) {
+  const L = lastMine(g), n = g.raters || 0, cnt = n ? ` · ${n} rated so far` : '';
+  if (L && L.played && !Object.keys((L.mine && L.mine.ratings) || {}).length) return `Rate the game to see everyone’s ratings${cnt}. Everyone else sees them at ${closeWhen(g)}.`;
+  return `Match ratings show at ${closeWhen(g)}${cnt}. Only the players who played rate it.`;
+}
 function matchCardHtml(g, open, toggle) {
+  g = withLive(g);
   const sc = g.b != null && g.w != null ? { black: g.b, white: g.w } : null, motm = g.motm || [], r = g.ratings || {};
   const won = side => !sc || sc.black === sc.white ? '' : (sc[side] > sc[side === 'black' ? 'white' : 'black'] ? ' won' : ' lost');
   const three = (g.red || []).length > 0, res = three ? '3 teams' : !sc ? 'No score' : sc.black === sc.white ? 'Draw' : `${sc.black > sc.white ? 'Black' : 'White'} won`;
   const hasTeams = (g.black || []).length || (g.white || []).length, played = hasTeams ? g.black.length + g.white.length + (g.red || []).length : (g.list || []).length;
-  const me = VOTER && VOTER.ok ? VOTER.name : '', mySide = three ? '' : me && (g.black || []).includes(me) ? 'black' : me && (g.white || []).includes(me) ? 'white' : '', hasRt = (g.raters || 0) >= 3, rt = n => hasRt && r[n] && r[n].n >= 2 ? r[n].avg : null;
+  const me = VOTER && VOTER.ok ? VOTER.name : '', mySide = three ? '' : me && (g.black || []).includes(me) ? 'black' : me && (g.white || []).includes(me) ? 'white' : '', hasRt = (g.raters || 0) >= 3 && Object.keys(r).length > 0, rt = n => hasRt && r[n] && r[n].n >= 2 ? r[n].avg : null;
   const best = Object.keys(r).filter(n => rt(n) != null).sort((x, y) => r[y].avg - r[x].avg)[0];
   const MG = g.mgr && g.mgr.ratings && Object.keys(g.mgr.ratings).length ? g.mgr : null;
   const pl = n => { const p = ALL_PLAYERS.find(x => x.name === n), v = rt(n), mv = MG ? MG.ratings[n] : null;
@@ -5225,7 +5239,7 @@ function matchCardHtml(g, open, toggle) {
       ? three ? `<div class="mc-teams mc-teams3">${TEAM_KEYS.filter(k => (g[k] || []).length).map(k => `<div><div class="label"><i class="gd-shirt${TEAM_SHIRT[k]}"></i>${TEAM_NAME[k]}</div>${byRt(g[k]).map(pl).join('')}</div>`).join('')}</div>` : `<div class="mc-teams"><div><div class="label"><i class="gd-shirt"></i>Black${sc ? ` · ${sc.black}` : ''}</div>${byRt(g.black).map(pl).join('')}</div><div><div class="label"><i class="gd-shirt w"></i>White${sc ? ` · ${sc.white}` : ''}</div>${byRt(g.white).map(pl).join('')}</div></div>`
       : `<div class="mc-teams one"><div>${byRt(g.list || []).map(pl).join('')}</div></div>`}
     ${MG ? `<div class="mc-mgrline"><span class="mgr-row-ph"><img src="${esc(mgrPhoto())}" alt="" loading="lazy" onerror="this.remove()"><span>SD</span></span><span>In gold: the Manager’s ratings${MG.star ? ` · his pick of the night: <b>${esc(MG.star)}</b>` : ''}</span></div>` : ''}
-    <div class="mc-foot">${hasRt ? `Match ratings out of 10 · ${g.raters} rated · tap a player for their card` : `Match ratings show once three players have rated${g.raters ? ` · ${g.raters} so far` : ''}.`}</div></div>`;
+    <div class="mc-foot">${hasRt ? `Match ratings out of 10 · ${g.raters} rated · tap a player for their card` : (g.raters || 0) >= 3 && Date.now() < closeAt(g) ? rtHiddenNote(g) : `Match ratings show once three players have rated${g.raters ? ` · ${g.raters} so far` : ''}.`}</div></div>`;
   return `<article class="mc${open ? ' open' : ''}" id="mc-${g.date}">
     <button class="mc-head" onclick="${toggle}">
       <span class="mc-when"><b>${esc(dayOf(g))}</b><small>${fmtKo(g)} · ${three ? `3 teams of ${g.size || 6}` : `${g.size || 6}-a-side`}${played ? ` · ${played} played` : ''}</small></span>
@@ -5442,6 +5456,7 @@ let MATCH = null;
 function openMatch() {
   const g = RATINGS && RATINGS.last; if (!g || !VOTER || !VOTER.ok) return;
   if (isMgr(VOTER.name)) return openMgrRate(g.date);
+  if (!playedLast(g)) return;   // only the players who played rate a game
   const me = ALL_PLAYERS.find(p => p.name.toLowerCase() === VOTER.name.toLowerCase());
   const prev = (VOTER.last && VOTER.last.date === g.date && VOTER.last.mine) || { ratings: {}, motm: '' };
   const T = g.teams || { black: [], white: [] }, mySide = me ? teamOf(T, me.name) : '';
@@ -5472,7 +5487,7 @@ async function saveMatch() {
   let res; try { res = await api(null, M ? { action:'mgrRate', t: TOKEN, date: MATCH.g.date, ratings: MATCH.ratings, star: MATCH.motm } : { action:'matchRate', t: TOKEN, ratings: MATCH.ratings, motm: MATCH.motm }); } catch (e) { res = { ok:false, error: e.message }; }
   if (!res.ok) { btn.disabled = false; btn.textContent = 'Try again'; msg.textContent = res.error || 'Could not save'; return; }
   if (M) { VOTER.mgrMine = res.mine || Object.assign(VOTER.mgrMine || {}, { [MATCH.g.date]: { ratings: Object.assign({}, MATCH.ratings), star: MATCH.motm } }); closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday(); return; }
-  VOTER.last = { date: MATCH.g.date, mine: { ratings: Object.assign({}, MATCH.ratings), motm: MATCH.motm } };
+  VOTER.last = { date: MATCH.g.date, mine: { ratings: Object.assign({}, MATCH.ratings), motm: MATCH.motm }, played: true, live: res.live || null }; try { writeCache('w910_me', VOTER); } catch (_) {}
   closeMatch(); RATINGS_AT = 0; await fetchResults(); renderGameday();
 }
 function closeMatch() { document.getElementById('match-overlay').classList.remove('open'); document.body.style.overflow = ''; }
