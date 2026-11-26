@@ -937,11 +937,27 @@ function awardsPublic_() {
   if (Date.now() >= new Date(AWARDS_PUBLIC_).getTime()) out.results = awardsTally_(rows);   // nobody sees winners before the night
   return out;
 }
+/** One trophy per player. Winners are settled strongest-first: of the awards still open, the one whose leader has the biggest
+ *  share of that award's votes is decided next, and that player is out of the running for the rest (the next in line moves up).
+ *  Ties go to whoever got more votes across all the awards, then by name. Each award's top 3 leaves out players who won another. */
 function awardsTally_(rows) {
-  rows = rows || (ss_().getSheetByName('Awards') ? tab_('Awards') : []); const out = {};
-  AWARDS_.forEach(function (k) { const c = {}, tot = rows.filter(function (r) { return r[2] === k; });
-    tot.forEach(function (r) { c[r[3]] = (c[r[3]] || 0) + 1; });
-    out[k] = { votes: tot.length, top: Object.keys(c).sort(function (a, b) { return c[b] - c[a] || a.localeCompare(b); }).slice(0, 3).map(function (n) { return { name: n, n: c[n], pct: Math.round(100 * c[n] / tot.length) }; }) }; });
+  rows = rows || (ss_().getSheetByName('Awards') ? tab_('Awards') : []);
+  const cnt = {}, votes = {}, overall = {};
+  AWARDS_.forEach(function (k) { cnt[k] = {}; votes[k] = 0; });
+  rows.forEach(function (r) { const k = String(r[2]), n = String(r[3]); if (!cnt[k] || !n) return; cnt[k][n] = (cnt[k][n] || 0) + 1; votes[k]++; overall[n] = (overall[n] || 0) + 1; });
+  const rank = function (k, taken) { const c = cnt[k]; return Object.keys(c).filter(function (n) { return !taken[n]; }).sort(function (a, b) { return c[b] - c[a] || (overall[b] || 0) - (overall[a] || 0) || a.localeCompare(b); }); };
+  const won = {}, winner = {}, left = AWARDS_.filter(function (k) { return votes[k] > 0; });
+  while (left.length) {
+    let best = null, bestN = null, bestShare = -1;
+    left.forEach(function (k) { const n = rank(k, won)[0]; if (!n) return; const sh = cnt[k][n] / votes[k];
+      if (sh > bestShare || (sh === bestShare && cnt[k][n] > cnt[best][bestN])) { best = k; bestN = n; bestShare = sh; } });
+    if (!best) break;
+    winner[best] = bestN; won[bestN] = best; left.splice(left.indexOf(best), 1);
+  }
+  const out = {};
+  AWARDS_.forEach(function (k) { const others = {}; Object.keys(won).forEach(function (n) { if (won[n] !== k) others[n] = 1; });
+    out[k] = { votes: votes[k], top: rank(k, others).slice(0, 3).map(function (n) { return { name: n, n: cnt[k][n], pct: votes[k] ? Math.round(100 * cnt[k][n] / votes[k]) : 0 }; }),
+               movedUp: Object.keys(cnt[k]).filter(function (n) { return others[n] && cnt[k][n] > ((cnt[k][winner[k]]) || 0); }) }; });   // who out-polled the winner here but took another trophy
   return out;
 }
 /** Editor only: wipe every awards ballot (used once before launch, to drop votes cast while the vote was briefly visible). */

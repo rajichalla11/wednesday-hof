@@ -3284,7 +3284,7 @@ function paintAwards() {
     ov.innerHTML = `<div class="aw-stage aw-intro ${anim}"><button class="aw-x solo" onclick="closeAwards()" aria-label="Close">✕</button>
       <div class="aw-fan">${AWARDS.map((a, i) => `<span style="--i:${i - (AWARDS.length - 1) / 2};--a:${a.c}">${awArt(a, 'fan')}</span>`).join('')}</div>
       <div class="aw-kicker">Wednesday 9–10 presents</div><h2 class="aw-h">The 2026<br>Awards</h2>
-      <p class="aw-blurb">Seven trophies. You pick the winners.<br>Winners are handed out at the end-of-year drinks, <b>Kraftory Biergarten, Wed 9 Dec</b>.</p>
+      <p class="aw-blurb">Seven trophies. You pick the winners. One trophy per player: top two, keep the stronger.<br>Winners are handed out at the end-of-year drinks, <b>Kraftory Biergarten, Wed 9 Dec</b>.</p>
       <div class="aw-chips"><span>${AWARDS.length} awards</span><span>~1 minute</span><span>100% anonymous</span></div>
       <button class="aw-cta" onclick="awGo(0, 1)">Start voting</button>
       <small class="aw-fine">${days} day${days === 1 ? '' : 's'} left${voters ? ` · ${voters} already voted` : ''}</small></div>`;
