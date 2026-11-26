@@ -939,13 +939,13 @@ function awardsPublic_() {
 }
 /** One trophy per player. Winners are settled strongest-first: of the awards still open, the one whose leader has the biggest
  *  share of that award's votes is decided next, and that player is out of the running for the rest (the next in line moves up).
- *  Ties go to whoever got more votes across all the awards, then by name. Each award's top 3 leaves out players who won another. */
+ *  A tie goes to whoever has fewer votes in the other awards (so the other contender can still win elsewhere), then by name. Each award's top 3 leaves out players who won another. */
 function awardsTally_(rows) {
   rows = rows || (ss_().getSheetByName('Awards') ? tab_('Awards') : []);
   const cnt = {}, votes = {}, overall = {};
   AWARDS_.forEach(function (k) { cnt[k] = {}; votes[k] = 0; });
   rows.forEach(function (r) { const k = String(r[2]), n = String(r[3]); if (!cnt[k] || !n) return; cnt[k][n] = (cnt[k][n] || 0) + 1; votes[k]++; overall[n] = (overall[n] || 0) + 1; });
-  const rank = function (k, taken) { const c = cnt[k]; return Object.keys(c).filter(function (n) { return !taken[n]; }).sort(function (a, b) { return c[b] - c[a] || (overall[b] || 0) - (overall[a] || 0) || a.localeCompare(b); }); };
+  const rank = function (k, taken) { const c = cnt[k]; return Object.keys(c).filter(function (n) { return !taken[n]; }).sort(function (a, b) { return c[b] - c[a] || ((overall[a] || 0) - c[a]) - ((overall[b] || 0) - c[b]) || a.localeCompare(b); }); };
   const won = {}, winner = {}, left = AWARDS_.filter(function (k) { return votes[k] > 0; });
   while (left.length) {
     let best = null, bestN = null, bestShare = -1;
